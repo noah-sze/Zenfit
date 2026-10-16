@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Zenfit" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Zenfit</title>
+    <script>
+      (function() {
+        var ua = navigator.userAgent;
+        var isIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          document.documentElement.classList.add('is-ios');
+          var match = ua.match(/OS (\d+)[._]/);
+          var iosMajorVersion = match ? parseInt(match[1], 10) : 0;
+          if (iosMajorVersion >= 26) {
+            document.documentElement.classList.add('ios-has-status-blur');
+          }
+        }
+      })();
+    </script>
+    <style>
+      :root {
+        --app-bg: #000000;
+        --app-fg: #ffffff;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --app-bg: #ffffff;
+          --app-fg: #000000;
+        }
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: var(--app-bg);
+        color: var(--app-fg);
+        overflow: hidden;
+      }
+      #app-shell-fallback {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--app-bg);
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .app-shell-icon {
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.9;
+        animation: appShellPulse 2s ease-in-out infinite;
+      }
+      @keyframes appShellPulse {
+        0%, 100% { opacity: 0.9; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.97); }
+      }
+      #app-shell-status {
+        margin-top: 20px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.35s ease, transform 0.35s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #app-shell-status.visible {
+        opacity: 0.75;
+        transform: translateY(0);
+      }
+      .app-shell-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: currentColor;
+        opacity: 0.8;
+      }
+    </style>
+    <script>
+      (function() {
+        var watchdogTimer = setTimeout(function() {
+          var statusEl = document.getElementById('app-shell-status');
+          if (statusEl && document.getElementById('app-shell-fallback')) {
+            var isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+            if (!isOnline) {
+              statusEl.innerHTML = '<span class="app-shell-dot"></span><span>OFFLINE MODE</span>';
+            } else {
+              statusEl.innerHTML = '<span class="app-shell-dot"></span><span>CONNECTING...</span>';
+            }
+            statusEl.classList.add('visible');
+          }
+        }, 1800);
+
+        window.__dismissAppShell = function() {
+          clearTimeout(watchdogTimer);
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <div id="app-shell-fallback">
+        <div class="app-shell-icon">
+          <!-- Zen Minimal Monogram Icon -->
+          <svg width="44" height="44" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="currentColor" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 120 140 L 392 140 L 120 372 L 392 372" />
+              <circle cx="256" cy="256" r="32" fill="currentColor" stroke="none" />
+            </g>
+          </svg>
+        </div>
+        <div id="app-shell-status"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
