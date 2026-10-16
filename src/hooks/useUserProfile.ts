@@ -8,6 +8,7 @@ const DEFAULT_PROFILE: UserProfile = {
   id: DEFAULT_PROFILE_ID,
   name: 'Noah',
   gender: 'male',
+  birthDate: '1999-01',
   age: 25,
   heightCm: 175,
   currentWeightKg: 70,
