@@ -11,7 +11,9 @@ import {
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import { calculateBMI, calculateBMR } from '@/utils/weightMath';
+import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weightMath';
+import { MonthPicker } from '@/components/ui/month-picker';
+import { CalendarDays } from 'lucide-react';
 
 export default function ProfileSettings() {
   const { t } = useTranslation();
@@ -20,7 +22,7 @@ export default function ProfileSettings() {
   // 本地表單狀態
   const [name, setName] = useState(profile.name || 'Noah');
   const [gender, setGender] = useState<'male' | 'female'>(profile.gender || 'male');
-  const [age, setAge] = useState(String(profile.age || 25));
+  const [birthDate, setBirthDate] = useState(profile.birthDate || '1999-01');
   const [heightCm, setHeightCm] = useState(String(profile.heightCm || 175));
   const [currentWeightKg, setCurrentWeightKg] = useState(String(profile.currentWeightKg || 70));
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(profile.weightUnit || 'kg');
@@ -29,7 +31,7 @@ export default function ProfileSettings() {
     if (profile) {
       setName(profile.name || 'Noah');
       setGender(profile.gender || 'male');
-      setAge(String(profile.age || 25));
+      setBirthDate(profile.birthDate || '1999-01');
       setHeightCm(String(profile.heightCm || 175));
       setCurrentWeightKg(String(profile.currentWeightKg || 70));
       setWeightUnit(profile.weightUnit || 'kg');
@@ -39,20 +41,20 @@ export default function ProfileSettings() {
   // 即時計算客觀生理常數
   const parsedWeight = parseFloat(currentWeightKg) || 0;
   const parsedHeight = parseFloat(heightCm) || 0;
-  const parsedAge = parseInt(age, 10) || 25;
+  const calculatedAge = calculateAgeFromBirth(birthDate);
   const currentBMI = calculateBMI(parsedWeight, parsedHeight);
-  const currentBMR = calculateBMR(parsedWeight, parsedHeight, gender, parsedAge);
+  const currentBMR = calculateBMR(parsedWeight, parsedHeight, gender, calculatedAge);
 
   const handleSave = async () => {
     const finalName = name.trim() || 'Noah';
-    const finalAge = parseInt(age, 10) || 25;
     const finalHeight = parseFloat(heightCm) || 175;
     const finalWeight = parseFloat(currentWeightKg) || 70;
 
     await updateProfile({
       name: finalName,
       gender,
-      age: finalAge,
+      birthDate,
+      age: calculatedAge,
       heightCm: finalHeight,
       currentWeightKg: finalWeight,
       weightUnit,
@@ -111,21 +113,24 @@ export default function ProfileSettings() {
             </Select>
           </div>
 
-          {/* 年齡 */}
+          {/* 出生年月 */}
           <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
             <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.age')}
+              {t('profileSettings.birthDate')}
             </span>
-            <div className="flex items-center gap-1 text-sm font-mono text-muted-foreground">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={age}
-                onChange={(e) => setAge(e.target.value.replace(/[^0-9]/g, ''))}
-                className="h-8 w-16 text-right text-sm font-mono text-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
-              />
-              <span>{t('profileSettings.ageUnit')}</span>
-            </div>
+            <MonthPicker
+              value={birthDate}
+              onChange={setBirthDate}
+              className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-foreground">{birthDate}</span>
+                <span className="text-xs text-muted-foreground">
+                  ({calculatedAge} {t('profileSettings.yearsOld')})
+                </span>
+                <CalendarDays className="size-3.5 text-muted-foreground/70" />
+              </div>
+            </MonthPicker>
           </div>
 
           {/* 身高 */}

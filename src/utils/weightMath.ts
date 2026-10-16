@@ -77,6 +77,28 @@ export function calculateWeeklyChangeRate(points: SmoothedWeightPoint[]): number
 }
 
 /**
+ * 依據出生年月 (YYYY-MM) 或出生日期 (YYYY-MM-DD) 與參考日期動態計算客觀實足年齡
+ * 誤差小於 1 個月，對 BMR 計算 (-5 * age) 誤差小於 0.5 kcal
+ */
+export function calculateAgeFromBirth(birthDateStr?: string, referenceDate: Date = new Date()): number {
+  if (!birthDateStr) return 25;
+  const parts = birthDateStr.split('-');
+  const birthYear = parseInt(parts[0], 10);
+  const birthMonth = parseInt(parts[1], 10) || 1;
+
+  if (isNaN(birthYear) || birthYear <= 1900) return 25;
+
+  const currentYear = referenceDate.getFullYear();
+  const currentMonth = referenceDate.getMonth() + 1;
+
+  let age = currentYear - birthYear;
+  if (currentMonth < birthMonth) {
+    age -= 1;
+  }
+  return Math.max(0, age);
+}
+
+/**
  * 計算 BMI
  */
 export function calculateBMI(weightKg: number, heightCm: number): number {

@@ -126,8 +126,8 @@
       "gender": "性別",
       "male": "男",
       "female": "女",
-      "age": "年齡",
-      "ageUnit": "歲",
+      "birthDate": "出生年月",
+      "yearsOld": "歲",
       "height": "身高",
       "weightSection": "體重基準",
       "currentWeight": "基準體重",
@@ -155,6 +155,22 @@
       "clearDataConfirm": "確定要清除所有本地資料嗎？此操作無法撤銷！",
       "dataCleared": "所有本地資料已清空",
       "exported": "備份資料已匯出"
+    },
+    "monthPicker": {
+      "title": "選擇出生年月",
+      "year": "年份",
+      "month": "月份",
+      "yearFormat": "yyyy 年",
+      "cancel": "取消",
+      "confirm": "確認選擇",
+      "close": "關閉",
+      "selectYear": "選擇年份",
+      "selectMonth": "選擇月份",
+      "months": [
+        "1 月", "2 月", "3 月", "4 月",
+        "5 月", "6 月", "7 月", "8 月",
+        "9 月", "10 月", "11 月", "12 月"
+      ]
     }
   }
 }
