@@ -1,0 +1,9 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="120" fill="#000000"/>
+  <g fill="none" stroke="#ffffff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 中央基準線 -->
+    <path d="M 256 120 L 256 392" />
+    <!-- 穿插的 Z -->
+    <path d="M 150 180 L 362 180 L 150 332 L 362 332" />
+  </g>
+</svg>

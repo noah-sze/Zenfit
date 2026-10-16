@@ -1,0 +1,270 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --radius-lg: var(--radius);
+  --radius-md: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+
+  --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft JhengHei", "Microsoft YaHei", "Noto Sans CJK", sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-10px);
+  }
+  40%, 80% {
+    transform: translateX(10px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes marquee-ping-pong {
+  0%, 25% {
+    transform: translateX(0);
+  }
+  75%, 100% {
+    transform: translateX(var(--marquee-distance, 0px));
+  }
+}
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #f0f0f0;
+    --secondary-foreground: #000000;
+    --muted: #fafafa;
+    --muted-foreground: #666666;
+    --accent: #fafafa;
+    --accent-foreground: #000000;
+    --destructive: #ff0000;
+    --destructive-foreground: #ffffff;
+    --border: #eaeaea;
+    --input: #eaeaea;
+    --ring: #000000;
+    --overlay: rgba(255, 255, 255, 0.8);
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: #000000;
+    --foreground: #ffffff;
+    --card: #000000;
+    --card-foreground: #ffffff;
+    --popover: #000000;
+    --popover-foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+    --secondary: #1a1a1a;
+    --secondary-foreground: #ffffff;
+    --muted: #0a0a0a;
+    --muted-foreground: #a0a0a0;
+    --accent: #111111;
+    --accent-foreground: #ffffff;
+    --destructive: #ff453a;
+    --destructive-foreground: #ffffff;
+    --border: #333333;
+    --input: #333333;
+    --ring: #ffffff;
+    --overlay: rgba(0, 0, 0, 0.8);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    font-size: 90%;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html, body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  #root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  /* 豁免所有輸入框，原生允許自由選取文字與呼出編輯選單 */
+  input, textarea, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
+  }
+  
+  /* Globally hide all scrollbars for an app-like experience */
+  ::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+@utility select-text {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility pt-safe {
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--ios-status-blur-offset, 0px));
+}
+
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility mt-safe {
+  margin-top: calc(env(safe-area-inset-top, 0px) + var(--ios-status-blur-offset, 0px));
+}
+
+/* iOS 26/27 PWA Status Bar Blur & Shadow Countermeasure */
+:root {
+  --ios-status-blur-offset: 0px;
+}
+
+@media (display-mode: standalone) and (orientation: portrait) {
+  /* 僅在 iOS 26+ 存在強制毛玻璃與陰影的系統上啟用 16px 避讓與全覆蓋遮罩 */
+  .ios-has-status-blur {
+    --ios-status-blur-offset: 16px;
+  }
+
+  .ios-has-status-blur #ios-status-bar-tint {
+    height: calc(env(safe-area-inset-top, 0px) + var(--ios-status-blur-offset)) !important;
+  }
+
+  /* 精準打擊：收緊 iOS PWA 下巴，消除巨大白色留白 */
+  .is-ios #bottom-nav {
+    padding-bottom: max(0.5rem, calc(env(safe-area-inset-bottom, 0px) - 14px)) !important;
+  }
+
+  .is-ios #bottom-nav-inner {
+    height: 3rem !important; /* 48px 原生 HIG 緊湊高度 */
+  }
+}
+
+/* Marquee Ping-Pong Animation for Overflowing Amounts */
+@keyframes marquee-pingpong {
+  0%, 20% {
+    transform: translateX(0);
+  }
+  50%, 70% {
+    transform: translateX(var(--marquee-distance, 0px));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-pingpong {
+  animation: marquee-pingpong var(--marquee-duration, 5s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes marquee-pingpong-from-end {
+  0%, 20% {
+    transform: translateX(0);
+  }
+  50%, 70% {
+    transform: translateX(var(--marquee-distance, 0px));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-pingpong-from-end {
+  animation: marquee-pingpong-from-end var(--marquee-duration, 5s) cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+
