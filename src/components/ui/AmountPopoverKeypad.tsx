@@ -191,13 +191,13 @@ export function AmountPopoverKeypad({
   };
 
   const btnBaseClass =
-    "h-12 text-lg sm:text-xl font-mono font-medium rounded-xl bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none";
+    "h-12 text-lg sm:text-xl font-mono font-medium rounded-lg bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none";
 
   return (
     <div
       data-slot="amount-popover-keypad"
       className={cn(
-        "w-[280px] sm:w-[320px] rounded-xl bg-popover border border-border p-2.5 flex flex-col gap-2.5 text-popover-foreground select-none shadow-none outline-none",
+        "w-[280px] sm:w-[320px] rounded-lg bg-popover border border-border p-2.5 flex flex-col gap-2.5 text-popover-foreground select-none shadow-none outline-none",
         className
       )}
     >
@@ -207,7 +207,7 @@ export function AmountPopoverKeypad({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('C')}
-          className="text-xs font-medium h-7 px-2.5 rounded-md bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-transform duration-75 active:scale-95 cursor-pointer"
+          className="text-xs font-medium h-7 px-2.5 rounded-lg bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-transform duration-75 active:scale-95 cursor-pointer"
           title={t('keypad.clear', '清空')}
         >
           {t('keypad.clear', '清空')}
@@ -217,7 +217,7 @@ export function AmountPopoverKeypad({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onClose?.()}
-          className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-transform duration-75 active:scale-95 cursor-pointer"
+          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-transform duration-75 active:scale-95 cursor-pointer"
           title={t('keypad.collapse', '收起鍵盤')}
         >
           <X className="size-4" />
@@ -255,7 +255,7 @@ export function AmountPopoverKeypad({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('DEL')}
-          className="h-12 rounded-xl bg-muted/60 text-destructive hover:bg-destructive/10 hover:text-destructive border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none"
+          className="h-12 rounded-lg bg-muted/60 text-destructive hover:bg-destructive/10 hover:text-destructive border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none"
           title={t('keypad.backspace', '退格')}
         >
           <Delete className="size-5" />
@@ -350,7 +350,7 @@ export function AmountPopoverKeypad({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('00')}
-          className="h-12 text-sm sm:text-base font-mono tracking-wider font-medium rounded-xl bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none"
+          className="h-12 text-sm sm:text-base font-mono tracking-wider font-medium rounded-lg bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none"
         >
           00
         </button>
@@ -359,7 +359,7 @@ export function AmountPopoverKeypad({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('=')}
           className={cn(
-            "h-12 rounded-xl flex items-center justify-center transition-transform duration-75 active:scale-[0.96] border cursor-pointer shadow-none select-none",
+            "h-12 rounded-lg flex items-center justify-center transition-transform duration-75 active:scale-[0.96] border cursor-pointer shadow-none select-none",
             isExpression
               ? "bg-muted/60 text-foreground hover:bg-muted border-border/40 font-bold active:bg-foreground active:text-background active:border-foreground"
               : "bg-primary text-primary-foreground hover:bg-primary/90 border-primary font-bold active:bg-primary/80"

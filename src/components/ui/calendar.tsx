@@ -110,7 +110,7 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
   return (
     <div
       className={cn(
-        "w-full max-w-[340px] select-none rounded-2xl bg-card text-card-foreground border border-border overflow-hidden shadow-none",
+        "w-full max-w-[340px] select-none rounded-lg bg-card text-card-foreground border border-border overflow-hidden shadow-none",
         className
       )}
     >
@@ -125,7 +125,7 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             onClick={handlePreviousMonth}
           >
             <ChevronLeft className="size-3.5" />
@@ -134,7 +134,7 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             onClick={handleNextMonth}
           >
             <ChevronRight className="size-3.5" />
@@ -147,7 +147,7 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                 onClick={onClose}
                 title={t("calendar.close", "關閉")}
               >
@@ -209,7 +209,7 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
             type="button"
             onClick={() => handlePresetClick(0)}
             className={cn(
-              "px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer",
+              "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
               isPresetActive(0)
                 ? "bg-foreground text-background"
                 : "border border-border hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -221,7 +221,7 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
             type="button"
             onClick={() => handlePresetClick(1)}
             className={cn(
-              "px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer",
+              "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
               isPresetActive(1)
                 ? "bg-foreground text-background"
                 : "border border-border hover:bg-muted text-muted-foreground hover:text-foreground"

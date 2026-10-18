@@ -132,9 +132,9 @@ export default function Workout() {
       {workouts.length > 0 ? (
         workouts.map((workout) => (
           <Card key={workout.id} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-            <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-border/40">
+            <CardHeader className="py-3.5 px-4 flex flex-row items-center justify-between border-b border-border/40">
               <div>
-                <CardTitle className="text-sm font-medium tracking-tight">
+                <CardTitle className="text-base font-semibold tracking-tight">
                   {workout.title}
                 </CardTitle>
                 <span className="text-xs font-mono text-muted-foreground">
@@ -177,14 +177,14 @@ export default function Workout() {
                       <button
                         type="button"
                         onClick={() => startRestTimer(60)}
-                        className="text-xs font-mono px-2 py-0.5 border border-border rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                        className="text-xs font-mono px-2 py-0.5 border border-border rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                       >
                         60s
                       </button>
                       <button
                         type="button"
                         onClick={() => startRestTimer(90)}
-                        className="text-xs font-mono px-2 py-0.5 border border-border rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                        className="text-xs font-mono px-2 py-0.5 border border-border rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                       >
                         90s
                       </button>
@@ -193,7 +193,7 @@ export default function Workout() {
 
                   {/* 組數記錄表格 */}
                   <div className="border border-border/60 rounded-lg overflow-hidden divide-y divide-border/40 text-xs">
-                    <div className="grid grid-cols-4 px-3 py-2 bg-muted/30 text-xs font-mono uppercase text-muted-foreground">
+                    <div className="grid grid-cols-4 px-3.5 py-2.5 bg-muted/30 text-xs sm:text-sm font-mono uppercase text-muted-foreground">
                       <span>{t('workout.set')}</span>
                       <span>{t('workout.weight')}</span>
                       <span>{t('workout.reps')}</span>
@@ -203,7 +203,7 @@ export default function Workout() {
                     {exGroup.sets.map((set, setIdx) => (
                       <div
                         key={set.id || setIdx}
-                        className={`grid grid-cols-4 px-3 py-2 items-center transition-colors ${
+                        className={`grid grid-cols-4 px-3.5 py-2.5 items-center transition-colors ${
                           set.isCompleted ? 'bg-muted/40 opacity-75' : 'bg-background'
                         }`}
                       >
@@ -221,7 +221,7 @@ export default function Workout() {
                                 set.reps || 0
                               )
                             }
-                            className="h-8 w-16 text-sm font-mono px-2"
+                            className="h-9 w-20 text-sm font-mono px-2.5"
                           />
                         </div>
                         <div>
@@ -237,14 +237,14 @@ export default function Workout() {
                                 parseInt(e.target.value, 10) || 0
                               )
                             }
-                            className="h-8 w-16 text-sm font-mono px-2"
+                            className="h-9 w-20 text-sm font-mono px-2.5"
                           />
                         </div>
                         <div className="text-right">
                           <button
                             type="button"
                             onClick={() => toggleSetCompleted(workout.id, exIdx, setIdx)}
-                            className={`size-7 rounded-md border flex items-center justify-center transition-all cursor-pointer ml-auto ${
+                            className={`size-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ml-auto ${
                               set.isCompleted
                                 ? 'bg-foreground border-foreground text-background'
                                 : 'border-border bg-background hover:border-foreground/50 text-transparent'
@@ -261,7 +261,7 @@ export default function Workout() {
                     variant="outline"
                     size="sm"
                     onClick={() => addSetToExercise(workout.id, exIdx)}
-                    className="w-full h-8 text-xs font-mono text-muted-foreground hover:text-foreground cursor-pointer rounded-lg border-dashed"
+                    className="w-full h-9 text-xs sm:text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer rounded-lg border-dashed"
                   >
                     + {t('workout.addSet')}
                   </Button>
@@ -287,7 +287,7 @@ export default function Workout() {
 
       {/* 新增動作選擇彈窗 */}
       <Dialog open={isAddExerciseModalOpen} onOpenChange={setIsAddExerciseModalOpen}>
-        <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-xl">
+        <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-lg">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold">
               {t('workout.selectExercise')}

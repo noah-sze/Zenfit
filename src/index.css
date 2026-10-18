@@ -36,21 +36,36 @@
   --color-header-bg: var(--header-bg);
   --color-destructive-subtle: var(--destructive-subtle);
 
-  /* 圓角階層體系 (以基準 --radius 為中心自動等比聯動) */
-  --radius-xs: calc(var(--radius) - 6px); /* 2px - 極小微標籤 */
-  --radius-sm: calc(var(--radius) - 4px); /* 4px - 按鈕、輸入框 */
-  --radius-md: calc(var(--radius) - 2px); /* 6px - 下拉選單、卡片內部項目 */
-  --radius-lg: var(--radius);             /* 8px - 基準卡片、容器 */
-  --radius-xl: calc(var(--radius) + 4px); /* 12px - 模組區塊 */
-  --radius-2xl: calc(var(--radius) + 8px);/* 16px - 彈窗 Dialog */
-  --radius-3xl: calc(var(--radius) + 16px);/* 24px - 底部抽屜 / Command Deck */
-  --radius-4xl: calc(var(--radius) + 24px);/* 32px */
+  /* 三大營養素語意色彩 (Carbs, Protein, Fat) */
+  --color-carbs: var(--carbs);
+  --color-carbs-foreground: var(--carbs-foreground);
+  --color-carbs-subtle: var(--carbs-subtle);
 
-  /* 文字階層微型字體 Token */
-  --text-2xs: 0.625rem; /* 10px */
-  --text-2xs--line-height: 0.875rem; /* 14px */
-  --text-3xs: 0.5625rem; /* 9px */
-  --text-3xs--line-height: 0.75rem; /* 12px */
+  --color-protein: var(--protein);
+  --color-protein-foreground: var(--protein-foreground);
+  --color-protein-subtle: var(--protein-subtle);
+
+  --color-fat: var(--fat);
+  --color-fat-foreground: var(--fat-foreground);
+  --color-fat-subtle: var(--fat-subtle);
+
+  /* 圓角體系：除 full 與 none 外全面統一為 rounded-lg (var(--radius)) */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+
+  /* 文字階層微型字體 Token (以基準 1rem = 14px 精密調校) */
+  --text-xs: 0.8rem; /* 11.2px - 輔助標籤與微單位 */
+  --text-xs--line-height: 1.15rem;
+  --text-2xs: 0.72rem; /* 10.1px - 極小微標籤 */
+  --text-2xs--line-height: 1rem;
+  --text-3xs: 0.65rem; /* 9.1px */
+  --text-3xs--line-height: 0.85rem;
 
   --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft JhengHei", "Microsoft YaHei", "Noto Sans CJK", sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -105,6 +120,19 @@
     --overlay: rgba(255, 255, 255, 0.8);
     --header-bg: rgba(255, 255, 255, 0.9);
     --destructive-subtle: rgba(255, 0, 0, 0.08);
+
+    /* 三大營養素 - 亮色模式 (高對比、WCAG AA 達標且純淨洗練) */
+    --carbs: #d97706; /* 琥珀金 - 穀物能量 */
+    --carbs-foreground: #ffffff;
+    --carbs-subtle: rgba(217, 119, 6, 0.12);
+
+    --protein: #0284c7; /* 冰川青藍 - 肌肉修復與科技客觀感 */
+    --protein-foreground: #ffffff;
+    --protein-subtle: rgba(2, 132, 199, 0.12);
+
+    --fat: #7c3aed; /* 洗練紫羅蘭 - 脂質儲備，避開批判性紅色 */
+    --fat-foreground: #ffffff;
+    --fat-subtle: rgba(124, 58, 237, 0.12);
     --radius: 0.5rem;
   }
   .dark {
@@ -130,6 +158,19 @@
     --overlay: rgba(0, 0, 0, 0.8);
     --header-bg: rgba(0, 0, 0, 0.9);
     --destructive-subtle: rgba(255, 69, 58, 0.15);
+
+    /* 三大營養素 - 深色模式 (純黑背景下明快清透、無光暈污染) */
+    --carbs: #f59e0b;
+    --carbs-foreground: #000000;
+    --carbs-subtle: rgba(245, 158, 11, 0.18);
+
+    --protein: #38bdf8;
+    --protein-foreground: #000000;
+    --protein-subtle: rgba(56, 189, 248, 0.18);
+
+    --fat: #a78bfa;
+    --fat-foreground: #000000;
+    --fat-subtle: rgba(167, 139, 250, 0.18);
   }
 }
 
@@ -145,7 +186,7 @@
     text-rendering: optimizeLegibility;
   }
   html {
-    font-size: 90%;
+    font-size: 14px;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }

@@ -145,7 +145,7 @@ export function E2EEUnlockDialog({
             type="button"
             onClick={handleDisconnect}
             disabled={isUnlocking}
-            className="text-2xs font-mono tracking-tight text-muted-foreground hover:text-destructive transition-colors outline-none cursor-pointer flex items-center gap-1.5 py-1 px-2 rounded-sm hover:bg-destructive-subtle"
+            className="text-2xs font-mono tracking-tight text-muted-foreground hover:text-destructive transition-colors outline-none cursor-pointer flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-destructive-subtle"
           >
             <Unlink className="size-3" />
             <span>{t('settings.disconnectDropbox', '斷開 Dropbox 連接')}</span>

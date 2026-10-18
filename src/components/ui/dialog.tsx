@@ -89,7 +89,7 @@ function DialogContent({
           initialFocus={initialFocus ?? false}
           data-slot="dialog-content"
           className={cn(
-            "fixed inset-0 z-[60] flex flex-col w-full h-full bg-background text-foreground outline-none px-4 pt-[calc(1rem+env(safe-area-inset-top,0px)+var(--ios-status-blur-offset,0px))] pb-4 overflow-y-auto overscroll-contain no-scrollbar sm:fixed sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-[min(380px,calc(100vw-2rem))] sm:h-[min(600px,calc(100vh-3rem))] sm:h-[min(600px,calc(100dvh-3rem))] sm:max-h-[calc(100vh-3rem)] sm:max-h-[calc(100dvh-3rem))] sm:rounded-3xl sm:bg-card sm:text-card-foreground sm:border sm:border-border sm:p-6 sm:shadow-none sm:overflow-y-auto sm:overscroll-contain",
+            "fixed inset-0 z-[60] flex flex-col w-full h-full bg-background text-foreground outline-none px-4 pt-[calc(1rem+env(safe-area-inset-top,0px)+var(--ios-status-blur-offset,0px))] pb-4 overflow-y-auto overscroll-contain no-scrollbar sm:fixed sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-[min(380px,calc(100vw-2rem))] sm:h-[min(600px,calc(100vh-3rem))] sm:h-[min(600px,calc(100dvh-3rem))] sm:max-h-[calc(100vh-3rem)] sm:max-h-[calc(100dvh-3rem))] sm:rounded-lg sm:bg-card sm:text-card-foreground sm:border sm:border-border sm:p-6 sm:shadow-none sm:overflow-y-auto sm:overscroll-contain",
             className
           )}
           {...props}
@@ -107,7 +107,7 @@ function DialogContent({
             initialFocus={initialFocus ?? false}
             data-slot="dialog-content"
             className={cn(
-              "pointer-events-auto relative flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[min(88vh,calc(100%-2rem))] max-h-[min(88dvh,calc(100%-2rem))] overflow-hidden overscroll-contain rounded-xl bg-card p-5 sm:p-6 text-sm text-card-foreground border border-border shadow-none outline-none sm:max-w-[400px]",
+              "pointer-events-auto relative flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[min(88vh,calc(100%-2rem))] max-h-[min(88dvh,calc(100%-2rem))] overflow-hidden overscroll-contain rounded-lg bg-card p-5 sm:p-6 text-sm text-card-foreground border border-border shadow-none outline-none sm:max-w-[400px]",
               "[&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:flex-1 [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:min-h-0 [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:overflow-y-auto [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:overflow-x-hidden [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:overscroll-contain",
               "[&>form]:flex [&>form]:flex-col [&>form]:flex-1 [&>form]:min-h-0 [&>form]:overflow-hidden",
               "[&>form>*:not([data-slot=dialog-footer])]:flex-1 [&>form>*:not([data-slot=dialog-footer])]:min-h-0 [&>form>*:not([data-slot=dialog-footer])]:overflow-y-auto [&>form>*:not([data-slot=dialog-footer])]:overflow-x-hidden [&>form>*:not([data-slot=dialog-footer])]:overscroll-contain",
@@ -122,7 +122,7 @@ function DialogContent({
                 render={
                   <Button
                     variant="ghost"
-                    className="absolute top-4 right-4 h-8 w-8 p-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer z-10"
+                    className="absolute top-4 right-4 h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer z-10"
                     size="icon-sm"
                   />
                 }

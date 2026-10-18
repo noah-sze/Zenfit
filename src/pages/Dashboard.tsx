@@ -111,12 +111,15 @@ export default function Dashboard() {
             {/* 蛋白質 */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">{t('diet.protein')}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-protein shrink-0" />
+                  <span className="font-medium text-foreground">{t('diet.protein')}</span>
+                </div>
                 <span className="font-mono text-muted-foreground">{Math.round(proteinConsumed)}g</span>
               </div>
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-protein-subtle rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-foreground rounded-full transition-all duration-300"
+                  className="h-full bg-protein rounded-full transition-all duration-300"
                   style={{ width: `${proteinProgress}%` }}
                 />
               </div>
@@ -128,12 +131,15 @@ export default function Dashboard() {
             {/* 碳水化合物 */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">{t('diet.carbs')}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-carbs shrink-0" />
+                  <span className="font-medium text-foreground">{t('diet.carbs')}</span>
+                </div>
                 <span className="font-mono text-muted-foreground">{Math.round(carbsConsumed)}g</span>
               </div>
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-carbs-subtle rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-foreground/60 rounded-full transition-all duration-300"
+                  className="h-full bg-carbs rounded-full transition-all duration-300"
                   style={{ width: `${carbsProgress}%` }}
                 />
               </div>
@@ -145,12 +151,15 @@ export default function Dashboard() {
             {/* 脂肪 */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">{t('diet.fat')}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-fat shrink-0" />
+                  <span className="font-medium text-foreground">{t('diet.fat')}</span>
+                </div>
                 <span className="font-mono text-muted-foreground">{Math.round(fatConsumed)}g</span>
               </div>
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-fat-subtle rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-foreground/30 rounded-full transition-all duration-300"
+                  className="h-full bg-fat rounded-full transition-all duration-300"
                   style={{ width: `${fatProgress}%` }}
                 />
               </div>
@@ -246,7 +255,7 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               onClick={() => addWater(250)}
-              className="flex-1 text-xs h-9 cursor-pointer rounded-lg"
+              className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
             >
               +250 ml
             </Button>
@@ -254,7 +263,7 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               onClick={() => addWater(500)}
-              className="flex-1 text-xs h-9 cursor-pointer rounded-lg"
+              className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
             >
               +500 ml
             </Button>

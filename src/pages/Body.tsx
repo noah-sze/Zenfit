@@ -140,38 +140,38 @@ export default function Body() {
 
       {/* 客觀指標並列網格 */}
       <div className="grid grid-cols-4 gap-2">
-        <div className="p-3 bg-muted/40 border border-border/80 rounded-lg space-y-0.5">
+        <div className="p-3 sm:p-3.5 bg-muted/40 border border-border/80 rounded-lg space-y-1">
           <span className="text-xs font-mono text-muted-foreground block truncate">
             {t('body.trendWeight')}
           </span>
-          <span className="text-sm sm:text-base font-bold font-mono">
+          <span className="text-base sm:text-lg font-bold font-mono">
             {currentTrendWeight ? `${currentTrendWeight}` : '--'}
           </span>
         </div>
 
-        <div className="p-3 bg-muted/40 border border-border/80 rounded-lg space-y-0.5">
+        <div className="p-3 sm:p-3.5 bg-muted/40 border border-border/80 rounded-lg space-y-1">
           <span className="text-xs font-mono text-muted-foreground block truncate">
             {t('body.weeklyRate')}
           </span>
-          <span className="text-sm sm:text-base font-bold font-mono">
+          <span className="text-base sm:text-lg font-bold font-mono">
             {weeklyRate !== null ? `${weeklyRate > 0 ? '+' : ''}${weeklyRate}` : '--'}
           </span>
         </div>
 
-        <div className="p-3 bg-muted/40 border border-border/80 rounded-lg space-y-0.5">
+        <div className="p-3 sm:p-3.5 bg-muted/40 border border-border/80 rounded-lg space-y-1">
           <span className="text-xs font-mono text-muted-foreground block truncate">
             {t('body.leanBodyMass')}
           </span>
-          <span className="text-sm sm:text-base font-bold font-mono">
+          <span className="text-base sm:text-lg font-bold font-mono">
             {leanMassKg ? `${leanMassKg}` : '--'}
           </span>
         </div>
 
-        <div className="p-3 bg-muted/40 border border-border/80 rounded-lg space-y-0.5">
+        <div className="p-3 sm:p-3.5 bg-muted/40 border border-border/80 rounded-lg space-y-1">
           <span className="text-xs font-mono text-muted-foreground block truncate">
             {t('body.bmi')}
           </span>
-          <span className="text-sm sm:text-base font-bold font-mono">
+          <span className="text-base sm:text-lg font-bold font-mono">
             {bmi || '--'}
           </span>
         </div>
@@ -208,7 +208,7 @@ export default function Body() {
               value={bodyFat}
               onChange={(e) => setBodyFat(e.target.value)}
               placeholder="如: 15.0"
-              className="h-9 text-sm font-mono"
+              className="h-10 text-sm font-mono"
             />
           </div>
           <div>
@@ -221,7 +221,7 @@ export default function Body() {
               value={waist}
               onChange={(e) => setWaist(e.target.value)}
               placeholder="如: 78.0"
-              className="h-9 text-sm font-mono"
+              className="h-10 text-sm font-mono"
             />
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function Body() {
                   value={chest}
                   onChange={(e) => setChest(e.target.value)}
                   placeholder="如: 98.0"
-                  className="h-9 text-sm font-mono"
+                  className="h-10 text-sm font-mono"
                 />
               </div>
 
@@ -272,7 +272,7 @@ export default function Body() {
                   value={hips}
                   onChange={(e) => setHips(e.target.value)}
                   placeholder="如: 95.0"
-                  className="h-9 text-sm font-mono"
+                  className="h-10 text-sm font-mono"
                 />
               </div>
 
@@ -286,7 +286,7 @@ export default function Body() {
                   value={arms}
                   onChange={(e) => setArms(e.target.value)}
                   placeholder="如: 35.0"
-                  className="h-9 text-sm font-mono"
+                  className="h-10 text-sm font-mono"
                 />
               </div>
 
@@ -300,7 +300,7 @@ export default function Body() {
                   value={thighs}
                   onChange={(e) => setThighs(e.target.value)}
                   placeholder="如: 56.0"
-                  className="h-9 text-sm font-mono"
+                  className="h-10 text-sm font-mono"
                 />
               </div>
             </div>
@@ -324,8 +324,8 @@ export default function Body() {
 
       {/* 歷史時序流水記錄表 */}
       <Card className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-        <CardHeader className="py-3 px-4 border-b border-border/40">
-          <CardTitle className="text-xs font-bold tracking-tight uppercase font-mono text-muted-foreground">
+        <CardHeader className="py-3.5 px-4 border-b border-border/40">
+          <CardTitle className="text-sm font-semibold tracking-tight uppercase font-mono text-muted-foreground">
             時序過磅記錄
           </CardTitle>
         </CardHeader>

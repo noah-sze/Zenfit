@@ -369,7 +369,7 @@ export function AppLockOverlay() {
                 setView('pin');
                 setErrorMsg('');
               }}
-              className="w-full py-2 px-3 text-xs font-medium text-muted-foreground hover:text-foreground border border-border/80 rounded-md bg-card hover:bg-muted/40 transition-colors cursor-pointer outline-none"
+              className="w-full py-2 px-3 text-xs font-medium text-muted-foreground hover:text-foreground border border-border/80 rounded-lg bg-card hover:bg-muted/40 transition-colors cursor-pointer outline-none"
             >
               {t('security.usePinInstead')}
             </button>

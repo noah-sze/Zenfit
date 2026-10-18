@@ -95,7 +95,7 @@ export default function Diet() {
   return (
     <div className="space-y-4">
       {/* 頂部全日總計卡片 (對齊財務儀表板經典雙層排版：1. 熱量統計 2. 碳水、蛋白質、脂肪) */}
-      <div className="bg-card border border-border rounded-xl shadow-none overflow-hidden text-card-foreground">
+      <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground">
         {/* 上半部：熱量統計 (Hero Metric) */}
         <div className="p-4 sm:p-5 relative space-y-3">
           {/* 頂部列：左側活動係數、中間熱量統計標籤、右側目標藥丸 */}
@@ -157,7 +157,7 @@ export default function Diet() {
             </div>
 
             {/* 客觀差額事實 */}
-            <div className="flex items-center justify-center gap-2 mt-1 text-xs font-mono text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
               <span>
                 {calorieDiff >= 0
                   ? `${t('dietPlan.underBudget')} ${calorieDiff} kcal`
@@ -167,7 +167,7 @@ export default function Diet() {
             </div>
 
             {/* 客觀進度標尺 */}
-            <div className="h-1 w-full max-w-[200px] mx-auto bg-muted/60 rounded-full overflow-hidden mt-2.5">
+            <div className="h-2 w-full max-w-[220px] mx-auto bg-muted/60 rounded-full overflow-hidden mt-3">
               <div
                 className="h-full bg-foreground transition-all duration-300"
                 style={{
@@ -183,8 +183,11 @@ export default function Diet() {
           {/* 1. 碳水化合物 */}
           <div className="p-3.5 sm:p-4 space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <span>{t('dietPlan.carbsShort')}</span>
-              <span className="text-2xs text-muted-foreground/70">
+              <div className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-carbs shrink-0" />
+                <span className="text-foreground/90 font-medium">{t('dietPlan.carbsShort')}</span>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
                 / {targetMacros.carbsGrams}g
               </span>
             </div>
@@ -192,9 +195,9 @@ export default function Diet() {
               {Math.round(totals.carbs)}
               <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
             </div>
-            <div className="h-1 w-full bg-muted/60 rounded-full overflow-hidden mt-1.5">
+            <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-foreground transition-all duration-300"
+                className="h-full bg-carbs transition-all duration-300"
                 style={{
                   width: `${Math.min(
                     100,
@@ -210,8 +213,11 @@ export default function Diet() {
           {/* 2. 蛋白質 */}
           <div className="p-3.5 sm:p-4 space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <span>{t('dietPlan.proteinShort')}</span>
-              <span className="text-2xs text-muted-foreground/70">
+              <div className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-protein shrink-0" />
+                <span className="text-foreground/90 font-medium">{t('dietPlan.proteinShort')}</span>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
                 / {targetMacros.proteinGrams}g
               </span>
             </div>
@@ -219,9 +225,9 @@ export default function Diet() {
               {Math.round(totals.protein)}
               <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
             </div>
-            <div className="h-1 w-full bg-muted/60 rounded-full overflow-hidden mt-1.5">
+            <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-foreground transition-all duration-300"
+                className="h-full bg-protein transition-all duration-300"
                 style={{
                   width: `${Math.min(
                     100,
@@ -237,8 +243,11 @@ export default function Diet() {
           {/* 3. 脂肪 */}
           <div className="p-3.5 sm:p-4 space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <span>{t('dietPlan.fatShort')}</span>
-              <span className="text-2xs text-muted-foreground/70">
+              <div className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-fat shrink-0" />
+                <span className="text-foreground/90 font-medium">{t('dietPlan.fatShort')}</span>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
                 / {targetMacros.fatGrams}g
               </span>
             </div>
@@ -247,9 +256,9 @@ export default function Diet() {
               {Math.round(totals.fat)}
               <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
             </div>
-            <div className="h-1 w-full bg-muted/60 rounded-full overflow-hidden mt-1.5">
+            <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-foreground transition-all duration-300"
+                className="h-full bg-fat transition-all duration-300"
                 style={{
                   width: `${Math.min(
                     100,
@@ -272,14 +281,19 @@ export default function Diet() {
 
         return (
           <Card key={type} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-            <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-border/40">
+            <CardHeader className="py-3.5 px-4 flex flex-row items-center justify-between border-b border-border/40">
               <div className="flex items-center gap-2">
-                <CardTitle className="text-sm font-medium tracking-tight">
+                <CardTitle className="text-base font-semibold tracking-tight">
                   {t(`diet.${type}`)}
                 </CardTitle>
-                <span className="text-xs font-mono text-muted-foreground">
-                  {groupCalories} kcal · {Math.round(groupProtein)}g P
-                </span>
+                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+                  <span>{groupCalories} kcal</span>
+                  <span className="text-border">·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2 rounded-full bg-protein shrink-0" />
+                    <span>{Math.round(groupProtein)}g P</span>
+                  </span>
+                </div>
               </div>
 
               <Button
@@ -299,19 +313,32 @@ export default function Diet() {
                   {items.map((item) => (
                     <div
                       key={item.id}
-                      className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                      className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
                     >
                       <div className="space-y-0.5">
-                        <div className="text-sm font-normal text-foreground">
+                        <div className="text-sm font-medium text-foreground">
                           {item.foodName}
                         </div>
-                        <div className="text-xs font-mono text-muted-foreground">
-                          {item.quantity} {item.unit} · P: {item.protein}g · C: {item.carbs}g · F: {item.fat}g
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs font-mono text-muted-foreground">
+                          <span>{item.quantity} {item.unit}</span>
+                          <span className="text-border/70">·</span>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="size-2 rounded-full bg-carbs shrink-0" />
+                            <span>C: {item.carbs}g</span>
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="size-2 rounded-full bg-protein shrink-0" />
+                            <span>P: {item.protein}g</span>
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="size-2 rounded-full bg-fat shrink-0" />
+                            <span>F: {item.fat}g</span>
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2.5">
-                        <span className="font-mono text-sm font-semibold">
+                        <span className="font-mono text-base font-semibold">
                           {item.calories} <span className="text-xs text-muted-foreground font-normal">kcal</span>
                         </span>
                         <button
