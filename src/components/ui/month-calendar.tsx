@@ -122,7 +122,7 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
   return (
     <div
       className={cn(
-        "w-full max-w-[340px] sm:max-w-[360px] select-none rounded-2xl bg-card text-card-foreground border border-border overflow-hidden shadow-none",
+        "w-full max-w-[340px] sm:max-w-[360px] select-none rounded-lg bg-card text-card-foreground border border-border overflow-hidden shadow-none",
         className
       )}
     >
@@ -136,7 +136,7 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             onClick={onClose}
             title={t("monthPicker.close", "關閉")}
           >
@@ -173,7 +173,7 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
         </div>
 
         {/* 雙列列表容器 */}
-        <div className="grid grid-cols-2 gap-2 h-48 rounded-xl border border-border bg-muted/15 p-1 overflow-hidden">
+        <div className="grid grid-cols-2 gap-2 h-48 rounded-lg border border-border bg-muted/15 p-1 overflow-hidden">
           {/* 左側：年份滾動清單 */}
           <div className="h-full overflow-y-auto overscroll-contain pr-1 flex flex-col gap-0.5 no-scrollbar sm:scrollbar-thin">
             {yearsList.map((y) => {

@@ -264,7 +264,7 @@ export function DietPlanModal({
 
         <div className="space-y-4 py-1">
           {/* 區塊 1：客觀代謝常數與目標熱量 */}
-          <div className="border border-border rounded-xl bg-card divide-y divide-border overflow-hidden">
+          <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
             {/* 活動係數行 */}
             <div className="h-12 px-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors">
               <span className="text-xs font-normal text-foreground">
@@ -319,7 +319,7 @@ export function DietPlanModal({
                   <button
                     type="button"
                     onClick={handleSyncTdee}
-                    className="flex items-center gap-1 text-2xs px-1.5 py-0.5 rounded-sm border border-border/70 hover:border-foreground/40 bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-2xs px-1.5 py-0.5 rounded-lg border border-border/70 hover:border-foreground/40 bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     title={t('dietPlan.syncTdeeTooltip')}
                   >
                     <RefreshCw className="size-2.5" />
@@ -384,22 +384,22 @@ export function DietPlanModal({
             </div>
 
             {/* 供能比整體卡片：標尺 + 3 欄並列 + 總和行 */}
-            <div className="border border-border rounded-xl bg-card overflow-hidden">
+            <div className="border border-border rounded-lg bg-card overflow-hidden">
               {/* 視覺供能比標尺 (Ratio Bar) */}
               <div className="h-1.5 w-full bg-muted/40 flex overflow-hidden">
                 {ratioTotal > 0 && (
                   <>
                     <div
                       style={{ width: `${carbsBarWidth}%` }}
-                      className="h-full bg-foreground/50 transition-all duration-300"
+                      className="h-full bg-carbs transition-all duration-300"
                     />
                     <div
                       style={{ width: `${proteinBarWidth}%` }}
-                      className="h-full bg-foreground transition-all duration-300"
+                      className="h-full bg-protein transition-all duration-300"
                     />
                     <div
                       style={{ width: `${fatBarWidth}%` }}
-                      className="h-full bg-foreground/25 transition-all duration-300"
+                      className="h-full bg-fat transition-all duration-300"
                     />
                   </>
                 )}
@@ -410,7 +410,7 @@ export function DietPlanModal({
                 {/* 碳水化合物 */}
                 <div className="p-3 flex flex-col items-center justify-between text-center gap-1.5 bg-card hover:bg-muted/10 transition-colors">
                   <div className="flex items-center gap-1 text-2xs font-mono text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-foreground/50 shrink-0" />
+                    <span className="size-1.5 rounded-full bg-carbs shrink-0" />
                     <span>C · {t('dietPlan.carbsShort')}</span>
                   </div>
                   <div className="flex items-baseline justify-center gap-0.5">
@@ -439,7 +439,7 @@ export function DietPlanModal({
                 {/* 蛋白質 */}
                 <div className="p-3 flex flex-col items-center justify-between text-center gap-1.5 bg-card hover:bg-muted/10 transition-colors">
                   <div className="flex items-center gap-1 text-2xs font-mono text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-foreground shrink-0" />
+                    <span className="size-1.5 rounded-full bg-protein shrink-0" />
                     <span>P · {t('dietPlan.proteinShort')}</span>
                   </div>
                   <div className="flex items-baseline justify-center gap-0.5">
@@ -468,7 +468,7 @@ export function DietPlanModal({
                 {/* 脂肪 */}
                 <div className="p-3 flex flex-col items-center justify-between text-center gap-1.5 bg-card hover:bg-muted/10 transition-colors">
                   <div className="flex items-center gap-1 text-2xs font-mono text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-foreground/25 shrink-0" />
+                    <span className="size-1.5 rounded-full bg-fat shrink-0" />
                     <span>F · {t('dietPlan.fatShort')}</span>
                   </div>
                   <div className="flex items-baseline justify-center gap-0.5">

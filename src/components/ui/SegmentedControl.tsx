@@ -58,7 +58,7 @@ export function SegmentedControl<T extends string = string>({
               }
             }}
             className={cn(
-              'relative z-10 flex items-center justify-center gap-1.5 rounded-md font-medium outline-none select-none',
+              'relative z-10 flex items-center justify-center gap-1.5 rounded-lg font-medium outline-none select-none',
               fullWidth ? 'flex-1' : 'shrink-0',
               size === 'sm' ? 'py-1 px-2.5 text-xs' : 'py-1.5 px-3 text-xs sm:text-sm',
               isSelected

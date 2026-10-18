@@ -81,7 +81,7 @@ export function ConfirmDialog({
           <DialogPrimitive.Popup
             data-slot="confirm-dialog-content"
             className={cn(
-              'pointer-events-auto relative grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto overscroll-contain gap-4 rounded-xl bg-card p-5 text-sm text-card-foreground border border-border shadow-none outline-none sm:max-w-[360px]'
+              'pointer-events-auto relative grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto overscroll-contain gap-4 rounded-lg bg-card p-5 text-sm text-card-foreground border border-border shadow-none outline-none sm:max-w-[360px]'
             )}
           >
             <div className="flex flex-col gap-1.5 text-left">

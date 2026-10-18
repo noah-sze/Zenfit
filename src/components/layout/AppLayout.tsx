@@ -104,7 +104,7 @@ export function AppLayout() {
                         : format(currentDateObj, 'MM/dd')}
                     </span>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 border border-border bg-card shadow-none rounded-xl" align="center">
+                  <PopoverContent className="w-auto p-0 border border-border bg-card shadow-none rounded-lg" align="center">
                     <Calendar
                       selected={currentDateObj}
                       onSelect={handleDateSelect}

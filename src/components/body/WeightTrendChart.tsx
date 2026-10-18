@@ -12,7 +12,7 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="h-44 flex items-center justify-center border border-border/60 rounded-2xl text-xs text-muted-foreground font-mono">
+      <div className="h-44 flex items-center justify-center border border-border/60 rounded-lg text-xs text-muted-foreground font-mono">
         暫無足夠時序數據
       </div>
     );

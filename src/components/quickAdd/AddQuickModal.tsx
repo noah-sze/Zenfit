@@ -167,7 +167,7 @@ export function AddQuickModal() {
 
   return (
     <Dialog open={isAddModalOpen} onOpenChange={(open) => !open && closeAddModal()}>
-      <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-xl">
+      <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-lg">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-base font-semibold tracking-tight">
             {t('quickAdd.title')}
@@ -257,8 +257,9 @@ export function AddQuickModal() {
 
             <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border/50">
               <div>
-                <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('diet.protein')} (g)
+                <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                  <span className="size-1.5 rounded-full bg-protein shrink-0" />
+                  <span>{t('diet.protein')} (g)</span>
                 </label>
                 <Input
                   type="number"
@@ -269,8 +270,9 @@ export function AddQuickModal() {
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('diet.carbs')} (g)
+                <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                  <span className="size-1.5 rounded-full bg-carbs shrink-0" />
+                  <span>{t('diet.carbs')} (g)</span>
                 </label>
                 <Input
                   type="number"
@@ -281,8 +283,9 @@ export function AddQuickModal() {
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('diet.fat')} (g)
+                <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                  <span className="size-1.5 rounded-full bg-fat shrink-0" />
+                  <span>{t('diet.fat')} (g)</span>
                 </label>
                 <Input
                   type="number"
