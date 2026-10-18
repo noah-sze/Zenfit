@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { FoodItem, FoodLog, Exercise, WorkoutLog, BodyMetric, UserProfile } from '@/types';
+import type { FoodItem, FoodLog, Exercise, WorkoutLog, BodyMetric, UserProfile, UserBaseInfo, DietPlan } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ZenfitDatabase extends Dexie {
@@ -9,6 +9,8 @@ export class ZenfitDatabase extends Dexie {
   workout_logs!: Table<WorkoutLog>;
   body_metrics!: Table<BodyMetric>;
   user_profile!: Table<UserProfile>;
+  user_base_info!: Table<UserBaseInfo>;
+  diet_plans!: Table<DietPlan>;
 
   constructor() {
     super('ZenfitDB');
@@ -20,6 +22,65 @@ export class ZenfitDatabase extends Dexie {
       workout_logs: 'id, date, title, createdAt, updatedAt',
       body_metrics: 'id, date, updatedAt',
       user_profile: 'id, updatedAt',
+    });
+
+    this.version(3).stores({
+      foods: 'id, name, updatedAt',
+      food_logs: 'id, date, mealType, foodId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (tx) => {
+      try {
+        const oldProfiles = await tx.table('user_profile').toArray();
+        if (oldProfiles.length > 0) {
+          const old = oldProfiles[0];
+          await tx.table('user_base_info').put({
+            id: 'primary_user',
+            name: old.name || 'Noah',
+            gender: old.gender || 'male',
+            birthDate: old.birthDate || '1999-01',
+            heightCm: old.heightCm || 175,
+            weightUnit: old.weightUnit || 'kg',
+            createdAt: old.updatedAt || Date.now(),
+            updatedAt: old.updatedAt || Date.now(),
+          });
+
+          // 若已有舊目標且今天無飲食計劃，可為今日建立初始計劃
+          const todayStr = new Date().toISOString().slice(0, 10);
+          if (old.dailyCaloriesTarget) {
+            await tx.table('diet_plans').put({
+              id: uuidv4(),
+              date: todayStr,
+              planName: '標準目標',
+              caloriesTarget: old.dailyCaloriesTarget || 2000,
+              proteinTarget: old.proteinGramsTarget || 140,
+              carbsTarget: old.carbsGramsTarget || 220,
+              fatTarget: old.fatGramsTarget || 60,
+              waterMlTarget: old.dailyWaterMlTarget || 2500,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+          }
+
+          // 若無體重記錄，為今日建立初始體重
+          const metricCount = await tx.table('body_metrics').count();
+          if (metricCount === 0 && old.currentWeightKg) {
+            await tx.table('body_metrics').put({
+              id: uuidv4(),
+              date: todayStr,
+              weight: old.currentWeightKg,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Dexie migration version 3 error:', err);
+      }
     });
   }
 
@@ -96,6 +157,33 @@ export class ZenfitDatabase extends Dexie {
         dailyWaterMlTarget: 2500,
         weightUnit: 'kg',
         isSetupCompleted: true,
+        updatedAt: now,
+      });
+    }
+
+    const baseInfoCount = await this.user_base_info.count();
+    if (baseInfoCount === 0) {
+      await this.user_base_info.add({
+        id: 'primary_user',
+        name: 'Noah',
+        gender: 'male',
+        birthDate: '1999-01',
+        heightCm: 175,
+        weightUnit: 'kg',
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    const metricCount = await this.body_metrics.count();
+    if (metricCount === 0) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      await this.body_metrics.add({
+        id: uuidv4(),
+        date: todayStr,
+        weight: 70,
+        waterMl: 0,
+        createdAt: now,
         updatedAt: now,
       });
     }

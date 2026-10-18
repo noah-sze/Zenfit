@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useDietPlan } from '@/hooks/useDietPlan';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, SlidersHorizontal } from 'lucide-react';
@@ -29,6 +30,7 @@ export default function Diet() {
   const { selectedDate, openAddModal } = useAppStore();
   const { mealGroups, deleteFoodLog, totals } = useFoodLogs(selectedDate);
   const { profile, updateProfile } = useUserProfile();
+  const { plan, saveDietPlan } = useDietPlan(selectedDate);
   const confirm = useConfirm();
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -46,20 +48,19 @@ export default function Diet() {
     age
   );
   const currentActivity = profile.activityLevel || 1.55;
-  const estimatedTDEE = calculateTDEE(currentBMR, currentActivity);
-  const targetCalories = profile.dailyCaloriesTarget || estimatedTDEE;
+
+  // 目標熱量與宏量營養素優先取用當日獨立之 DietPlan
+  const targetCalories = plan.caloriesTarget;
+  const targetMacros = {
+    carbsGrams: plan.carbsTarget,
+    proteinGrams: plan.proteinTarget,
+    fatGrams: plan.fatTarget,
+  };
 
   const currentSplit = profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
-  const targetMacros = calculateMacrosFromSplit(
-    targetCalories,
-    currentSplit.carbs,
-    currentSplit.protein,
-    currentSplit.fat
-  );
-
   const calorieDiff = targetCalories - totals.calories;
 
-  // 快捷切換活動係數（3-5 天調整一次的極速通道）
+  // 快捷切換活動係數（寫入當日專屬 DietPlan）
   const handleQuickActivityChange = async (newLevel: number) => {
     triggerHaptic('selection');
     const newTDEE = calculateTDEE(currentBMR, newLevel);
@@ -69,12 +70,14 @@ export default function Diet() {
       currentSplit.protein,
       currentSplit.fat
     );
+    await saveDietPlan({
+      caloriesTarget: newTDEE,
+      proteinTarget: newMacros.proteinGrams,
+      carbsTarget: newMacros.carbsGrams,
+      fatTarget: newMacros.fatGrams,
+    });
     await updateProfile({
       activityLevel: newLevel,
-      dailyCaloriesTarget: newTDEE,
-      proteinGramsTarget: newMacros.proteinGrams,
-      carbsGramsTarget: newMacros.carbsGrams,
-      fatGramsTarget: newMacros.fatGrams,
     });
   };
 
@@ -335,9 +338,13 @@ export default function Diet() {
       <DietPlanModal
         isOpen={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
+        date={selectedDate}
+        currentPlan={plan}
+        onSavePlan={saveDietPlan}
         profile={profile}
         onSave={updateProfile}
       />
     </div>
   );
+
 }

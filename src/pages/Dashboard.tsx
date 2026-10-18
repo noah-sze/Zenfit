@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useDietPlan } from '@/hooks/useDietPlan';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyMetrics } from '@/hooks/useBodyMetrics';
@@ -15,29 +15,30 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { selectedDate, openAddModal } = useAppStore();
 
-  const { profile } = useUserProfile();
+  const { plan: dietPlan } = useDietPlan(selectedDate);
   const { totals } = useFoodLogs(selectedDate);
+
   const { workouts } = useWorkoutLogs(selectedDate);
   const { metricToday, addWater } = useBodyMetrics(selectedDate);
 
-  const calorieTarget = profile.dailyCaloriesTarget || 2000;
+  const calorieTarget = dietPlan.caloriesTarget || 2000;
   const calorieConsumed = totals.calories || 0;
   const calorieRemaining = Math.max(0, calorieTarget - calorieConsumed);
   const calorieProgress = Math.min(100, Math.round((calorieConsumed / calorieTarget) * 100));
 
-  const proteinTarget = profile.proteinGramsTarget || 140;
+  const proteinTarget = dietPlan.proteinTarget || 140;
   const proteinConsumed = totals.protein || 0;
   const proteinProgress = Math.min(100, Math.round((proteinConsumed / proteinTarget) * 100));
 
-  const carbsTarget = profile.carbsGramsTarget || 220;
+  const carbsTarget = dietPlan.carbsTarget || 220;
   const carbsConsumed = totals.carbs || 0;
   const carbsProgress = Math.min(100, Math.round((carbsConsumed / carbsTarget) * 100));
 
-  const fatTarget = profile.fatGramsTarget || 60;
+  const fatTarget = dietPlan.fatTarget || 60;
   const fatConsumed = totals.fat || 0;
   const fatProgress = Math.min(100, Math.round((fatConsumed / fatTarget) * 100));
 
-  const waterTarget = profile.dailyWaterMlTarget || 2500;
+  const waterTarget = dietPlan.waterMlTarget || 2500;
   const waterConsumed = metricToday?.waterMl || 0;
   const waterProgress = Math.min(100, Math.round((waterConsumed / waterTarget) * 100));
 

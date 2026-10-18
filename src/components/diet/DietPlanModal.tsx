@@ -24,18 +24,23 @@ import {
   calculateAgeFromBirth,
   calculateMacrosFromSplit,
 } from '@/utils/weightMath';
-import type { UserProfile, MacroSplit } from '@/types';
+import type { UserProfile, MacroSplit, DietPlan } from '@/types';
 
 export interface DietPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
+  date?: string;
+  currentPlan?: DietPlan;
+  onSavePlan?: (updates: Partial<DietPlan>) => Promise<void>;
   profile: UserProfile;
-  onSave: (updates: Partial<UserProfile>) => Promise<void>;
+  onSave?: (updates: Partial<UserProfile>) => Promise<void>;
 }
 
 export function DietPlanModal({
   isOpen,
   onClose,
+  currentPlan,
+  onSavePlan,
   profile,
   onSave,
 }: DietPlanModalProps) {
@@ -70,10 +75,27 @@ export function DietPlanModal({
     if (isOpen) {
       const act = profile.activityLevel || 1.55;
       setActivityLevel(act);
-      const defTarget = profile.dailyCaloriesTarget || calculateTDEE(currentBMR, act);
+
+      // 優先讀取當日專屬計劃之目標熱量，若無則讀取 profile 或計算之 TDEE
+      const defTarget = currentPlan?.caloriesTarget || profile.dailyCaloriesTarget || calculateTDEE(currentBMR, act);
       setTargetCalories(String(defTarget));
 
-      const split = profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
+      // 若 currentPlan 有宏量目標克數，反推熱量百分比；否則使用 profile.macroSplit
+      let split = profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
+      if (currentPlan && currentPlan.caloriesTarget > 0 && currentPlan.proteinTarget) {
+        const cKcal = currentPlan.carbsTarget * 4;
+        const pKcal = currentPlan.proteinTarget * 4;
+        const fKcal = currentPlan.fatTarget * 9;
+        const total = cKcal + pKcal + fKcal;
+        if (total > 0) {
+          split = {
+            carbs: Math.round((cKcal / total) * 100),
+            protein: Math.round((pKcal / total) * 100),
+            fat: Math.max(0, 100 - Math.round((cKcal / total) * 100) - Math.round((pKcal / total) * 100)),
+          };
+        }
+      }
+
       setCarbsPercent(String(split.carbs));
       setProteinPercent(String(split.protein));
       setFatPercent(String(split.fat));
@@ -89,7 +111,8 @@ export function DietPlanModal({
         setTemplate('custom');
       }
     }
-  }, [isOpen, profile, currentBMR]);
+  }, [isOpen, profile, currentPlan, currentBMR]);
+
 
   // 當前推算的 TDEE
   const currentTDEE = calculateTDEE(currentBMR, activityLevel);
@@ -201,18 +224,30 @@ export function DietPlanModal({
       fat: parsedFat,
     };
 
-    await onSave({
-      activityLevel,
-      dailyCaloriesTarget: parsedCalories,
-      macroSplit: newSplit,
-      proteinGramsTarget: calculatedMacros.proteinGrams,
-      carbsGramsTarget: calculatedMacros.carbsGrams,
-      fatGramsTarget: calculatedMacros.fatGrams,
-    });
+    if (onSavePlan) {
+      await onSavePlan({
+        caloriesTarget: parsedCalories,
+        proteinTarget: calculatedMacros.proteinGrams,
+        carbsTarget: calculatedMacros.carbsGrams,
+        fatTarget: calculatedMacros.fatGrams,
+      });
+    }
+
+    if (onSave) {
+      await onSave({
+        activityLevel,
+        dailyCaloriesTarget: parsedCalories,
+        macroSplit: newSplit,
+        proteinGramsTarget: calculatedMacros.proteinGrams,
+        carbsGramsTarget: calculatedMacros.carbsGrams,
+        fatGramsTarget: calculatedMacros.fatGrams,
+      });
+    }
 
     triggerHaptic('success');
     onClose();
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
