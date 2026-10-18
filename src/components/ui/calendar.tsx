@@ -161,11 +161,12 @@ export function Calendar({ selected, onSelect, onClose, className }: CalendarPro
       {/* 2. Weekdays Header */}
       <div className="px-4 pt-3 grid grid-cols-7 gap-1">
         {weekdays.map((day, idx) => (
-          <div key={idx} className="text-center text-[11px] font-medium text-muted-foreground select-none">
+          <div key={idx} className="text-center text-xs font-medium text-muted-foreground select-none">
             {day}
           </div>
         ))}
       </div>
+
 
       {/* 3. Days Grid (42 Cells) */}
       <div className="p-4 grid grid-cols-7 gap-1.5">

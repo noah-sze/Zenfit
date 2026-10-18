@@ -66,7 +66,7 @@ export function AppLayout() {
   return (
     <div className="flex flex-col h-full w-full bg-background text-foreground select-none overflow-hidden">
       {/* 頂部 Header */}
-      <header className="relative flex-none w-full border-b border-border bg-background/90 backdrop-blur-xl z-40 pt-safe">
+      <header className="relative flex-none w-full border-b border-border bg-header-bg backdrop-blur-xl z-40 pt-safe">
         <div className="w-full max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
           {!isSubPage ? (
             <>
@@ -169,8 +169,9 @@ export function AppLayout() {
       {!isSubPage && (
         <nav
           id="bottom-nav"
-          className="flex-none w-full bg-background/90 backdrop-blur-xl border-t border-border z-40 pb-[env(safe-area-inset-bottom,0px)]"
+          className="flex-none w-full bg-header-bg backdrop-blur-xl border-t border-border z-40 pb-[env(safe-area-inset-bottom,0px)]"
         >
+
           <div
             id="bottom-nav-inner"
             className="w-full max-w-xl mx-auto flex justify-around items-center h-14 sm:h-16"

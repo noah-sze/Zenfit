@@ -125,7 +125,7 @@ export default function Settings() {
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 外觀主題 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">{t('settings.theme')}</span>
             <Select value={theme} onValueChange={(v) => setTheme(v as any)}>
               <SelectTrigger
@@ -145,7 +145,7 @@ export default function Settings() {
           </div>
 
           {/* 介面語言 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">{t('settings.language')}</span>
             <Select
               value={currentLang}
@@ -178,7 +178,7 @@ export default function Settings() {
           {/* 匯出資料備份 */}
           <div
             onClick={handleExportJson}
-            className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors cursor-pointer group"
+            className="usage-row cursor-pointer group"
           >
             <span className="text-sm font-normal text-foreground">
               {t('settings.exportData')}
@@ -191,6 +191,7 @@ export default function Settings() {
         </div>
       </div>
 
+
       {/* 區塊 3：危險操作 */}
       <div>
         <div className="text-xs uppercase tracking-widest text-destructive/80 px-1 mb-2">
@@ -200,8 +201,9 @@ export default function Settings() {
           {/* 清除所有本地資料 */}
           <div
             onClick={handleClearData}
-            className="h-12 px-4 flex items-center justify-between hover:bg-destructive/5 transition-colors cursor-pointer group"
+            className="h-12 px-4 flex items-center justify-between hover:bg-destructive-subtle transition-colors cursor-pointer group"
           >
+
             <span className="text-sm font-normal text-destructive">
               {t('settings.clearData')}
             </span>

@@ -295,31 +295,31 @@ export function DietPlanModal({
             {/* 客觀代謝參考條 (BMR & TDEE + 同步按鈕) */}
             <div className="px-3.5 py-2 bg-muted/20 flex items-center justify-between text-xs font-mono text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-mono">
+                <span className="text-2xs uppercase tracking-wider text-muted-foreground/80 font-mono">
                   BMR
                 </span>
                 <span className="text-foreground font-medium font-mono">
                   {currentBMR}
                 </span>
-                <span className="text-[11px]">kcal</span>
+                <span className="text-2xs">kcal</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-mono">
+                  <span className="text-2xs uppercase tracking-wider text-muted-foreground/80 font-mono">
                     TDEE
                   </span>
                   <span className="text-foreground font-medium font-mono">
                     {currentTDEE}
                   </span>
-                  <span className="text-[11px]">kcal</span>
+                  <span className="text-2xs">kcal</span>
                 </div>
 
                 {parsedCalories !== currentTDEE && (
                   <button
                     type="button"
                     onClick={handleSyncTdee}
-                    className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-border/70 hover:border-foreground/40 bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-2xs px-1.5 py-0.5 rounded-sm border border-border/70 hover:border-foreground/40 bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     title={t('dietPlan.syncTdeeTooltip')}
                   >
                     <RefreshCw className="size-2.5" />
@@ -336,11 +336,12 @@ export function DietPlanModal({
                   {t('dietPlan.targetCalories')}
                 </span>
                 {calorieDelta !== 0 && parsedCalories > 0 && (
-                  <span className="text-[10px] font-mono text-muted-foreground">
+                  <span className="text-2xs font-mono text-muted-foreground">
                     {calorieDelta > 0 ? `(+${calorieDelta})` : `(${calorieDelta})`}
                   </span>
                 )}
               </div>
+
               <div className="flex items-center gap-1 text-xs font-mono">
                 <input
                   type="text"
@@ -408,7 +409,7 @@ export function DietPlanModal({
               <div className="grid grid-cols-3 divide-x divide-border">
                 {/* 碳水化合物 */}
                 <div className="p-3 flex flex-col items-center justify-between text-center gap-1.5 bg-card hover:bg-muted/10 transition-colors">
-                  <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                  <div className="flex items-center gap-1 text-2xs font-mono text-muted-foreground">
                     <span className="size-1.5 rounded-full bg-foreground/50 shrink-0" />
                     <span>C · {t('dietPlan.carbsShort')}</span>
                   </div>
@@ -423,13 +424,13 @@ export function DietPlanModal({
                       }}
                       className="h-7 w-9 text-center text-base font-bold font-mono text-foreground bg-transparent border-b border-border/80 focus:border-foreground outline-none transition-colors p-0"
                     />
-                    <span className="text-[11px] font-mono text-muted-foreground">%</span>
+                    <span className="text-2xs font-mono text-muted-foreground">%</span>
                   </div>
                   <div className="space-y-0.5 text-center">
                     <span className="text-xs font-mono font-semibold text-foreground block">
                       {calculatedMacros.carbsGrams} g
                     </span>
-                    <span className="text-[10px] font-mono text-muted-foreground block">
+                    <span className="text-2xs font-mono text-muted-foreground block">
                       {carbsKcal} kcal
                     </span>
                   </div>
@@ -437,7 +438,7 @@ export function DietPlanModal({
 
                 {/* 蛋白質 */}
                 <div className="p-3 flex flex-col items-center justify-between text-center gap-1.5 bg-card hover:bg-muted/10 transition-colors">
-                  <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                  <div className="flex items-center gap-1 text-2xs font-mono text-muted-foreground">
                     <span className="size-1.5 rounded-full bg-foreground shrink-0" />
                     <span>P · {t('dietPlan.proteinShort')}</span>
                   </div>
@@ -452,13 +453,13 @@ export function DietPlanModal({
                       }}
                       className="h-7 w-9 text-center text-base font-bold font-mono text-foreground bg-transparent border-b border-border/80 focus:border-foreground outline-none transition-colors p-0"
                     />
-                    <span className="text-[11px] font-mono text-muted-foreground">%</span>
+                    <span className="text-2xs font-mono text-muted-foreground">%</span>
                   </div>
                   <div className="space-y-0.5 text-center">
                     <span className="text-xs font-mono font-semibold text-foreground block">
                       {calculatedMacros.proteinGrams} g
                     </span>
-                    <span className="text-[10px] font-mono text-muted-foreground block">
+                    <span className="text-2xs font-mono text-muted-foreground block">
                       {proteinKcal} kcal
                     </span>
                   </div>
@@ -466,7 +467,7 @@ export function DietPlanModal({
 
                 {/* 脂肪 */}
                 <div className="p-3 flex flex-col items-center justify-between text-center gap-1.5 bg-card hover:bg-muted/10 transition-colors">
-                  <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                  <div className="flex items-center gap-1 text-2xs font-mono text-muted-foreground">
                     <span className="size-1.5 rounded-full bg-foreground/25 shrink-0" />
                     <span>F · {t('dietPlan.fatShort')}</span>
                   </div>
@@ -481,13 +482,13 @@ export function DietPlanModal({
                       }}
                       className="h-7 w-9 text-center text-base font-bold font-mono text-foreground bg-transparent border-b border-border/80 focus:border-foreground outline-none transition-colors p-0"
                     />
-                    <span className="text-[11px] font-mono text-muted-foreground">%</span>
+                    <span className="text-2xs font-mono text-muted-foreground">%</span>
                   </div>
                   <div className="space-y-0.5 text-center">
                     <span className="text-xs font-mono font-semibold text-foreground block">
                       {calculatedMacros.fatGrams} g
                     </span>
-                    <span className="text-[10px] font-mono text-muted-foreground block">
+                    <span className="text-2xs font-mono text-muted-foreground block">
                       {fatKcal} kcal
                     </span>
                   </div>
@@ -508,7 +509,7 @@ export function DietPlanModal({
                   ) : (
                     <span className="text-destructive font-mono">
                       {ratioTotal} %{' '}
-                      <span className="text-[10px] font-normal">
+                      <span className="text-2xs font-normal">
                         ({ratioTotal < 100
                           ? `${t('dietPlan.remain')} ${100 - ratioTotal} %`
                           : `${t('dietPlan.excess')} +${ratioTotal - 100} %`})
@@ -517,6 +518,7 @@ export function DietPlanModal({
                   )}
                 </div>
               </div>
+
             </div>
           </div>
         </div>

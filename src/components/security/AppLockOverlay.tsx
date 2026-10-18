@@ -356,9 +356,10 @@ export function AppLockOverlay() {
             <Fingerprint className={cn("size-10 text-primary transition-transform group-hover:scale-105", errorMsg && "text-destructive")} />
           </button>
 
-          <p className="text-[11px] font-mono text-muted-foreground/70 mb-4">
+          <p className="text-xs font-mono text-muted-foreground/70 mb-4">
             {isBioVerifying ? t('security.biometricVerifying') : t('security.biometricClickToRetry')}
           </p>
+
 
           {/* Fallback to PIN Button */}
           <div className="mt-2 pt-1 w-full">
@@ -538,7 +539,7 @@ export function AppLockOverlay() {
                 />
                 <div className="min-h-[1.25rem] mt-1.5 flex items-center justify-center">
                   {forgotErrorMsg && (
-                    <span className="text-[11px] text-rose-500 block leading-tight">{forgotErrorMsg}</span>
+                    <span className="text-2xs text-destructive block leading-tight">{forgotErrorMsg}</span>
                   )}
                 </div>
               </div>
@@ -554,7 +555,7 @@ export function AppLockOverlay() {
               {config?.securityQuestion && (
                 <Button
                   variant="ghost"
-                  className="w-full h-8 text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="w-full h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                   onClick={() => {
                     setRecoverMethod('question');
                     setForgotErrorMsg('');
@@ -575,7 +576,7 @@ export function AppLockOverlay() {
           ) : recoverMethod === 'question' ? (
             <div className="w-full space-y-3">
               <div className="p-3 rounded-lg border border-border bg-muted/20 text-xs text-left w-full space-y-1">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">
+                <span className="text-2xs uppercase tracking-wider text-muted-foreground block">
                   {t('security.securityQuestion')}
                 </span>
                 <span className="text-xs font-medium text-foreground block">
@@ -601,7 +602,7 @@ export function AppLockOverlay() {
                 />
                 <div className="min-h-[1.25rem] mt-1.5 flex items-center justify-center">
                   {forgotErrorMsg && (
-                    <span className="text-[11px] text-rose-500 block leading-tight">{forgotErrorMsg}</span>
+                    <span className="text-2xs text-destructive block leading-tight">{forgotErrorMsg}</span>
                   )}
                 </div>
               </div>
@@ -617,7 +618,7 @@ export function AppLockOverlay() {
               {isE2EEEnabled() && (
                 <Button
                   variant="ghost"
-                  className="w-full h-8 text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="w-full h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                   onClick={() => {
                     setRecoverMethod('e2ee');
                     setForgotErrorMsg('');
@@ -626,6 +627,7 @@ export function AppLockOverlay() {
                   {t('security.useE2EEPassphrase')}
                 </Button>
               )}
+
 
               <Button
                 variant="ghost"

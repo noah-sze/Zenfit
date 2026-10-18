@@ -4,7 +4,8 @@ import { cn, formatCompactNumber } from '@/lib/utils';
 import { getRememberedNumber, setRememberedNumber } from '@/lib/numberMemory';
 
 export const BADGE_PILL_CLASS =
-  'inline-flex items-center justify-center h-4.5 text-[10px] font-mono font-medium px-1.5 rounded-full border border-border/80 text-muted-foreground bg-muted/40 select-none tracking-normal shrink-0 leading-none transition-opacity';
+  'inline-flex items-center justify-center h-4.5 text-2xs font-mono font-medium px-1.5 rounded-full border border-border/80 text-muted-foreground bg-muted/40 select-none tracking-normal shrink-0 leading-none transition-opacity';
+
 
 export interface MagnitudeBadgeProps {
   /** 金額數值 */
