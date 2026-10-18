@@ -78,10 +78,11 @@ export default function Dashboard() {
         <CardContent className="px-4 sm:px-5 pb-5 space-y-4">
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="text-4xl font-bold font-mono tracking-tight flex items-baseline gap-1">
+              <div className="hero-number flex items-baseline gap-1">
                 <SpringNumber value={calorieRemaining} />
                 <span className="text-xs font-normal text-muted-foreground font-sans">kcal</span>
               </div>
+
               <p className="text-xs text-muted-foreground mt-0.5">
                 {t('diet.remaining')}
               </p>

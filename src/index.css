@@ -33,14 +33,24 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-overlay: var(--overlay);
+  --color-header-bg: var(--header-bg);
+  --color-destructive-subtle: var(--destructive-subtle);
 
-  --radius-lg: var(--radius);
-  --radius-md: var(--radius);
-  --radius-sm: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  /* 圓角階層體系 (以基準 --radius 為中心自動等比聯動) */
+  --radius-xs: calc(var(--radius) - 6px); /* 2px - 極小微標籤 */
+  --radius-sm: calc(var(--radius) - 4px); /* 4px - 按鈕、輸入框 */
+  --radius-md: calc(var(--radius) - 2px); /* 6px - 下拉選單、卡片內部項目 */
+  --radius-lg: var(--radius);             /* 8px - 基準卡片、容器 */
+  --radius-xl: calc(var(--radius) + 4px); /* 12px - 模組區塊 */
+  --radius-2xl: calc(var(--radius) + 8px);/* 16px - 彈窗 Dialog */
+  --radius-3xl: calc(var(--radius) + 16px);/* 24px - 底部抽屜 / Command Deck */
+  --radius-4xl: calc(var(--radius) + 24px);/* 32px */
+
+  /* 文字階層微型字體 Token */
+  --text-2xs: 0.625rem; /* 10px */
+  --text-2xs--line-height: 0.875rem; /* 14px */
+  --text-3xs: 0.5625rem; /* 9px */
+  --text-3xs--line-height: 0.75rem; /* 12px */
 
   --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft JhengHei", "Microsoft YaHei", "Noto Sans CJK", sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -93,6 +103,8 @@
     --input: #eaeaea;
     --ring: #000000;
     --overlay: rgba(255, 255, 255, 0.8);
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --destructive-subtle: rgba(255, 0, 0, 0.08);
     --radius: 0.5rem;
   }
   .dark {
@@ -116,8 +128,11 @@
     --input: #333333;
     --ring: #ffffff;
     --overlay: rgba(0, 0, 0, 0.8);
+    --header-bg: rgba(0, 0, 0, 0.9);
+    --destructive-subtle: rgba(255, 69, 58, 0.15);
   }
 }
+
 
 @layer base {
   * {
@@ -266,5 +281,18 @@
 .animate-marquee-pingpong-from-end {
   animation: marquee-pingpong-from-end var(--marquee-duration, 5s) cubic-bezier(0.4, 0, 0.2, 1) infinite both;
 }
+
+@utility usage-row {
+  @apply h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors;
+}
+
+@utility hero-number {
+  @apply text-4xl sm:text-5xl font-bold font-mono tracking-tight text-foreground;
+}
+
+@utility micro-label {
+  @apply text-2xs uppercase tracking-widest text-muted-foreground font-mono select-none;
+}
+
 
 

@@ -73,7 +73,7 @@ export default function ProfileSettings() {
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 姓名 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.name')}
             </span>
@@ -87,7 +87,7 @@ export default function ProfileSettings() {
           </div>
 
           {/* 性別 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.gender')}
             </span>
@@ -114,7 +114,7 @@ export default function ProfileSettings() {
           </div>
 
           {/* 出生年月 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.birthDate')}
             </span>
@@ -134,7 +134,7 @@ export default function ProfileSettings() {
           </div>
 
           {/* 身高 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.height')}
             </span>
@@ -159,7 +159,7 @@ export default function ProfileSettings() {
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 度量單位 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.unit')}
             </span>
@@ -186,7 +186,7 @@ export default function ProfileSettings() {
           </div>
 
           {/* 基準體重 */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="usage-row">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.currentWeight')}
             </span>
@@ -201,6 +201,7 @@ export default function ProfileSettings() {
               <span>{weightUnit}</span>
             </div>
           </div>
+
         </div>
       </div>
 

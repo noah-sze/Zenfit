@@ -95,14 +95,14 @@ export default function Diet() {
   return (
     <div className="space-y-4">
       {/* 頂部全日總計卡片 (對齊財務儀表板經典雙層排版：1. 熱量統計 2. 碳水、蛋白質、脂肪) */}
-      <div className="bg-card border border-border rounded-2xl shadow-none overflow-hidden text-card-foreground">
+      <div className="bg-card border border-border rounded-xl shadow-none overflow-hidden text-card-foreground">
         {/* 上半部：熱量統計 (Hero Metric) */}
         <div className="p-4 sm:p-5 relative space-y-3">
           {/* 頂部列：左側活動係數、中間熱量統計標籤、右側目標藥丸 */}
           <div className="flex items-center justify-between">
             {/* 左側：活動係數快捷切換 */}
             <div className="flex items-center gap-1 text-xs">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+              <span className="text-2xs uppercase tracking-widest text-muted-foreground font-mono">
                 PAL:
               </span>
               <Select
@@ -149,7 +149,7 @@ export default function Diet() {
 
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-2 pb-1 text-center">
-            <div className="text-4xl sm:text-5xl font-bold font-mono tracking-tight text-foreground flex items-baseline justify-center gap-1.5">
+            <div className="hero-number flex items-baseline justify-center gap-1.5">
               <span>{totals.calories}</span>
               <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
                 kcal
@@ -163,6 +163,7 @@ export default function Diet() {
                   ? `${t('dietPlan.underBudget')} ${calorieDiff} kcal`
                   : `${t('dietPlan.overBudget')} +${Math.abs(calorieDiff)} kcal`}
               </span>
+
             </div>
 
             {/* 客觀進度標尺 */}
@@ -183,7 +184,7 @@ export default function Diet() {
           <div className="p-3.5 sm:p-4 space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
               <span>{t('dietPlan.carbsShort')}</span>
-              <span className="text-[10px] text-muted-foreground/70">
+              <span className="text-2xs text-muted-foreground/70">
                 / {targetMacros.carbsGrams}g
               </span>
             </div>
@@ -210,7 +211,7 @@ export default function Diet() {
           <div className="p-3.5 sm:p-4 space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
               <span>{t('dietPlan.proteinShort')}</span>
-              <span className="text-[10px] text-muted-foreground/70">
+              <span className="text-2xs text-muted-foreground/70">
                 / {targetMacros.proteinGrams}g
               </span>
             </div>
@@ -237,10 +238,11 @@ export default function Diet() {
           <div className="p-3.5 sm:p-4 space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
               <span>{t('dietPlan.fatShort')}</span>
-              <span className="text-[10px] text-muted-foreground/70">
+              <span className="text-2xs text-muted-foreground/70">
                 / {targetMacros.fatGrams}g
               </span>
             </div>
+
             <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-foreground">
               {Math.round(totals.fat)}
               <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
