@@ -39,23 +39,36 @@ export default function Settings() {
   // 匯出資料備份
   const handleExportJson = async () => {
     try {
-      const foods = await db.foods.toArray();
-      const foodLogs = await db.food_logs.toArray();
-      const exercises = await db.exercises.toArray();
-      const workoutLogs = await db.workout_logs.toArray();
-      const bodyMetrics = await db.body_metrics.toArray();
-      const userProfile = await db.user_profile.toArray();
+      const [userBaseInfo, foods, dietPlans, foodLogs, exercises, workoutLogs, bodyMetrics] =
+        await Promise.all([
+          db.user_base_info.toArray(),
+          db.foods.toArray(),
+          db.diet_plans.toArray(),
+          db.food_logs.toArray(),
+          db.exercises.toArray(),
+          db.workout_logs.toArray(),
+          db.body_metrics.toArray(),
+        ]);
 
       const data = {
-        version: 1,
+        version: 2,
         appName: 'Zenfit',
         exportedAt: new Date().toISOString(),
-        foods,
-        foodLogs,
-        exercises,
-        workoutLogs,
-        bodyMetrics,
-        userProfile,
+        profile: {
+          userBaseInfo: userBaseInfo[0] || null,
+        },
+        diet: {
+          foods,
+          dietPlans,
+          foodLogs,
+        },
+        workout: {
+          exercises,
+          workoutLogs,
+        },
+        body: {
+          bodyMetrics,
+        },
       };
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -88,9 +101,11 @@ export default function Settings() {
         await Promise.all([
           db.foods.clear(),
           db.food_logs.clear(),
+          db.diet_plans.clear(),
           db.exercises.clear(),
           db.workout_logs.clear(),
           db.body_metrics.clear(),
+          db.user_base_info.clear(),
         ]);
         triggerHaptic('warning');
         toast.show(t('settings.dataCleared'));
@@ -99,6 +114,7 @@ export default function Settings() {
       }
     }
   };
+
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6 pb-20">

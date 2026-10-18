@@ -34,6 +34,20 @@ export interface FoodLog {
   updatedAt: number;
 }
 
+export interface DietPlan {
+  id: string; // 唯一識別碼 (UUID)
+  date: string; // YYYY-MM-DD
+  planName?: string; // 計劃名稱（例如：「高碳訓練日」、「減脂期平日」）
+  caloriesTarget: number; // 目標總熱量 (kcal)
+  proteinTarget: number; // 蛋白質目標 (g)
+  carbsTarget: number; // 碳水化合物目標 (g)
+  fatTarget: number; // 脂肪目標 (g)
+  waterMlTarget?: number; // 目標飲水量 (ml)
+  notes?: string; // 飲食備註
+  createdAt: number;
+  updatedAt: number;
+}
+
 export type MuscleCategory =
   | 'chest'
   | 'back'
@@ -123,6 +137,17 @@ export interface MacroSplit {
   fat: number; // 百分比 (0-100)
 }
 
+export interface UserBaseInfo {
+  id: string; // 唯一識別碼，預設為 'primary_user'
+  name: string; // 稱呼 / 姓名
+  gender: 'male' | 'female'; // 生理性別
+  birthDate?: string; // 出生年月 ('YYYY-MM' 或 'YYYY-MM-DD')
+  heightCm: number; // 身高 (cm)
+  weightUnit: 'kg' | 'lbs'; // 預設度量衡單位
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -143,3 +168,4 @@ export interface UserProfile {
   isSetupCompleted: boolean;
   updatedAt: number;
 }
+
