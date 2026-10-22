@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 import {
@@ -12,11 +13,15 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { db } from '@/services/db/db';
 import { useConfirm } from '@/components/ui/confirm-dialog';
+import { useFoods } from '@/hooks/useFoods';
+import { useRecipes } from '@/hooks/useRecipes';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const confirm = useConfirm();
+  const { customFoods, archivedCustomFoods } = useFoods();
+  const { customRecipes, archivedCustomRecipes } = useRecipes();
 
   const currentLang = i18n.resolvedLanguage || i18n.language || 'en';
 
@@ -166,6 +171,44 @@ export default function Settings() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* 單品食材管理入口 */}
+          <Link
+            to="/settings/foods"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('diet.foodItems')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: customFoods.length })}
+                {archivedCustomFoods.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedCustomFoods.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+
+          {/* 菜餚組合管理入口 */}
+          <Link
+            to="/settings/recipes"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('diet.recipes')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: customRecipes.length })}
+                {archivedCustomRecipes.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedCustomRecipes.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
         </div>
       </div>
 

@@ -61,7 +61,37 @@ export function AppLayout() {
     { path: '/body', label: t('nav.body'), icon: Activity },
   ];
 
-  const isSubPage = location.pathname === '/settings' || location.pathname === '/profile';
+  const isSubPage = location.pathname.startsWith('/settings') || location.pathname === '/profile';
+
+  const getSubPageTitle = () => {
+    if (location.pathname === '/settings') return t('settings.title');
+    if (location.pathname === '/profile') return t('profileSettings.title');
+    if (
+      location.pathname === '/settings/foods/archived' ||
+      location.pathname === '/settings/categories/archived'
+    ) {
+      return t('settings.archivedFoods');
+    }
+    if (
+      location.pathname.startsWith('/settings/foods/') ||
+      location.pathname.startsWith('/settings/categories/')
+    ) {
+      return t('diet.foodDetails');
+    }
+    if (location.pathname.startsWith('/settings/recipes/')) {
+      return t('diet.recipeDetails');
+    }
+    if (location.pathname === '/settings/recipes') {
+      return t('diet.recipes');
+    }
+    if (
+      location.pathname === '/settings/foods' ||
+      location.pathname === '/settings/categories'
+    ) {
+      return t('diet.foodItems');
+    }
+    return t('settings.title');
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-background text-foreground select-none overflow-hidden">
@@ -136,23 +166,24 @@ export function AppLayout() {
               </button>
             </>
           ) : (
-            <div className="flex items-center gap-1.5 -ml-2">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('light');
-                  navigate(-1);
-                }}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
-                aria-label={t('common.back')}
-              >
-                <ChevronLeft className="size-5" />
-              </button>
-              <h2 className="text-lg font-medium tracking-tight text-foreground">
-                {location.pathname === '/settings'
-                  ? t('settings.title')
-                  : t('profileSettings.title')}
-              </h2>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-1.5 -ml-2 min-w-0 pr-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    navigate(-1);
+                  }}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
+                  aria-label={t('common.back')}
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <h2 className="text-lg font-medium tracking-tight text-foreground truncate">
+                  {getSubPageTitle()}
+                </h2>
+              </div>
+              <div id="subpage-header-action" className="flex items-center -mr-2 shrink-0" />
             </div>
           )}
         </div>

@@ -1,8 +1,11 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
+export type FoodCategory = 'natural' | 'processed' | 'oil' | 'condiment';
+
 export interface FoodItem {
   id: string;
   name: string;
+  category?: FoodCategory; // 天然食材 | 工業食品 | 食用油 | 調味品
   brand?: string;
   servingSize: number;
   servingUnit: string;
@@ -11,6 +14,25 @@ export interface FoodItem {
   carbs: number;
   fat: number;
   fiber?: number;
+  isCustom: boolean;
+  isArchived?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface RecipeIngredient {
+  foodId: string;
+  foodName: string;
+  quantity: number;
+  unit: string;
+  isOptional?: boolean;
+}
+
+export interface FoodRecipe {
+  id: string;
+  name: string;
+  description?: string;
+  ingredients: RecipeIngredient[];
   isCustom: boolean;
   isArchived?: boolean;
   createdAt: number;
