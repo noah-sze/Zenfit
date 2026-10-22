@@ -1,9 +1,10 @@
 import Dexie, { type Table } from 'dexie';
-import type { FoodItem, FoodLog, Exercise, WorkoutLog, BodyMetric, UserProfile, UserBaseInfo, DietPlan } from '@/types';
+import type { FoodItem, FoodCategory, FoodRecipe, FoodLog, Exercise, WorkoutLog, BodyMetric, UserProfile, UserBaseInfo, DietPlan } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ZenfitDatabase extends Dexie {
   foods!: Table<FoodItem>;
+  recipes!: Table<FoodRecipe>;
   food_logs!: Table<FoodLog>;
   exercises!: Table<Exercise>;
   workout_logs!: Table<WorkoutLog>;
@@ -82,6 +83,58 @@ export class ZenfitDatabase extends Dexie {
         console.error('Dexie migration version 3 error:', err);
       }
     });
+
+    this.version(4).stores({
+      foods: 'id, name, updatedAt',
+      recipes: 'id, name, isCustom, isArchived, updatedAt',
+      food_logs: 'id, date, mealType, foodId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (_tx) => {
+      // 升級版本 4：新增菜餚組合 (recipes) 表，平滑相容
+    });
+
+    this.version(5).stores({
+      foods: 'id, name, category, updatedAt',
+      recipes: 'id, name, isCustom, isArchived, updatedAt',
+      food_logs: 'id, date, mealType, foodId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (tx) => {
+      // 升級版本 5：為既有單品食材補齊 category 欄位
+      const allFoods = await tx.table('foods').toArray();
+      for (const food of allFoods) {
+        if (!food.category) {
+          let category: FoodCategory = 'natural';
+          if (food.id === 'food_cooking_oil' || food.name.includes('油')) {
+            category = 'oil';
+          } else if (
+            food.id === 'food_whey_protein' ||
+            food.id === 'food_greek_yogurt' ||
+            food.id === 'food_soy_milk'
+          ) {
+            category = 'processed';
+          } else if (
+            food.name.includes('鹽') ||
+            food.name.includes('醬') ||
+            food.name.includes('醋') ||
+            food.name.includes('胡椒') ||
+            food.name.includes('粉')
+          ) {
+            category = 'condiment';
+          }
+          await tx.table('foods').update(food.id, { category });
+        }
+      }
+    });
   }
 
   async seedDefaultData() {
@@ -124,20 +177,190 @@ export class ZenfitDatabase extends Dexie {
     }
 
     const foodCount = await this.foods.count();
+    const defaultFoods: FoodItem[] = [
+      { id: 'food_chicken_breast', name: '雞胸肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 110, protein: 23, carbs: 0, fat: 1.2, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_whole_egg', name: '雞蛋', category: 'natural', servingSize: 50, servingUnit: 'g', calories: 72, protein: 6.3, carbs: 0.4, fat: 4.8, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_white_rice', name: '白米飯', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_sweet_potato', name: '地瓜', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 86, protein: 1.6, carbs: 20, fat: 0.1, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_whey_protein', name: '乳清蛋白粉', category: 'processed', servingSize: 30, servingUnit: 'g', calories: 120, protein: 24, carbs: 2, fat: 1.5, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_rolled_oats', name: '大燕麥片', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 389, protein: 16.9, carbs: 66, fat: 6.9, fiber: 10.6, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_beef_flank', name: '牛板腱', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 180, protein: 24, carbs: 0, fat: 9, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_greek_yogurt', name: '無糖希臘優格', category: 'processed', servingSize: 100, servingUnit: 'g', calories: 60, protein: 10, carbs: 3.5, fat: 0.5, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_salmon', name: '鮭魚', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 208, protein: 20, carbs: 0, fat: 13, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_soy_milk', name: '無糖豆漿', category: 'processed', servingSize: 250, servingUnit: 'ml', calories: 85, protein: 8.5, carbs: 4.5, fat: 3.5, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_tomato', name: '牛番茄', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_cooking_oil', name: '食用植物油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, createdAt: now, updatedAt: now },
+      { id: 'food_black_pepper', name: '黑胡椒粒', category: 'condiment', servingSize: 5, servingUnit: 'g', calories: 13, protein: 0.5, carbs: 3.2, fat: 0.2, isCustom: false, createdAt: now, updatedAt: now },
+    ];
+
     if (foodCount === 0) {
-      const defaultFoods: FoodItem[] = [
-        { id: uuidv4(), name: '香煎雞胸肉', servingSize: 100, servingUnit: 'g', calories: 165, protein: 31, carbs: 0, fat: 3.6, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '全蛋 (中顆)', servingSize: 50, servingUnit: 'g', calories: 72, protein: 6.3, carbs: 0.4, fat: 4.8, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '白米飯', servingSize: 100, servingUnit: 'g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '蒸地瓜', servingSize: 100, servingUnit: 'g', calories: 86, protein: 1.6, carbs: 20, fat: 0.1, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '乳清蛋白粉 (1匙)', servingSize: 30, servingUnit: 'g', calories: 120, protein: 24, carbs: 2, fat: 1.5, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '大燕麥片', servingSize: 100, servingUnit: 'g', calories: 389, protein: 16.9, carbs: 66, fat: 6.9, fiber: 10.6, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '瘦牛肉 (板腱)', servingSize: 100, servingUnit: 'g', calories: 180, protein: 24, carbs: 0, fat: 9, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '無糖希臘式優格', servingSize: 100, servingUnit: 'g', calories: 60, protein: 10, carbs: 3.5, fat: 0.5, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '香煎鮭魚排', servingSize: 100, servingUnit: 'g', calories: 208, protein: 20, carbs: 0, fat: 13, isCustom: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '無糖高纖豆漿', servingSize: 250, servingUnit: 'ml', calories: 85, protein: 8.5, carbs: 4.5, fat: 3.5, isCustom: false, createdAt: now, updatedAt: now },
-      ];
       await this.foods.bulkAdd(defaultFoods);
+    } else {
+      // 平滑升級遷移：將既有系統預設食物名稱與數值標準化 (去除烹飪前綴與模糊量詞，填補分類)
+      const standardizationMap: Record<string, Partial<FoodItem>> = {
+        food_chicken_breast: { name: '雞胸肉', category: 'natural', calories: 110, protein: 23, carbs: 0, fat: 1.2 },
+        food_whole_egg: { name: '雞蛋', category: 'natural', servingSize: 50, servingUnit: 'g' },
+        food_white_rice: { category: 'natural' },
+        food_sweet_potato: { name: '地瓜', category: 'natural' },
+        food_whey_protein: { name: '乳清蛋白粉', category: 'processed' },
+        food_rolled_oats: { category: 'natural' },
+        food_beef_flank: { name: '牛板腱', category: 'natural' },
+        food_greek_yogurt: { name: '無糖希臘優格', category: 'processed' },
+        food_salmon: { name: '鮭魚', category: 'natural' },
+        food_soy_milk: { name: '無糖豆漿', category: 'processed' },
+        food_tomato: { category: 'natural' },
+        food_cooking_oil: { category: 'oil' },
+      };
+
+      for (const [foodId, updates] of Object.entries(standardizationMap)) {
+        const food = await this.foods.get(foodId);
+        if (food && !food.isCustom) {
+          await this.foods.update(foodId, { ...updates, updatedAt: now });
+        }
+      }
+
+      // 增量補充牛番茄與食用油與調味品（若不存在）
+      const existingTomato = await this.foods.where('name').equals('牛番茄').first();
+      if (!existingTomato) {
+        await this.foods.add({
+          id: 'food_tomato',
+          name: '牛番茄',
+          category: 'natural',
+          servingSize: 100,
+          servingUnit: 'g',
+          calories: 18,
+          protein: 0.9,
+          carbs: 3.9,
+          fat: 0.2,
+          isCustom: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      const existingOil = await this.foods.where('name').equals('食用植物油').first();
+      if (!existingOil) {
+        await this.foods.add({
+          id: 'food_cooking_oil',
+          name: '食用植物油',
+          category: 'oil',
+          servingSize: 10,
+          servingUnit: 'g',
+          calories: 90,
+          protein: 0,
+          carbs: 0,
+          fat: 10,
+          isCustom: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      const existingPepper = await this.foods.where('name').equals('黑胡椒粒').first();
+      if (!existingPepper) {
+        await this.foods.add({
+          id: 'food_black_pepper',
+          name: '黑胡椒粒',
+          category: 'condiment',
+          servingSize: 5,
+          servingUnit: 'g',
+          calories: 13,
+          protein: 0.5,
+          carbs: 3.2,
+          fat: 0.2,
+          isCustom: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      // 同時同步菜餚組合中的 ingredients foodName
+      const allRecipes = await this.recipes.toArray();
+      for (const recipe of allRecipes) {
+        let changed = false;
+        const newIngredients = recipe.ingredients.map((ing) => {
+          const matchedUpdate = standardizationMap[ing.foodId];
+          if (matchedUpdate && matchedUpdate.name && matchedUpdate.name !== ing.foodName) {
+            changed = true;
+            return { ...ing, foodName: matchedUpdate.name };
+          }
+          return ing;
+        });
+        if (changed) {
+          await this.recipes.update(recipe.id, { ingredients: newIngredients, updatedAt: now });
+        }
+      }
+    }
+
+    // 初始化菜餚組合預設種子資料
+    const recipeCount = await this.recipes.count();
+    if (recipeCount === 0) {
+      const allFoods = await this.foods.toArray();
+      const findFood = (queryName: string) => allFoods.find((f) => f.name.includes(queryName));
+
+      const tomatoFood = findFood('牛番茄');
+      const eggFood = findFood('雞蛋') || findFood('全蛋');
+      const oilFood = findFood('食用植物油');
+      const oatsFood = findFood('大燕麥片');
+      const yogurtFood = findFood('優格');
+      const wheyFood = findFood('乳清蛋白');
+      const chickenFood = findFood('雞胸肉');
+      const riceFood = findFood('白米飯');
+
+      const defaultRecipes: FoodRecipe[] = [];
+
+      if (tomatoFood && eggFood) {
+        defaultRecipes.push({
+          id: 'recipe_tomato_egg',
+          name: '經典家常番茄炒蛋',
+          description: '經典少油高蛋白家常菜，油脂可自由依烹調習慣調整',
+          ingredients: [
+            { foodId: tomatoFood.id, foodName: tomatoFood.name, quantity: 150, unit: 'g', isOptional: false },
+            { foodId: eggFood.id, foodName: eggFood.name, quantity: 100, unit: 'g', isOptional: false },
+            ...(oilFood ? [{ foodId: oilFood.id, foodName: oilFood.name, quantity: 10, unit: 'g', isOptional: true }] : []),
+          ],
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      if (oatsFood && yogurtFood) {
+        defaultRecipes.push({
+          id: 'recipe_oat_bowl',
+          name: '高蛋白燕麥優格碗',
+          description: '無油純淨碳水與蛋白質組合，飽腹感極佳',
+          ingredients: [
+            { foodId: oatsFood.id, foodName: oatsFood.name, quantity: 50, unit: 'g', isOptional: false },
+            { foodId: yogurtFood.id, foodName: yogurtFood.name, quantity: 100, unit: 'g', isOptional: false },
+            ...(wheyFood ? [{ foodId: wheyFood.id, foodName: wheyFood.name, quantity: 30, unit: 'g', isOptional: false }] : []),
+          ],
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      if (chickenFood && riceFood) {
+        defaultRecipes.push({
+          id: 'recipe_chicken_rice_box',
+          name: '經典低脂雞胸便當',
+          description: '標準乾淨減脂主食，可選配微量烹調油',
+          ingredients: [
+            { foodId: chickenFood.id, foodName: chickenFood.name, quantity: 150, unit: 'g', isOptional: false },
+            { foodId: riceFood.id, foodName: riceFood.name, quantity: 150, unit: 'g', isOptional: false },
+            ...(oilFood ? [{ foodId: oilFood.id, foodName: oilFood.name, quantity: 5, unit: 'g', isOptional: true }] : []),
+          ],
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      if (defaultRecipes.length > 0) {
+        await this.recipes.bulkAdd(defaultRecipes);
+      }
     }
 
     const profileCount = await this.user_profile.count();

@@ -9,6 +9,11 @@ import Workout from './pages/Workout';
 import Body from './pages/Body';
 import Settings from './pages/Settings';
 import ProfileSettings from './pages/ProfileSettings';
+import Categories from './pages/Categories';
+import Recipes from './pages/Recipes';
+import RecipeDetails from './pages/RecipeDetails';
+import CategoryDetails from './pages/CategoryDetails';
+import ArchivedCategories from './pages/ArchivedCategories';
 
 const router = createBrowserRouter([
   {
@@ -38,6 +43,38 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         element: <Settings />,
+      },
+      {
+        path: 'settings/foods',
+        element: <Categories />,
+      },
+      {
+        path: 'settings/foods/archived',
+        element: <ArchivedCategories />,
+      },
+      {
+        path: 'settings/foods/:id',
+        element: <CategoryDetails />,
+      },
+      {
+        path: 'settings/recipes',
+        element: <Recipes />,
+      },
+      {
+        path: 'settings/recipes/:id',
+        element: <RecipeDetails />,
+      },
+      {
+        path: 'settings/categories',
+        element: <Categories />,
+      },
+      {
+        path: 'settings/categories/archived',
+        element: <ArchivedCategories />,
+      },
+      {
+        path: 'settings/categories/:id',
+        element: <CategoryDetails />,
       },
       {
         path: 'profile',

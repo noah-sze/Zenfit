@@ -5,6 +5,7 @@ import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyMetrics } from '@/hooks/useBodyMetrics';
 import { useFoods } from '@/hooks/useFoods';
+import { useRecipes } from '@/hooks/useRecipes';
 import { useExercises } from '@/hooks/useExercises';
 import {
   Dialog,
@@ -16,10 +17,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Utensils, Dumbbell, Activity } from 'lucide-react';
+import { Utensils, Dumbbell, Activity, Layers, UtensilsCrossed } from 'lucide-react';
 import type { MealType } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/toast';
+import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
 
 export function AddQuickModal() {
   const { t } = useTranslation();
@@ -42,11 +44,13 @@ export function AddQuickModal() {
   const { addFoodLog } = useFoodLogs(selectedDate);
   const { addWorkout } = useWorkoutLogs(selectedDate);
   const { saveMetric, metricToday } = useBodyMetrics(selectedDate);
-  const { foods } = useFoods();
+  const { foods, allFoods } = useFoods();
+  const { activeRecipes, foodMap } = useRecipes();
   const { exercises } = useExercises();
 
   // Food Form State
   const [mealType, setMealType] = useState<MealType>('breakfast');
+  const [foodEntryMode, setFoodEntryMode] = useState<'item' | 'recipe'>('item');
   const [foodName, setFoodName] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('份');
@@ -54,6 +58,34 @@ export function AddQuickModal() {
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
+
+  // 菜餚組合狀態
+  const [selectedRecipeId, setSelectedRecipeId] = useState('');
+  const [recipeExcludedIndices, setRecipeExcludedIndices] = useState<number[]>([]);
+
+  // 當前選中菜餚物件
+  const currentRecipe = activeRecipes.find((r) => r.id === selectedRecipeId);
+
+  // 當切換選中菜餚時，重置排除索引
+  const handleSelectRecipe = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedRecipeId(id);
+    setRecipeExcludedIndices([]);
+  };
+
+  // 切換某食材的選中狀態（主要是可選調味/油）
+  const toggleIngredientIndex = (index: number) => {
+    setRecipeExcludedIndices((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
+  // 菜餚即時總計
+  const currentRecipeTotals = currentRecipe
+    ? calculateRecipeTotals(currentRecipe, foodMap, {
+        excludedIndices: recipeExcludedIndices,
+      })
+    : { calories: 0, protein: 0, carbs: 0, fat: 0, totalWeightGrams: 0, ingredientCount: 0 };
 
   // Workout Form State
   const [workoutTitle, setWorkoutTitle] = useState('');
@@ -107,6 +139,43 @@ export function AddQuickModal() {
     });
     toast.show(t('common.saved'));
     resetFoodForm();
+    closeAddModal();
+  };
+
+  const handleSaveRecipe = async () => {
+    if (!currentRecipe) {
+      toast.show(t('common.required'));
+      return;
+    }
+
+    const excludedSet = new Set(recipeExcludedIndices);
+    const ingredientsToLog = currentRecipe.ingredients.filter((_, idx) => !excludedSet.has(idx));
+
+    if (ingredientsToLog.length === 0) {
+      toast.show(t('diet.noIngredients'));
+      return;
+    }
+
+    for (const ing of ingredientsToLog) {
+      const targetFood = allFoods.find((f) => f.id === ing.foodId);
+      const macros = calculateIngredientMacros(targetFood, ing.quantity);
+      await addFoodLog({
+        date: selectedDate,
+        mealType,
+        foodName: ing.foodName,
+        quantity: ing.quantity,
+        unit: ing.unit || 'g',
+        calories: macros.calories,
+        protein: macros.protein,
+        carbs: macros.carbs,
+        fat: macros.fat,
+        notes: `[${currentRecipe.name}]`,
+      });
+    }
+
+    toast.show(t('common.saved'));
+    setSelectedRecipeId('');
+    setRecipeExcludedIndices([]);
     closeAddModal();
   };
 
@@ -192,6 +261,7 @@ export function AddQuickModal() {
 
           {/* 記飲食 Tab */}
           <TabsContent value="food" className="space-y-3 mt-0 focus-visible:outline-none">
+            {/* 餐別選擇 */}
             <div className="grid grid-cols-4 gap-1.5">
               {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((type) => (
                 <button
@@ -209,102 +279,243 @@ export function AddQuickModal() {
               ))}
             </div>
 
-            <div>
-              <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                {t('diet.foodLibrary')}
-              </label>
-              <select
-                onChange={handleSelectPresetFood}
-                value=""
-                className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
+            {/* 單品食材 vs 菜餚組合 切換 */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/60 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setFoodEntryMode('item')}
+                className={`py-1 text-xs rounded-md font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  foodEntryMode === 'item'
+                    ? 'bg-background text-foreground shadow-none'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
-                <option value="" disabled>
-                  {t('diet.searchFoodPlaceholder')}
-                </option>
-                {foods.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} ({f.calories} kcal)
-                  </option>
-                ))}
-              </select>
+                <UtensilsCrossed className="size-3.5" />
+                <span>{t('diet.foodItems')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFoodEntryMode('recipe')}
+                className={`py-1 text-xs rounded-md font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  foodEntryMode === 'recipe'
+                    ? 'bg-background text-foreground shadow-none'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Layers className="size-3.5" />
+                <span>{t('diet.recipes')}</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  {t('diet.foodName')} *
-                </label>
-                <Input
-                  value={foodName}
-                  onChange={(e) => setFoodName(e.target.value)}
-                  placeholder="如: 香煎雞胸肉"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  {t('diet.calories')} (kcal)
-                </label>
-                <Input
-                  type="number"
-                  value={calories}
-                  onChange={(e) => setCalories(e.target.value)}
-                  placeholder="0"
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
-            </div>
+            {/* 模式 1：單品食材快速記錄 */}
+            {foodEntryMode === 'item' ? (
+              <>
+                <div>
+                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                    {t('diet.foodLibrary')}
+                  </label>
+                  <select
+                    onChange={handleSelectPresetFood}
+                    value=""
+                    className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      {t('diet.searchFoodPlaceholder')}
+                    </option>
+                    {foods.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name} · {t(`diet.foodCategory.${f.category || 'natural'}`)} ({f.calories} kcal)
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border/50">
-              <div>
-                <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
-                  <span className="size-1.5 rounded-full bg-protein shrink-0" />
-                  <span>{t('diet.protein')} (g)</span>
-                </label>
-                <Input
-                  type="number"
-                  value={protein}
-                  onChange={(e) => setProtein(e.target.value)}
-                  placeholder="0"
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
-                  <span className="size-1.5 rounded-full bg-carbs shrink-0" />
-                  <span>{t('diet.carbs')} (g)</span>
-                </label>
-                <Input
-                  type="number"
-                  value={carbs}
-                  onChange={(e) => setCarbs(e.target.value)}
-                  placeholder="0"
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
-                  <span className="size-1.5 rounded-full bg-fat shrink-0" />
-                  <span>{t('diet.fat')} (g)</span>
-                </label>
-                <Input
-                  type="number"
-                  value={fat}
-                  onChange={(e) => setFat(e.target.value)}
-                  placeholder="0"
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
-            </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                      {t('diet.foodName')} *
+                    </label>
+                    <Input
+                      value={foodName}
+                      onChange={(e) => setFoodName(e.target.value)}
+                      placeholder="如: 雞胸肉"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                      {t('diet.calories')} (kcal)
+                    </label>
+                    <Input
+                      type="number"
+                      value={calories}
+                      onChange={(e) => setCalories(e.target.value)}
+                      placeholder="0"
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                </div>
 
-            <DialogFooter className="pt-2 flex flex-row items-center justify-between">
-              <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
-                {t('common.cancel')}
-              </Button>
-              <Button size="sm" onClick={handleSaveFood} className="cursor-pointer">
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border/50">
+                  <div>
+                    <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                      <span className="size-1.5 rounded-full bg-protein shrink-0" />
+                      <span>{t('diet.protein')} (g)</span>
+                    </label>
+                    <Input
+                      type="number"
+                      value={protein}
+                      onChange={(e) => setProtein(e.target.value)}
+                      placeholder="0"
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                      <span className="size-1.5 rounded-full bg-carbs shrink-0" />
+                      <span>{t('diet.carbs')} (g)</span>
+                    </label>
+                    <Input
+                      type="number"
+                      value={carbs}
+                      onChange={(e) => setCarbs(e.target.value)}
+                      placeholder="0"
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                      <span className="size-1.5 rounded-full bg-fat shrink-0" />
+                      <span>{t('diet.fat')} (g)</span>
+                    </label>
+                    <Input
+                      type="number"
+                      value={fat}
+                      onChange={(e) => setFat(e.target.value)}
+                      placeholder="0"
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter className="pt-2 flex flex-row items-center justify-between">
+                  <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
+                    {t('common.cancel')}
+                  </Button>
+                  <Button size="sm" onClick={handleSaveFood} className="cursor-pointer">
+                    {t('common.save')}
+                  </Button>
+                </DialogFooter>
+              </>
+            ) : (
+              /* 模式 2：菜餚組合（番茄炒蛋拆解原型記錄） */
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                    {t('diet.recipes')}
+                  </label>
+                  <select
+                    value={selectedRecipeId}
+                    onChange={handleSelectRecipe}
+                    className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      {t('diet.selectIngredient')}
+                    </option>
+                    {activeRecipes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {currentRecipe ? (
+                  <div className="space-y-2.5">
+                    {/* 食材構成勾選清單 */}
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground">
+                        {t('diet.recipeIngredients')}
+                      </div>
+                      <div className="border border-border rounded-lg divide-y divide-border/60 overflow-hidden bg-background">
+                        {currentRecipe.ingredients.map((ing, idx) => {
+                          const isExcluded = recipeExcludedIndices.includes(idx);
+                          const targetFood = allFoods.find((f) => f.id === ing.foodId);
+                          const ingMacros = calculateIngredientMacros(targetFood, ing.quantity);
+
+                          return (
+                            <label
+                              key={idx}
+                              className={`flex items-center justify-between p-2.5 text-xs transition-colors cursor-pointer select-none ${
+                                isExcluded ? 'opacity-50 bg-muted/20 line-through' : 'hover:bg-muted/30'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={!isExcluded}
+                                  onChange={() => toggleIngredientIndex(idx)}
+                                  className="size-3.5 rounded border-border"
+                                />
+                                <div className="truncate">
+                                  <span className="font-medium text-foreground">{ing.foodName}</span>
+                                  {ing.isOptional && (
+                                    <span className="ml-1.5 text-[10px] text-muted-foreground">
+                                      ({t('diet.optionalBadge')})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="font-mono text-right shrink-0 pl-2">
+                                <span className="text-foreground font-medium">{ingMacros.calories} kcal</span>
+                                <span className="text-muted-foreground ml-1">
+                                  ({ing.quantity} {ing.unit})
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* 總計預覽卡片 */}
+                    <div className="p-3 rounded-lg border border-border bg-muted/20 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono text-muted-foreground uppercase">
+                          {t('diet.totalEstimated')}
+                        </span>
+                        <span className="text-sm font-semibold font-mono text-foreground">
+                          {currentRecipeTotals.calories} kcal
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-mono text-muted-foreground flex gap-3 pt-0.5">
+                        <span>P: {currentRecipeTotals.protein} g</span>
+                        <span>C: {currentRecipeTotals.carbs} g</span>
+                        <span>F: {currentRecipeTotals.fat} g</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 text-center text-xs text-muted-foreground border border-dashed border-border rounded-lg">
+                    {t('diet.selectIngredient')}
+                  </div>
+                )}
+
+                <DialogFooter className="pt-2 flex flex-row items-center justify-between">
+                  <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveRecipe}
+                    disabled={!currentRecipe}
+                    className="cursor-pointer"
+                  >
+                    {t('diet.logRecipe')}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
           </TabsContent>
 
           {/* 記訓練 Tab */}
