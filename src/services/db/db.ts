@@ -1,5 +1,20 @@
 import Dexie, { type Table } from 'dexie';
-import type { FoodItem, FoodCategory, FoodRecipe, FoodLog, Exercise, WorkoutLog, BodyMetric, UserProfile, UserBaseInfo, DietPlan } from '@/types';
+import type {
+  FoodItem,
+  FoodCategory,
+  FoodRecipe,
+  FoodLog,
+  Exercise,
+  WorkoutRoutine,
+  WorkoutLog,
+  BodyMetric,
+  UserProfile,
+  UserBaseInfo,
+  DietPlan,
+  ExerciseCategory,
+  DetailedMuscle,
+  Equipment,
+} from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ZenfitDatabase extends Dexie {
@@ -7,6 +22,8 @@ export class ZenfitDatabase extends Dexie {
   recipes!: Table<FoodRecipe>;
   food_logs!: Table<FoodLog>;
   exercises!: Table<Exercise>;
+  routines!: Table<WorkoutRoutine>;
+  equipments!: Table<Equipment>;
   workout_logs!: Table<WorkoutLog>;
   body_metrics!: Table<BodyMetric>;
   user_profile!: Table<UserProfile>;
@@ -135,43 +152,373 @@ export class ZenfitDatabase extends Dexie {
         }
       }
     });
+
+    this.version(6).stores({
+      foods: 'id, name, category, updatedAt',
+      recipes: 'id, name, isCustom, isArchived, updatedAt',
+      food_logs: 'id, date, mealType, foodId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      routines: 'id, name, isCustom, isArchived, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (tx) => {
+      // 升級版本 6：為既有單品動作遷移形態分類與細分肌群刺激強度
+      const allExercises = await tx.table('exercises').toArray();
+      const validCategories: ExerciseCategory[] = ['free_weight', 'machine', 'bodyweight', 'cardio'];
+      for (const ex of allExercises) {
+        let newCat: ExerciseCategory = 'free_weight';
+        if (validCategories.includes(ex.category as any)) {
+          newCat = ex.category as ExerciseCategory;
+        } else if (ex.equipment === 'machine' || ex.equipment === 'cable') {
+          newCat = 'machine';
+        } else if (ex.equipment === 'bodyweight') {
+          newCat = 'bodyweight';
+        } else if (ex.category === 'cardio') {
+          newCat = 'cardio';
+        } else {
+          newCat = 'free_weight';
+        }
+
+        let targetMuscles: Partial<Record<DetailedMuscle, number>> = ex.targetMuscles || {};
+        if (Object.keys(targetMuscles).length === 0) {
+          const oldCat = String(ex.category || '');
+          if (oldCat === 'chest') targetMuscles = { mid_lower_chest: 100, front_delts: 50, triceps: 40 };
+          else if (oldCat === 'back') targetMuscles = { lats: 90, upper_back_traps: 70, biceps: 50 };
+          else if (oldCat === 'legs') targetMuscles = { quads: 100, glutes: 70 };
+          else if (oldCat === 'shoulders') targetMuscles = { front_delts: 90, side_delts: 70 };
+          else if (oldCat === 'arms') targetMuscles = { biceps: 80, triceps: 80 };
+          else if (oldCat === 'core') targetMuscles = { abs: 90 };
+          else targetMuscles = { mid_lower_chest: 50 };
+        }
+
+        await tx.table('exercises').update(ex.id, {
+          category: newCat,
+          targetMuscles,
+        });
+      }
+    });
+
+    this.version(7).stores({
+      foods: 'id, name, category, updatedAt',
+      recipes: 'id, name, isCustom, isArchived, updatedAt',
+      food_logs: 'id, date, mealType, foodId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      routines: 'id, name, isCustom, isArchived, updatedAt',
+      equipments: 'id, name, isCustom, isArchived, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (tx) => {
+      // 升級版本 7：為既有動作精確遷移器械載荷
+      const allExercises = await tx.table('exercises').toArray();
+      for (const ex of allExercises) {
+        if (ex.equipment === 'machine') {
+          let newEq = 'pin_loaded_machine';
+          if (ex.name.includes('腿舉') || ex.name.includes('倒蹬') || ex.name.includes('腿推')) newEq = 'leg_press';
+          else if (ex.name.includes('哈克')) newEq = 'hack_squat';
+          else if (ex.name.includes('史密斯')) newEq = 'smith_machine';
+          else if (ex.name.includes('跑步機')) newEq = 'cardio_machine';
+          await tx.table('exercises').update(ex.id, { equipment: newEq });
+        }
+      }
+    });
   }
 
   async seedDefaultData() {
-    const exerciseCount = await this.exercises.count();
     const now = Date.now();
+
+    // 初始化預設器械庫
+    const equipmentCount = await this.equipments.count();
+    if (equipmentCount === 0) {
+      const defaultEquipments: Equipment[] = [
+        { id: 'barbell', name: '槓鈴', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'dumbbell', name: '啞鈴', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'kettlebell', name: '壺鈴', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'specialty_bar', name: '專項槓', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'cable', name: '繩索滑輪', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'pin_loaded_machine', name: '插銷式器械', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'plate_loaded_machine', name: '掛片式器械', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'smith_machine', name: '史密斯機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'leg_press', name: '腿舉 / 倒蹬機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'hack_squat', name: '哈克機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'bodyweight', name: '徒手自重', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'weighted_bodyweight', name: '負重自重', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'resistance_band', name: '彈力帶', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'gymnastic_rings', name: '體操吊環', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'cardio_machine', name: '有氧設備', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'other', name: '其他', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+      ];
+      await this.equipments.bulkAdd(defaultEquipments);
+    }
+
+    const exerciseCount = await this.exercises.count();
 
     if (exerciseCount === 0) {
       const defaultExercises: Exercise[] = [
-        // 胸部
-        { id: uuidv4(), name: '槓鈴臥推 (Bench Press)', category: 'chest', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '上斜啞鈴臥推 (Incline Dumbbell Press)', category: 'chest', equipment: 'dumbbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '滑輪夾胸 (Cable Fly)', category: 'chest', equipment: 'cable', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '雙槓臂屈伸 (Dips)', category: 'chest', equipment: 'bodyweight', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        // 背部
-        { id: uuidv4(), name: '傳統硬舉 (Deadlift)', category: 'back', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '槓鈴划船 (Barbell Row)', category: 'back', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '引體向上 (Pull-up)', category: 'back', equipment: 'bodyweight', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '滑輪下拉 (Lat Pulldown)', category: 'back', equipment: 'cable', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '坐姿划船 (Seated Cable Row)', category: 'back', equipment: 'cable', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        // 腿部
-        { id: uuidv4(), name: '槓鈴深蹲 (Barbell Squat)', category: 'legs', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '羅馬尼亞硬舉 (Romanian Deadlift)', category: 'legs', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '腿推機 (Leg Press)', category: 'legs', equipment: 'machine', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '腿伸展 (Leg Extension)', category: 'legs', equipment: 'machine', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '腿彎舉 (Leg Curl)', category: 'legs', equipment: 'machine', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        // 肩部
-        { id: uuidv4(), name: '站姿槓鈴推舉 (Overhead Press)', category: 'shoulders', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '啞鈴側平舉 (Dumbbell Lateral Raise)', category: 'shoulders', equipment: 'dumbbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '繩索面拉 (Face Pull)', category: 'shoulders', equipment: 'cable', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        // 手臂
-        { id: uuidv4(), name: '滑輪三頭下壓 (Tricep Pushdown)', category: 'arms', equipment: 'cable', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '槓鈴二頭彎舉 (Barbell Curl)', category: 'arms', equipment: 'barbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '啞鈴錘式彎舉 (Hammer Curl)', category: 'arms', equipment: 'dumbbell', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        // 胸部動作
+        {
+          id: uuidv4(),
+          name: '槓鈴臥推 (Bench Press)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { mid_lower_chest: 100, front_delts: 50, triceps: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '上斜啞鈴臥推 (Incline Dumbbell Press)',
+          category: 'free_weight',
+          equipment: 'dumbbell',
+          targetMuscles: { upper_chest: 100, front_delts: 60, triceps: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '滑輪夾胸 (Cable Fly)',
+          category: 'machine',
+          equipment: 'cable',
+          targetMuscles: { mid_lower_chest: 100 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '雙槓臂屈伸 (Dips)',
+          category: 'bodyweight',
+          equipment: 'bodyweight',
+          targetMuscles: { mid_lower_chest: 90, triceps: 80, front_delts: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        // 背部動作
+        {
+          id: uuidv4(),
+          name: '傳統硬舉 (Deadlift)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { lower_back: 100, glutes: 90, hamstrings: 70, upper_back_traps: 70, forearms: 50 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '槓鈴划船 (Barbell Row)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { lats: 90, upper_back_traps: 80, biceps: 50, lower_back: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '引體向上 (Pull-up)',
+          category: 'bodyweight',
+          equipment: 'bodyweight',
+          targetMuscles: { lats: 100, upper_back_traps: 60, biceps: 60, forearms: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '滑輪下拉 (Lat Pulldown)',
+          category: 'machine',
+          equipment: 'cable',
+          targetMuscles: { lats: 100, biceps: 50, upper_back_traps: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '坐姿划船 (Seated Cable Row)',
+          category: 'machine',
+          equipment: 'cable',
+          targetMuscles: { upper_back_traps: 90, lats: 70, biceps: 50 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        // 腿部動作
+        {
+          id: uuidv4(),
+          name: '槓鈴深蹲 (Barbell Squat)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { quads: 100, glutes: 80, abs: 30, lower_back: 30 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '羅馬尼亞硬舉 (Romanian Deadlift)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { hamstrings: 100, glutes: 80, lower_back: 50 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '腿推機 (Leg Press)',
+          category: 'machine',
+          equipment: 'leg_press',
+          targetMuscles: { quads: 100, glutes: 60 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '腿伸展 (Leg Extension)',
+          category: 'machine',
+          equipment: 'pin_loaded_machine',
+          targetMuscles: { quads: 100 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '腿彎舉 (Leg Curl)',
+          category: 'machine',
+          equipment: 'pin_loaded_machine',
+          targetMuscles: { hamstrings: 100 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        // 肩部動作
+        {
+          id: uuidv4(),
+          name: '站姿槓鈴推舉 (Overhead Press)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { front_delts: 100, triceps: 60, upper_chest: 40, abs: 30 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '啞鈴側平舉 (Dumbbell Lateral Raise)',
+          category: 'free_weight',
+          equipment: 'dumbbell',
+          targetMuscles: { side_delts: 100, upper_back_traps: 30 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '繩索面拉 (Face Pull)',
+          category: 'machine',
+          equipment: 'cable',
+          targetMuscles: { rear_delts: 100, upper_back_traps: 70 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        // 手臂動作
+        {
+          id: uuidv4(),
+          name: '滑輪三頭下壓 (Tricep Pushdown)',
+          category: 'machine',
+          equipment: 'cable',
+          targetMuscles: { triceps: 100 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '槓鈴二頭彎舉 (Barbell Curl)',
+          category: 'free_weight',
+          equipment: 'barbell',
+          targetMuscles: { biceps: 100, forearms: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '啞鈴錘式彎舉 (Hammer Curl)',
+          category: 'free_weight',
+          equipment: 'dumbbell',
+          targetMuscles: { forearms: 90, biceps: 80 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
         // 核心與有氧
-        { id: uuidv4(), name: '平板支撐 (Plank)', category: 'core', equipment: 'bodyweight', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '懸垂舉腿 (Hanging Leg Raise)', category: 'core', equipment: 'bodyweight', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: uuidv4(), name: '跑步機慢跑 (Treadmill Running)', category: 'cardio', equipment: 'machine', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        {
+          id: uuidv4(),
+          name: '平板支撐 (Plank)',
+          category: 'bodyweight',
+          equipment: 'bodyweight',
+          targetMuscles: { abs: 90, obliques: 60 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '懸垂舉腿 (Hanging Leg Raise)',
+          category: 'bodyweight',
+          equipment: 'bodyweight',
+          targetMuscles: { abs: 100, forearms: 30 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: uuidv4(),
+          name: '跑步機慢跑 (Treadmill Running)',
+          category: 'cardio',
+          equipment: 'cardio_machine',
+          targetMuscles: { calves: 60, quads: 40 },
+          isCustom: false,
+          isArchived: false,
+          createdAt: now,
+          updatedAt: now,
+        },
       ];
       await this.exercises.bulkAdd(defaultExercises);
     }

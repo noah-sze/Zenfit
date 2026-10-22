@@ -15,6 +15,9 @@ import { db } from '@/services/db/db';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useFoods } from '@/hooks/useFoods';
 import { useRecipes } from '@/hooks/useRecipes';
+import { useExercises } from '@/hooks/useExercises';
+import { useRoutines } from '@/hooks/useRoutines';
+import { useEquipments } from '@/hooks/useEquipments';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -22,6 +25,9 @@ export default function Settings() {
   const confirm = useConfirm();
   const { customFoods, archivedCustomFoods } = useFoods();
   const { customRecipes, archivedCustomRecipes } = useRecipes();
+  const { activeExercises, archivedCustomExercises } = useExercises();
+  const { activeRoutines, archivedCustomRoutines } = useRoutines();
+  const { activeEquipments, archivedCustomEquipments } = useEquipments();
 
   const currentLang = i18n.resolvedLanguage || i18n.language || 'en';
 
@@ -171,7 +177,15 @@ export default function Settings() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </div>
 
+      {/* 區塊 2：飲食資料管理 */}
+      <div>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
+          {t('settings.dietSection')}
+        </div>
+        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 單品食材管理入口 */}
           <Link
             to="/settings/foods"
@@ -212,7 +226,72 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* 區塊 2：資料與儲存 */}
+      {/* 區塊 3：訓練資料管理 */}
+      <div>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
+          {t('settings.workoutSection')}
+        </div>
+        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          {/* 單品動作管理入口 */}
+          <Link
+            to="/settings/exercises"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.exercises')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: activeExercises.length })}
+                {archivedCustomExercises.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedCustomExercises.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+
+          {/* 訓練組合管理入口 */}
+          <Link
+            to="/settings/routines"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.routines')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: activeRoutines.length })}
+                {archivedCustomRoutines.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedCustomRoutines.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+
+          {/* 器械管理入口 */}
+          <Link
+            to="/settings/equipments"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.equipments')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: activeEquipments.length })}
+                {archivedCustomEquipments.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedCustomEquipments.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      {/* 區塊 4：資料與儲存 */}
       <div>
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
           {t('settings.dataVaultSection')}
@@ -235,7 +314,7 @@ export default function Settings() {
       </div>
 
 
-      {/* 區塊 3：危險操作 */}
+      {/* 區塊 5：危險操作 */}
       <div>
         <div className="text-xs uppercase tracking-widest text-destructive/80 px-1 mb-2">
           {t('settings.dangerZoneSection')}

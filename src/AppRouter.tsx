@@ -14,6 +14,14 @@ import Recipes from './pages/Recipes';
 import RecipeDetails from './pages/RecipeDetails';
 import CategoryDetails from './pages/CategoryDetails';
 import ArchivedCategories from './pages/ArchivedCategories';
+import Exercises from './pages/Exercises';
+import ExerciseDetails from './pages/ExerciseDetails';
+import ArchivedExercises from './pages/ArchivedExercises';
+import Routines from './pages/Routines';
+import RoutineDetails from './pages/RoutineDetails';
+import ArchivedRoutines from './pages/ArchivedRoutines';
+import Equipments from './pages/Equipments';
+import ArchivedEquipments from './pages/ArchivedEquipments';
 
 const router = createBrowserRouter([
   {
@@ -61,8 +69,44 @@ const router = createBrowserRouter([
         element: <Recipes />,
       },
       {
+        path: 'settings/recipes/archived',
+        element: <ArchivedCategories />,
+      },
+      {
         path: 'settings/recipes/:id',
         element: <RecipeDetails />,
+      },
+      {
+        path: 'settings/exercises',
+        element: <Exercises />,
+      },
+      {
+        path: 'settings/exercises/archived',
+        element: <ArchivedExercises />,
+      },
+      {
+        path: 'settings/exercises/:id',
+        element: <ExerciseDetails />,
+      },
+      {
+        path: 'settings/routines',
+        element: <Routines />,
+      },
+      {
+        path: 'settings/routines/archived',
+        element: <ArchivedRoutines />,
+      },
+      {
+        path: 'settings/routines/:id',
+        element: <RoutineDetails />,
+      },
+      {
+        path: 'settings/equipments',
+        element: <Equipments />,
+      },
+      {
+        path: 'settings/equipments/archived',
+        element: <ArchivedEquipments />,
       },
       {
         path: 'settings/categories',
