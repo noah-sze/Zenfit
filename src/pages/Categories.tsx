@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Plus,
   MoreVertical,
@@ -41,6 +41,7 @@ export default function Categories() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // 食物原子庫 Hooks
   const {
@@ -55,8 +56,16 @@ export default function Categories() {
     deleteFood,
   } = useFoods();
 
-  const [activeTab, setActiveTab] = useState<'custom' | 'preset'>('custom');
-  const [filterStatus, setFilterStatus] = useState<'active' | 'archived'>('active');
+  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const handleTabChange = (tab: 'active' | 'archived') => {
+    triggerHaptic('selection');
+    if (tab === 'archived') {
+      setSearchParams({ tab: 'archived' });
+    } else {
+      setSearchParams({});
+    }
+  };
+
   const [selectedCategory, setSelectedCategory] = useState<'all' | FoodCategory>('all');
 
   // 單品新增狀態
@@ -84,25 +93,19 @@ export default function Categories() {
   const [editCarbs, setEditCarbs] = useState('');
   const [editFat, setEditFat] = useState('');
 
-  const handleTabChange = (tab: 'custom' | 'preset') => {
-    triggerHaptic('selection');
-    setActiveTab(tab);
-    setFilterStatus('active');
-  };
-
-  // 當前食物列表 (支援分類過濾)
+  // 當前食物列表 (預設與自定義整合混排，支援分類過濾)
   const currentFoods = useMemo(() => {
     let list: FoodItem[] = [];
-    if (activeTab === 'custom') {
-      list = filterStatus === 'archived' ? archivedCustomFoods : customFoods;
+    if (activeTab === 'active') {
+      list = [...customFoods, ...presetFoods];
     } else {
-      list = filterStatus === 'archived' ? archivedPresetFoods : presetFoods;
+      list = [...archivedCustomFoods, ...archivedPresetFoods];
     }
     if (selectedCategory !== 'all') {
       list = list.filter((item) => (item.category || 'natural') === selectedCategory);
     }
-    return list;
-  }, [activeTab, filterStatus, selectedCategory, customFoods, presetFoods, archivedCustomFoods, archivedPresetFoods]);
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [activeTab, selectedCategory, customFoods, presetFoods, archivedCustomFoods, archivedPresetFoods]);
 
   // 單品編輯與處理
   const handleOpenEditFood = (food: FoodItem) => {
@@ -215,8 +218,7 @@ export default function Categories() {
     <div className="w-full max-w-md mx-auto space-y-4 pb-20">
       {/* 頂部操作按鈕 (Portal 映射至 AppLayout 頂部標頭右側) */}
       {headerActionEl &&
-        filterStatus === 'active' &&
-        activeTab === 'custom' &&
+        activeTab === 'active' &&
         createPortal(
           <Button
             size="icon"
@@ -231,82 +233,14 @@ export default function Categories() {
           headerActionEl
         )}
 
-      {/* 雙向篩選選單 (自訂 vs 預設 / 使用中 vs 已歸檔) */}
-      <SegmentedControl<'custom' | 'preset'>
+      {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
+      <SegmentedControl<'active' | 'archived'>
         value={activeTab}
         onChange={handleTabChange}
         fullWidth
         options={[
-          {
-            value: 'custom',
-            label: (
-              <span className="flex items-center gap-1">
-                <span>
-                  {activeTab === 'custom' && filterStatus === 'archived'
-                    ? t('settings.archived')
-                    : t('settings.customFoods')}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-              </span>
-            ),
-            dropdown: (
-              <DropdownMenuContent align="start" sideOffset={6} className="min-w-[130px]">
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('active')}
-                >
-                  <span>{t('settings.customFoods')}</span>
-                  {filterStatus === 'active' && activeTab === 'custom' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('archived')}
-                >
-                  <span>{t('settings.archived')}</span>
-                  {filterStatus === 'archived' && activeTab === 'custom' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            ),
-          },
-          {
-            value: 'preset',
-            label: (
-              <span className="flex items-center gap-1">
-                <span>
-                  {activeTab === 'preset' && filterStatus === 'archived'
-                    ? t('settings.archived')
-                    : t('settings.presetFoods')}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-              </span>
-            ),
-            dropdown: (
-              <DropdownMenuContent align="end" sideOffset={6} className="min-w-[130px]">
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('active')}
-                >
-                  <span>{t('settings.presetFoods')}</span>
-                  {filterStatus === 'active' && activeTab === 'preset' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('archived')}
-                >
-                  <span>{t('settings.archived')}</span>
-                  {filterStatus === 'archived' && activeTab === 'preset' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            ),
-          },
+          { value: 'active', label: t('common.active') },
+          { value: 'archived', label: t('common.archived') },
         ]}
       />
 
@@ -360,7 +294,7 @@ export default function Categories() {
         <div className="divide-y divide-border">
           {currentFoods.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              {filterStatus === 'archived'
+              {activeTab === 'archived'
                 ? t('settings.noArchivedFoods')
                 : t('settings.noCustomFoods')}
             </div>
@@ -370,7 +304,7 @@ export default function Categories() {
                 key={food.id}
                 className="h-14 flex items-stretch justify-between transition-colors hover:bg-muted/40 group"
               >
-                {filterStatus === 'archived' ? (
+                {activeTab === 'archived' ? (
                   <>
                     <button
                       type="button"
@@ -379,6 +313,15 @@ export default function Categories() {
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="truncate">{food.name}</span>
+                        {food.isCustom ? (
+                          <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
+                            {t('settings.customFoods')}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono bg-muted/50 px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
+                            {t('settings.systemPreset')}
+                          </span>
+                        )}
                         <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground/80 shrink-0 leading-normal">
                           {t(`diet.foodCategory.${food.category || 'natural'}`)}
                         </span>
@@ -387,16 +330,30 @@ export default function Categories() {
                         {food.calories} kcal · {food.servingSize} {food.servingUnit}
                       </span>
                     </button>
-                    <div className="flex items-center h-full pr-3 shrink-0">
+                    <div className="flex items-center h-full pr-3 gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
                         onClick={() => handleUnarchiveFood(food)}
+                        title={t('common.restore')}
+                        aria-label={t('common.restore')}
                       >
                         <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
-                        {t('settings.unarchive')}
+                        {t('common.restore')}
                       </Button>
+                      {food.isCustom && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                          onClick={() => handleDeleteFood(food)}
+                          title={t('common.delete')}
+                          aria-label={t('common.delete')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -408,6 +365,15 @@ export default function Categories() {
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="truncate text-foreground font-medium">{food.name}</span>
+                        {food.isCustom ? (
+                          <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
+                            {t('settings.customFoods')}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono bg-muted/50 px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
+                            {t('settings.systemPreset')}
+                          </span>
+                        )}
                         <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
                           {t(`diet.foodCategory.${food.category || 'natural'}`)}
                         </span>

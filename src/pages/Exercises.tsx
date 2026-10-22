@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
-import { Plus, Search, ChevronRight, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Search, ChevronRight, X, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import {
   Select,
   SelectContent,
@@ -21,7 +22,8 @@ import {
 } from '@/components/ui/dialog';
 import { useExercises } from '@/hooks/useExercises';
 import { useEquipments } from '@/hooks/useEquipments';
-import type { EquipmentType, DetailedMuscle } from '@/types';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import type { EquipmentType, DetailedMuscle, Exercise } from '@/types';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
@@ -30,14 +32,28 @@ import { cn } from '@/lib/utils';
 export default function Exercises() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const handleTabChange = (tab: 'active' | 'archived') => {
+    triggerHaptic('selection');
+    if (tab === 'archived') {
+      setSearchParams({ tab: 'archived' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
 
   const {
     activeExercises,
-    archivedCustomExercises,
+    archivedExercises,
     addExercise,
+    unarchiveExercise,
+    deleteExercise,
   } = useExercises();
 
   const {
@@ -60,30 +76,34 @@ export default function Exercises() {
   const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
   const [customEquipmentName, setCustomEquipmentName] = useState('');
 
+  const currentList = activeTab === 'archived' ? archivedExercises : activeExercises;
+
   // 取得動作庫中實際出現過的所有器械 ID（用於頂部快篩標籤）
   const filterEquipmentList = useMemo(() => {
     const set = new Set<string>();
-    for (const ex of activeExercises) {
+    for (const ex of currentList) {
       if (ex.equipment) set.add(ex.equipment);
     }
     return Array.from(set);
-  }, [activeExercises]);
+  }, [currentList]);
 
   const filteredExercises = useMemo(() => {
-    return activeExercises.filter((item) => {
-      if (selectedEquipment !== 'all' && item.equipment !== selectedEquipment) {
-        return false;
-      }
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        return (
-          item.name.toLowerCase().includes(q) ||
-          (item.notes && item.notes.toLowerCase().includes(q))
-        );
-      }
-      return true;
-    });
-  }, [activeExercises, selectedEquipment, searchQuery]);
+    return currentList
+      .filter((item) => {
+        if (selectedEquipment !== 'all' && item.equipment !== selectedEquipment) {
+          return false;
+        }
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          return (
+            item.name.toLowerCase().includes(q) ||
+            (item.notes && item.notes.toLowerCase().includes(q))
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [currentList, selectedEquipment, searchQuery]);
 
   const getMuscleLabel = (muscle: DetailedMuscle) => {
     const key = `workout.muscle${muscle.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
@@ -163,8 +183,51 @@ export default function Exercises() {
     toast.show(t('common.saved'));
   };
 
+  const handleUnarchive = async (e: React.MouseEvent, exercise: Exercise) => {
+    e.stopPropagation();
+    await unarchiveExercise(exercise.id);
+    triggerHaptic('selection');
+    toast.show(t('common.saved'));
+  };
+
+  const handleDelete = async (e: React.MouseEvent, exercise: Exercise) => {
+    e.stopPropagation();
+    const ok = await confirm({
+      title: t('common.delete'),
+      description: `${t('common.confirm')} ${t('common.delete')} ${exercise.name}?`,
+      variant: 'destructive',
+    });
+    if (!ok) return;
+
+    const res = await deleteExercise(exercise.id);
+    if (!res.success) {
+      if (res.reason === 'has_logs') {
+        toast.show('已有訓練日誌記錄此動作，無法直接刪除');
+      } else if (res.reason === 'has_routines') {
+        toast.show('已有訓練組合包含此動作，無法直接刪除');
+      } else {
+        toast.show(t('common.error'));
+      }
+      return;
+    }
+
+    triggerHaptic('warning');
+    toast.show(t('common.deleted'));
+  };
+
   return (
     <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+      {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
+      <SegmentedControl<'active' | 'archived'>
+        value={activeTab}
+        onChange={handleTabChange}
+        fullWidth
+        options={[
+          { value: 'active', label: t('common.active') },
+          { value: 'archived', label: t('common.archived') },
+        ]}
+      />
+
       {/* 頂部操作與搜尋 */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -176,13 +239,17 @@ export default function Exercises() {
             className="pl-9 h-10 bg-card border-border font-mono text-sm"
           />
         </div>
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          size="icon"
-          className="size-10 shrink-0 bg-foreground text-background hover:opacity-90 cursor-pointer"
-        >
-          <Plus className="size-5" />
-        </Button>
+        {activeTab === 'active' && (
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            size="icon"
+            className="size-10 shrink-0 bg-foreground text-background hover:opacity-90 cursor-pointer"
+            title={t('common.add')}
+            aria-label={t('common.add')}
+          >
+            <Plus className="size-5" />
+          </Button>
+        )}
       </div>
 
       {/* 器械橫向切換標籤 */}
@@ -220,17 +287,13 @@ export default function Exercises() {
         ))}
       </div>
 
-      {/* 狀態列：活躍動作與封存入口 */}
+      {/* 狀態列：計數顯示 */}
       <div className="flex items-center justify-between px-1 text-xs font-mono text-muted-foreground">
-        <span>{t('settings.activeCount', { count: filteredExercises.length })}</span>
-        {archivedCustomExercises.length > 0 && (
-          <Link
-            to="/settings/exercises/archived"
-            className="hover:text-foreground transition-colors underline underline-offset-4"
-          >
-            {t('settings.archivedCount', { count: archivedCustomExercises.length })}
-          </Link>
-        )}
+        <span>
+          {activeTab === 'active'
+            ? t('settings.activeCount', { count: filteredExercises.length })
+            : t('settings.archivedCount', { count: filteredExercises.length })}
+        </span>
       </div>
 
       {/* 動作清單 (Usage List 佈局，無陰影，純邊框) */}
@@ -253,9 +316,13 @@ export default function Exercises() {
                     <span className="text-sm font-medium text-foreground truncate">
                       {exercise.name}
                     </span>
-                    {exercise.isCustom && (
+                    {exercise.isCustom ? (
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground shrink-0">
                         {t('settings.customFoods')}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground shrink-0">
+                        {t('settings.systemPreset')}
                       </span>
                     )}
                   </div>
@@ -281,7 +348,35 @@ export default function Exercises() {
                     )}
                   </div>
                 </div>
-                <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+
+                {activeTab === 'archived' ? (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleUnarchive(e, exercise)}
+                      className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title={t('common.restore')}
+                      aria-label={t('common.restore')}
+                    >
+                      <RotateCcw className="size-3.5" />
+                    </Button>
+                    {exercise.isCustom && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleDelete(e, exercise)}
+                        className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                        title={t('common.delete')}
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+                )}
               </div>
             );
           })

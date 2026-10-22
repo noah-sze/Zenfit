@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { Plus, Search, Edit2, Archive, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, Search, Edit2, Archive, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import {
   Dialog,
   DialogContent,
@@ -22,14 +23,26 @@ import type { Equipment } from '@/types';
 export default function Equipments() {
   const { t } = useTranslation();
   const confirm = useConfirm();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const handleTabChange = (tab: 'active' | 'archived') => {
+    triggerHaptic('selection');
+    if (tab === 'archived') {
+      setSearchParams({ tab: 'archived' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   const {
     activeEquipments,
-    archivedCustomEquipments,
+    archivedEquipments,
     addCustomEquipment,
     updateEquipment,
     archiveEquipment,
+    unarchiveEquipment,
     deleteEquipment,
     getEquipmentDisplayName,
   } = useEquipments();
@@ -54,14 +67,22 @@ export default function Equipments() {
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [editEquipmentName, setEditEquipmentName] = useState('');
 
+  const currentList = activeTab === 'archived' ? archivedEquipments : activeEquipments;
+
   const filteredEquipments = useMemo(() => {
-    return activeEquipments.filter((eq) => {
-      const displayName = getEquipmentDisplayName(eq.id, t).toLowerCase();
-      const q = searchQuery.toLowerCase().trim();
-      if (!q) return true;
-      return displayName.includes(q) || eq.name.toLowerCase().includes(q);
-    });
-  }, [activeEquipments, searchQuery, getEquipmentDisplayName, t]);
+    const q = searchQuery.toLowerCase().trim();
+    return currentList
+      .filter((eq) => {
+        const displayName = getEquipmentDisplayName(eq.id, t).toLowerCase();
+        if (!q) return true;
+        return displayName.includes(q) || eq.name.toLowerCase().includes(q);
+      })
+      .sort((a, b) => {
+        const nameA = getEquipmentDisplayName(a.id, t);
+        const nameB = getEquipmentDisplayName(b.id, t);
+        return nameA.localeCompare(nameB);
+      });
+  }, [currentList, searchQuery, getEquipmentDisplayName, t]);
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +137,12 @@ export default function Equipments() {
     toast.show(t('common.saved'));
   };
 
+  const handleUnarchive = async (eq: Equipment) => {
+    await unarchiveEquipment(eq.id);
+    triggerHaptic('selection');
+    toast.show(t('common.saved'));
+  };
+
   const handleDelete = async (eq: Equipment) => {
     const ok = await confirm({
       title: t('common.delete'),
@@ -140,6 +167,17 @@ export default function Equipments() {
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+      {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
+      <SegmentedControl<'active' | 'archived'>
+        value={activeTab}
+        onChange={handleTabChange}
+        fullWidth
+        options={[
+          { value: 'active', label: t('common.active') },
+          { value: 'archived', label: t('common.archived') },
+        ]}
+      />
+
       {/* 搜尋與新增按鈕 */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -151,29 +189,29 @@ export default function Equipments() {
             className="pl-9 h-10 bg-card border-border font-mono text-sm"
           />
         </div>
-        <Button
-          onClick={() => {
-            setNewEquipmentName('');
-            setIsAddOpen(true);
-          }}
-          size="icon"
-          className="size-10 shrink-0 bg-foreground text-background hover:opacity-90 cursor-pointer"
-        >
-          <Plus className="size-5" />
-        </Button>
+        {activeTab === 'active' && (
+          <Button
+            onClick={() => {
+              setNewEquipmentName('');
+              setIsAddOpen(true);
+            }}
+            size="icon"
+            className="size-10 shrink-0 bg-foreground text-background hover:opacity-90 cursor-pointer"
+            title={t('common.add')}
+            aria-label={t('common.add')}
+          >
+            <Plus className="size-5" />
+          </Button>
+        )}
       </div>
 
-      {/* 狀態列：活躍器械數與封存入口 */}
+      {/* 狀態列：計數顯示 */}
       <div className="flex items-center justify-between px-1 text-xs font-mono text-muted-foreground">
-        <span>{t('settings.activeCount', { count: filteredEquipments.length })}</span>
-        {archivedCustomEquipments.length > 0 && (
-          <Link
-            to="/settings/equipments/archived"
-            className="hover:text-foreground transition-colors underline underline-offset-4"
-          >
-            {t('settings.archivedCount', { count: archivedCustomEquipments.length })}
-          </Link>
-        )}
+        <span>
+          {activeTab === 'active'
+            ? t('settings.activeCount', { count: filteredEquipments.length })
+            : t('settings.archivedCount', { count: filteredEquipments.length })}
+        </span>
       </div>
 
       {/* 器械列表 (Usage List 佈局，無陰影，純邊框) */}
@@ -211,30 +249,63 @@ export default function Equipments() {
                   </div>
                 </div>
 
-                {eq.isCustom && (
+                {activeTab === 'active' ? (
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenEdit(eq)}
-                      className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                    >
-                      <Edit2 className="size-3.5" />
-                    </Button>
+                    {eq.isCustom && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenEdit(eq)}
+                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                        title={t('common.edit')}
+                        aria-label={t('common.edit')}
+                      >
+                        <Edit2 className="size-3.5" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleArchive(eq)}
                       className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title={t('common.archive')}
+                      aria-label={t('common.archive')}
                     >
                       <Archive className="size-3.5" />
                     </Button>
-                    {usage === 0 && (
+                    {eq.isCustom && usage === 0 && (
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(eq)}
                         className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                        title={t('common.delete')}
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleUnarchive(eq)}
+                      className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title={t('common.restore')}
+                      aria-label={t('common.restore')}
+                    >
+                      <RotateCcw className="size-3.5" />
+                    </Button>
+                    {eq.isCustom && usage === 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(eq)}
+                        className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                        title={t('common.delete')}
+                        aria-label={t('common.delete')}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>

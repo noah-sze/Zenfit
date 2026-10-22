@@ -23,11 +23,17 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const confirm = useConfirm();
-  const { customFoods, archivedCustomFoods } = useFoods();
-  const { customRecipes, archivedCustomRecipes } = useRecipes();
-  const { activeExercises, archivedCustomExercises } = useExercises();
-  const { activeRoutines, archivedCustomRoutines } = useRoutines();
-  const { activeEquipments, archivedCustomEquipments } = useEquipments();
+  const { customFoods, presetFoods, archivedCustomFoods, archivedPresetFoods } = useFoods();
+  const { customRecipes, presetRecipes, archivedCustomRecipes, archivedPresetRecipes } = useRecipes();
+  const { activeExercises, archivedExercises } = useExercises();
+  const { activeRoutines, archivedRoutines } = useRoutines();
+  const { activeEquipments, archivedEquipments } = useEquipments();
+
+  const totalActiveFoods = customFoods.length + presetFoods.length;
+  const totalArchivedFoods = archivedCustomFoods.length + archivedPresetFoods.length;
+
+  const totalActiveRecipes = customRecipes.length + presetRecipes.length;
+  const totalArchivedRecipes = archivedCustomRecipes.length + archivedPresetRecipes.length;
 
   const currentLang = i18n.resolvedLanguage || i18n.language || 'en';
 
@@ -196,9 +202,9 @@ export default function Settings() {
             </span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
               <span>
-                {t('settings.activeCount', { count: customFoods.length })}
-                {archivedCustomFoods.length > 0
-                  ? ` · ${t('settings.archivedCount', { count: archivedCustomFoods.length })}`
+                {t('settings.activeCount', { count: totalActiveFoods })}
+                {totalArchivedFoods > 0
+                  ? ` · ${t('settings.archivedCount', { count: totalArchivedFoods })}`
                   : ''}
               </span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -215,9 +221,9 @@ export default function Settings() {
             </span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
               <span>
-                {t('settings.activeCount', { count: customRecipes.length })}
-                {archivedCustomRecipes.length > 0
-                  ? ` · ${t('settings.archivedCount', { count: archivedCustomRecipes.length })}`
+                {t('settings.activeCount', { count: totalActiveRecipes })}
+                {totalArchivedRecipes > 0
+                  ? ` · ${t('settings.archivedCount', { count: totalArchivedRecipes })}`
                   : ''}
               </span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -232,45 +238,7 @@ export default function Settings() {
           {t('settings.workoutSection')}
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          {/* 單品動作管理入口 */}
-          <Link
-            to="/settings/exercises"
-            className="usage-row cursor-pointer group"
-          >
-            <span className="text-sm font-normal text-foreground">
-              {t('settings.exercises')}
-            </span>
-            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>
-                {t('settings.activeCount', { count: activeExercises.length })}
-                {archivedCustomExercises.length > 0
-                  ? ` · ${t('settings.archivedCount', { count: archivedCustomExercises.length })}`
-                  : ''}
-              </span>
-              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
-
-          {/* 訓練組合管理入口 */}
-          <Link
-            to="/settings/routines"
-            className="usage-row cursor-pointer group"
-          >
-            <span className="text-sm font-normal text-foreground">
-              {t('settings.routines')}
-            </span>
-            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>
-                {t('settings.activeCount', { count: activeRoutines.length })}
-                {archivedCustomRoutines.length > 0
-                  ? ` · ${t('settings.archivedCount', { count: archivedCustomRoutines.length })}`
-                  : ''}
-              </span>
-              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
-
-          {/* 器械管理入口 */}
+          {/* 器械入口 */}
           <Link
             to="/settings/equipments"
             className="usage-row cursor-pointer group"
@@ -281,8 +249,46 @@ export default function Settings() {
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
               <span>
                 {t('settings.activeCount', { count: activeEquipments.length })}
-                {archivedCustomEquipments.length > 0
-                  ? ` · ${t('settings.archivedCount', { count: archivedCustomEquipments.length })}`
+                {archivedEquipments.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedEquipments.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+
+          {/* 動作入口 */}
+          <Link
+            to="/settings/exercises"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.exercises')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: activeExercises.length })}
+                {archivedExercises.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedExercises.length })}`
+                  : ''}
+              </span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+
+          {/* 訓練組合入口 */}
+          <Link
+            to="/settings/routines"
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.routines')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>
+                {t('settings.activeCount', { count: activeRoutines.length })}
+                {archivedRoutines.length > 0
+                  ? ` · ${t('settings.archivedCount', { count: archivedRoutines.length })}`
                   : ''}
               </span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
