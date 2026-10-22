@@ -3,19 +3,23 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useExercises } from '@/hooks/useExercises';
+import { useRoutines } from '@/hooks/useRoutines';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Check, Trash2, Timer, Dumbbell } from 'lucide-react';
+import { Plus, Check, Trash2, Timer, Dumbbell, Layers } from 'lucide-react';
 import { useConfirm } from '@/components/ui/confirm-dialog';
+import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Workout() {
   const { t } = useTranslation();
   const { selectedDate, openAddModal } = useAppStore();
   const {
     workouts,
+    addWorkout,
     deleteWorkout,
     toggleSetCompleted,
     addSetToExercise,
@@ -23,6 +27,7 @@ export default function Workout() {
     updateWorkout,
   } = useWorkoutLogs(selectedDate);
   const { exercises } = useExercises();
+  const { activeRoutines, exerciseMap } = useRoutines();
   const confirm = useConfirm();
 
   // 休息計時器狀態
@@ -32,6 +37,9 @@ export default function Workout() {
   // 新增動作對話框
   const [targetWorkoutId, setTargetWorkoutId] = useState<string | null>(null);
   const [isAddExerciseModalOpen, setIsAddExerciseModalOpen] = useState(false);
+
+  // 套用訓練組合對話框
+  const [isApplyRoutineOpen, setIsApplyRoutineOpen] = useState(false);
 
   useEffect(() => {
     let interval: any = null;
@@ -94,6 +102,42 @@ export default function Workout() {
     triggerHaptic('success');
   };
 
+  const handleApplyRoutineDirect = async (routineId: string) => {
+    const routine = activeRoutines.find((r) => r.id === routineId);
+    if (!routine) return;
+
+    const exerciseGroups = routine.exercises.map((item) => {
+      const ex = exerciseMap.get(item.exerciseId);
+      const setsCount = item.defaultSets || 3;
+      const sets = Array.from({ length: setsCount }, (_, i) => ({
+        id: uuidv4(),
+        setNumber: i + 1,
+        weight: 20,
+        reps: 10,
+        isCompleted: false,
+      }));
+
+      return {
+        exerciseId: item.exerciseId,
+        exerciseName: ex ? ex.name : '未知動作',
+        category: ex ? ex.category : 'free_weight',
+        sets,
+        notes: item.notes,
+      };
+    });
+
+    await addWorkout({
+      date: selectedDate,
+      title: routine.name,
+      exercises: exerciseGroups,
+      notes: routine.notes ? `[${routine.name}] ${routine.notes}` : `[${routine.name}]`,
+    });
+
+    setIsApplyRoutineOpen(false);
+    triggerHaptic('success');
+    toast.show(t('workout.routineApplied'));
+  };
+
   return (
     <div className="space-y-4">
       {/* 頂部極簡休息計時器膠囊 */}
@@ -119,14 +163,27 @@ export default function Workout() {
       {/* 快速開始新訓練按鈕 */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm sm:text-base font-semibold tracking-tight">{t('workout.title')}</h2>
-        <Button
-          size="sm"
-          onClick={() => openAddModal('workout')}
-          className="text-xs h-9 px-3 cursor-pointer rounded-lg"
-        >
-          <Plus className="size-4 mr-1" />
-          {t('workout.newWorkout')}
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {activeRoutines.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsApplyRoutineOpen(true)}
+              className="text-xs h-9 px-2.5 cursor-pointer rounded-lg border-border"
+            >
+              <Layers className="size-3.5 mr-1" />
+              {t('workout.routines')}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            onClick={() => openAddModal('workout')}
+            className="text-xs h-9 px-3 cursor-pointer rounded-lg bg-foreground text-background"
+          >
+            <Plus className="size-4 mr-1" />
+            {t('workout.newWorkout')}
+          </Button>
+        </div>
       </div>
 
       {workouts.length > 0 ? (
@@ -304,8 +361,42 @@ export default function Workout() {
               >
                 <span className="font-medium text-foreground text-sm">{ex.name}</span>
                 <span className="text-xs font-mono text-muted-foreground">
-                  {t(`workout.${ex.category}`)}
+                  {ex.category}
                 </span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 套用訓練組合彈窗 */}
+      <Dialog open={isApplyRoutineOpen} onOpenChange={setIsApplyRoutineOpen}>
+        <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-lg space-y-3">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold">
+              {t('workout.applyRoutine')}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="max-h-72 overflow-y-auto space-y-1.5 pt-1">
+            {activeRoutines.map((routine) => (
+              <button
+                key={routine.id}
+                type="button"
+                onClick={() => handleApplyRoutineDirect(routine.id)}
+                className="w-full p-2.5 text-left rounded-lg hover:bg-muted/60 border border-border transition-colors flex items-center justify-between text-xs cursor-pointer group"
+              >
+                <div>
+                  <div className="font-medium text-foreground text-sm group-hover:underline">
+                    {routine.name}
+                  </div>
+                  <div className="text-[11px] font-mono text-muted-foreground">
+                    {routine.exercises.length} 個動作
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="h-7 text-xs font-mono pointer-events-none">
+                  套用
+                </Button>
               </button>
             ))}
           </div>

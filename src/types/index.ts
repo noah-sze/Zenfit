@@ -80,20 +80,93 @@ export type MuscleCategory =
   | 'cardio'
   | 'other';
 
-export type EquipmentType =
-  | 'barbell'
-  | 'dumbbell'
-  | 'cable'
+export type ExerciseCategory =
+  | 'free_weight'
   | 'machine'
   | 'bodyweight'
+  | 'cardio';
+
+export type MajorMuscleGroup =
+  | 'chest'
+  | 'back'
+  | 'shoulders'
+  | 'arms'
+  | 'legs'
+  | 'core';
+
+export type DetailedMuscle =
+  | 'upper_chest'
+  | 'mid_lower_chest'
+  | 'lats'
+  | 'upper_back_traps'
+  | 'lower_back'
+  | 'front_delts'
+  | 'side_delts'
+  | 'rear_delts'
+  | 'biceps'
+  | 'triceps'
+  | 'forearms'
+  | 'quads'
+  | 'hamstrings'
+  | 'glutes'
+  | 'calves'
+  | 'abs'
+  | 'obliques';
+
+export type PredefinedEquipmentId =
+  | 'barbell'
+  | 'dumbbell'
+  | 'kettlebell'
+  | 'specialty_bar'
+  | 'cable'
+  | 'pin_loaded_machine'
+  | 'plate_loaded_machine'
+  | 'smith_machine'
+  | 'leg_press'
+  | 'hack_squat'
+  | 'bodyweight'
+  | 'weighted_bodyweight'
+  | 'resistance_band'
+  | 'gymnastic_rings'
+  | 'cardio_machine'
+  | 'machine' // 相容舊版固定器械
   | 'other';
+
+export type EquipmentType = PredefinedEquipmentId | (string & {});
+
+export interface Equipment {
+  id: string;
+  name: string;
+  isCustom: boolean;
+  isArchived?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
 
 export interface Exercise {
   id: string;
   name: string;
-  category: MuscleCategory;
+  category?: ExerciseCategory; // 淘汰/選填：向後相容
   equipment: EquipmentType;
+  targetMuscles: Partial<Record<DetailedMuscle, number>>;
   notes?: string;
+  isCustom: boolean;
+  isArchived?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface RoutineExerciseItem {
+  exerciseId: string;
+  defaultSets: number;
+  notes?: string;
+}
+
+export interface WorkoutRoutine {
+  id: string;
+  name: string;
+  notes?: string;
+  exercises: RoutineExerciseItem[];
   isCustom: boolean;
   isArchived?: boolean;
   createdAt: number;
@@ -115,7 +188,7 @@ export interface WorkoutSet {
 export interface WorkoutExerciseGroup {
   exerciseId: string;
   exerciseName: string;
-  category: MuscleCategory;
+  category?: string;
   sets: WorkoutSet[];
   notes?: string;
 }

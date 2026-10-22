@@ -7,6 +7,7 @@ import { useBodyMetrics } from '@/hooks/useBodyMetrics';
 import { useFoods } from '@/hooks/useFoods';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useExercises } from '@/hooks/useExercises';
+import { useRoutines } from '@/hooks/useRoutines';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ import { Utensils, Dumbbell, Activity, Layers, UtensilsCrossed } from 'lucide-re
 import type { MealType } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/toast';
+import { cn } from '@/lib/utils';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
 
 export function AddQuickModal() {
@@ -47,6 +49,11 @@ export function AddQuickModal() {
   const { foods, allFoods } = useFoods();
   const { activeRecipes, foodMap } = useRecipes();
   const { exercises } = useExercises();
+  const { activeRoutines, exerciseMap } = useRoutines();
+
+  // Workout Form State
+  const [workoutEntryMode, setWorkoutEntryMode] = useState<'single' | 'routine'>('single');
+  const [selectedRoutineId, setSelectedRoutineId] = useState('');
 
   // Food Form State
   const [mealType, setMealType] = useState<MealType>('breakfast');
@@ -207,6 +214,46 @@ export function AddQuickModal() {
     });
     toast.show(t('common.saved'));
     resetWorkoutForm();
+    closeAddModal();
+  };
+
+  const currentRoutine = activeRoutines.find((r) => r.id === selectedRoutineId);
+
+  const handleSaveRoutineWorkout = async () => {
+    if (!currentRoutine) {
+      toast.show(t('common.required'));
+      return;
+    }
+
+    const exerciseGroups = currentRoutine.exercises.map((item) => {
+      const ex = exerciseMap.get(item.exerciseId);
+      const setsCount = item.defaultSets || 3;
+      const sets = Array.from({ length: setsCount }, (_, i) => ({
+        id: uuidv4(),
+        setNumber: i + 1,
+        weight: 20,
+        reps: 10,
+        isCompleted: false,
+      }));
+
+      return {
+        exerciseId: item.exerciseId,
+        exerciseName: ex ? ex.name : '未知動作',
+        category: ex ? ex.category : 'free_weight',
+        sets,
+        notes: item.notes,
+      };
+    });
+
+    await addWorkout({
+      date: selectedDate,
+      title: currentRoutine.name,
+      exercises: exerciseGroups,
+      notes: currentRoutine.notes ? `[${currentRoutine.name}] ${currentRoutine.notes}` : `[${currentRoutine.name}]`,
+    });
+
+    toast.show(t('workout.routineApplied'));
+    setSelectedRoutineId('');
     closeAddModal();
   };
 
@@ -520,69 +567,160 @@ export function AddQuickModal() {
 
           {/* 記訓練 Tab */}
           <TabsContent value="workout" className="space-y-3 mt-0 focus-visible:outline-none">
-            <div>
-              <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                {t('workout.workoutTitle')}
-              </label>
-              <Input
-                value={workoutTitle}
-                onChange={(e) => setWorkoutTitle(e.target.value)}
-                placeholder="例如：胸與三頭推力訓練"
-                className="h-9 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                {t('workout.selectExercise')}
-              </label>
-              <select
-                value={selectedExerciseId}
-                onChange={(e) => setSelectedExerciseId(e.target.value)}
-                className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
+            {/* 模式切換：單一動作 vs 訓練組合 */}
+            <div className="flex border border-border rounded-lg p-0.5 bg-muted/30 mb-2">
+              <button
+                type="button"
+                onClick={() => setWorkoutEntryMode('single')}
+                className={cn(
+                  'flex-1 text-xs py-1.5 font-mono font-medium rounded-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer',
+                  workoutEntryMode === 'single'
+                    ? 'bg-background text-foreground shadow-none'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
-                <option value="">選擇第一個動作...</option>
-                {exercises.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.name} ({t(`workout.${ex.category}`)})
-                  </option>
-                ))}
-              </select>
+                <Dumbbell className="size-3.5" />
+                <span>{t('workout.singleExercise')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkoutEntryMode('routine')}
+                className={cn(
+                  'flex-1 text-xs py-1.5 font-mono font-medium rounded-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer',
+                  workoutEntryMode === 'routine'
+                    ? 'bg-background text-foreground shadow-none'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Layers className="size-3.5" />
+                <span>{t('workout.routineTemplate')}</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  第 1 組重量 (kg)
-                </label>
-                <Input
-                  type="number"
-                  value={firstSetWeight}
-                  onChange={(e) => setFirstSetWeight(e.target.value)}
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  第 1 組次數 (reps)
-                </label>
-                <Input
-                  type="number"
-                  value={firstSetReps}
-                  onChange={(e) => setFirstSetReps(e.target.value)}
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
-            </div>
+            {workoutEntryMode === 'single' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                    {t('workout.workoutTitle')}
+                  </label>
+                  <Input
+                    value={workoutTitle}
+                    onChange={(e) => setWorkoutTitle(e.target.value)}
+                    placeholder="例如：胸與三頭推力訓練"
+                    className="h-9 text-sm"
+                  />
+                </div>
 
-            <DialogFooter className="pt-2 flex flex-row items-center justify-between">
-              <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
-                {t('common.cancel')}
-              </Button>
-              <Button size="sm" onClick={handleSaveWorkout} className="cursor-pointer">
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
+                <div>
+                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                    {t('workout.selectExercise')}
+                  </label>
+                  <select
+                    value={selectedExerciseId}
+                    onChange={(e) => setSelectedExerciseId(e.target.value)}
+                    className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
+                  >
+                    <option value="">選擇第一個動作...</option>
+                    {exercises.map((ex) => (
+                      <option key={ex.id} value={ex.id}>
+                        {ex.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                      第 1 組重量 (kg)
+                    </label>
+                    <Input
+                      type="number"
+                      value={firstSetWeight}
+                      onChange={(e) => setFirstSetWeight(e.target.value)}
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                      第 1 組次數 (reps)
+                    </label>
+                    <Input
+                      type="number"
+                      value={firstSetReps}
+                      onChange={(e) => setFirstSetReps(e.target.value)}
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter className="pt-2 flex flex-row items-center justify-between">
+                  <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
+                    {t('common.cancel')}
+                  </Button>
+                  <Button size="sm" onClick={handleSaveWorkout} className="cursor-pointer bg-foreground text-background">
+                    {t('common.save')}
+                  </Button>
+                </DialogFooter>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                    {t('workout.routines')}
+                  </label>
+                  <select
+                    value={selectedRoutineId}
+                    onChange={(e) => setSelectedRoutineId(e.target.value)}
+                    className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
+                  >
+                    <option value="">選擇訓練組合...</option>
+                    {activeRoutines.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} ({r.exercises.length} 個動作)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {currentRoutine && (
+                  <div className="border border-border rounded-lg p-2.5 bg-muted/20 space-y-1.5">
+                    <div className="text-xs font-mono text-muted-foreground">
+                      包含 {currentRoutine.exercises.length} 個動作：
+                    </div>
+                    <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                      {currentRoutine.exercises.map((item, idx) => {
+                        const ex = exerciseMap.get(item.exerciseId);
+                        return (
+                          <div key={idx} className="text-xs font-mono flex items-center justify-between">
+                            <span className="truncate text-foreground">
+                              {ex ? ex.name : '未知動作'}
+                            </span>
+                            <span className="text-muted-foreground shrink-0 ml-2">
+                              {item.defaultSets} 組
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter className="pt-2 flex flex-row items-center justify-between">
+                  <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveRoutineWorkout}
+                    disabled={!currentRoutine}
+                    className="cursor-pointer bg-foreground text-background"
+                  >
+                    {t('workout.applyRoutine')}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
           </TabsContent>
 
           {/* 記體態 Tab */}
