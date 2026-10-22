@@ -226,6 +226,12 @@ export class ZenfitDatabase extends Dexie {
           await tx.table('exercises').update(ex.id, { equipment: newEq });
         }
       }
+
+      // 平滑升級：若既有預設器械存在斜線，更新為標準單一名詞
+      const legPress = await tx.table('equipments').get('leg_press');
+      if (legPress && legPress.name.includes('/')) {
+        await tx.table('equipments').update('leg_press', { name: '腿舉機' });
+      }
     });
   }
 
@@ -244,7 +250,7 @@ export class ZenfitDatabase extends Dexie {
         { id: 'pin_loaded_machine', name: '插銷式器械', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
         { id: 'plate_loaded_machine', name: '掛片式器械', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
         { id: 'smith_machine', name: '史密斯機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'leg_press', name: '腿舉 / 倒蹬機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
+        { id: 'leg_press', name: '腿舉機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
         { id: 'hack_squat', name: '哈克機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
         { id: 'bodyweight', name: '徒手自重', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
         { id: 'weighted_bodyweight', name: '負重自重', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },

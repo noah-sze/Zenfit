@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { LockGuard } from './components/security/LockGuard';
 
@@ -13,15 +13,11 @@ import Categories from './pages/Categories';
 import Recipes from './pages/Recipes';
 import RecipeDetails from './pages/RecipeDetails';
 import CategoryDetails from './pages/CategoryDetails';
-import ArchivedCategories from './pages/ArchivedCategories';
 import Exercises from './pages/Exercises';
 import ExerciseDetails from './pages/ExerciseDetails';
-import ArchivedExercises from './pages/ArchivedExercises';
 import Routines from './pages/Routines';
 import RoutineDetails from './pages/RoutineDetails';
-import ArchivedRoutines from './pages/ArchivedRoutines';
 import Equipments from './pages/Equipments';
-import ArchivedEquipments from './pages/ArchivedEquipments';
 
 const router = createBrowserRouter([
   {
@@ -58,7 +54,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/foods/archived',
-        element: <ArchivedCategories />,
+        element: <Navigate to="/settings/foods?tab=archived" replace />,
       },
       {
         path: 'settings/foods/:id',
@@ -70,7 +66,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/recipes/archived',
-        element: <ArchivedCategories />,
+        element: <Navigate to="/settings/recipes?tab=archived" replace />,
       },
       {
         path: 'settings/recipes/:id',
@@ -82,7 +78,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/exercises/archived',
-        element: <ArchivedExercises />,
+        element: <Navigate to="/settings/exercises?tab=archived" replace />,
       },
       {
         path: 'settings/exercises/:id',
@@ -94,7 +90,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/routines/archived',
-        element: <ArchivedRoutines />,
+        element: <Navigate to="/settings/routines?tab=archived" replace />,
       },
       {
         path: 'settings/routines/:id',
@@ -106,7 +102,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/equipments/archived',
-        element: <ArchivedEquipments />,
+        element: <Navigate to="/settings/equipments?tab=archived" replace />,
       },
       {
         path: 'settings/categories',
@@ -114,7 +110,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/categories/archived',
-        element: <ArchivedCategories />,
+        element: <Navigate to="/settings/foods?tab=archived" replace />,
       },
       {
         path: 'settings/categories/:id',

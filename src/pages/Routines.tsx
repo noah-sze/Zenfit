@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
-import { Plus, Search, ChevronRight, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Search, ChevronRight, X, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import {
   Select,
   SelectContent,
@@ -21,21 +22,36 @@ import {
 } from '@/components/ui/dialog';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useExercises } from '@/hooks/useExercises';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import type { RoutineExerciseItem, DetailedMuscle } from '@/types';
+import type { RoutineExerciseItem, DetailedMuscle, WorkoutRoutine } from '@/types';
 
 export default function Routines() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const handleTabChange = (tab: 'active' | 'archived') => {
+    triggerHaptic('selection');
+    if (tab === 'archived') {
+      setSearchParams({ tab: 'archived' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   const {
     activeRoutines,
-    archivedCustomRoutines,
+    archivedRoutines,
     exerciseMap,
     addRoutine,
+    unarchiveRoutine,
+    deleteRoutine,
   } = useRoutines(searchQuery);
 
   const { activeExercises } = useExercises();
@@ -45,6 +61,22 @@ export default function Routines() {
   const [newName, setNewName] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [newRoutineItems, setNewRoutineItems] = useState<RoutineExerciseItem[]>([]);
+
+  const currentList = activeTab === 'archived' ? archivedRoutines : activeRoutines;
+  const filteredRoutines = useMemo(() => {
+    return currentList
+      .filter((r) => {
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          return (
+            r.name.toLowerCase().includes(q) ||
+            (r.notes && r.notes.toLowerCase().includes(q))
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [currentList, searchQuery]);
 
   const getMuscleLabel = (muscle: DetailedMuscle) => {
     const key = `workout.muscle${muscle.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
@@ -113,8 +145,40 @@ export default function Routines() {
     setIsAddOpen(false);
   };
 
+  const handleUnarchive = async (e: React.MouseEvent, routine: WorkoutRoutine) => {
+    e.stopPropagation();
+    await unarchiveRoutine(routine.id);
+    triggerHaptic('selection');
+    toast.show(t('common.saved'));
+  };
+
+  const handleDelete = async (e: React.MouseEvent, routine: WorkoutRoutine) => {
+    e.stopPropagation();
+    const ok = await confirm({
+      title: t('common.delete'),
+      description: `${t('common.confirm')} ${t('common.delete')} ${routine.name}?`,
+      variant: 'destructive',
+    });
+    if (!ok) return;
+
+    await deleteRoutine(routine.id);
+    triggerHaptic('warning');
+    toast.show(t('common.deleted'));
+  };
+
   return (
     <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+      {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
+      <SegmentedControl<'active' | 'archived'>
+        value={activeTab}
+        onChange={handleTabChange}
+        fullWidth
+        options={[
+          { value: 'active', label: t('common.active') },
+          { value: 'archived', label: t('common.archived') },
+        ]}
+      />
+
       {/* 頂部操作與搜尋 */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -126,36 +190,36 @@ export default function Routines() {
             className="pl-9 h-10 bg-card border-border font-mono text-sm"
           />
         </div>
-        <Button
-          onClick={handleOpenAdd}
-          size="icon"
-          className="size-10 shrink-0 bg-foreground text-background hover:opacity-90 cursor-pointer"
-        >
-          <Plus className="size-5" />
-        </Button>
+        {activeTab === 'active' && (
+          <Button
+            onClick={handleOpenAdd}
+            size="icon"
+            className="size-10 shrink-0 bg-foreground text-background hover:opacity-90 cursor-pointer"
+            title={t('common.add')}
+            aria-label={t('common.add')}
+          >
+            <Plus className="size-5" />
+          </Button>
+        )}
       </div>
 
-      {/* 狀態列：活躍數與封存入口 */}
+      {/* 狀態列：計數顯示 */}
       <div className="flex items-center justify-between px-1 text-xs font-mono text-muted-foreground">
-        <span>{t('settings.activeCount', { count: activeRoutines.length })}</span>
-        {archivedCustomRoutines.length > 0 && (
-          <Link
-            to="/settings/routines/archived"
-            className="hover:text-foreground transition-colors underline underline-offset-4"
-          >
-            {t('settings.archivedCount', { count: archivedCustomRoutines.length })}
-          </Link>
-        )}
+        <span>
+          {activeTab === 'active'
+            ? t('settings.activeCount', { count: filteredRoutines.length })
+            : t('settings.archivedCount', { count: filteredRoutines.length })}
+        </span>
       </div>
 
       {/* 訓練組合清單 (Usage List 佈局，無陰影，純邊框) */}
       <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-        {activeRoutines.length === 0 ? (
+        {filteredRoutines.length === 0 ? (
           <div className="p-8 text-center text-sm font-mono text-muted-foreground">
             {t('workout.noRoutines')}
           </div>
         ) : (
-          activeRoutines.map((routine) => {
+          filteredRoutines.map((routine) => {
             const summary = getRoutineFactSummary(routine, exerciseMap);
             return (
               <div
@@ -168,9 +232,13 @@ export default function Routines() {
                     <span className="text-sm font-medium text-foreground truncate">
                       {routine.name}
                     </span>
-                    {routine.isCustom && (
+                    {routine.isCustom ? (
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground shrink-0">
                         {t('settings.customRecipes')}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground shrink-0">
+                        {t('settings.systemPreset')}
                       </span>
                     )}
                   </div>
@@ -198,7 +266,35 @@ export default function Routines() {
                     )}
                   </div>
                 </div>
-                <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+
+                {activeTab === 'archived' ? (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleUnarchive(e, routine)}
+                      className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title={t('common.restore')}
+                      aria-label={t('common.restore')}
+                    >
+                      <RotateCcw className="size-3.5" />
+                    </Button>
+                    {routine.isCustom && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleDelete(e, routine)}
+                        className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                        title={t('common.delete')}
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+                )}
               </div>
             );
           })

@@ -234,7 +234,7 @@ export interface MacroSplit {
 
 export interface UserBaseInfo {
   id: string; // 唯一識別碼，預設為 'primary_user'
-  name: string; // 稱呼 / 姓名
+  name: string; // 姓名
   gender: 'male' | 'female'; // 生理性別
   birthDate?: string; // 出生年月 ('YYYY-MM' 或 'YYYY-MM-DD')
   heightCm: number; // 身高 (cm)

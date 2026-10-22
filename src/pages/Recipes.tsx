@@ -1,16 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Plus,
   MoreVertical,
   Trash2,
   Edit2,
   Archive,
-  ChevronDown,
   RefreshCcw,
-  Check,
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,6 +41,7 @@ export default function Recipes() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { allFoods } = useFoods();
   const {
@@ -58,8 +57,15 @@ export default function Recipes() {
     getRecipeMacros,
   } = useRecipes();
 
-  const [activeTab, setActiveTab] = useState<'custom' | 'preset'>('custom');
-  const [filterStatus, setFilterStatus] = useState<'active' | 'archived'>('active');
+  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const handleTabChange = (tab: 'active' | 'archived') => {
+    triggerHaptic('selection');
+    if (tab === 'archived') {
+      setSearchParams({ tab: 'archived' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   // 新增或編輯菜餚彈窗狀態
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
@@ -70,19 +76,15 @@ export default function Recipes() {
     Array<{ foodId: string; quantity: string; isOptional: boolean }>
   >([]);
 
-  // 切換 Tab
-  const handleTabChange = (tab: 'custom' | 'preset') => {
-    triggerHaptic('selection');
-    setActiveTab(tab);
-    setFilterStatus('active');
-  };
-
   const currentRecipes = useMemo(() => {
-    if (activeTab === 'custom') {
-      return filterStatus === 'archived' ? archivedCustomRecipes : customRecipes;
+    let list: FoodRecipe[] = [];
+    if (activeTab === 'active') {
+      list = [...customRecipes, ...presetRecipes];
+    } else {
+      list = [...archivedCustomRecipes, ...archivedPresetRecipes];
     }
-    return filterStatus === 'archived' ? archivedPresetRecipes : presetRecipes;
-  }, [activeTab, filterStatus, customRecipes, presetRecipes, archivedCustomRecipes, archivedPresetRecipes]);
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [activeTab, customRecipes, presetRecipes, archivedCustomRecipes, archivedPresetRecipes]);
 
   const handleOpenAddRecipe = () => {
     setEditingRecipe(null);
@@ -231,8 +233,7 @@ export default function Recipes() {
     <div className="w-full max-w-md mx-auto space-y-4 pb-20">
       {/* 頂部操作按鈕 (Portal 映射至 AppLayout 頂部標頭右側) */}
       {headerActionEl &&
-        filterStatus === 'active' &&
-        activeTab === 'custom' &&
+        activeTab === 'active' &&
         createPortal(
           <Button
             size="icon"
@@ -247,91 +248,32 @@ export default function Recipes() {
           headerActionEl
         )}
 
-      {/* 雙向篩選選單 (自訂菜餚 vs 預設菜餚 / 使用中 vs 已歸檔) */}
-      <SegmentedControl<'custom' | 'preset'>
+      {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
+      <SegmentedControl<'active' | 'archived'>
         value={activeTab}
         onChange={handleTabChange}
         fullWidth
         options={[
-          {
-            value: 'custom',
-            label: (
-              <span className="flex items-center gap-1">
-                <span>
-                  {activeTab === 'custom' && filterStatus === 'archived'
-                    ? t('settings.archived')
-                    : t('settings.customRecipes')}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-              </span>
-            ),
-            dropdown: (
-              <DropdownMenuContent align="start" sideOffset={6} className="min-w-[130px]">
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('active')}
-                >
-                  <span>{t('settings.customRecipes')}</span>
-                  {filterStatus === 'active' && activeTab === 'custom' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('archived')}
-                >
-                  <span>{t('settings.archived')}</span>
-                  {filterStatus === 'archived' && activeTab === 'custom' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            ),
-          },
-          {
-            value: 'preset',
-            label: (
-              <span className="flex items-center gap-1">
-                <span>
-                  {activeTab === 'preset' && filterStatus === 'archived'
-                    ? t('settings.archived')
-                    : t('settings.presetRecipes')}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-              </span>
-            ),
-            dropdown: (
-              <DropdownMenuContent align="end" sideOffset={6} className="min-w-[130px]">
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('active')}
-                >
-                  <span>{t('settings.presetRecipes')}</span>
-                  {filterStatus === 'active' && activeTab === 'preset' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setFilterStatus('archived')}
-                >
-                  <span>{t('settings.archived')}</span>
-                  {filterStatus === 'archived' && activeTab === 'preset' && (
-                    <Check className="h-3.5 w-3.5 ml-2" />
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            ),
-          },
+          { value: 'active', label: t('common.active') },
+          { value: 'archived', label: t('common.archived') },
         ]}
       />
+
+      {/* 狀態列：計數顯示 */}
+      <div className="flex items-center justify-between px-1 text-xs font-mono text-muted-foreground">
+        <span>
+          {activeTab === 'active'
+            ? t('settings.activeCount', { count: currentRecipes.length })
+            : t('settings.archivedCount', { count: currentRecipes.length })}
+        </span>
+      </div>
 
       {/* 菜餚組合清單 */}
       <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
         <div className="divide-y divide-border">
           {currentRecipes.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              {filterStatus === 'archived'
+              {activeTab === 'archived'
                 ? t('settings.noArchivedRecipes')
                 : t('settings.noCustomRecipes')}
             </div>
@@ -352,6 +294,15 @@ export default function Recipes() {
                           <span className="truncate text-foreground font-medium text-sm">
                             {recipe.name}
                           </span>
+                          {recipe.isCustom ? (
+                            <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
+                              {t('settings.customFoods')}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono bg-muted/50 px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
+                              {t('settings.systemPreset')}
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
                           {macros.calories} kcal · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
@@ -361,16 +312,32 @@ export default function Recipes() {
                     </button>
 
                     <div className="flex items-center pl-2 shrink-0">
-                      {filterStatus === 'archived' ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
-                          onClick={() => handleUnarchiveRecipe(recipe)}
-                        >
-                          <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
-                          {t('settings.unarchive')}
-                        </Button>
+                      {activeTab === 'archived' ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
+                            onClick={() => handleUnarchiveRecipe(recipe)}
+                            title={t('common.restore')}
+                            aria-label={t('common.restore')}
+                          >
+                            <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
+                            {t('common.restore')}
+                          </Button>
+                          {recipe.isCustom && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                              onClick={() => handleDeleteRecipe(recipe)}
+                              title={t('common.delete')}
+                              aria-label={t('common.delete')}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       ) : (
                         <DropdownMenu>
                           <DropdownMenuTrigger
