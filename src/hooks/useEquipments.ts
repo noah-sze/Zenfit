@@ -79,10 +79,10 @@ export function useEquipments() {
     });
   };
 
-  const deleteEquipment = async (id: string): Promise<{ success: boolean; reason?: 'has_exercises' | 'system_preset' }> => {
+  const deleteEquipment = async (id: string): Promise<{ success: boolean; reason?: 'has_exercises' | 'not_found' }> => {
     const eq = equipments.find((e) => e.id === id);
-    if (!eq || !eq.isCustom) {
-      return { success: false, reason: 'system_preset' };
+    if (!eq) {
+      return { success: false, reason: 'not_found' };
     }
 
     // 檢查是否有動作正在使用此器械

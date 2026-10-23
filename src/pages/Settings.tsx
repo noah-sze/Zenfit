@@ -23,17 +23,17 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const confirm = useConfirm();
-  const { customFoods, presetFoods, archivedCustomFoods, archivedPresetFoods } = useFoods();
-  const { customRecipes, presetRecipes, archivedCustomRecipes, archivedPresetRecipes } = useRecipes();
+  const { activeFoods, archivedFoods } = useFoods();
+  const { activeRecipes, archivedRecipes } = useRecipes();
   const { activeExercises, archivedExercises } = useExercises();
   const { activeRoutines, archivedRoutines } = useRoutines();
   const { activeEquipments, archivedEquipments } = useEquipments();
 
-  const totalActiveFoods = customFoods.length + presetFoods.length;
-  const totalArchivedFoods = archivedCustomFoods.length + archivedPresetFoods.length;
+  const totalActiveFoods = activeFoods.length;
+  const totalArchivedFoods = archivedFoods.length;
 
-  const totalActiveRecipes = customRecipes.length + presetRecipes.length;
-  const totalArchivedRecipes = archivedCustomRecipes.length + archivedPresetRecipes.length;
+  const totalActiveRecipes = activeRecipes.length;
+  const totalArchivedRecipes = archivedRecipes.length;
 
   const currentLang = i18n.resolvedLanguage || i18n.language || 'en';
 
@@ -102,6 +102,28 @@ export default function Settings() {
       toast.show(t('settings.exported'));
     } catch {
       toast.show(t('common.error'));
+    }
+  };
+
+  // 恢復缺失的系統預設資料
+  const handleRestoreDefaults = async () => {
+    const ok = await confirm({
+      title: t('settings.restoreDefaults'),
+      description: t('settings.restoreDefaultsConfirm'),
+    });
+
+    if (ok) {
+      try {
+        const res = await db.restoreDefaultData();
+        if (res.totalRestored > 0) {
+          triggerHaptic('success');
+          toast.show(t('settings.defaultsRestoredWithCount', { count: res.totalRestored }));
+        } else {
+          toast.show(t('settings.noDefaultsToRestore'));
+        }
+      } catch {
+        toast.show(t('common.error'));
+      }
     }
   };
 
@@ -313,6 +335,20 @@ export default function Settings() {
             </span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
               <span>JSON</span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+
+          {/* 恢復預設數據 */}
+          <div
+            onClick={handleRestoreDefaults}
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.restoreDefaults')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>{t('settings.restoreDefaultsAction')}</span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>

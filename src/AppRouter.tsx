@@ -54,7 +54,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/foods/archived',
-        element: <Navigate to="/settings/foods?tab=archived" replace />,
+        element: <Navigate to="/settings/foods" replace />,
       },
       {
         path: 'settings/foods/:id',
@@ -66,7 +66,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/recipes/archived',
-        element: <Navigate to="/settings/recipes?tab=archived" replace />,
+        element: <Navigate to="/settings/recipes" replace />,
       },
       {
         path: 'settings/recipes/:id',
@@ -78,7 +78,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/exercises/archived',
-        element: <Navigate to="/settings/exercises?tab=archived" replace />,
+        element: <Navigate to="/settings/exercises" replace />,
       },
       {
         path: 'settings/exercises/:id',
@@ -90,7 +90,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/routines/archived',
-        element: <Navigate to="/settings/routines?tab=archived" replace />,
+        element: <Navigate to="/settings/routines" replace />,
       },
       {
         path: 'settings/routines/:id',
@@ -102,7 +102,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/equipments/archived',
-        element: <Navigate to="/settings/equipments?tab=archived" replace />,
+        element: <Navigate to="/settings/equipments" replace />,
       },
       {
         path: 'settings/categories',
@@ -110,7 +110,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/categories/archived',
-        element: <Navigate to="/settings/foods?tab=archived" replace />,
+        element: <Navigate to="/settings/foods" replace />,
       },
       {
         path: 'settings/categories/:id',

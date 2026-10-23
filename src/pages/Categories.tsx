@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   MoreVertical,
@@ -41,7 +41,11 @@ export default function Categories() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const handleTabChange = (tab: 'active' | 'archived') => {
+    triggerHaptic('selection');
+    setActiveTab(tab);
+  };
 
   // 食物原子庫 Hooks
   const {
@@ -55,16 +59,6 @@ export default function Categories() {
     unarchiveFood,
     deleteFood,
   } = useFoods();
-
-  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
-  const handleTabChange = (tab: 'active' | 'archived') => {
-    triggerHaptic('selection');
-    if (tab === 'archived') {
-      setSearchParams({ tab: 'archived' });
-    } else {
-      setSearchParams({});
-    }
-  };
 
   const [selectedCategory, setSelectedCategory] = useState<'all' | FoodCategory>('all');
 
@@ -156,6 +150,8 @@ export default function Categories() {
     if (!res.success) {
       if (res.reason === 'has_logs') {
         toast.show(t('settings.foodHasLogsCannotDelete'));
+      } else if (res.reason === 'has_recipes') {
+        toast.show(t('diet.foodHasRecipes', '該單品食材已被菜餚組合引用，無法直接刪除'));
       } else {
         toast.show(t('common.error'));
       }
@@ -313,15 +309,6 @@ export default function Categories() {
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="truncate">{food.name}</span>
-                        {food.isCustom ? (
-                          <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
-                            {t('settings.customFoods')}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-mono bg-muted/50 px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
-                            {t('settings.systemPreset')}
-                          </span>
-                        )}
                         <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground/80 shrink-0 leading-normal">
                           {t(`diet.foodCategory.${food.category || 'natural'}`)}
                         </span>
@@ -342,18 +329,16 @@ export default function Categories() {
                         <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
                         {t('common.restore')}
                       </Button>
-                      {food.isCustom && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                          onClick={() => handleDeleteFood(food)}
-                          title={t('common.delete')}
-                          aria-label={t('common.delete')}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                        onClick={() => handleDeleteFood(food)}
+                        title={t('common.delete')}
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </>
                 ) : (
@@ -365,15 +350,6 @@ export default function Categories() {
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="truncate text-foreground font-medium">{food.name}</span>
-                        {food.isCustom ? (
-                          <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
-                            {t('settings.customFoods')}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-mono bg-muted/50 px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
-                            {t('settings.systemPreset')}
-                          </span>
-                        )}
                         <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
                           {t(`diet.foodCategory.${food.category || 'natural'}`)}
                         </span>
@@ -398,15 +374,13 @@ export default function Categories() {
                           }
                         />
                         <DropdownMenuContent align="end" className="w-[160px]">
-                          {food.isCustom && (
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => handleOpenEditFood(food)}
-                            >
-                              <Edit2 className="h-4 w-4 mr-2" />
-                              {t('common.edit')}
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => handleOpenEditFood(food)}
+                          >
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            {t('common.edit')}
+                          </DropdownMenuItem>
 
                           <DropdownMenuItem
                             className="cursor-pointer"
@@ -416,17 +390,15 @@ export default function Categories() {
                             {t('settings.archive')}
                           </DropdownMenuItem>
 
-                          {food.isCustom && (
-                            <DropdownMenuItem
-                              className={cn(
-                                "text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                              )}
-                              onClick={() => handleDeleteFood(food)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t('common.delete')}
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem
+                            className={cn(
+                              "text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                            )}
+                            onClick={() => handleDeleteFood(food)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t('common.delete')}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

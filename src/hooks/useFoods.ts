@@ -76,7 +76,7 @@ export function useFoods(searchQuery = '') {
 
   const deleteFood = async (
     id: string
-  ): Promise<{ success: boolean; reason?: 'has_logs' | 'not_found' }> => {
+  ): Promise<{ success: boolean; reason?: 'has_logs' | 'has_recipes' | 'not_found' }> => {
     const food = await db.foods.get(id);
     if (!food) {
       return { success: false, reason: 'not_found' };
@@ -93,6 +93,21 @@ export function useFoods(searchQuery = '') {
 
     if (hasLogs > 0) {
       return { success: false, reason: 'has_logs' };
+    }
+
+    // 檢查是否有關聯之菜餚組合
+    const hasRecipes = await db.recipes
+      .filter((r) =>
+        r.ingredients.some(
+          (ing) =>
+            ing.foodId === id ||
+            ing.foodName.trim().toLowerCase() === food.name.trim().toLowerCase()
+        )
+      )
+      .count();
+
+    if (hasRecipes > 0) {
+      return { success: false, reason: 'has_recipes' };
     }
 
     await db.foods.delete(id);

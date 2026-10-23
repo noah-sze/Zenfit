@@ -113,6 +113,7 @@
       "oilReductionDelta": "客观用油差值",
       "viewFoodDetail": "查看单品详情",
       "noRecipeLogs": "尚无该菜肴的饮食记录",
+      "foodHasRecipes": "该单品食材已被菜肴组合引用，无法直接删除",
       "foodCategory": {
         "title": "分类",
         "all": "全部分类",
@@ -360,7 +361,13 @@
       "unarchivedSuccess": "已取消归档",
       "foodHasLogsCannotDelete": "此食物存在饮食记录，无法删除。",
       "activeCount": "{{count}} 种常用",
-      "archivedCount": "{{count}} 种归档"
+      "archivedCount": "{{count}} 种归档",
+      "restoreDefaults": "恢复默认数据",
+      "restoreDefaultsAction": "立即恢复",
+      "restoreDefaultsConfirm": "确定要补齐缺失的系统默认数据吗？这不会影响您已创建或修改的自定义数据。",
+      "defaultsRestored": "已成功补齐默认数据",
+      "defaultsRestoredWithCount": "已成功补齐 {{count}} 项默认数据",
+      "noDefaultsToRestore": "所有默认数据皆已齐全，无需补齐"
     },
     "stats": {
       "allTime": "全部",

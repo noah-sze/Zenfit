@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   MoreVertical,
@@ -41,7 +41,6 @@ export default function Recipes() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const { allFoods } = useFoods();
   const {
@@ -57,14 +56,10 @@ export default function Recipes() {
     getRecipeMacros,
   } = useRecipes();
 
-  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const handleTabChange = (tab: 'active' | 'archived') => {
     triggerHaptic('selection');
-    if (tab === 'archived') {
-      setSearchParams({ tab: 'archived' });
-    } else {
-      setSearchParams({});
-    }
+    setActiveTab(tab);
   };
 
   // 新增或編輯菜餚彈窗狀態
@@ -294,15 +289,6 @@ export default function Recipes() {
                           <span className="truncate text-foreground font-medium text-sm">
                             {recipe.name}
                           </span>
-                          {recipe.isCustom ? (
-                            <span className="text-[10px] font-mono border border-border px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
-                              {t('settings.customFoods')}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-mono bg-muted/50 px-1 py-0.2 rounded text-muted-foreground shrink-0 leading-normal">
-                              {t('settings.systemPreset')}
-                            </span>
-                          )}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
                           {macros.calories} kcal · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
@@ -325,18 +311,16 @@ export default function Recipes() {
                             <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
                             {t('common.restore')}
                           </Button>
-                          {recipe.isCustom && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              onClick={() => handleDeleteRecipe(recipe)}
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                            onClick={() => handleDeleteRecipe(recipe)}
+                            title={t('common.delete')}
+                            aria-label={t('common.delete')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       ) : (
                         <DropdownMenu>
@@ -352,15 +336,13 @@ export default function Recipes() {
                             }
                           />
                           <DropdownMenuContent align="end" className="w-[160px]">
-                            {recipe.isCustom && (
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => handleOpenEditRecipe(recipe)}
-                              >
-                                <Edit2 className="h-4 w-4 mr-2" />
-                                {t('common.edit')}
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => handleOpenEditRecipe(recipe)}
+                            >
+                              <Edit2 className="h-4 w-4 mr-2" />
+                              {t('common.edit')}
+                            </DropdownMenuItem>
 
                             <DropdownMenuItem
                               className="cursor-pointer"
@@ -370,17 +352,15 @@ export default function Recipes() {
                               {t('settings.archive')}
                             </DropdownMenuItem>
 
-                            {recipe.isCustom && (
-                              <DropdownMenuItem
-                                className={cn(
-                                  "text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                                )}
-                                onClick={() => handleDeleteRecipe(recipe)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                {t('common.delete')}
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                              className={cn(
+                                "text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                              )}
+                              onClick={() => handleDeleteRecipe(recipe)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {t('common.delete')}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}

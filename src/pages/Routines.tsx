@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, ChevronRight, X, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,16 +32,11 @@ export default function Routines() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const handleTabChange = (tab: 'active' | 'archived') => {
     triggerHaptic('selection');
-    if (tab === 'archived') {
-      setSearchParams({ tab: 'archived' });
-    } else {
-      setSearchParams({});
-    }
+    setActiveTab(tab);
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -232,15 +227,6 @@ export default function Routines() {
                     <span className="text-sm font-medium text-foreground truncate">
                       {routine.name}
                     </span>
-                    {routine.isCustom ? (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground shrink-0">
-                        {t('settings.customRecipes')}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground shrink-0">
-                        {t('settings.systemPreset')}
-                      </span>
-                    )}
                   </div>
                   <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground flex-wrap">
                     <span>{summary.exerciseCount} 個動作</span>
@@ -279,18 +265,16 @@ export default function Routines() {
                     >
                       <RotateCcw className="size-3.5" />
                     </Button>
-                    {routine.isCustom && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleDelete(e, routine)}
-                        className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                        title={t('common.delete')}
-                        aria-label={t('common.delete')}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDelete(e, routine)}
+                      className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                      title={t('common.delete')}
+                      aria-label={t('common.delete')}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
                   </div>
                 ) : (
                   <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />

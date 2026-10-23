@@ -78,6 +78,10 @@ trigger: always_on
   - **狀態提示規範**：錯誤與警告應優先透過元件本身的視覺狀態切換（如輸入框文字變紅 `text-destructive`、邊框變色、確認按鈕動態禁用 `disabled`）或透過全域 Toast 提示呈現。
 - **破壞性動作按鈕規範 (Destructive Buttons)**：
   - 二次確認與破壞性高危操作的 `destructive` 按鈕統一採用「實色紅底 + 純白文字（`bg-destructive text-destructive-foreground hover:opacity-90 active:opacity-80`）」，嚴禁使用淡底弱化樣式。
+- **頁面內部視圖切換與瀏覽器導航歷史規範 (Page Tab State & History Stack Standards)**：
+  - **視圖狀態純本地化 (Tabs as Pure Local State)**：頁面內部的同級視圖、分頁或過濾切換（例如管理清單的「使用中 / 已歸檔」Tab），預設必須使用元件內部純本地狀態（`useState<'active' | 'archived'>`）進行管理，嚴禁濫用 URL Query 參數（如 `?tab=archived`）。
+  - **純淨 URL 契約 (Clean Path Contract)**：管理清單與子頁面 URL 必須維持恆定的乾淨純路徑（例如 `/settings/foods`），切換內部 Tab 時不得污染瀏覽器網址列。
+  - **瀏覽器返回直達上一層原則 (Deterministic Browser Back Navigation)**：無論使用者在當前頁面的內部 Tab 之間切換多少次，皆不得向瀏覽器歷史堆疊（History Stack）推入新紀錄；使用者點擊瀏覽器「返回」按鈕或頁面返回鍵時，必須確定且直接地返回「上一層頁面」（例如返回「設定」`/settings`），絕對嚴禁退回上一個切換的 Tab。
 
 ## 5. 負面清單（絕對禁止與不得 XXX 清單，Strict Prohibitions & "Do Not" List）
 為確保代碼簡潔與介面純粹，以下行為在專案中被**絕對禁止**：
@@ -98,6 +102,7 @@ trigger: always_on
 15. **不得執行未備份的毀滅性資料庫操作**：嚴禁在 IndexedDB 升級時跳過版本號管理、未寫 `upgrade` 腳本即變更表結構，或在生產環境執行未經防護的資料庫清空。
 16. **不得在單品食物名稱中包含烹調手法與修飾形容詞**：嚴禁「香煎」、「水煮」、「清炒」等前綴，單品食材一律使用客觀原型名詞。
 17. **不得在食物名稱或計量單位中使用模糊非客觀量詞**：嚴禁在食物名稱或單位中混入「1 勺」、「1 匙」、「1 碗」、「中顆」等主觀模糊詞，一律回歸克數 (`g`) 與毫升 (`ml`)。
+18. **不得將頁面內部 Tab 綁定至污染瀏覽器歷史的 Query 參數**：嚴禁在管理列表切換「使用中 / 已歸檔」等頁面內部視圖時產生 `?tab=archived` 等查詢參數，導致使用者點擊瀏覽器返回時無法直接回到上一層頁面。
 
 ## 6. 食物數據與原子計量規範 (Food Data & Atomic Metric Standards)
 - **原型食材原子化真理源 (Atomic Ingredients as Ground Truth)**：

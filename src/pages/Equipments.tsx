@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Edit2, Archive, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,16 +22,11 @@ import type { Equipment } from '@/types';
 export default function Equipments() {
   const { t } = useTranslation();
   const confirm = useConfirm();
-  const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = (searchParams.get('tab') === 'archived' ? 'archived' : 'active') as 'active' | 'archived';
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const handleTabChange = (tab: 'active' | 'archived') => {
     triggerHaptic('selection');
-    if (tab === 'archived') {
-      setSearchParams({ tab: 'archived' });
-    } else {
-      setSearchParams({});
-    }
+    setActiveTab(tab);
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -234,15 +228,6 @@ export default function Equipments() {
                     <span className="text-sm font-medium text-foreground truncate">
                       {displayName}
                     </span>
-                    {eq.isCustom ? (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground shrink-0">
-                        {t('settings.customFoods')}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground shrink-0">
-                        {t('settings.systemPreset')}
-                      </span>
-                    )}
                   </div>
                   <div className="text-xs font-mono text-muted-foreground">
                     <span>{usage} 個動作關聯</span>
@@ -251,18 +236,16 @@ export default function Equipments() {
 
                 {activeTab === 'active' ? (
                   <div className="flex items-center gap-1 shrink-0">
-                    {eq.isCustom && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenEdit(eq)}
-                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                        title={t('common.edit')}
-                        aria-label={t('common.edit')}
-                      >
-                        <Edit2 className="size-3.5" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenEdit(eq)}
+                      className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title={t('common.edit')}
+                      aria-label={t('common.edit')}
+                    >
+                      <Edit2 className="size-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -273,7 +256,7 @@ export default function Equipments() {
                     >
                       <Archive className="size-3.5" />
                     </Button>
-                    {eq.isCustom && usage === 0 && (
+                    {usage === 0 && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -298,7 +281,7 @@ export default function Equipments() {
                     >
                       <RotateCcw className="size-3.5" />
                     </Button>
-                    {eq.isCustom && usage === 0 && (
+                    {usage === 0 && (
                       <Button
                         variant="ghost"
                         size="icon"
