@@ -218,14 +218,6 @@ export default function RoutineDetails() {
               <span>{summary.exerciseCount} 個動作</span>
               <span>·</span>
               <span>計劃 {summary.totalPlannedSets} 組</span>
-              {routine.isCustom && (
-                <>
-                  <span>·</span>
-                  <span className="text-[10px] px-1 rounded border border-border">
-                    {t('settings.customRecipes')}
-                  </span>
-                </>
-              )}
             </div>
           </div>
 
@@ -364,16 +356,14 @@ export default function RoutineDetails() {
           )}
         </Button>
 
-        {routine.isCustom && (
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="w-full text-xs font-mono h-10 bg-destructive text-destructive-foreground hover:opacity-90 cursor-pointer"
-          >
-            <Trash2 className="size-3.5 mr-1.5" />
-            {t('common.delete')}
-          </Button>
-        )}
+        <Button
+          variant="destructive"
+          onClick={handleDelete}
+          className="w-full text-xs font-mono h-10 bg-destructive text-destructive-foreground hover:opacity-90 cursor-pointer"
+        >
+          <Trash2 className="size-3.5 mr-1.5" />
+          {t('common.delete')}
+        </Button>
       </div>
 
       {/* 編輯組合彈窗 (Instant Pop, 左取消右確認) */}

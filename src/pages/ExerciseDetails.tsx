@@ -257,14 +257,6 @@ export default function ExerciseDetails() {
             </h1>
             <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
               <span>{getEquipmentDisplayName(exercise.equipment, t)}</span>
-              {exercise.isCustom && (
-                <>
-                  <span>·</span>
-                  <span className="text-[10px] px-1 rounded border border-border">
-                    {t('settings.customFoods')}
-                  </span>
-                </>
-              )}
             </div>
           </div>
           <Button
@@ -406,16 +398,14 @@ export default function ExerciseDetails() {
           )}
         </Button>
 
-        {exercise.isCustom && (
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="w-full text-xs font-mono h-10 bg-destructive text-destructive-foreground hover:opacity-90 cursor-pointer"
-          >
-            <Trash2 className="size-3.5 mr-1.5" />
-            {t('common.delete')}
-          </Button>
-        )}
+        <Button
+          variant="destructive"
+          onClick={handleDelete}
+          className="w-full text-xs font-mono h-10 bg-destructive text-destructive-foreground hover:opacity-90 cursor-pointer"
+        >
+          <Trash2 className="size-3.5 mr-1.5" />
+          {t('common.delete')}
+        </Button>
       </div>
 
       {/* 編輯動作彈窗 (Instant Pop, 左取消右確認) */}

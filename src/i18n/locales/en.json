@@ -113,6 +113,7 @@
       "oilReductionDelta": "Cooking Oil Impact",
       "viewFoodDetail": "View Single Item",
       "noRecipeLogs": "No consumption records for this dish",
+      "foodHasRecipes": "This ingredient is referenced by recipes and cannot be deleted",
       "foodCategory": {
         "title": "Category",
         "all": "All Categories",
@@ -360,7 +361,13 @@
       "unarchivedSuccess": "Unarchived",
       "foodHasLogsCannotDelete": "This food has consumption records and cannot be deleted.",
       "activeCount": "{{count}} active",
-      "archivedCount": "{{count}} archived"
+      "archivedCount": "{{count}} archived",
+      "restoreDefaults": "Restore Default Data",
+      "restoreDefaultsAction": "Restore",
+      "restoreDefaultsConfirm": "Are you sure you want to restore missing system default data? This will not affect your custom or modified data.",
+      "defaultsRestored": "Default data restored successfully",
+      "defaultsRestoredWithCount": "Successfully restored {{count}} default items",
+      "noDefaultsToRestore": "All default data are present, nothing to restore"
     },
     "stats": {
       "allTime": "All Time",

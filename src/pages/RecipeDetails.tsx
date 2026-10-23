@@ -310,18 +310,16 @@ export default function RecipeDetails() {
       {headerActionEl &&
         createPortal(
           <div className="flex items-center gap-1">
-            {recipe.isCustom && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={handleOpenEdit}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                title={t('common.edit')}
-                aria-label={t('common.edit')}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleOpenEdit}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+              title={t('common.edit')}
+              aria-label={t('common.edit')}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -349,15 +347,13 @@ export default function RecipeDetails() {
                   </DropdownMenuItem>
                 )}
 
-                {recipe.isCustom && (
-                  <DropdownMenuItem
-                    className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t('common.delete')}
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('common.delete')}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>,

@@ -108,6 +108,7 @@ export function useRecipes(searchQuery = '') {
   return {
     allRecipes,
     activeRecipes: filteredActiveRecipes,
+    archivedRecipes,
     customRecipes,
     presetRecipes,
     archivedCustomRecipes,

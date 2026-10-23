@@ -16,6 +16,13 @@ import type {
   Equipment,
 } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  DEFAULT_EQUIPMENTS,
+  DEFAULT_EXERCISES,
+  DEFAULT_FOODS,
+  DEFAULT_RECIPES,
+  restoreMissingDefaultData,
+} from './defaultData';
 
 export class ZenfitDatabase extends Dexie {
   foods!: Table<FoodItem>;
@@ -236,485 +243,38 @@ export class ZenfitDatabase extends Dexie {
   }
 
   async seedDefaultData() {
+    const SEED_STORAGE_KEY = 'zenfit_seed_initialized';
+    const isSeeded = typeof window !== 'undefined' && localStorage.getItem(SEED_STORAGE_KEY);
+    if (isSeeded) {
+      return;
+    }
+
     const now = Date.now();
-
-    // 初始化預設器械庫
-    const equipmentCount = await this.equipments.count();
-    if (equipmentCount === 0) {
-      const defaultEquipments: Equipment[] = [
-        { id: 'barbell', name: '槓鈴', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'dumbbell', name: '啞鈴', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'kettlebell', name: '壺鈴', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'specialty_bar', name: '專項槓', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'cable', name: '繩索滑輪', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'pin_loaded_machine', name: '插銷式器械', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'plate_loaded_machine', name: '掛片式器械', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'smith_machine', name: '史密斯機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'leg_press', name: '腿舉機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'hack_squat', name: '哈克機', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'bodyweight', name: '徒手自重', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'weighted_bodyweight', name: '負重自重', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'resistance_band', name: '彈力帶', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'gymnastic_rings', name: '體操吊環', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'cardio_machine', name: '有氧設備', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-        { id: 'other', name: '其他', isCustom: false, isArchived: false, createdAt: now, updatedAt: now },
-      ];
-      await this.equipments.bulkAdd(defaultEquipments);
-    }
-
-    const exerciseCount = await this.exercises.count();
-
-    if (exerciseCount === 0) {
-      const defaultExercises: Exercise[] = [
-        // 胸部動作
-        {
-          id: uuidv4(),
-          name: '槓鈴臥推 (Bench Press)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { mid_lower_chest: 100, front_delts: 50, triceps: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '上斜啞鈴臥推 (Incline Dumbbell Press)',
-          category: 'free_weight',
-          equipment: 'dumbbell',
-          targetMuscles: { upper_chest: 100, front_delts: 60, triceps: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '滑輪夾胸 (Cable Fly)',
-          category: 'machine',
-          equipment: 'cable',
-          targetMuscles: { mid_lower_chest: 100 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '雙槓臂屈伸 (Dips)',
-          category: 'bodyweight',
-          equipment: 'bodyweight',
-          targetMuscles: { mid_lower_chest: 90, triceps: 80, front_delts: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        // 背部動作
-        {
-          id: uuidv4(),
-          name: '傳統硬舉 (Deadlift)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { lower_back: 100, glutes: 90, hamstrings: 70, upper_back_traps: 70, forearms: 50 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '槓鈴划船 (Barbell Row)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { lats: 90, upper_back_traps: 80, biceps: 50, lower_back: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '引體向上 (Pull-up)',
-          category: 'bodyweight',
-          equipment: 'bodyweight',
-          targetMuscles: { lats: 100, upper_back_traps: 60, biceps: 60, forearms: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '滑輪下拉 (Lat Pulldown)',
-          category: 'machine',
-          equipment: 'cable',
-          targetMuscles: { lats: 100, biceps: 50, upper_back_traps: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '坐姿划船 (Seated Cable Row)',
-          category: 'machine',
-          equipment: 'cable',
-          targetMuscles: { upper_back_traps: 90, lats: 70, biceps: 50 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        // 腿部動作
-        {
-          id: uuidv4(),
-          name: '槓鈴深蹲 (Barbell Squat)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { quads: 100, glutes: 80, abs: 30, lower_back: 30 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '羅馬尼亞硬舉 (Romanian Deadlift)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { hamstrings: 100, glutes: 80, lower_back: 50 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '腿推機 (Leg Press)',
-          category: 'machine',
-          equipment: 'leg_press',
-          targetMuscles: { quads: 100, glutes: 60 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '腿伸展 (Leg Extension)',
-          category: 'machine',
-          equipment: 'pin_loaded_machine',
-          targetMuscles: { quads: 100 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '腿彎舉 (Leg Curl)',
-          category: 'machine',
-          equipment: 'pin_loaded_machine',
-          targetMuscles: { hamstrings: 100 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        // 肩部動作
-        {
-          id: uuidv4(),
-          name: '站姿槓鈴推舉 (Overhead Press)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { front_delts: 100, triceps: 60, upper_chest: 40, abs: 30 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '啞鈴側平舉 (Dumbbell Lateral Raise)',
-          category: 'free_weight',
-          equipment: 'dumbbell',
-          targetMuscles: { side_delts: 100, upper_back_traps: 30 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '繩索面拉 (Face Pull)',
-          category: 'machine',
-          equipment: 'cable',
-          targetMuscles: { rear_delts: 100, upper_back_traps: 70 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        // 手臂動作
-        {
-          id: uuidv4(),
-          name: '滑輪三頭下壓 (Tricep Pushdown)',
-          category: 'machine',
-          equipment: 'cable',
-          targetMuscles: { triceps: 100 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '槓鈴二頭彎舉 (Barbell Curl)',
-          category: 'free_weight',
-          equipment: 'barbell',
-          targetMuscles: { biceps: 100, forearms: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '啞鈴錘式彎舉 (Hammer Curl)',
-          category: 'free_weight',
-          equipment: 'dumbbell',
-          targetMuscles: { forearms: 90, biceps: 80 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        // 核心與有氧
-        {
-          id: uuidv4(),
-          name: '平板支撐 (Plank)',
-          category: 'bodyweight',
-          equipment: 'bodyweight',
-          targetMuscles: { abs: 90, obliques: 60 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '懸垂舉腿 (Hanging Leg Raise)',
-          category: 'bodyweight',
-          equipment: 'bodyweight',
-          targetMuscles: { abs: 100, forearms: 30 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          id: uuidv4(),
-          name: '跑步機慢跑 (Treadmill Running)',
-          category: 'cardio',
-          equipment: 'cardio_machine',
-          targetMuscles: { calves: 60, quads: 40 },
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        },
-      ];
-      await this.exercises.bulkAdd(defaultExercises);
-    }
-
     const foodCount = await this.foods.count();
-    const defaultFoods: FoodItem[] = [
-      { id: 'food_chicken_breast', name: '雞胸肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 110, protein: 23, carbs: 0, fat: 1.2, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_whole_egg', name: '雞蛋', category: 'natural', servingSize: 50, servingUnit: 'g', calories: 72, protein: 6.3, carbs: 0.4, fat: 4.8, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_white_rice', name: '白米飯', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_sweet_potato', name: '地瓜', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 86, protein: 1.6, carbs: 20, fat: 0.1, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_whey_protein', name: '乳清蛋白粉', category: 'processed', servingSize: 30, servingUnit: 'g', calories: 120, protein: 24, carbs: 2, fat: 1.5, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_rolled_oats', name: '大燕麥片', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 389, protein: 16.9, carbs: 66, fat: 6.9, fiber: 10.6, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_beef_flank', name: '牛板腱', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 180, protein: 24, carbs: 0, fat: 9, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_greek_yogurt', name: '無糖希臘優格', category: 'processed', servingSize: 100, servingUnit: 'g', calories: 60, protein: 10, carbs: 3.5, fat: 0.5, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_salmon', name: '鮭魚', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 208, protein: 20, carbs: 0, fat: 13, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_soy_milk', name: '無糖豆漿', category: 'processed', servingSize: 250, servingUnit: 'ml', calories: 85, protein: 8.5, carbs: 4.5, fat: 3.5, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_tomato', name: '牛番茄', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_cooking_oil', name: '食用植物油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, createdAt: now, updatedAt: now },
-      { id: 'food_black_pepper', name: '黑胡椒粒', category: 'condiment', servingSize: 5, servingUnit: 'g', calories: 13, protein: 0.5, carbs: 3.2, fat: 0.2, isCustom: false, createdAt: now, updatedAt: now },
-    ];
+    const exerciseCount = await this.exercises.count();
+    const equipmentCount = await this.equipments.count();
 
-    if (foodCount === 0) {
-      await this.foods.bulkAdd(defaultFoods);
-    } else {
-      // 平滑升級遷移：將既有系統預設食物名稱與數值標準化 (去除烹飪前綴與模糊量詞，填補分類)
-      const standardizationMap: Record<string, Partial<FoodItem>> = {
-        food_chicken_breast: { name: '雞胸肉', category: 'natural', calories: 110, protein: 23, carbs: 0, fat: 1.2 },
-        food_whole_egg: { name: '雞蛋', category: 'natural', servingSize: 50, servingUnit: 'g' },
-        food_white_rice: { category: 'natural' },
-        food_sweet_potato: { name: '地瓜', category: 'natural' },
-        food_whey_protein: { name: '乳清蛋白粉', category: 'processed' },
-        food_rolled_oats: { category: 'natural' },
-        food_beef_flank: { name: '牛板腱', category: 'natural' },
-        food_greek_yogurt: { name: '無糖希臘優格', category: 'processed' },
-        food_salmon: { name: '鮭魚', category: 'natural' },
-        food_soy_milk: { name: '無糖豆漿', category: 'processed' },
-        food_tomato: { category: 'natural' },
-        food_cooking_oil: { category: 'oil' },
-      };
-
-      for (const [foodId, updates] of Object.entries(standardizationMap)) {
-        const food = await this.foods.get(foodId);
-        if (food && !food.isCustom) {
-          await this.foods.update(foodId, { ...updates, updatedAt: now });
-        }
+    // 若既有資料庫已存在數據，表示使用者已初始化過，僅記錄標記防復活，絕不覆寫或增補
+    if (foodCount > 0 || exerciseCount > 0 || equipmentCount > 0) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(SEED_STORAGE_KEY, 'true');
       }
-
-      // 增量補充牛番茄與食用油與調味品（若不存在）
-      const existingTomato = await this.foods.where('name').equals('牛番茄').first();
-      if (!existingTomato) {
-        await this.foods.add({
-          id: 'food_tomato',
-          name: '牛番茄',
-          category: 'natural',
-          servingSize: 100,
-          servingUnit: 'g',
-          calories: 18,
-          protein: 0.9,
-          carbs: 3.9,
-          fat: 0.2,
-          isCustom: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-      const existingOil = await this.foods.where('name').equals('食用植物油').first();
-      if (!existingOil) {
-        await this.foods.add({
-          id: 'food_cooking_oil',
-          name: '食用植物油',
-          category: 'oil',
-          servingSize: 10,
-          servingUnit: 'g',
-          calories: 90,
-          protein: 0,
-          carbs: 0,
-          fat: 10,
-          isCustom: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-      const existingPepper = await this.foods.where('name').equals('黑胡椒粒').first();
-      if (!existingPepper) {
-        await this.foods.add({
-          id: 'food_black_pepper',
-          name: '黑胡椒粒',
-          category: 'condiment',
-          servingSize: 5,
-          servingUnit: 'g',
-          calories: 13,
-          protein: 0.5,
-          carbs: 3.2,
-          fat: 0.2,
-          isCustom: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      // 同時同步菜餚組合中的 ingredients foodName
-      const allRecipes = await this.recipes.toArray();
-      for (const recipe of allRecipes) {
-        let changed = false;
-        const newIngredients = recipe.ingredients.map((ing) => {
-          const matchedUpdate = standardizationMap[ing.foodId];
-          if (matchedUpdate && matchedUpdate.name && matchedUpdate.name !== ing.foodName) {
-            changed = true;
-            return { ...ing, foodName: matchedUpdate.name };
-          }
-          return ing;
-        });
-        if (changed) {
-          await this.recipes.update(recipe.id, { ingredients: newIngredients, updatedAt: now });
-        }
-      }
+      return;
     }
 
-    // 初始化菜餚組合預設種子資料
-    const recipeCount = await this.recipes.count();
-    if (recipeCount === 0) {
-      const allFoods = await this.foods.toArray();
-      const findFood = (queryName: string) => allFoods.find((f) => f.name.includes(queryName));
-
-      const tomatoFood = findFood('牛番茄');
-      const eggFood = findFood('雞蛋') || findFood('全蛋');
-      const oilFood = findFood('食用植物油');
-      const oatsFood = findFood('大燕麥片');
-      const yogurtFood = findFood('優格');
-      const wheyFood = findFood('乳清蛋白');
-      const chickenFood = findFood('雞胸肉');
-      const riceFood = findFood('白米飯');
-
-      const defaultRecipes: FoodRecipe[] = [];
-
-      if (tomatoFood && eggFood) {
-        defaultRecipes.push({
-          id: 'recipe_tomato_egg',
-          name: '經典家常番茄炒蛋',
-          description: '經典少油高蛋白家常菜，油脂可自由依烹調習慣調整',
-          ingredients: [
-            { foodId: tomatoFood.id, foodName: tomatoFood.name, quantity: 150, unit: 'g', isOptional: false },
-            { foodId: eggFood.id, foodName: eggFood.name, quantity: 100, unit: 'g', isOptional: false },
-            ...(oilFood ? [{ foodId: oilFood.id, foodName: oilFood.name, quantity: 10, unit: 'g', isOptional: true }] : []),
-          ],
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      if (oatsFood && yogurtFood) {
-        defaultRecipes.push({
-          id: 'recipe_oat_bowl',
-          name: '高蛋白燕麥優格碗',
-          description: '無油純淨碳水與蛋白質組合，飽腹感極佳',
-          ingredients: [
-            { foodId: oatsFood.id, foodName: oatsFood.name, quantity: 50, unit: 'g', isOptional: false },
-            { foodId: yogurtFood.id, foodName: yogurtFood.name, quantity: 100, unit: 'g', isOptional: false },
-            ...(wheyFood ? [{ foodId: wheyFood.id, foodName: wheyFood.name, quantity: 30, unit: 'g', isOptional: false }] : []),
-          ],
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      if (chickenFood && riceFood) {
-        defaultRecipes.push({
-          id: 'recipe_chicken_rice_box',
-          name: '經典低脂雞胸便當',
-          description: '標準乾淨減脂主食，可選配微量烹調油',
-          ingredients: [
-            { foodId: chickenFood.id, foodName: chickenFood.name, quantity: 150, unit: 'g', isOptional: false },
-            { foodId: riceFood.id, foodName: riceFood.name, quantity: 150, unit: 'g', isOptional: false },
-            ...(oilFood ? [{ foodId: oilFood.id, foodName: oilFood.name, quantity: 5, unit: 'g', isOptional: true }] : []),
-          ],
-          isCustom: false,
-          isArchived: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      if (defaultRecipes.length > 0) {
-        await this.recipes.bulkAdd(defaultRecipes);
-      }
-    }
+    // 全新資料庫初始種子寫入
+    await this.equipments.bulkAdd(
+      DEFAULT_EQUIPMENTS.map((eq) => ({ ...eq, createdAt: now, updatedAt: now }))
+    );
+    await this.exercises.bulkAdd(
+      DEFAULT_EXERCISES.map((ex) => ({ ...ex, id: uuidv4(), createdAt: now, updatedAt: now }))
+    );
+    await this.foods.bulkAdd(
+      DEFAULT_FOODS.map((f) => ({ ...f, createdAt: now, updatedAt: now }))
+    );
+    await this.recipes.bulkAdd(
+      DEFAULT_RECIPES.map((r) => ({ ...r, createdAt: now, updatedAt: now }))
+    );
 
     const profileCount = await this.user_profile.count();
     if (profileCount === 0) {
@@ -763,6 +323,14 @@ export class ZenfitDatabase extends Dexie {
         updatedAt: now,
       });
     }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SEED_STORAGE_KEY, 'true');
+    }
+  }
+
+  async restoreDefaultData() {
+    return await restoreMissingDefaultData(this);
   }
 }
 
