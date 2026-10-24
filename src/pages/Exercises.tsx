@@ -197,9 +197,9 @@ export default function Exercises() {
     const res = await deleteExercise(exercise.id);
     if (!res.success) {
       if (res.reason === 'has_logs') {
-        toast.show('已有訓練日誌記錄此動作，無法直接刪除');
+        toast.show(t('workout.exerciseHasLogs'));
       } else if (res.reason === 'has_routines') {
-        toast.show('已有訓練組合包含此動作，無法直接刪除');
+        toast.show(t('workout.exerciseHasRoutines'));
       } else {
         toast.show(t('common.error'));
       }
@@ -211,7 +211,7 @@ export default function Exercises() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
       <SegmentedControl<'active' | 'archived'>
         value={activeTab}

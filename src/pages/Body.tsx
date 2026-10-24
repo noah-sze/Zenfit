@@ -130,7 +130,7 @@ export default function Body() {
         <h1 className="text-xl font-bold tracking-tight">
           {currentTrendWeight ? (
             <>
-              {currentTrendWeight} <span className="text-xs font-normal text-muted-foreground font-mono">{profile.weightUnit} (趨勢)</span>
+              {currentTrendWeight} <span className="text-xs font-normal text-muted-foreground font-mono">{profile.weightUnit} ({t('body.trend')})</span>
             </>
           ) : (
             `${profile.currentWeightKg} ${profile.weightUnit}`
@@ -326,7 +326,7 @@ export default function Body() {
       <Card className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
         <CardHeader className="py-3.5 px-4 border-b border-border/40">
           <CardTitle className="text-sm font-semibold tracking-tight uppercase font-mono text-muted-foreground">
-            時序過磅記錄
+            {t('body.history')}
           </CardTitle>
         </CardHeader>
 

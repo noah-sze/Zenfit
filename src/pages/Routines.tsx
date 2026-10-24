@@ -124,7 +124,7 @@ export default function Routines() {
       return;
     }
     if (newRoutineItems.length === 0) {
-      toast.show('請至少添加一個動作');
+      toast.show(t('workout.atLeastOneExercise'));
       return;
     }
 
@@ -162,7 +162,7 @@ export default function Routines() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
       <SegmentedControl<'active' | 'archived'>
         value={activeTab}

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 行動端窄螢幕食材排版與對齊方案預覽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card-bg)',
+            border: 'var(--border-color)',
+            muted: 'var(--muted-bg)',
+            'muted-foreground': 'var(--muted-fg)',
+            guide: 'var(--guide-color)'
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card-bg: #ffffff;
+      --border-color: #e5e5e5;
+      --muted-bg: #f4f4f5;
+      --muted-fg: #71717a;
+      --guide-color: rgba(239, 68, 68, 0.55);
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card-bg: #000000;
+      --border-color: #27272a;
+      --muted-bg: #09090b;
+      --muted-fg: #a1a1aa;
+      --guide-color: rgba(248, 113, 113, 0.65);
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', -apple-system, sans-serif;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* 對齊輔助紅線 */
+    .show-guides .guide-v-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: var(--guide-color);
+      z-index: 40;
+      pointer-events: none;
+    }
+    .show-guides .food-name-target {
+      outline: 1px dashed var(--guide-color);
+      outline-offset: 1px;
+      background-color: rgba(239, 68, 68, 0.08);
+    }
+    .show-guides .right-budget-box {
+      outline: 1px dotted rgba(59, 130, 246, 0.6);
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    /* 手機外框微擬態 */
+    .device-frame {
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+  <!-- 頂部控制列 -->
+  <header class="w-full max-w-3xl mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-6">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono uppercase tracking-widest text-muted-foreground">ZENFIT · UI/UX PRO MAX</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/30">Mobile-First Narrow Screen</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight mt-1">行動端窄螢幕排版與視覺對齊重構</h1>
+      <p class="text-xs text-muted-foreground font-mono mt-1">針對 360px ~ 390px 手機寬度下的空間擠壓與基線對齊專項優化</p>
+    </div>
+
+    <div class="flex items-center gap-2 font-mono text-xs self-end sm:self-auto">
+      <!-- 對齊輔助線開關 -->
+      <button
+        id="toggle-guides-btn"
+        onclick="toggleGuides()"
+        class="px-2.5 py-1.5 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+        title="開啟/關閉幾何基準線與右側寬度佔用標定"
+      >
+        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+        <span id="guides-btn-text">對齊基準線: 關</span>
+      </button>
+
+      <!-- 主題切換 -->
+      <button
+        onclick="toggleTheme()"
+        class="p-2 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        title="切換淺色/深色模式"
+      >
+        <svg id="theme-icon-dark" class="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg id="theme-icon-light" class="w-4 h-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 行動設備寬度切換器 (Device Viewport Controller) -->
+  <section class="w-full max-w-3xl mb-6 p-3.5 rounded-xl border border-border bg-card font-mono text-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <span class="font-bold text-foreground">模擬真實設備視窗寬度 (Device Viewport)</span>
+      </div>
+
+      <!-- 視窗切換按鈕群 -->
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button
+          onclick="setViewportWidth('360px', this)"
+          class="viewport-btn px-2.5 py-1 rounded-lg border border-foreground bg-foreground text-background font-bold transition-all cursor-pointer"
+        >
+          360px (極窄 Android)
+        </button>
+        <button
+          onclick="setViewportWidth('375px', this)"
+          class="viewport-btn px-2.5 py-1 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground transition-all cursor-pointer"
+        >
+          375px (iPhone SE)
+        </button>
+        <button
+          onclick="setViewportWidth('390px', this)"
+          class="viewport-btn px-2.5 py-1 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground transition-all cursor-pointer"
+        >
+          390px (iPhone 14/15)
+        </button>
+        <button
+          onclick="setViewportWidth('100%', this)"
+          class="viewport-btn px-2.5 py-1 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground transition-all cursor-pointer"
+        >
+          全寬 (Desktop)
+        </button>
+      </div>
+    </div>
+
+    <!-- 空間預算實時診斷條 -->
+    <div class="mt-3 pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
+      <div class="flex items-center gap-2">
+        <span>當前視窗: <strong id="current-width-label" class="text-foreground">360px</strong></span>
+        <span class="opacity-40">·</span>
+        <span>卡片內寬: <strong id="card-inner-width-label" class="text-foreground">296px</strong></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-blue-500">■ 右側數值方塊: <strong>164px</strong></span>
+        <span class="text-emerald-500">■ 左側可用空間: <strong id="left-space-label">132px</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 四大排版方案切換 Tabs -->
+  <nav class="w-full max-w-3xl mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs select-none">
+      <button
+        onclick="switchScheme('1')"
+        id="tab-btn-1"
+        class="p-2.5 rounded-xl border border-foreground bg-muted/30 text-left cursor-pointer transition-all flex flex-col justify-between h-[72px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-foreground">方案 1</span>
+          <span class="text-[9px] px-1 py-0.2 rounded bg-foreground text-background font-bold">推薦</span>
+        </div>
+        <div class="text-[11px] text-foreground font-medium">行內微型單標籤</div>
+        <div class="text-[9px] text-muted-foreground">Smart Compact Inline</div>
+      </button>
+
+      <button
+        onclick="switchScheme('2')"
+        id="tab-btn-2"
+        class="p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[72px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-muted-foreground">方案 2</span>
+          <span class="text-[9px] px-1 py-0.2 rounded border border-border text-muted-foreground">高容積</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground font-medium">副標題前置微徽章</div>
+        <div class="text-[9px] text-muted-foreground">Subtitle-Leading Tag</div>
+      </button>
+
+      <button
+        onclick="switchScheme('3')"
+        id="tab-btn-3"
+        class="p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[72px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-muted-foreground">方案 3</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground font-medium">純文字排印 Overline</div>
+        <div class="text-[9px] text-muted-foreground">Typographic Overline</div>
+      </button>
+
+      <button
+        onclick="switchScheme('4')"
+        id="tab-btn-4"
+        class="p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[72px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-muted-foreground">方案 4</span>
+          <span class="text-[9px] px-1 py-0.2 rounded border border-border text-muted-foreground">零雜訊</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground font-medium">數據矩陣直接點亮</div>
+        <div class="text-[9px] text-muted-foreground">MacroSquare Synergy</div>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 方案核心架構說明卡片 -->
+  <section id="scheme-description" class="w-full max-w-3xl mb-6 p-4 rounded-xl border border-border bg-card font-mono text-xs space-y-2">
+    <!-- 動態由 JS 渲染 -->
+  </section>
+
+  <!-- 真機外框與模擬畫布 (動態調整寬度) -->
+  <div class="w-full flex justify-center mb-8">
+    <div id="device-wrapper" class="device-frame w-[360px] max-w-full">
+      <div class="flex items-center justify-between text-[11px] font-mono text-muted-foreground px-1 mb-2">
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>DEVICE PREVIEW CANVAS</span>
+        </span>
+        <span id="canvas-width-indicator" class="font-bold text-foreground">360px</span>
+      </div>
+
+      <div id="preview-canvas-container" class="relative border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+        <!-- 垂直左邊界輔助線 (對齊品名文字開端) -->
+        <div class="guide-v-line" style="left: 12px;"></div>
+
+        <!-- 列表容器 -->
+        <div id="food-list-container" class="divide-y divide-border">
+          <!-- 動態由 JS 渲染 5 項真實挑戰食材 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 行動端窄螢幕工程極限對比表 -->
+  <section class="w-full max-w-3xl border border-border rounded-xl bg-card p-4 sm:p-5 font-mono text-xs space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-bold text-foreground">360px 窄螢幕排版極限指標評測</h2>
+      <span class="text-[10px] text-muted-foreground">寬度預算：左 132px / 右 164px</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-border text-muted-foreground text-[11px]">
+            <th class="py-2 pr-3">方案</th>
+            <th class="py-2 pr-3">長品名是否折行</th>
+            <th class="py-2 pr-3">品名基線對齊度</th>
+            <th class="py-2 pr-3">光學邊界齊平</th>
+            <th class="py-2">行動端綜合評分</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border text-[11px]">
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 1 · 行內微單標籤</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">0 折行 (單行Truncate)</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">100% 水平對齊</td>
+            <td class="py-3 pr-3 text-emerald-500">完美平齊 (0 外凸)</td>
+            <td class="py-3 text-emerald-500 font-bold">9.8 / 10 (最佳平衡)</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 2 · 副標題前置微徽章</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">0 折行 (滿幅品名)</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">100% 水平對齊</td>
+            <td class="py-3 pr-3 text-emerald-500">完美平齊 (純文字)</td>
+            <td class="py-3 text-foreground font-bold">9.6 / 10 (品名第一)</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 3 · 純文字 Overline</td>
+            <td class="py-3 pr-3 text-emerald-500">0 折行 (Overline自適應)</td>
+            <td class="py-3 pr-3 text-amber-500">有標籤項目下移</td>
+            <td class="py-3 pr-3 text-emerald-500">完美平齊 (0px 誤差)</td>
+            <td class="py-3 text-muted-foreground">8.8 / 10 (儀表質感)</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 4 · 數據矩陣直接點亮</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">空間最大 (純淨)</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">100% 水平對齊</td>
+            <td class="py-3 pr-3 text-emerald-500">完美平齊</td>
+            <td class="py-3 text-sky-500 font-bold">9.5 / 10 (高階極簡)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-xs text-muted-foreground font-mono pb-8">
+    Zenfit UI/UX Pro Max · Mobile Narrow-Screen Precision Contract
+  </footer>
+
+  <script>
+    // 挑戰測試資料集 (專為 360px 窄螢幕設計的極端案例)
+    const TEST_FOODS = [
+      {
+        id: '1',
+        name: '大燕麥片',
+        brand: '',
+        tags: ['高蛋白', '碳水'], // 多標籤緊湊化
+        serving: '100g · 389 kcal',
+        p: '16.9g', c: '66g', f: '6.9g',
+        pHigh: true, cHigh: true, fHigh: false
+      },
+      {
+        id: '2',
+        name: '牛板腱',
+        brand: '',
+        tags: ['高蛋白'],
+        serving: '100g · 180 kcal',
+        p: '24g', c: '0g', f: '9g',
+        pHigh: true, cHigh: false, fHigh: false
+      },
+      {
+        id: '3',
+        name: '全麥吐司',
+        brand: '曼可頓', // 超長品牌名 (測試窄螢幕是否會把方塊擠爆)
+        tags: ['高蛋白'],
+        serving: '100g · 246 kcal',
+        p: '12g', c: '42g', f: '2.5g',
+        pHigh: true, cHigh: false, fHigh: false
+      },
+      {
+        id: '4',
+        name: '牛番茄',
+        brand: '',
+        tags: ['低卡'], // 極簡字數
+        serving: '100g · 18 kcal',
+        p: '0.9g', c: '3.9g', f: '0.2g',
+        pHigh: false, cHigh: false, fHigh: false
+      },
+      {
+        id: '5',
+        name: '特選頂級牛五花',
+        brand: '',
+        tags: [], // 無標籤 (檢驗基線是否和有標籤項目一致)
+        serving: '100g · 330 kcal',
+        p: '15g', c: '0g', f: '30g',
+        pHigh: false, cHigh: false, fHigh: false
+      }
+    ];
+
+    let currentScheme = '1';
+    let showGuides = false;
+
+    // 視窗寬度切換
+    function setViewportWidth(width, btnEl) {
+      const wrapper = document.getElementById('device-wrapper');
+      wrapper.style.width = width;
+
+      // 更新按鈕樣式
+      document.querySelectorAll('.viewport-btn').forEach(btn => {
+        btn.className = "viewport-btn px-2.5 py-1 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground transition-all cursor-pointer";
+      });
+      btnEl.className = "viewport-btn px-2.5 py-1 rounded-lg border border-foreground bg-foreground text-background font-bold transition-all cursor-pointer";
+
+      // 更新標籤文字
+      document.getElementById('current-width-label').innerText = width;
+      document.getElementById('canvas-width-indicator').innerText = width;
+
+      if (width === '360px') {
+        document.getElementById('card-inner-width-label').innerText = '296px';
+        document.getElementById('left-space-label').innerText = '132px';
+      } else if (width === '375px') {
+        document.getElementById('card-inner-width-label').innerText = '311px';
+        document.getElementById('left-space-label').innerText = '147px';
+      } else if (width === '390px') {
+        document.getElementById('card-inner-width-label').innerText = '326px';
+        document.getElementById('left-space-label').innerText = '162px';
+      } else {
+        document.getElementById('card-inner-width-label').innerText = '自適應 100%';
+        document.getElementById('left-space-label').innerText = '寬裕 (>350px)';
+      }
+    }
+
+    // 切換對齊線
+    function toggleGuides() {
+      showGuides = !showGuides;
+      const canvas = document.getElementById('preview-canvas-container');
+      const btnText = document.getElementById('guides-btn-text');
+      if (showGuides) {
+        canvas.classList.add('show-guides');
+        btnText.innerText = '對齊基準線: 開';
+      } else {
+        canvas.classList.remove('show-guides');
+        btnText.innerText = '對齊基準線: 關';
+      }
+    }
+
+    // 切換深淺主題
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    // 格式化品名
+    function formatFoodName(food) {
+      if (food.brand) {
+        return `${food.brand} · ${food.name}`;
+      }
+      return food.name;
+    }
+
+    // 切換方案
+    function switchScheme(schemeId) {
+      currentScheme = schemeId;
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`tab-btn-${i}`);
+        if (`${i}` === schemeId) {
+          btn.className = "p-2.5 rounded-xl border border-foreground bg-muted/30 text-left cursor-pointer transition-all flex flex-col justify-between h-[72px]";
+          btn.querySelector('span').className = "font-semibold text-foreground";
+        } else {
+          btn.className = "p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[72px]";
+          btn.querySelector('span').className = "font-semibold text-muted-foreground";
+        }
+      }
+
+      renderSchemeDescription(schemeId);
+      renderList(schemeId);
+    }
+
+    // 渲染方案架構說明
+    function renderSchemeDescription(schemeId) {
+      const container = document.getElementById('scheme-description');
+      if (schemeId === '1') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 1：【行動優化版】智能行內緊湊標籤 (Smart Compact Inline) — ★ 首推方案</span>
+            <span class="text-emerald-500 font-mono text-[11px]">360px 零折行</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>專門解決窄螢幕溢出</strong>：品名與標籤同行並排。標籤精煉為 2 字微膠囊（<code>高蛋白</code>、<code>碳水</code>、<code>低卡</code>），高度僅 16px。在 360px 極窄螢幕下，品名字數超過寬度時自動以 <code>truncate</code> 平滑截斷，標籤始終緊扣右側，<strong>絕對不發生非預期折行</strong>！所有品名垂直基線 100% 絕對齊平，行高恆定 60px。
+          </p>
+        `;
+      } else if (schemeId === '2') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 2：副標題前置微徽章 (Subtitle-Leading Tag) — 容積率最高</span>
+            <span class="text-foreground font-mono text-[11px]">品名 100% 滿幅</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>品名優先哲學</strong>：第一行 100% 完整留給食物名稱（即使「曼可頓 · 全麥吐司」也能從容排開）；將核心標籤放在第二行副標題最前側（<code>[高蛋白] 100g · 389 kcal</code>）。在窄螢幕上層級最分明、文字呼吸感最佳，徹底擺脫雙行擠壓。
+          </p>
+        `;
+      } else if (schemeId === '3') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 3：純文字排印 Overline (Typographic Overline - 行動緊湊版)</span>
+            <span class="text-sky-500 font-mono text-[11px]">0 邊框外凸</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            維持在名稱上方，但<strong class="text-foreground">徹底移除膠囊外框與背景</strong>，改為精緻大寫微距純文字（<code>高蛋白 · 碳水</code>，字號 10px）。首字左緣與下方品名首字在幾何與光學上 0 像素絕對平齊，徹底根除膠囊外凸的鋸齒感；壓縮行高至 62px，解決窄螢幕單屏高度浪費。
+          </p>
+        `;
+      } else if (schemeId === '4') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 4：數據矩陣直接點亮 (MacroSquare Synergy) — 極致高階冷靜</span>
+            <span class="text-sky-500 font-mono text-[11px]">左側零標籤雜訊</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>客觀測量儀終極形態</strong>：左側完全不堆疊冗長文字標籤！「高蛋白」特性直接由右側藍色 P 方塊外框點亮體現，「碳水」由橙色 C 方塊體現。左側只呈現純粹的品名與 <code>100g · 389 kcal</code>。在 360px 窄螢幕下擁有無與倫比的俐落與高級感。
+          </p>
+        `;
+      }
+    }
+
+    // 渲染列表
+    function renderList(schemeId) {
+      const container = document.getElementById('food-list-container');
+
+      container.innerHTML = TEST_FOODS.map(food => {
+        const displayName = formatFoodName(food);
+
+        let leftContentHtml = '';
+
+        if (schemeId === '1') {
+          // 方案 1：行動優化版行內微標籤
+          leftContentHtml = `
+            <div class="flex flex-col justify-center min-w-0 pr-2 overflow-hidden">
+              <!-- 第一行：名稱 + 微型行內標籤 (自適應防折行) -->
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="truncate text-foreground font-medium text-xs sm:text-sm leading-snug food-name-target shrink min-w-0">
+                  ${displayName}
+                </span>
+                <div class="flex items-center gap-1 shrink-0">
+                  ${food.tags.slice(0, 1).map(t => `
+                    <span class="text-[9px] font-mono px-1 py-0.2 leading-tight rounded border border-border/80 bg-muted/40 text-muted-foreground font-normal">
+                      ${t}
+                    </span>
+                  `).join('')}
+                  ${food.tags.length > 1 ? `
+                    <span class="text-[8px] font-mono px-1 py-0.2 rounded bg-muted text-muted-foreground border border-border/60">
+                      +${food.tags.length - 1}
+                    </span>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- 第二行：份量與熱量 -->
+              <div class="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                <span>${food.serving}</span>
+              </div>
+            </div>
+          `;
+        } else if (schemeId === '2') {
+          // 方案 2：副標題前置微徽章
+          leftContentHtml = `
+            <div class="flex flex-col justify-center min-w-0 pr-2 overflow-hidden">
+              <!-- 第一行：純粹品名 (100% 滿幅寬裕) -->
+              <div class="truncate text-foreground font-medium text-xs sm:text-sm leading-snug food-name-target">
+                ${displayName}
+              </div>
+
+              <!-- 第二行：標籤前置 · 份量與熱量 -->
+              <div class="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+                ${food.tags.length > 0 ? `
+                  <span class="text-[9px] font-mono px-1 py-0.2 rounded border border-border/80 bg-muted/40 text-muted-foreground shrink-0 leading-tight">
+                    ${food.tags[0]}
+                  </span>
+                  <span class="opacity-40">·</span>
+                ` : ''}
+                <span class="truncate">${food.serving}</span>
+              </div>
+            </div>
+          `;
+        } else if (schemeId === '3') {
+          // 方案 3：純文字排印 Overline (緊湊微型)
+          leftContentHtml = `
+            <div class="flex flex-col justify-center min-w-0 pr-2 overflow-hidden">
+              ${food.tags.length > 0 ? `
+                <div class="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/80 leading-none mb-0.5 truncate">
+                  ${food.tags.join(' · ')}
+                </div>
+              ` : `
+                <div class="text-[9px] font-mono leading-none mb-0.5 text-transparent select-none opacity-0">
+                  &nbsp;
+                </div>
+              `}
+
+              <!-- 品名 -->
+              <div class="truncate text-foreground font-medium text-xs sm:text-sm leading-snug food-name-target">
+                ${displayName}
+              </div>
+
+              <!-- 份量與熱量 -->
+              <div class="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                <span>${food.serving}</span>
+              </div>
+            </div>
+          `;
+        } else if (schemeId === '4') {
+          // 方案 4：數據矩陣直接點亮 (左側零多餘標籤)
+          leftContentHtml = `
+            <div class="flex flex-col justify-center min-w-0 pr-2 overflow-hidden">
+              <!-- 品名 -->
+              <div class="truncate text-foreground font-medium text-xs sm:text-sm leading-snug food-name-target">
+                ${displayName}
+              </div>
+
+              <!-- 份量與熱量 -->
+              <div class="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                <span>${food.serving}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="min-h-14 py-2.5 px-3 flex items-center justify-between group hover:bg-muted/30 transition-colors">
+            <!-- 左側品名區塊 -->
+            ${leftContentHtml}
+
+            <!-- 右側：P/C/F 數值方塊與操作選單 (行動端窄螢幕自適應緊湊化) -->
+            <div class="flex items-center gap-1.5 shrink-0 right-budget-box p-0.5 rounded">
+              <div class="flex items-center gap-1 font-mono">
+                <!-- P -->
+                <div class="w-10 sm:w-11 h-9 sm:h-10 rounded border ${food.pHigh ? 'border-sky-500/60 bg-sky-500/10 text-foreground' : 'border-border bg-card text-muted-foreground'} flex flex-col items-center justify-center transition-colors">
+                  <span class="text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${food.pHigh ? 'text-sky-500' : 'text-muted-foreground/60'}">P</span>
+                  <span class="text-[11px] sm:text-xs font-bold leading-none">${food.p}</span>
+                </div>
+                <!-- C -->
+                <div class="w-10 sm:w-11 h-9 sm:h-10 rounded border ${food.cHigh ? 'border-amber-500/60 bg-amber-500/10 text-foreground' : 'border-border bg-card text-muted-foreground'} flex flex-col items-center justify-center transition-colors">
+                  <span class="text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${food.cHigh ? 'text-amber-500' : 'text-muted-foreground/60'}">C</span>
+                  <span class="text-[11px] sm:text-xs font-bold leading-none">${food.c}</span>
+                </div>
+                <!-- F -->
+                <div class="w-10 sm:w-11 h-9 sm:h-10 rounded border ${food.fHigh ? 'border-purple-500/60 bg-purple-500/10 text-foreground' : 'border-border bg-card text-muted-foreground'} flex flex-col items-center justify-center transition-colors">
+                  <span class="text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${food.fHigh ? 'text-purple-500' : 'text-muted-foreground/60'}">F</span>
+                  <span class="text-[11px] sm:text-xs font-bold leading-none">${food.f}</span>
+                </div>
+              </div>
+
+              <!-- 三點選單 (緊湊尺寸) -->
+              <button type="button" class="h-7 w-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 初始化：預設切換為 360px 窄螢幕模式與方案 1
+    switchScheme('1');
+  </script>
+</body>
+</html>

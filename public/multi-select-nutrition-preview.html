@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 營養特徵多選過濾設計方案預覽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card-bg)',
+            border: 'var(--border-color)',
+            muted: 'var(--muted-bg)',
+            'muted-foreground': 'var(--muted-fg)',
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card-bg: #ffffff;
+      --border-color: #e5e5e5;
+      --muted-bg: #f4f4f5;
+      --muted-fg: #71717a;
+      --overlay: rgba(255, 255, 255, 0.85);
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card-bg: #000000;
+      --border-color: #27272a;
+      --muted-bg: #09090b;
+      --muted-fg: #a1a1aa;
+      --overlay: rgba(0, 0, 0, 0.85);
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', -apple-system, sans-serif;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .device-frame {
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    /* 簡約微型 Checkbox */
+    .custom-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .custom-checkbox.checked {
+      background-color: var(--fg);
+      border-color: var(--fg);
+      color: var(--bg);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+  <!-- 頂部標題與說明 -->
+  <header class="w-full max-w-3xl mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-6">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono uppercase tracking-widest text-muted-foreground">ZENFIT · UI/UX PRO MAX</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Multi-Tag Filtering</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight mt-1">營養特徵多選過濾設計方案</h1>
+      <p class="text-xs text-muted-foreground font-mono mt-1">支援同時勾選多個營養特徵（如高蛋白 ＋ 低卡），兼顧 360px 窄螢幕與極速互動</p>
+    </div>
+
+    <div class="flex items-center gap-2 font-mono text-xs self-end sm:self-auto">
+      <!-- 邏輯模式切換器 (交集 AND vs 聯集 OR) -->
+      <div class="flex items-center border border-border rounded-lg p-0.5 bg-card">
+        <button
+          id="logic-and-btn"
+          onclick="setFilterLogic('AND')"
+          class="px-2 py-1 rounded text-[11px] font-semibold bg-foreground text-background transition-all cursor-pointer"
+          title="交集模式：必須同時符合所有選中的特徵"
+        >
+          且 (AND)
+        </button>
+        <button
+          id="logic-or-btn"
+          onclick="setFilterLogic('OR')"
+          class="px-2 py-1 rounded text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+          title="聯集模式：符合任一選中的特徵即可"
+        >
+          或 (OR)
+        </button>
+      </div>
+
+      <!-- 主題切換 -->
+      <button
+        onclick="toggleTheme()"
+        class="p-2 rounded-lg border border-border hover:border-foreground/40 bg-card text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        title="切換淺色/深色模式"
+      >
+        <svg id="theme-icon-dark" class="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg id="theme-icon-light" class="w-4 h-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 螢幕寬度控制器 -->
+  <section class="w-full max-w-3xl mb-6 p-3 rounded-xl border border-border bg-card font-mono text-xs flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-muted-foreground">模擬螢幕:</span>
+      <button onclick="setViewportWidth('360px', this)" class="vp-btn px-2.5 py-1 rounded-md border border-foreground bg-foreground text-background font-bold cursor-pointer">360px (窄屏)</button>
+      <button onclick="setViewportWidth('390px', this)" class="vp-btn px-2.5 py-1 rounded-md border border-border bg-card text-muted-foreground hover:border-foreground/40 cursor-pointer">390px (標準)</button>
+      <button onclick="setViewportWidth('100%', this)" class="vp-btn px-2.5 py-1 rounded-md border border-border bg-card text-muted-foreground hover:border-foreground/40 cursor-pointer">全寬 (Desktop)</button>
+    </div>
+    <div class="text-[11px] text-muted-foreground">
+      當前選中: <span id="selected-tags-summary" class="text-foreground font-semibold">無特徵 (全部)</span>
+    </div>
+  </section>
+
+  <!-- 四大互動方案選擇 Tabs -->
+  <nav class="w-full max-w-3xl mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs select-none">
+      <button
+        onclick="switchScheme('A')"
+        id="tab-btn-A"
+        class="p-2.5 rounded-xl border border-foreground bg-muted/30 text-left cursor-pointer transition-all flex flex-col justify-between h-[76px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-foreground">方案 A</span>
+          <span class="text-[9px] px-1 py-0.2 rounded bg-foreground text-background font-bold">推薦</span>
+        </div>
+        <div class="text-[11px] text-foreground font-medium">多選浮層 Popover</div>
+        <div class="text-[9px] text-muted-foreground">Checkbox Popover</div>
+      </button>
+
+      <button
+        onclick="switchScheme('B')"
+        id="tab-btn-B"
+        class="p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[76px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-muted-foreground">方案 B</span>
+          <span class="text-[9px] px-1 py-0.2 rounded border border-border text-muted-foreground">零彈窗</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground font-medium">免彈窗·次級膠囊條</div>
+        <div class="text-[9px] text-muted-foreground">Inline Filter Chips</div>
+      </button>
+
+      <button
+        onclick="switchScheme('C')"
+        id="tab-btn-C"
+        class="p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[76px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-muted-foreground">方案 C</span>
+          <span class="text-[9px] px-1 py-0.2 rounded border border-border text-muted-foreground">大拇指友好</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground font-medium">底部抽屜面板</div>
+        <div class="text-[9px] text-muted-foreground">Mobile Bottom Sheet</div>
+      </button>
+
+      <button
+        onclick="switchScheme('D')"
+        id="tab-btn-D"
+        class="p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[76px]"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-muted-foreground">方案 D</span>
+          <span class="text-[9px] px-1 py-0.2 rounded border border-border text-muted-foreground">極簡整合</span>
+        </div>
+        <div class="text-[11px] text-muted-foreground font-medium">搜尋框內聯 Token</div>
+        <div class="text-[9px] text-muted-foreground">Search Input Tokens</div>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 方案架構說明卡片 -->
+  <section id="scheme-description" class="w-full max-w-3xl mb-6 p-4 rounded-xl border border-border bg-card font-mono text-xs space-y-2">
+    <!-- 動態注入說明 -->
+  </section>
+
+  <!-- 模擬手機畫布容器 -->
+  <div class="w-full flex justify-center mb-8">
+    <div id="device-wrapper" class="device-frame w-[360px] max-w-full">
+      <div class="flex items-center justify-between text-[11px] font-mono text-muted-foreground px-1 mb-2">
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>INTERACTIVE PREVIEW</span>
+        </span>
+        <span id="canvas-width-indicator" class="font-bold text-foreground">360px</span>
+      </div>
+
+      <!-- 手機內層卡片主體 -->
+      <div class="border border-border rounded-xl bg-card overflow-hidden shadow-sm relative">
+
+        <!-- 頂部過濾控制列容器 -->
+        <div id="filter-controls-area" class="p-3 border-b border-border space-y-2.5 bg-card">
+          <!-- 動態渲染控制列 -->
+        </div>
+
+        <!-- 列表容器 -->
+        <div id="food-list-container" class="divide-y divide-border min-h-[320px] max-h-[460px] overflow-y-auto">
+          <!-- 動態過濾渲染 -->
+        </div>
+
+        <!-- 底部計數列 -->
+        <div class="p-2.5 bg-muted/20 border-t border-border flex items-center justify-between text-[11px] font-mono text-muted-foreground px-3">
+          <span>共顯示 <strong id="matched-count-label" class="text-foreground">0</strong> 項食材</span>
+          <span id="logic-badge" class="px-1.5 py-0.5 rounded bg-muted text-[10px] border border-border">邏輯: 且 (AND)</span>
+        </div>
+
+        <!-- 方案 A 的 Popover 浮層 (位置掛在卡片右上角下方) -->
+        <div
+          id="popover-dropdown"
+          onclick="event.stopPropagation()"
+          class="hidden absolute right-3 top-[92px] w-[210px] bg-card border border-border rounded-xl shadow-2xl z-50 p-2.5 font-mono text-xs"
+        >
+          <!-- 動態渲染浮層內容 -->
+        </div>
+
+        <!-- 方案 C 的 Bottom Sheet 抽屜 -->
+        <div
+          id="bottom-sheet-backdrop"
+          onclick="closeBottomSheet()"
+          class="hidden absolute inset-0 bg-black/60 backdrop-blur-[1px] z-50 transition-opacity flex flex-col justify-end"
+        >
+          <div
+            id="bottom-sheet-panel"
+            onclick="event.stopPropagation()"
+            class="bg-card border-t border-border rounded-t-2xl p-4 space-y-3 font-mono text-xs"
+          >
+            <!-- 動態渲染抽屜內容 -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 多選設計方案評估比較表 -->
+  <section class="w-full max-w-3xl border border-border rounded-xl bg-card p-4 sm:p-5 font-mono text-xs space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-bold text-foreground">多選過濾架構綜合評估</h2>
+      <span class="text-[10px] text-muted-foreground">符合客觀測量儀標準</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-border text-muted-foreground text-[11px]">
+            <th class="py-2 pr-3">方案</th>
+            <th class="py-2 pr-3">360px 窄螢幕寬度佔用</th>
+            <th class="py-2 pr-3">互動操作摩擦力</th>
+            <th class="py-2 pr-3">當前狀態透明度</th>
+            <th class="py-2">推薦指數</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border text-[11px]">
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 A · 浮層 Checkbox Popover</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">極小 (恆定單鍵)</td>
+            <td class="py-3 pr-3 text-emerald-500">低 (點擊浮層勾選)</td>
+            <td class="py-3 pr-3 text-emerald-500">極佳 (按鈕即時計數)</td>
+            <td class="py-3 text-emerald-500 font-bold">★ 9.8 / 10 (最推薦)</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 B · 免彈窗次級膠囊條</td>
+            <td class="py-3 pr-3 text-amber-500">需多佔 28px 高度</td>
+            <td class="py-3 pr-3 text-emerald-500 font-bold">極速 (0 彈窗直接點)</td>
+            <td class="py-3 pr-3 text-emerald-500">100% 眼前全顯</td>
+            <td class="py-3 text-foreground font-bold">9.5 / 10 (單手極速)</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 C · 底部抽屜面板</td>
+            <td class="py-3 pr-3 text-emerald-500">極小 (按鈕進入)</td>
+            <td class="py-3 pr-3 text-muted-foreground">中 (需遮罩滑出確認)</td>
+            <td class="py-3 pr-3 text-emerald-500">極佳 (全螢幕聚焦)</td>
+            <td class="py-3 text-muted-foreground">9.0 / 10 (大屏手機)</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-foreground">方案 D · 搜尋框內聯 Token</td>
+            <td class="py-3 pr-3 text-amber-500">佔用搜尋框長度</td>
+            <td class="py-3 pr-3 text-muted-foreground">高 (需鍵盤或下拉交互)</td>
+            <td class="py-3 pr-3 text-emerald-500">良好 (如 GitHub)</td>
+            <td class="py-3 text-muted-foreground">8.7 / 10 (極客風格)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    // 營養特徵維度清單
+    const NUTRITION_TAG_OPTIONS = [
+      { id: 'high-protein', label: '高蛋白', short: '高蛋' },
+      { id: 'carb-source', label: '碳水主食', short: '碳水' },
+      { id: 'fat-source', label: '脂質來源', short: '優脂' },
+      { id: 'low-calorie', label: '低熱量', short: '低卡' },
+    ];
+
+    // 食材真實測試數據庫
+    const FOOD_ITEMS = [
+      { id: '1', name: '大燕麥片', brand: '', tags: ['high-protein', 'carb-source'], serving: '100g · 389 kcal', p: '16.9g', c: '66g', f: '6.9g', pHigh: true, cHigh: true, fHigh: false },
+      { id: '2', name: '牛板腱', brand: '', tags: ['high-protein'], serving: '100g · 180 kcal', p: '24g', c: '0g', f: '9g', pHigh: true, cHigh: false, fHigh: false },
+      { id: '3', name: '牛番茄', brand: '', tags: ['low-calorie'], serving: '100g · 18 kcal', p: '0.9g', c: '3.9g', f: '0.2g', pHigh: false, cHigh: false, fHigh: false },
+      { id: '4', name: '白米飯', brand: '', tags: ['carb-source'], serving: '100g · 130 kcal', p: '2.7g', c: '28g', f: '0.3g', pHigh: false, cHigh: true, fHigh: false },
+      { id: '5', name: '全麥吐司', brand: '曼可頓', tags: ['high-protein', 'carb-source'], serving: '100g · 246 kcal', p: '12g', c: '42g', f: '2.5g', pHigh: true, cHigh: true, fHigh: false },
+      { id: '6', name: '橄欖油', brand: '歐麗薇蘭', tags: ['fat-source'], serving: '10g · 90 kcal', p: '0g', c: '0g', f: '10g', pHigh: false, cHigh: false, fHigh: true },
+      { id: '7', name: '乳清蛋白粉', brand: 'ON', tags: ['high-protein', 'low-calorie'], serving: '30g · 120 kcal', p: '24g', c: '2g', f: '1.5g', pHigh: true, cHigh: false, fHigh: false },
+      { id: '8', name: '雞胸肉', brand: '正大', tags: ['high-protein', 'low-calorie'], serving: '100g · 118 kcal', p: '24.6g', c: '0g', f: '1.9g', pHigh: true, cHigh: false, fHigh: false },
+      { id: '9', name: '特選頂級牛五花', brand: '', tags: ['fat-source'], serving: '100g · 330 kcal', p: '15g', c: '0g', f: '30g', pHigh: false, cHigh: false, fHigh: true },
+    ];
+
+    // 全域響應狀態
+    let selectedTags = new Set();
+    let filterLogic = 'AND'; // 'AND' 或 'OR'
+    let currentScheme = 'A';
+    let isPopoverOpen = false;
+
+    // 邏輯切換 (AND / OR)
+    function setFilterLogic(logic) {
+      filterLogic = logic;
+      const andBtn = document.getElementById('logic-and-btn');
+      const orBtn = document.getElementById('logic-or-btn');
+      const badge = document.getElementById('logic-badge');
+
+      if (logic === 'AND') {
+        andBtn.className = "px-2 py-1 rounded text-[11px] font-semibold bg-foreground text-background transition-all cursor-pointer";
+        orBtn.className = "px-2 py-1 rounded text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer";
+        badge.innerText = "邏輯: 且 (AND 交集)";
+      } else {
+        orBtn.className = "px-2 py-1 rounded text-[11px] font-semibold bg-foreground text-background transition-all cursor-pointer";
+        andBtn.className = "px-2 py-1 rounded text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer";
+        badge.innerText = "邏輯: 或 (OR 聯集)";
+      }
+
+      updateSummaryLabel();
+      renderControls();
+      renderList();
+      if (isPopoverOpen) renderPopoverContent();
+    }
+
+    // 切換單一特徵選中
+    function toggleTag(tagId) {
+      if (selectedTags.has(tagId)) {
+        selectedTags.delete(tagId);
+      } else {
+        selectedTags.add(tagId);
+      }
+      updateSummaryLabel();
+      renderControls();
+      renderList();
+      if (isPopoverOpen) renderPopoverContent();
+      if (currentScheme === 'C') renderBottomSheetContent();
+    }
+
+    // 重設清空特徵
+    function resetAllTags() {
+      selectedTags.clear();
+      updateSummaryLabel();
+      renderControls();
+      renderList();
+      if (isPopoverOpen) renderPopoverContent();
+      if (currentScheme === 'C') renderBottomSheetContent();
+    }
+
+    // 更新頂部文字摘要
+    function updateSummaryLabel() {
+      const summaryEl = document.getElementById('selected-tags-summary');
+      if (selectedTags.size === 0) {
+        summaryEl.innerText = '無特徵 (全部)';
+        summaryEl.className = 'text-foreground font-semibold';
+      } else {
+        const labels = Array.from(selectedTags).map(id => {
+          const opt = NUTRITION_TAG_OPTIONS.find(o => o.id === id);
+          return opt ? opt.short : id;
+        });
+        summaryEl.innerText = `${labels.join(filterLogic === 'AND' ? ' + ' : ' / ')} (${selectedTags.size})`;
+        summaryEl.className = 'text-foreground font-semibold bg-foreground text-background px-1.5 py-0.2 rounded text-[10px]';
+      }
+    }
+
+    // 切換視窗寬度
+    function setViewportWidth(width, btnEl) {
+      document.getElementById('device-wrapper').style.width = width;
+      document.querySelectorAll('.vp-btn').forEach(btn => {
+        btn.className = "vp-btn px-2.5 py-1 rounded-md border border-border bg-card text-muted-foreground hover:border-foreground/40 cursor-pointer";
+      });
+      btnEl.className = "vp-btn px-2.5 py-1 rounded-md border border-foreground bg-foreground text-background font-bold cursor-pointer";
+      document.getElementById('canvas-width-indicator').innerText = width;
+    }
+
+    // 切換淺深主題
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    // 切換方案
+    function switchScheme(schemeId) {
+      currentScheme = schemeId;
+      isPopoverOpen = false;
+      document.getElementById('popover-dropdown').classList.add('hidden');
+      document.getElementById('bottom-sheet-backdrop').classList.add('hidden');
+
+      for (let s of ['A', 'B', 'C', 'D']) {
+        const btn = document.getElementById(`tab-btn-${s}`);
+        if (s === schemeId) {
+          btn.className = "p-2.5 rounded-xl border border-foreground bg-muted/30 text-left cursor-pointer transition-all flex flex-col justify-between h-[76px]";
+          btn.querySelector('span').className = "font-semibold text-foreground";
+        } else {
+          btn.className = "p-2.5 rounded-xl border border-border hover:border-foreground/40 bg-card text-left cursor-pointer transition-all flex flex-col justify-between h-[76px]";
+          btn.querySelector('span').className = "font-semibold text-muted-foreground";
+        }
+      }
+
+      renderSchemeDescription(schemeId);
+      renderControls();
+      renderList();
+    }
+
+    // 渲染方案說明
+    function renderSchemeDescription(schemeId) {
+      const descEl = document.getElementById('scheme-description');
+      if (schemeId === 'A') {
+        descEl.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 A：【Vercel 經典多選浮層】Checkbox Popover — ★ 最強推薦</span>
+            <span class="text-emerald-500 font-mono text-[11px]">相容現有佈局 · 零破版</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>最優解法</strong>：右側釘住按鈕維持原位，選中多個時智慧變為 <code>特徵 · 2 ˇ [×]</code>。點擊按鈕呼出精緻的極簡 Checkbox 浮層，支援即時勾選多項、即時顯示符合個數，並內嵌 <code>且 (AND) / 或 (OR)</code> 邏輯開關。在 360px 窄螢幕下寬度佔用 0 增加！
+          </p>
+        `;
+      } else if (schemeId === 'B') {
+        descEl.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 B：【免彈窗·次級過濾膠囊條】Inline Multi-Toggle Chips Bar</span>
+            <span class="text-foreground font-mono text-[11px]">極速 0 彈窗摩擦</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>極速單手操作</strong>：在分類滾動列下方展開一條專屬的次級多選膠囊條（<code>[高蛋白] [碳水] [優脂] [低卡]</code>）。點擊任意膠囊直接切換選中狀態，可同時點選多個。零彈窗摩擦，單手大拇指 1 毫秒極速切換！
+          </p>
+        `;
+      } else if (schemeId === 'C') {
+        descEl.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 C：【行動端底部抽屜面板】Mobile Bottom Sheet Multi-Select</span>
+            <span class="text-sky-500 font-mono text-[11px]">大拇指黃金觸控</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>行動原生體驗</strong>：點擊右側特徵按鈕時，從手機螢幕底部平滑滑出半屏 Action Sheet，提供大按鈕多選交互與邏輯切換，底部常駐「完成 (符合 N 項)」按鈕。
+          </p>
+        `;
+      } else if (schemeId === 'D') {
+        descEl.innerHTML = `
+          <div class="flex items-center justify-between text-foreground font-semibold">
+            <span>方案 D：【搜尋框內聯 Token 標籤】Input Token Tags</span>
+            <span class="text-muted-foreground font-mono text-[11px]">極客一體化</span>
+          </div>
+          <p class="text-muted-foreground leading-relaxed">
+            <strong>語義一體化</strong>：選中的營養特徵轉化為搜尋框前端的微型標籤（<code>[高蛋 ×] [低卡 ×] 搜尋...</code>）。點擊「+ 特徵」可呼出浮層增減標籤。
+          </p>
+        `;
+      }
+    }
+
+    // 展開 / 收起方案 A 的 Popover
+    function togglePopover(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      isPopoverOpen = !isPopoverOpen;
+      const popover = document.getElementById('popover-dropdown');
+      if (isPopoverOpen) {
+        renderPopoverContent();
+        popover.classList.remove('hidden');
+      } else {
+        popover.classList.add('hidden');
+      }
+    }
+
+    // 渲染方案 A Popover 內容
+    function renderPopoverContent() {
+      const popover = document.getElementById('popover-dropdown');
+      popover.innerHTML = `
+        <div class="flex items-center justify-between pb-2 mb-1.5 border-b border-border/60">
+          <span class="font-bold text-xs text-foreground">篩選特徵 (可多選)</span>
+          <button
+            type="button"
+            onclick="resetAllTags();"
+            class="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+          >
+            清空
+          </button>
+        </div>
+
+        <!-- 特徵核取清單 (整行皆可點擊 toggle) -->
+        <div class="space-y-1 my-1.5">
+          ${NUTRITION_TAG_OPTIONS.map(opt => {
+            const isChecked = selectedTags.has(opt.id);
+            const matchCount = FOOD_ITEMS.filter(f => f.tags.includes(opt.id)).length;
+            return `
+              <div
+                onclick="toggleTag('${opt.id}');"
+                class="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer select-none transition-colors ${isChecked ? 'bg-muted/30 font-semibold' : ''}"
+              >
+                <div class="flex items-center gap-2">
+                  <div class="custom-checkbox ${isChecked ? 'checked' : ''}">
+                    ${isChecked ? '✓' : ''}
+                  </div>
+                  <span class="text-xs ${isChecked ? 'text-foreground' : 'text-muted-foreground'}">
+                    ${opt.label}
+                  </span>
+                </div>
+                <span class="text-[10px] font-mono text-muted-foreground">
+                  ${matchCount}
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- 底部確認按鈕 -->
+        <div class="pt-2 mt-1 border-t border-border/60 flex items-center justify-between text-[10px]">
+          <span class="text-muted-foreground">邏輯: ${filterLogic === 'AND' ? '且 (交集)' : '或 (聯集)'}</span>
+          <button
+            type="button"
+            onclick="togglePopover(event);"
+            class="px-3 py-1 rounded bg-foreground text-background font-semibold hover:opacity-90 cursor-pointer"
+          >
+            完成
+          </button>
+        </div>
+      `;
+    }
+
+    // 方案 C: 底部抽屜
+    function openBottomSheet(e) {
+      if (e) e.stopPropagation();
+      const sheet = document.getElementById('bottom-sheet-backdrop');
+      renderBottomSheetContent();
+      sheet.classList.remove('hidden');
+    }
+    function closeBottomSheet(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('bottom-sheet-backdrop').classList.add('hidden');
+    }
+
+    // 渲染方案 C 抽屜內容
+    function renderBottomSheetContent() {
+      const panel = document.getElementById('bottom-sheet-panel');
+      const filtered = getFilteredFoods();
+
+      panel.innerHTML = `
+        <div class="flex items-center justify-between pb-2 border-b border-border">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm text-foreground">篩選營養特徵</span>
+            <span class="text-[10px] text-muted-foreground">可多選組合</span>
+          </div>
+          <button type="button" onclick="closeBottomSheet(event)" class="text-muted-foreground hover:text-foreground text-sm cursor-pointer p-1">✕</button>
+        </div>
+
+        <!-- 大按鈕切換網格 -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          ${NUTRITION_TAG_OPTIONS.map(opt => {
+            const isChecked = selectedTags.has(opt.id);
+            return `
+              <div
+                onclick="toggleTag('${opt.id}')"
+                class="p-2.5 rounded-xl border text-left flex items-center justify-between cursor-pointer transition-all ${isChecked ? 'border-foreground bg-muted/40 font-semibold text-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'}"
+              >
+                <span>${opt.label}</span>
+                <span class="w-4 h-4 rounded border flex items-center justify-center text-[10px] ${isChecked ? 'bg-foreground text-background border-foreground font-bold' : 'border-border'}">
+                  ${isChecked ? '✓' : ''}
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- 底部確認列 -->
+        <div class="pt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onclick="resetAllTags()"
+            class="flex-1 py-2.5 rounded-xl border border-border text-center font-medium cursor-pointer hover:bg-muted"
+          >
+            重設
+          </button>
+          <button
+            type="button"
+            onclick="closeBottomSheet(event)"
+            class="flex-1 py-2.5 rounded-xl bg-foreground text-background font-bold text-center cursor-pointer hover:opacity-90"
+          >
+            完成 (${filtered.length} 項)
+          </button>
+        </div>
+      `;
+    }
+
+    // 渲染頂部控制列
+    function renderControls() {
+      const area = document.getElementById('filter-controls-area');
+      const hasTags = selectedTags.size > 0;
+      const count = selectedTags.size;
+
+      let triggerLabel = '特徵';
+      if (count === 1) {
+        const firstId = Array.from(selectedTags)[0];
+        const opt = NUTRITION_TAG_OPTIONS.find(o => o.id === firstId);
+        triggerLabel = opt ? opt.short : '特徵';
+      } else if (count > 1) {
+        triggerLabel = `特徵 · ${count}`;
+      }
+
+      if (currentScheme === 'A') {
+        // 方案 A：右側固定 Popover 按鈕
+        area.innerHTML = `
+          <!-- 搜尋框 -->
+          <div class="relative flex items-center">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="搜尋食材名稱或品牌..." class="w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none" />
+          </div>
+
+          <!-- 分類導航列 + 右側多選按鈕 -->
+          <div class="flex items-center justify-between gap-1.5 py-0.5">
+            <!-- 左側滾動分類 -->
+            <div class="flex-1 min-w-0 overflow-x-auto no-scrollbar">
+              <div class="flex items-center gap-1 shrink-0">
+                <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-foreground text-background shrink-0">全部 9</span>
+                <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium text-muted-foreground hover:bg-muted shrink-0">天然食材</span>
+                <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium text-muted-foreground hover:bg-muted shrink-0">工業食品</span>
+                <div class="h-3.5 w-px bg-border/60 mx-0.5 shrink-0"></div>
+                <span class="px-2 py-1 rounded-full text-xs font-mono text-muted-foreground shrink-0">已歸檔 0</span>
+              </div>
+            </div>
+
+            <!-- 右側：特徵多選觸發按鈕 (支援計數與一鍵重設) -->
+            <div class="shrink-0 pl-1 border-l border-border/60 relative">
+              <div class="inline-flex items-center rounded-full text-xs font-mono border transition-all ${hasTags ? 'bg-foreground text-background border-foreground font-semibold' : 'border-border/70 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'}">
+                <button
+                  id="nutrition-trigger-btn"
+                  type="button"
+                  onclick="togglePopover(event)"
+                  class="flex items-center gap-1 py-1 pl-2.5 pr-2 cursor-pointer focus:outline-none"
+                >
+                  <span class="truncate max-w-[70px]">${triggerLabel}</span>
+                  <svg class="w-3 h-3 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                ${hasTags ? `
+                  <button
+                    type="button"
+                    onclick="resetAllTags(); event.stopPropagation();"
+                    class="p-1 pr-2 hover:opacity-75 cursor-pointer text-background"
+                    title="清除特徵篩選"
+                  >
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (currentScheme === 'B') {
+        // 方案 B：次級多選膠囊條 (點擊即時多選)
+        area.innerHTML = `
+          <div class="relative flex items-center">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="搜尋食材名稱或品牌..." class="w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none" />
+          </div>
+
+          <!-- 第一層：食材實體物理分類 -->
+          <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+            <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-foreground text-background shrink-0">全部</span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium text-muted-foreground hover:bg-muted shrink-0">天然食材</span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium text-muted-foreground hover:bg-muted shrink-0">工業食品</span>
+          </div>
+
+          <!-- 第二層：次級特徵多選膠囊條 (每個皆可獨立點亮) -->
+          <div class="flex items-center gap-1.5 pt-1.5 border-t border-border/50 overflow-x-auto no-scrollbar">
+            <span class="text-[10px] font-mono text-muted-foreground shrink-0 uppercase tracking-widest mr-0.5">特徵:</span>
+            ${NUTRITION_TAG_OPTIONS.map(opt => {
+              const isSelected = selectedTags.has(opt.id);
+              return `
+                <button
+                  type="button"
+                  onclick="toggleTag('${opt.id}')"
+                  class="px-2 py-0.5 rounded-full text-[11px] font-mono transition-all cursor-pointer shrink-0 border ${isSelected ? 'bg-foreground text-background border-foreground font-semibold' : 'border-border/70 bg-muted/20 text-muted-foreground hover:border-foreground/40'}"
+                >
+                  ${opt.label}
+                  ${isSelected ? `<span class="ml-1 text-[9px]">✓</span>` : ''}
+                </button>
+              `;
+            }).join('')}
+            ${hasTags ? `
+              <button
+                type="button"
+                onclick="resetAllTags()"
+                class="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer shrink-0 ml-auto"
+              >
+                清空
+              </button>
+            ` : ''}
+          </div>
+        `;
+      } else if (currentScheme === 'C') {
+        // 方案 C：底部抽屜按鈕
+        area.innerHTML = `
+          <div class="relative flex items-center">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="搜尋食材名稱或品牌..." class="w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none" />
+          </div>
+
+          <div class="flex items-center justify-between gap-1.5 py-0.5">
+            <div class="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1">
+              <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-foreground text-background shrink-0">全部 9</span>
+              <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium text-muted-foreground shrink-0">天然食材</span>
+            </div>
+
+            <button
+              type="button"
+              onclick="openBottomSheet(event)"
+              class="px-2.5 py-1 rounded-full text-xs font-mono border border-border flex items-center gap-1 cursor-pointer shrink-0 ${hasTags ? 'bg-foreground text-background border-foreground font-semibold' : 'bg-card text-muted-foreground'}"
+            >
+              <span>${hasTags ? `特徵 · ${selectedTags.size}` : '篩選特徵'}</span>
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+            </button>
+          </div>
+        `;
+      } else if (currentScheme === 'D') {
+        // 方案 D：搜尋框 Token 內聯
+        area.innerHTML = `
+          <div class="flex items-center gap-1.5 p-1 rounded-lg border border-border bg-card overflow-x-auto no-scrollbar">
+            <svg class="w-3.5 h-3.5 text-muted-foreground ml-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            ${Array.from(selectedTags).map(id => {
+              const opt = NUTRITION_TAG_OPTIONS.find(o => o.id === id);
+              return `
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-foreground text-[10px] font-mono border border-border shrink-0">
+                  <span>${opt.short}</span>
+                  <button type="button" onclick="toggleTag('${id}')" class="hover:text-red-500 cursor-pointer">×</button>
+                </span>
+              `;
+            }).join('')}
+            <input type="text" placeholder="${selectedTags.size > 0 ? '搜尋...' : '搜尋名稱...'}" class="flex-1 min-w-[60px] bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none" />
+            
+            <button
+              id="nutrition-trigger-btn"
+              type="button"
+              onclick="togglePopover(event)"
+              class="px-2 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground hover:text-foreground shrink-0 border border-border cursor-pointer"
+            >
+              + 特徵
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 text-xs font-mono">
+            <span class="px-2.5 py-1 rounded-full bg-foreground text-background shrink-0">全部 9</span>
+            <span class="px-2.5 py-1 rounded-full text-muted-foreground shrink-0">天然食材</span>
+          </div>
+        `;
+      }
+    }
+
+    // 計算過濾後的食材
+    function getFilteredFoods() {
+      if (selectedTags.size === 0) {
+        return FOOD_ITEMS;
+      }
+
+      const activeTags = Array.from(selectedTags);
+
+      return FOOD_ITEMS.filter(food => {
+        if (filterLogic === 'AND') {
+          return activeTags.every(t => food.tags.includes(t));
+        } else {
+          return activeTags.some(t => food.tags.includes(t));
+        }
+      });
+    }
+
+    // 渲染食材列表 (純淨方案 4 風格)
+    function renderList() {
+      const container = document.getElementById('food-list-container');
+      const filtered = getFilteredFoods();
+      document.getElementById('matched-count-label').innerText = filtered.length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-xs font-mono text-muted-foreground space-y-2">
+            <div>無符合條件的食材</div>
+            <div class="text-[10px] opacity-75">當前為「${filterLogic === 'AND' ? '且 (交集)' : '或 (聯集)'}」篩選模式</div>
+            <button onclick="resetAllTags()" class="mt-2 px-3 py-1 rounded border border-border hover:bg-muted text-foreground text-xs cursor-pointer">
+              清除特徵篩選
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(food => {
+        const displayName = food.brand ? `${food.brand} · ${food.name}` : food.name;
+
+        return `
+          <div class="min-h-14 py-2.5 px-3 flex items-center justify-between group hover:bg-muted/30 transition-colors">
+            <!-- 左側純淨品名與份量 -->
+            <div class="flex flex-col justify-center min-w-0 pr-2 overflow-hidden">
+              <div class="truncate text-foreground font-medium text-xs sm:text-sm leading-snug">
+                ${displayName}
+              </div>
+              <div class="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                <span>${food.serving}</span>
+              </div>
+            </div>
+
+            <!-- 右側：P/C/F 數值方塊 (標準度量衡模式：不變淡) -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <div class="flex items-center gap-1 font-mono">
+                <!-- P -->
+                <div class="w-10 sm:w-11 h-9 sm:h-10 rounded border ${food.pHigh ? 'border-sky-500/60 bg-sky-500/10 text-foreground' : 'border-border bg-muted/30 text-foreground'} flex flex-col items-center justify-center transition-colors">
+                  <span class="text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${food.pHigh ? 'text-sky-500 font-bold' : 'text-muted-foreground'}">P</span>
+                  <span class="text-[11px] sm:text-xs font-bold leading-none">${food.p}</span>
+                </div>
+                <!-- C -->
+                <div class="w-10 sm:w-11 h-9 sm:h-10 rounded border ${food.cHigh ? 'border-amber-500/60 bg-amber-500/10 text-foreground' : 'border-border bg-muted/30 text-foreground'} flex flex-col items-center justify-center transition-colors">
+                  <span class="text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${food.cHigh ? 'text-amber-500 font-bold' : 'text-muted-foreground'}">C</span>
+                  <span class="text-[11px] sm:text-xs font-bold leading-none">${food.c}</span>
+                </div>
+                <!-- F -->
+                <div class="w-10 sm:w-11 h-9 sm:h-10 rounded border ${food.fHigh ? 'border-purple-500/60 bg-purple-500/10 text-foreground' : 'border-border bg-muted/30 text-foreground'} flex flex-col items-center justify-center transition-colors">
+                  <span class="text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${food.fHigh ? 'text-purple-500 font-bold' : 'text-muted-foreground'}">F</span>
+                  <span class="text-[11px] sm:text-xs font-bold leading-none">${food.f}</span>
+                </div>
+              </div>
+
+              <!-- 三點選單 -->
+              <button type="button" class="h-7 w-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 點擊空白處關閉 Popover
+    document.addEventListener('click', (e) => {
+      const popover = document.getElementById('popover-dropdown');
+      const triggerBtn = document.getElementById('nutrition-trigger-btn');
+      if (popover && isPopoverOpen) {
+        if (!popover.contains(e.target) && (!triggerBtn || !triggerBtn.contains(e.target))) {
+          isPopoverOpen = false;
+          popover.classList.add('hidden');
+        }
+      }
+    });
+
+    // 初始化啟動方案 A
+    switchScheme('A');
+  </script>
+</body>
+</html>

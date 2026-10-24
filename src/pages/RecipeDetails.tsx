@@ -39,6 +39,7 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
+import { formatFoodDisplayName } from '@/utils/foodNaming';
 import type { RecipeIngredient } from '@/types';
 
 export default function RecipeDetails() {
@@ -237,7 +238,7 @@ export default function RecipeDetails() {
       if (targetFood && qty > 0) {
         validIngredients.push({
           foodId: targetFood.id,
-          foodName: targetFood.name,
+          foodName: formatFoodDisplayName(targetFood),
           quantity: qty,
           unit: targetFood.servingUnit || 'g',
           isOptional: item.isOptional,
@@ -272,7 +273,7 @@ export default function RecipeDetails() {
     if (!recipe) return;
     await unarchiveRecipe(recipe.id);
     triggerHaptic('selection');
-    toast.show(t('settings.unarchivedSuccess', '已取消歸檔'));
+    toast.show(t('settings.unarchivedSuccess', '已恢復'));
   };
 
   const handleDelete = async () => {
@@ -305,7 +306,7 @@ export default function RecipeDetails() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部操作按鈕 (Portal 映射至 AppLayout 頂部標頭右側) */}
       {headerActionEl &&
         createPortal(
@@ -706,7 +707,7 @@ export default function RecipeDetails() {
                           >
                             {allFoods.map((f) => (
                               <option key={f.id} value={f.id}>
-                                {f.name} ({f.calories} kcal / {f.servingSize} {f.servingUnit})
+                                {formatFoodDisplayName(f)} ({f.calories} kcal / {f.servingSize} {f.servingUnit})
                               </option>
                             ))}
                           </select>

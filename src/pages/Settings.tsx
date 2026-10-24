@@ -156,7 +156,7 @@ export default function Settings() {
 
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-6 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
       {/* 區塊 1：偏好設定 */}
       <div>
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
@@ -214,39 +214,26 @@ export default function Settings() {
           {t('settings.dietSection')}
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          {/* 單品食材管理入口 */}
+          {/* 食材與食譜合一入口 */}
           <Link
             to="/settings/foods"
             className="usage-row cursor-pointer group"
           >
             <span className="text-sm font-normal text-foreground">
-              {t('diet.foodItems')}
+              {t('settings.dietSection')}
             </span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
               <span>
-                {t('settings.activeCount', { count: totalActiveFoods })}
-                {totalArchivedFoods > 0
-                  ? ` · ${t('settings.archivedCount', { count: totalArchivedFoods })}`
-                  : ''}
-              </span>
-              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
-
-          {/* 菜餚組合管理入口 */}
-          <Link
-            to="/settings/recipes"
-            className="usage-row cursor-pointer group"
-          >
-            <span className="text-sm font-normal text-foreground">
-              {t('diet.recipes')}
-            </span>
-            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>
-                {t('settings.activeCount', { count: totalActiveRecipes })}
-                {totalArchivedRecipes > 0
-                  ? ` · ${t('settings.archivedCount', { count: totalArchivedRecipes })}`
-                  : ''}
+                {totalArchivedFoods + totalArchivedRecipes > 0
+                  ? t('settings.dietCombinedSubtitleWithArchived', {
+                      foods: totalActiveFoods,
+                      recipes: totalActiveRecipes,
+                      archived: totalArchivedFoods + totalArchivedRecipes,
+                    })
+                  : t('settings.dietCombinedSubtitle', {
+                      foods: totalActiveFoods,
+                      recipes: totalActiveRecipes,
+                    })}
               </span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
             </div>

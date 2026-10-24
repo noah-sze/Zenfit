@@ -65,7 +65,7 @@ export default function ProfileSettings() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-6 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
       {/* 區塊 1：基本資料 */}
       <div>
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">

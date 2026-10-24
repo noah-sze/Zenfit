@@ -22,6 +22,7 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import type { FoodCategory } from '@/types';
+import { formatFoodDisplayName } from '@/utils/foodNaming';
 
 export default function CategoryDetails() {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +90,7 @@ export default function CategoryDetails() {
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: `${t('common.confirm')} ${t('common.archive')} ${food.name}?`,
+        description: `${t('common.confirm')} ${t('common.archive')} ${formatFoodDisplayName(food)}?`,
       });
       if (ok) {
         await archiveFood(food.id);
@@ -104,7 +105,7 @@ export default function CategoryDetails() {
     if (!food) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${t('common.delete')} ${food.name}?`,
+      description: `${t('common.confirm')} ${t('common.delete')} ${formatFoodDisplayName(food)}?`,
       variant: 'destructive',
     });
     if (ok) {
@@ -113,7 +114,7 @@ export default function CategoryDetails() {
         if (res.reason === 'has_logs') {
           toast.show(t('settings.foodHasLogsCannotDelete'));
         } else if (res.reason === 'has_recipes') {
-          toast.show(t('diet.foodHasRecipes', '該單品食材已被菜餚組合引用，無法直接刪除'));
+          toast.show(t('diet.foodHasRecipes', '已被菜餚引用'));
         } else {
           toast.show(t('common.error'));
         }
@@ -129,12 +130,14 @@ export default function CategoryDetails() {
   const foodLogs = useLiveQuery(
     async () => {
       if (!id || !food) return [];
+      const displayName = formatFoodDisplayName(food).trim().toLowerCase();
+      const rawName = food.name.trim().toLowerCase();
       const logs = await db.food_logs
-        .filter(
-          (log) =>
-            log.foodId === id ||
-            log.foodName.trim().toLowerCase() === food.name.trim().toLowerCase()
-        )
+        .filter((log) => {
+          if (log.foodId === id) return true;
+          const logName = log.foodName.trim().toLowerCase();
+          return logName === rawName || logName === displayName;
+        })
         .toArray();
       // 依日期與建立時間降序排序
       return logs.sort((a, b) => {
@@ -246,21 +249,16 @@ export default function CategoryDetails() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 食物名稱與品牌標籤卡片 */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <h2 className="text-xl font-semibold tracking-tight truncate">
-            {food.name}
+            {formatFoodDisplayName(food)}
           </h2>
           <span className="text-xs font-mono text-muted-foreground truncate border border-border px-1.5 py-0.5 rounded">
             {t(`diet.foodCategory.${food.category || 'natural'}`)}
           </span>
-          {food.brand && (
-            <span className="text-xs font-normal text-muted-foreground truncate border border-border px-1.5 py-0.5 rounded">
-              {food.brand}
-            </span>
-          )}
         </div>
         <Button
           variant="outline"
@@ -510,6 +508,7 @@ export default function CategoryDetails() {
               >
                 <option value="natural">{t('diet.foodCategory.natural')}</option>
                 <option value="processed">{t('diet.foodCategory.processed')}</option>
+                <option value="beverage">{t('diet.foodCategory.beverage')}</option>
                 <option value="oil">{t('diet.foodCategory.oil')}</option>
                 <option value="condiment">{t('diet.foodCategory.condiment')}</option>
               </select>

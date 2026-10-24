@@ -1,11 +1,13 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-export type FoodCategory = 'natural' | 'processed' | 'oil' | 'condiment';
+export type FoodCategory = 'natural' | 'processed' | 'beverage' | 'oil' | 'condiment';
+
+export type NutritionTag = 'high-protein' | 'carb-source' | 'fat-source' | 'low-calorie';
 
 export interface FoodItem {
   id: string;
   name: string;
-  category?: FoodCategory; // 天然食材 | 工業食品 | 食用油 | 調味品
+  category?: FoodCategory; // 天然食材 | 工業食品 | 飲品 | 食用油 | 調味品
   brand?: string;
   servingSize: number;
   servingUnit: string;
