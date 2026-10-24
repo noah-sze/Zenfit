@@ -29,9 +29,14 @@ describe('系統預設數據完整性與原子計量規範測試', () => {
       expect(food.protein).toBeGreaterThanOrEqual(0);
       expect(food.carbs).toBeGreaterThanOrEqual(0);
       expect(food.fat).toBeGreaterThanOrEqual(0);
+      expect(['natural', 'processed', 'beverage', 'oil', 'condiment']).toContain(food.category);
       // 確保單品名稱不包含主觀修飾形容詞或烹飪手法
       expect(food.name).not.toMatch(/^(香煎|水煮|清炒|油炸|烤|炸)/);
     }
+
+    const soyMilk = DEFAULT_FOODS.find((f) => f.id === 'food_soy_milk');
+    expect(soyMilk?.category).toBe('beverage');
+    expect(soyMilk?.servingUnit).toBe('ml');
   });
 
   it('所有默認動作之刺激肌群強度應介於 0 至 100 之間', () => {

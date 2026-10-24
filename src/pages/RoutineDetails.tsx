@@ -98,7 +98,7 @@ export default function RoutineDetails() {
     e.preventDefault();
     if (!routine || !editName.trim()) return;
     if (editItems.length === 0) {
-      toast.show('請至少保留一個動作');
+      toast.show(t('workout.atLeastOneExercise'));
       return;
     }
 
@@ -199,14 +199,14 @@ export default function RoutineDetails() {
 
   if (!routine) {
     return (
-      <div className="w-full max-w-md mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
+      <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-6 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
       {/* 組合頂部標題卡片 */}
       <div className="border border-border rounded-lg p-4 bg-card space-y-3">
         <div className="flex items-start justify-between">

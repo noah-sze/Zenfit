@@ -219,9 +219,9 @@ export default function ExerciseDetails() {
       const res = await deleteExercise(exercise.id);
       if (!res.success) {
         if (res.reason === 'has_logs') {
-          toast.show('該動作已有訓練記錄，建議封存而非刪除');
+          toast.show(t('workout.exerciseHasLogs'));
         } else if (res.reason === 'has_routines') {
-          toast.show('已有訓練組合包含此動作，無法直接刪除');
+          toast.show(t('workout.exerciseHasRoutines'));
         }
         return;
       }
@@ -238,7 +238,7 @@ export default function ExerciseDetails() {
 
   if (!exercise) {
     return (
-      <div className="w-full max-w-md mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
+      <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}
       </div>
     );
@@ -247,7 +247,7 @@ export default function ExerciseDetails() {
   const muscleEntries = Object.entries(exercise.targetMuscles || {}) as [DetailedMuscle, number][];
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-6 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
       {/* 動作頂部標題卡片 */}
       <div className="border border-border rounded-lg p-4 bg-card space-y-3">
         <div className="flex items-start justify-between">

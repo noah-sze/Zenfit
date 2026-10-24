@@ -36,6 +36,7 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/ui/confirm-dialog';
+import { formatFoodDisplayName } from '@/utils/foodNaming';
 
 export default function Recipes() {
   const { t } = useTranslation();
@@ -130,7 +131,7 @@ export default function Recipes() {
       if (targetFood && qty > 0) {
         validIngredients.push({
           foodId: targetFood.id,
-          foodName: targetFood.name,
+          foodName: formatFoodDisplayName(targetFood),
           quantity: qty,
           unit: targetFood.servingUnit || 'g',
           isOptional: item.isOptional,
@@ -186,7 +187,7 @@ export default function Recipes() {
   const handleUnarchiveRecipe = async (recipe: FoodRecipe) => {
     await unarchiveRecipe(recipe.id);
     triggerHaptic('selection');
-    toast.show(t('settings.unarchivedSuccess', '已取消歸檔'));
+    toast.show(t('settings.unarchivedSuccess', '已恢復'));
   };
 
   // 即時計算彈窗中食譜預估營養素
@@ -198,7 +199,7 @@ export default function Recipes() {
       if (f && qty > 0) {
         ingList.push({
           foodId: f.id,
-          foodName: f.name,
+          foodName: formatFoodDisplayName(f),
           quantity: qty,
           unit: f.servingUnit,
           isOptional: item.isOptional,
@@ -225,7 +226,7 @@ export default function Recipes() {
   }, []);
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部操作按鈕 (Portal 映射至 AppLayout 頂部標頭右側) */}
       {headerActionEl &&
         activeTab === 'active' &&
@@ -404,7 +405,7 @@ export default function Recipes() {
                   {t('diet.recipeDescription')}
                 </Label>
                 <Input
-                  placeholder="如: 少油高蛋白自煮"
+                  placeholder={t('common.notes')}
                   value={recipeDescription}
                   onChange={(e) => setRecipeDescription(e.target.value)}
                 />
@@ -449,7 +450,7 @@ export default function Recipes() {
                           >
                             {allFoods.map((f) => (
                               <option key={f.id} value={f.id}>
-                                {f.name} ({f.calories} kcal / {f.servingSize} {f.servingUnit})
+                                {formatFoodDisplayName(f)} ({f.calories} kcal / {f.servingSize} {f.servingUnit})
                               </option>
                             ))}
                           </select>

@@ -148,7 +148,7 @@ export default function Equipments() {
     const res = await deleteEquipment(eq.id);
     if (!res.success) {
       if (res.reason === 'has_exercises') {
-        toast.show('已有動作使用此器械，無法直接刪除，建議封存');
+        toast.show(t('workout.equipmentHasExercises'));
       } else {
         toast.show(t('common.error'));
       }
@@ -160,7 +160,7 @@ export default function Equipments() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部 Tab 欄 (使用中 / 已歸檔) */}
       <SegmentedControl<'active' | 'archived'>
         value={activeTab}

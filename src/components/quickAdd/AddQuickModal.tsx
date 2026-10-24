@@ -24,6 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
+import { formatFoodDisplayName } from '@/utils/foodNaming';
 
 export function AddQuickModal() {
   const { t } = useTranslation();
@@ -59,8 +60,8 @@ export function AddQuickModal() {
   const [mealType, setMealType] = useState<MealType>('breakfast');
   const [foodEntryMode, setFoodEntryMode] = useState<'item' | 'recipe'>('item');
   const [foodName, setFoodName] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [unit, setUnit] = useState('份');
+  const [quantity, setQuantity] = useState('100');
+  const [unit, setUnit] = useState('g');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
@@ -118,7 +119,7 @@ export function AddQuickModal() {
   const handleSelectPresetFood = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const found = foods.find((f) => f.id === e.target.value);
     if (found) {
-      setFoodName(found.name);
+      setFoodName(formatFoodDisplayName(found));
       setQuantity(String(found.servingSize));
       setUnit(found.servingUnit);
       setCalories(String(found.calories));
@@ -137,8 +138,8 @@ export function AddQuickModal() {
       date: selectedDate,
       mealType,
       foodName: foodName.trim(),
-      quantity: parseFloat(quantity) || 1,
-      unit: unit || '份',
+      quantity: parseFloat(quantity) || 100,
+      unit: unit || 'g',
       calories: parseFloat(calories) || 0,
       protein: parseFloat(protein) || 0,
       carbs: parseFloat(carbs) || 0,
@@ -238,7 +239,7 @@ export function AddQuickModal() {
 
       return {
         exerciseId: item.exerciseId,
-        exerciseName: ex ? ex.name : '未知動作',
+        exerciseName: ex ? ex.name : t('common.unknown'),
         category: ex ? ex.category : 'free_weight',
         sets,
         notes: item.notes,
@@ -371,7 +372,7 @@ export function AddQuickModal() {
                     </option>
                     {foods.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.name} · {t(`diet.foodCategory.${f.category || 'natural'}`)} ({f.calories} kcal)
+                        {formatFoodDisplayName(f)} · {t(`diet.foodCategory.${f.category || 'natural'}`)} ({f.calories} kcal)
                       </option>
                     ))}
                   </select>
@@ -620,7 +621,7 @@ export function AddQuickModal() {
                     onChange={(e) => setSelectedExerciseId(e.target.value)}
                     className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
                   >
-                    <option value="">選擇第一個動作...</option>
+                    <option value="">{t('workout.selectExercise')}</option>
                     {exercises.map((ex) => (
                       <option key={ex.id} value={ex.id}>
                         {ex.name}
@@ -632,7 +633,7 @@ export function AddQuickModal() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                      第 1 組重量 (kg)
+                      {t('workout.set')} 1 {t('workout.weight')}
                     </label>
                     <Input
                       type="number"
@@ -643,7 +644,7 @@ export function AddQuickModal() {
                   </div>
                   <div>
                     <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                      第 1 組次數 (reps)
+                      {t('workout.set')} 1 {t('workout.reps')}
                     </label>
                     <Input
                       type="number"
@@ -674,10 +675,10 @@ export function AddQuickModal() {
                     onChange={(e) => setSelectedRoutineId(e.target.value)}
                     className="w-full text-sm h-9 px-3 rounded-lg border border-border bg-background text-foreground outline-none focus:border-foreground transition-colors cursor-pointer"
                   >
-                    <option value="">選擇訓練組合...</option>
+                    <option value="">{t('workout.selectRoutine')}</option>
                     {activeRoutines.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.name} ({r.exercises.length} 個動作)
+                        {r.name} ({r.exercises.length})
                       </option>
                     ))}
                   </select>
@@ -686,7 +687,7 @@ export function AddQuickModal() {
                 {currentRoutine && (
                   <div className="border border-border rounded-lg p-2.5 bg-muted/20 space-y-1.5">
                     <div className="text-xs font-mono text-muted-foreground">
-                      包含 {currentRoutine.exercises.length} 個動作：
+                      {t('settings.exercises')} ({currentRoutine.exercises.length})
                     </div>
                     <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
                       {currentRoutine.exercises.map((item, idx) => {
@@ -694,10 +695,10 @@ export function AddQuickModal() {
                         return (
                           <div key={idx} className="text-xs font-mono flex items-center justify-between">
                             <span className="truncate text-foreground">
-                              {ex ? ex.name : '未知動作'}
+                              {ex ? ex.name : t('common.unknown')}
                             </span>
                             <span className="text-muted-foreground shrink-0 ml-2">
-                              {item.defaultSets} 組
+                              {item.defaultSets} {t('workout.set')}
                             </span>
                           </div>
                         );

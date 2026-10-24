@@ -201,12 +201,12 @@ export default function Dashboard() {
                   <div>
                     <h4 className="text-sm font-medium">{w.title}</h4>
                     <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                      {w.exercises.length} 動作 · {w.exercises.reduce((acc, e) => acc + e.sets.length, 0)} 組
+                      {w.exercises.length} {t('settings.exercises')} · {w.exercises.reduce((acc, e) => acc + e.sets.length, 0)} {t('workout.set')}
                     </p>
                   </div>
                   <div className="text-right font-mono text-xs">
                     <span className="font-medium">{completedSetsCount}</span>
-                    <span className="text-muted-foreground">/{totalSetsCount} 完成</span>
+                    <span className="text-muted-foreground">/{totalSetsCount} {t('workout.completed')}</span>
                   </div>
                 </div>
               ))}

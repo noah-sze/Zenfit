@@ -10,7 +10,6 @@ import Body from './pages/Body';
 import Settings from './pages/Settings';
 import ProfileSettings from './pages/ProfileSettings';
 import Categories from './pages/Categories';
-import Recipes from './pages/Recipes';
 import RecipeDetails from './pages/RecipeDetails';
 import CategoryDetails from './pages/CategoryDetails';
 import Exercises from './pages/Exercises';
@@ -62,7 +61,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/recipes',
-        element: <Recipes />,
+        element: <Navigate to="/settings/foods" replace />,
       },
       {
         path: 'settings/recipes/archived',
