@@ -30,11 +30,13 @@ function SelectTrigger({
   className,
   size = "default",
   hideIcon = false,
+  iconClassName,
   children,
   ...props
 }: SelectPrimitive.Trigger.Props & {
   size?: "sm" | "default" | "custom"
   hideIcon?: boolean
+  iconClassName?: string
 }) {
   return (
     <SelectPrimitive.Trigger
@@ -53,7 +55,7 @@ function SelectTrigger({
       {!hideIcon && (
         <SelectPrimitive.Icon
           render={
-            <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+            <ChevronDownIcon className={cn("pointer-events-none size-4 text-muted-foreground", iconClassName)} />
           }
         />
       )}
@@ -63,6 +65,8 @@ function SelectTrigger({
 
 function SelectContent({
   className,
+  positionerClassName,
+  backdropClassName,
   children,
   side = "bottom",
   sideOffset = 4,
@@ -74,24 +78,33 @@ function SelectContent({
   Pick<
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+  > & {
+    positionerClassName?: string
+    backdropClassName?: string
+  }) {
   return (
     <SelectPrimitive.Portal>
-      {/* 輕量純透明關閉層，避免沉重的全螢幕毛玻璃暗化 */}
-      <SelectPrimitive.Backdrop className="fixed inset-0 z-[60] bg-transparent data-closed:hidden touch-none" />
+      {/* 依據設計標準使用專屬語意化遮罩 (淺色純淨白霜牛奶玻璃 / 深色深邃黑曜石毛玻璃) */}
+      <SelectPrimitive.Backdrop
+        data-slot="select-backdrop"
+        className={cn(
+          "fixed inset-0 z-[80] bg-overlay backdrop-blur-[2px] data-closed:hidden touch-none",
+          backdropClassName
+        )}
+      />
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
-        className="isolate z-[60]"
+        className={cn("isolate z-[80]", positionerClassName)}
       >
         <SelectPrimitive.Popup
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "relative isolate z-[60] max-h-(--available-height) w-max min-w-[max(var(--anchor-width,0px),168px)] max-w-[calc(100vw-2rem)] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-card text-card-foreground border border-border shadow-none p-1 flex flex-col gap-0.5 data-closed:hidden",
+            "relative isolate z-[80] max-h-(--available-height) w-max min-w-[max(var(--anchor-width,0px),168px)] max-w-[calc(100vw-2rem)] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-card text-card-foreground border border-border shadow-none p-1 flex flex-col gap-0.5 data-closed:hidden",
             className
           )}
           {...props}

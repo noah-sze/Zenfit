@@ -4,10 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
-  MoreVertical,
   Trash2,
-  Edit2,
-  Archive,
   RefreshCcw,
   Search,
   ChevronDown,
@@ -40,11 +37,16 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { MacroSquares } from '@/components/food/MacroSquares';
+import { useAppStore } from '@/store/useAppStore';
+import { calculateScaledNutrition } from '@/utils/nutritionMath';
+import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
+import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
 
 export default function Categories() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const { nutritionDisplayMode } = useAppStore();
 
   // 頂部視圖切換：食材 vs 食譜 (純本地狀態，不污染 URL，遵守 Rule 4)
   const [viewTab, setViewTab] = useState<'foods' | 'recipes'>('foods');
@@ -94,8 +96,6 @@ export default function Categories() {
     archivedCustomFoods,
     archivedPresetFoods,
     addFood,
-    updateFood,
-    archiveFood,
     unarchiveFood,
     deleteFood,
   } = useFoods();
@@ -120,30 +120,8 @@ export default function Categories() {
     return totalArchivedFoods.filter((f) => (f.category || 'natural') === selectedCategory).length;
   }, [totalArchivedFoods, selectedCategory]);
 
-  // 單品新增狀態
+  // 單品新增彈窗狀態 (使用 FoodFormDialog 共用組件)
   const [isAddFoodOpen, setIsAddFoodOpen] = useState(false);
-  const [newFoodName, setNewFoodName] = useState('');
-  const [newFoodCategory, setNewFoodCategory] = useState<FoodCategory>('natural');
-  const [newFoodBrand, setNewFoodBrand] = useState('');
-  const [newFoodServingSize, setNewFoodServingSize] = useState('100');
-  const [newFoodServingUnit, setNewFoodServingUnit] = useState('g');
-  const [newFoodCalories, setNewFoodCalories] = useState('');
-  const [newFoodProtein, setNewFoodProtein] = useState('');
-  const [newFoodCarbs, setNewFoodCarbs] = useState('');
-  const [newFoodFat, setNewFoodFat] = useState('');
-
-  // 單品編輯狀態
-  const [isEditFoodOpen, setIsEditFoodOpen] = useState(false);
-  const [editingFood, setEditingFood] = useState<FoodItem | null>(null);
-  const [editFoodName, setEditFoodName] = useState('');
-  const [editFoodCategory, setEditFoodCategory] = useState<FoodCategory>('natural');
-  const [editFoodBrand, setEditFoodBrand] = useState('');
-  const [editFoodServingSize, setEditFoodServingSize] = useState('100');
-  const [editFoodServingUnit, setEditFoodServingUnit] = useState('g');
-  const [editFoodCalories, setEditFoodCalories] = useState('');
-  const [editFoodProtein, setEditFoodProtein] = useState('');
-  const [editFoodCarbs, setEditFoodCarbs] = useState('');
-  const [editFoodFat, setEditFoodFat] = useState('');
 
   const tabBaseFoods = useMemo(() => {
     if (!showFoodArchived) {
@@ -222,7 +200,6 @@ export default function Categories() {
     archivedPresetRecipes,
     addRecipe,
     updateRecipe,
-    archiveRecipe,
     unarchiveRecipe,
     deleteRecipe,
     getRecipeMacros,
@@ -319,19 +296,7 @@ export default function Categories() {
     setIsRecipeDialogOpen(true);
   };
 
-  const handleOpenEditRecipe = (recipe: FoodRecipe) => {
-    setEditingRecipe(recipe);
-    setRecipeName(recipe.name);
-    setRecipeDescription(recipe.description || '');
-    setRecipeIngredients(
-      recipe.ingredients.map((ing) => ({
-        foodId: ing.foodId,
-        quantity: String(ing.quantity),
-        isOptional: !!ing.isOptional,
-      }))
-    );
-    setIsRecipeDialogOpen(true);
-  };
+
 
   const handleAddIngredientRow = () => {
     if (allFoods.length === 0) return;
@@ -402,11 +367,7 @@ export default function Categories() {
     toast.show(t('common.deleted'));
   };
 
-  const handleArchiveRecipe = async (recipe: FoodRecipe) => {
-    await archiveRecipe(recipe.id);
-    triggerHaptic('selection');
-    toast.show(t('settings.archivedSuccess'));
-  };
+
 
   const handleUnarchiveRecipe = async (recipe: FoodRecipe) => {
     await unarchiveRecipe(recipe.id);
@@ -443,68 +404,17 @@ export default function Categories() {
   // ==========================================
   // 食物 Handlers
   // ==========================================
-  const handleOpenEditFood = (food: FoodItem) => {
-    setEditingFood(food);
-    setEditFoodName(food.name);
-    setEditFoodCategory(food.category || 'natural');
-    setEditFoodBrand(food.brand || '');
-    setEditFoodServingSize(String(food.servingSize));
-    setEditFoodServingUnit(food.servingUnit);
-    setEditFoodCalories(String(food.calories));
-    setEditFoodProtein(String(food.protein));
-    setEditFoodCarbs(String(food.carbs));
-    setEditFoodFat(String(food.fat));
-    setIsEditFoodOpen(true);
-  };
 
-  const handleAddFoodSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFoodName.trim()) return;
 
+  const handleAddFoodSubmit = async (formData: FoodFormData) => {
     await addFood({
-      name: newFoodName.trim(),
-      category: newFoodCategory,
-      brand: newFoodBrand.trim() || undefined,
-      servingSize: parseFloat(newFoodServingSize) || 100,
-      servingUnit: newFoodServingUnit.trim() || 'g',
-      calories: parseFloat(newFoodCalories) || 0,
-      protein: parseFloat(newFoodProtein) || 0,
-      carbs: parseFloat(newFoodCarbs) || 0,
-      fat: parseFloat(newFoodFat) || 0,
+      ...formData,
       isCustom: true,
     });
 
     triggerHaptic('success');
     toast.show(t('common.saved'));
     setIsAddFoodOpen(false);
-    setNewFoodName('');
-    setNewFoodBrand('');
-    setNewFoodCalories('');
-    setNewFoodProtein('');
-    setNewFoodCarbs('');
-    setNewFoodFat('');
-  };
-
-  const handleEditFoodSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingFood || !editFoodName.trim()) return;
-
-    await updateFood(editingFood.id, {
-      name: editFoodName.trim(),
-      category: editFoodCategory,
-      brand: editFoodBrand.trim() || undefined,
-      servingSize: parseFloat(editFoodServingSize) || 100,
-      servingUnit: editFoodServingUnit.trim() || 'g',
-      calories: parseFloat(editFoodCalories) || 0,
-      protein: parseFloat(editFoodProtein) || 0,
-      carbs: parseFloat(editFoodCarbs) || 0,
-      fat: parseFloat(editFoodFat) || 0,
-    });
-
-    triggerHaptic('success');
-    toast.show(t('common.saved'));
-    setIsEditFoodOpen(false);
-    setEditingFood(null);
   };
 
   const handleDeleteFood = async (food: FoodItem) => {
@@ -530,11 +440,7 @@ export default function Categories() {
     toast.show(t('common.deleted'));
   };
 
-  const handleArchiveFood = async (food: FoodItem) => {
-    await archiveFood(food.id);
-    triggerHaptic('selection');
-    toast.show(t('settings.archivedSuccess'));
-  };
+
 
   const handleUnarchiveFood = async (food: FoodItem) => {
     await unarchiveFood(food.id);
@@ -854,6 +760,14 @@ export default function Categories() {
 
           {/* 食材清單容器 */}
           <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
+            {/* 卡片內嵌儀表表頭 */}
+            <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
+              <span className="text-xs uppercase tracking-wider font-medium text-foreground">
+                {t('common.itemCount', { count: filteredFoods.length })}
+              </span>
+              <NutritionBasisToggle />
+            </div>
+
             <div className="divide-y divide-border">
               {filteredFoods.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
@@ -865,6 +779,7 @@ export default function Categories() {
                 filteredFoods.map((food) => {
                   const evalRes = evaluateNutritionalHighlight(food);
                   const isLowCalorie = evalRes.labels.includes('low-calorie');
+                  const scaledNutrition = calculateScaledNutrition(food, nutritionDisplayMode);
 
                   return (
                     <div
@@ -882,8 +797,8 @@ export default function Categories() {
                         </div>
 
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                          <span>
-                            {food.servingSize}{food.servingUnit}
+                          <span className={cn(nutritionDisplayMode === 'per100g' && "font-medium text-foreground")}>
+                            {scaledNutrition.servingSize}{scaledNutrition.servingUnit}
                           </span>
                           <span className="opacity-40">·</span>
                           <span
@@ -892,87 +807,44 @@ export default function Categories() {
                                 "text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20"
                             )}
                           >
-                            {food.calories} kcal
+                            {scaledNutrition.calories} kcal
                           </span>
                         </div>
                       </button>
 
                       {/* 右側：獨立 3 列營養素矩陣 (複用 MacroSquares 組件) */}
                       <MacroSquares
-                        protein={food.protein}
-                        carbs={food.carbs}
-                        fat={food.fat}
+                        protein={scaledNutrition.protein}
+                        carbs={scaledNutrition.carbs}
+                        fat={scaledNutrition.fat}
                         highlights={evalRes.highlights}
                       />
 
-                      {/* 操作按鈕 (編輯/歸檔/刪除/恢復) */}
-                      <div className="flex items-center shrink-0 pl-1">
-                        {showFoodArchived || food.isArchived ? (
-                          <div className="flex items-center gap-0.5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
-                              onClick={() => handleUnarchiveFood(food)}
-                              title={t('common.restore')}
-                              aria-label={t('common.restore')}
-                            >
-                              <RefreshCcw className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              onClick={() => handleDeleteFood(food)}
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 opacity-70 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                              }
-                            />
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => handleOpenEditFood(food)}
-                              >
-                                <Edit2 className="h-4 w-4 mr-2" />
-                                {t('common.edit')}
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => handleArchiveFood(food)}
-                              >
-                                <Archive className="h-4 w-4 mr-2" />
-                                {t('settings.archive')}
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                className={cn(
-                                  "text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                                )}
-                                onClick={() => handleDeleteFood(food)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                {t('common.delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
+                      {/* 僅在已歸檔狀態顯示恢復/刪除按鈕 */}
+                      {(showFoodArchived || food.isArchived) && (
+                        <div className="flex items-center gap-0.5 shrink-0 pl-1.5" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
+                            onClick={() => handleUnarchiveFood(food)}
+                            title={t('common.restore')}
+                            aria-label={t('common.restore')}
+                          >
+                            <RefreshCcw className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                            onClick={() => handleDeleteFood(food)}
+                            title={t('common.delete')}
+                            aria-label={t('common.delete')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -1157,6 +1029,14 @@ export default function Categories() {
 
           {/* 食譜清單容器 */}
           <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
+            {/* 卡片內嵌儀表表頭 */}
+            <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
+              <span className="text-xs uppercase tracking-wider font-medium text-foreground">
+                {t('common.itemCount', { count: filteredRecipes.length })}
+              </span>
+              <NutritionBasisToggle />
+            </div>
+
             <div className="divide-y divide-border">
               {filteredRecipes.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
@@ -1175,6 +1055,17 @@ export default function Categories() {
                     servingSize: macros.totalWeightGrams || 100,
                     servingUnit: 'g',
                   });
+                  const scaledRecipeMacros = calculateScaledNutrition(
+                    {
+                      calories: macros.calories,
+                      protein: macros.protein,
+                      carbs: macros.carbs,
+                      fat: macros.fat,
+                      servingSize: macros.totalWeightGrams || 100,
+                      servingUnit: 'g',
+                    },
+                    nutritionDisplayMode
+                  );
 
                   return (
                     <div
@@ -1192,92 +1083,63 @@ export default function Categories() {
                         </div>
 
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                          <span>
-                            {t('diet.ingredientsCount', { count: recipe.ingredients.length })}
-                          </span>
-                          <span className="opacity-40">·</span>
-                          <span>
-                            {macros.calories} kcal
-                          </span>
+                          {nutritionDisplayMode === 'per100g' ? (
+                            <>
+                              <span className="font-medium text-foreground">
+                                100g
+                              </span>
+                              <span className="opacity-40">·</span>
+                              <span>
+                                {scaledRecipeMacros.calories} kcal
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span>
+                                {t('diet.ingredientsCount', { count: recipe.ingredients.length })}
+                              </span>
+                              <span className="opacity-40">·</span>
+                              <span>
+                                {macros.calories} kcal
+                              </span>
+                            </>
+                          )}
                         </div>
                       </button>
 
                       {/* 右側：P / C / F 三列方塊矩陣 */}
                       <MacroSquares
-                        protein={macros.protein}
-                        carbs={macros.carbs}
-                        fat={macros.fat}
+                        protein={scaledRecipeMacros.protein}
+                        carbs={scaledRecipeMacros.carbs}
+                        fat={scaledRecipeMacros.fat}
                         highlights={evalRes.highlights}
                       />
 
-                      {/* 操作按鈕 (編輯/歸檔/刪除/恢復) */}
-                      <div className="flex items-center shrink-0 pl-1">
-                        {showRecipeArchived || recipe.isArchived ? (
-                          <div className="flex items-center gap-0.5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
-                              onClick={() => handleUnarchiveRecipe(recipe)}
-                              title={t('common.restore')}
-                              aria-label={t('common.restore')}
-                            >
-                              <RefreshCcw className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              onClick={() => handleDeleteRecipe(recipe)}
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 opacity-70 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                              }
-                            />
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => handleOpenEditRecipe(recipe)}
-                              >
-                                <Edit2 className="h-4 w-4 mr-2" />
-                                {t('common.edit')}
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => handleArchiveRecipe(recipe)}
-                              >
-                                <Archive className="h-4 w-4 mr-2" />
-                                {t('settings.archive')}
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                className={cn(
-                                  "text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                                )}
-                                onClick={() => handleDeleteRecipe(recipe)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                {t('common.delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
+                      {/* 僅在已歸檔狀態顯示恢復/刪除按鈕 */}
+                      {(showRecipeArchived || recipe.isArchived) && (
+                        <div className="flex items-center gap-0.5 shrink-0 pl-1.5" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
+                            onClick={() => handleUnarchiveRecipe(recipe)}
+                            title={t('common.restore')}
+                            aria-label={t('common.restore')}
+                          >
+                            <RefreshCcw className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                            onClick={() => handleDeleteRecipe(recipe)}
+                            title={t('common.delete')}
+                            aria-label={t('common.delete')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -1292,318 +1154,11 @@ export default function Categories() {
       {/* ========================================================================= */}
 
       {/* 新增單品食物 Dialog */}
-      <Dialog open={isAddFoodOpen} onOpenChange={setIsAddFoodOpen}>
-        <DialogContent
-          overlayClassName="z-[70]"
-          className="z-[70] w-[360px] max-w-[calc(100vw-32px)] sm:w-[380px] sm:max-w-[380px] bg-card border border-border text-card-foreground p-5"
-        >
-          <DialogHeader>
-            <DialogTitle className="text-card-foreground text-base font-semibold">
-              {t('settings.addCustomFood')}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddFoodSubmit} className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.foodName')}
-              </Label>
-              <Input
-                placeholder={t('diet.foodNamePlaceholder')}
-                value={newFoodName}
-                onChange={(e) => setNewFoodName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.foodCategory.title')}
-              </Label>
-              <select
-                value={newFoodCategory}
-                onChange={(e) => {
-                  const cat = e.target.value as FoodCategory;
-                  setNewFoodCategory(cat);
-                  if (cat === 'beverage' && (!newFoodServingUnit || newFoodServingUnit === 'g')) {
-                    setNewFoodServingUnit('ml');
-                    if (!newFoodServingSize || newFoodServingSize === '100') {
-                      setNewFoodServingSize('250');
-                    }
-                  } else if (cat !== 'beverage' && newFoodServingUnit === 'ml') {
-                    setNewFoodServingUnit('g');
-                    if (newFoodServingSize === '250') {
-                      setNewFoodServingSize('100');
-                    }
-                  }
-                }}
-                className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="natural">{t('diet.foodCategory.natural')}</option>
-                <option value="processed">{t('diet.foodCategory.processed')}</option>
-                <option value="beverage">{t('diet.foodCategory.beverage')}</option>
-                <option value="oil">{t('diet.foodCategory.oil')}</option>
-                <option value="condiment">{t('diet.foodCategory.condiment')}</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.brandOptional')}
-              </Label>
-              <Input
-                placeholder={t('diet.brandPlaceholder')}
-                value={newFoodBrand}
-                onChange={(e) => setNewFoodBrand(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.serving')}
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="100"
-                  value={newFoodServingSize}
-                  onChange={(e) => setNewFoodServingSize(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.unit')}
-                </Label>
-                <Input
-                  placeholder="g / ml"
-                  value={newFoodServingUnit}
-                  onChange={(e) => setNewFoodServingUnit(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.calories')} (kcal)
-              </Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={newFoodCalories}
-                onChange={(e) => setNewFoodCalories(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.protein')} (g)
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={newFoodProtein}
-                  onChange={(e) => setNewFoodProtein(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.carbs')} (g)
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={newFoodCarbs}
-                  onChange={(e) => setNewFoodCarbs(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.fat')} (g)
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={newFoodFat}
-                  onChange={(e) => setNewFoodFat(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="flex flex-row items-center justify-between gap-3 pt-3">
-              <DialogClose render={<Button type="button" variant="outline" className="border-border cursor-pointer" />}>
-                {t('common.cancel')}
-              </DialogClose>
-              <Button type="submit" disabled={!newFoodName.trim()} className="cursor-pointer">
-                {t('common.add')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 編輯單品食物 Dialog */}
-      <Dialog
-        open={isEditFoodOpen}
-        onOpenChange={(open) => {
-          setIsEditFoodOpen(open);
-          if (!open) setEditingFood(null);
-        }}
-      >
-        <DialogContent
-          overlayClassName="z-[70]"
-          className="z-[70] w-[360px] max-w-[calc(100vw-32px)] sm:w-[380px] sm:max-w-[380px] bg-card border border-border text-card-foreground p-5"
-        >
-          <DialogHeader>
-            <DialogTitle className="text-card-foreground text-base font-semibold">
-              {t('settings.editCustomFood')}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditFoodSubmit} className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.foodName')}
-              </Label>
-              <Input
-                placeholder={t('diet.foodNamePlaceholder')}
-                value={editFoodName}
-                onChange={(e) => setEditFoodName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.foodCategory.title')}
-              </Label>
-              <select
-                value={editFoodCategory}
-                onChange={(e) => {
-                  const cat = e.target.value as FoodCategory;
-                  setEditFoodCategory(cat);
-                  if (cat === 'beverage' && (!editFoodServingUnit || editFoodServingUnit === 'g')) {
-                    setEditFoodServingUnit('ml');
-                    if (!editFoodServingSize || editFoodServingSize === '100') {
-                      setEditFoodServingSize('250');
-                    }
-                  } else if (cat !== 'beverage' && editFoodServingUnit === 'ml') {
-                    setEditFoodServingUnit('g');
-                    if (editFoodServingSize === '250') {
-                      setEditFoodServingSize('100');
-                    }
-                  }
-                }}
-                className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="natural">{t('diet.foodCategory.natural')}</option>
-                <option value="processed">{t('diet.foodCategory.processed')}</option>
-                <option value="beverage">{t('diet.foodCategory.beverage')}</option>
-                <option value="oil">{t('diet.foodCategory.oil')}</option>
-                <option value="condiment">{t('diet.foodCategory.condiment')}</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.brandOptional')}
-              </Label>
-              <Input
-                placeholder={t('diet.brandPlaceholder')}
-                value={editFoodBrand}
-                onChange={(e) => setEditFoodBrand(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.serving')}
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="100"
-                  value={editFoodServingSize}
-                  onChange={(e) => setEditFoodServingSize(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.unit')}
-                </Label>
-                <Input
-                  placeholder="g / ml"
-                  value={editFoodServingUnit}
-                  onChange={(e) => setEditFoodServingUnit(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('diet.calories')} (kcal)
-              </Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={editFoodCalories}
-                onChange={(e) => setEditFoodCalories(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.protein')} (g)
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={editFoodProtein}
-                  onChange={(e) => setEditFoodProtein(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.carbs')} (g)
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={editFoodCarbs}
-                  onChange={(e) => setEditFoodCarbs(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.fat')} (g)
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={editFoodFat}
-                  onChange={(e) => setEditFoodFat(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="flex flex-row items-center justify-between gap-3 pt-3">
-              <DialogClose render={<Button type="button" variant="outline" className="border-border cursor-pointer" />}>
-                {t('common.cancel')}
-              </DialogClose>
-              <Button type="submit" disabled={!editFoodName.trim()} className="cursor-pointer">
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <FoodFormDialog
+        open={isAddFoodOpen}
+        onOpenChange={setIsAddFoodOpen}
+        onSubmit={handleAddFoodSubmit}
+      />
 
       {/* 新增或編輯食譜 Dialog */}
       <Dialog open={isRecipeDialogOpen} onOpenChange={setIsRecipeDialogOpen}>

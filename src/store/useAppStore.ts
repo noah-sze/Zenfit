@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
+import type { NutritionDisplayMode } from '@/utils/nutritionMath';
 
 export type QuickAddType = 'food' | 'workout' | 'metric';
 
@@ -12,6 +13,10 @@ interface AppState {
   lastSyncTime: string | null;
   setSyncing: (isSyncing: boolean) => void;
   setLastSyncTime: (time: string) => void;
+
+  // 營養數據顯示基準（每份 vs 每 100g）
+  nutritionDisplayMode: NutritionDisplayMode;
+  setNutritionDisplayMode: (mode: NutritionDisplayMode) => void;
 
   // Add / Edit Modal Controls
   isAddModalOpen: boolean;
@@ -35,6 +40,9 @@ export const useAppStore = create<AppState>()(
       lastSyncTime: null,
       setSyncing: (isSyncing) => set({ isSyncing }),
       setLastSyncTime: (lastSyncTime) => set({ lastSyncTime }),
+
+      nutritionDisplayMode: 'serving',
+      setNutritionDisplayMode: (nutritionDisplayMode) => set({ nutritionDisplayMode }),
 
       isAddModalOpen: false,
       addModalType: 'food',
@@ -65,6 +73,7 @@ export const useAppStore = create<AppState>()(
         selectedDate: state.selectedDate,
         lastSyncTime: state.lastSyncTime,
         hidePwaInstallPrompt: state.hidePwaInstallPrompt,
+        nutritionDisplayMode: state.nutritionDisplayMode,
       }),
     }
   )
