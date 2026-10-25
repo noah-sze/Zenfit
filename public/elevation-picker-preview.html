@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 垂直推拉升降數字輸入機制：8 款全新設計 (Up-to-Increase Elevation Gauge)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-fg)',
+            border: 'var(--border)',
+            calories: 'var(--calories)',
+            protein: 'var(--protein)',
+            carbs: 'var(--carbs)',
+            fat: 'var(--fat)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card: #ffffff;
+      --muted: #fafafa;
+      --muted-fg: #666666;
+      --border: #eaeaea;
+      --calories: #e11d48;
+      --protein: #0284c7;
+      --carbs: #d97706;
+      --fat: #7c3aed;
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card: #000000;
+      --muted: #0a0a0a;
+      --muted-fg: #a0a0a0;
+      --border: #262626;
+      --calories: #f43f5e;
+      --protein: #38bdf8;
+      --carbs: #f59e0b;
+      --fat: #a78bfa;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* 垂直滑槽紋理 */
+    .fader-track {
+      background-image: repeating-linear-gradient(
+        to top,
+        var(--border) 0px,
+        var(--border) 1px,
+        transparent 1px,
+        transparent 8px
+      );
+    }
+    .cursor-fader {
+      cursor: grab;
+    }
+    .cursor-fader:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 transition-colors duration-200">
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- 頂部標題與核心心智模型宣示 -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="number-wheel-picker-preview.html" class="text-xs font-mono px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors">
+            ← 返回原預覽
+          </a>
+          <a href="liquid-elevation-picker-preview.html" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-protein text-white font-bold hover:opacity-90 transition-opacity">
+            ★ 方案 2 專題：8 款「液柱升降規」深度拓展 →
+          </a>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight mt-1">全新垂直升降數值輸入：8 款「上滑增加 · 下拉降低」設計</h1>
+        <p class="text-sm text-muted-foreground mt-1">
+          徹底拋棄滾輪翻滾心智模型。回歸客觀空間高度標尺：<strong class="text-foreground">底座為 0，向上推/滾 = 數值增加；向下推/拉 = 數值降低</strong>。
+        </p>
+      </div>
+
+      <!-- 控制欄 -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="toggle-unit-support-btn" onclick="toggleUnitSupport()"
+                class="px-3 py-1.5 rounded-lg border border-border text-xs font-mono flex items-center gap-1.5 hover:bg-muted transition-colors">
+          <span class="w-2 h-2 rounded-full bg-emerald-500" id="unit-status-dot"></span>
+          <span id="unit-support-text">單位狀態：支援切換 (g/ml)</span>
+        </button>
+
+        <button onclick="toggleDarkMode()" 
+                class="px-3 py-1.5 rounded-lg border border-border text-xs font-mono hover:bg-muted transition-colors">
+          🌓 切換深淺模式
+        </button>
+      </div>
+    </div>
+
+    <!-- 直覺人機動力學心智模型卡片 -->
+    <div class="p-4 rounded-xl border border-border bg-card/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-calories text-white font-semibold">物理心智模型修正</span>
+          <span class="text-sm font-semibold tracking-tight">為什麼「上滑增加，下拉降低」最符合人類直覺？</span>
+        </div>
+        <p class="text-xs text-muted-foreground leading-relaxed">
+          滾輪模型本質是向下翻滾，易產生方向衝突；而<strong>高度標尺、水銀柱、專業調音台推子（Fader）</strong>模型中：<strong>「底座為 0，向上拉高 = 份量增加；向下推回 = 份量減少」</strong>。鼠標滾輪向上（向前推）= 數值增加；向下（往回拉）= 數值減少。
+        </p>
+      </div>
+      <div class="flex items-center gap-4 shrink-0 text-xs font-mono border-t md:border-t-0 md:border-l border-border pt-2 md:pt-0 md:pl-4">
+        <div class="flex items-center gap-1 text-calories font-bold">
+          <span class="text-base">↑</span> 上滑/上滾：增加 (+)
+        </div>
+        <div class="flex items-center gap-1 text-muted-foreground font-bold">
+          <span class="text-base">↓</span> 下拉/下滾：降低 (-)
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 款全新方案網格 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- ========================================== -->
+      <!-- 方案 1: 精密調音台推子 (Precision Studio Fader) -->
+      <!-- ========================================== -->
+      <div id="card-e1" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 1</span>
+              <h2 class="text-base font-semibold tracking-tight">精密調音推桿 (Precision Studio Fader)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">推薦首選 · 實體阻尼</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            音響工程級垂直推子。底端為 0g，頂部為 250g。手指向上推動推桿（Knob），數值向上升拔；向下拉回，數值降低。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e1', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e1', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 核心高度卡槽 -->
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <!-- 左側大字 -->
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">當前標定</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e1" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e1" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground flex items-center gap-1 pt-1">
+                <span class="text-calories">↑ 向上推</span> 增重 · <span class="text-muted-foreground">↓ 向下拉</span> 減重
+              </div>
+            </div>
+
+            <!-- 右側精密推桿軌道 -->
+            <div class="w-16 h-full relative flex items-center justify-center cursor-fader"
+                 id="track-e1"
+                 onwheel="handleElevationWheel(event, 'e1', 1, 250)"
+                 onmousedown="startFaderDrag(event, 'e1', 250)"
+                 ontouchstart="startFaderDrag(event, 'e1', 250)">
+              
+              <!-- 垂直金屬導軌線 -->
+              <div class="w-1 h-full bg-border rounded-full relative">
+                <!-- 刻度微線 (每 50g 一大刻) -->
+                <div class="absolute right-2.5 top-0 text-[9px] font-mono text-muted-foreground/60">250</div>
+                <div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-mono text-muted-foreground/60">125</div>
+                <div class="absolute right-2.5 bottom-0 text-[9px] font-mono text-muted-foreground/60">0</div>
+              </div>
+
+              <!-- 垂直推子滑塊 (Thumb Knob) -->
+              <div id="knob-e1" 
+                   class="absolute w-12 h-6 rounded bg-card border-2 border-foreground shadow-sm flex items-center justify-center transition-all duration-75 pointer-events-none"
+                   style="bottom: 20%;">
+                <div class="w-4 h-0.5 bg-calories"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e1" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：向上推增加 / 向下拉減少</span>
+          <span>特性：實體調音推子直覺</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 2: 液面水銀升降柱 (Mercury Elevation Bar) -->
+      <!-- ========================================== -->
+      <div id="card-e2" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 2</span>
+              <h2 class="text-base font-semibold tracking-tight">液柱升降規 (Mercury Level Column)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">液位高度</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            水銀柱/溫度計模型。底座固定為 0g。手指向上刷，高對比液柱自底向上升拔充滿；向下刷液柱回落排空。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e2', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e2', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <!-- 左側大字 -->
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">注入重量</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e2" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e2" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground pt-1" id="sub-e2">
+                約佔基準 100g 份量 50%
+              </div>
+            </div>
+
+            <!-- 右側水銀柱管 -->
+            <div class="w-14 h-full border border-border rounded-md bg-background relative cursor-fader overflow-hidden flex flex-col justify-end p-0.5"
+                 onwheel="handleElevationWheel(event, 'e2', 1, 200)"
+                 onmousedown="startFaderDrag(event, 'e2', 200)"
+                 ontouchstart="startFaderDrag(event, 'e2', 200)">
+              
+              <!-- 刻度線浮層 -->
+              <div class="absolute inset-0 z-10 flex flex-col justify-between p-1.5 pointer-events-none text-[8px] font-mono text-muted-foreground/60 text-right">
+                <div class="flex items-center justify-between border-b border-border/40 pb-0.5"><span>200</span><span>—</span></div>
+                <div class="flex items-center justify-between border-b border-border/40 pb-0.5"><span>100</span><span>—</span></div>
+                <div class="flex items-center justify-between"><span>0</span><span>—</span></div>
+              </div>
+
+              <!-- 上升水銀液體 (自底向上充滿) -->
+              <div id="liquid-e2" 
+                   class="w-full bg-foreground text-background rounded-sm transition-all duration-75 flex items-center justify-center font-mono text-[9px] font-bold"
+                   style="height: 25%;">
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e2" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：上滑液位升 / 下拉液位降</span>
+          <span>特性：份量飽和感一目瞭然</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 3: 機械高度測量儀 (Vernier Height Stand) -->
+      <!-- ========================================== -->
+      <div id="card-e3" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 3</span>
+              <h2 class="text-base font-semibold tracking-tight">高度基準測量儀 (Vernier Height Stand)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-carbs/10 text-carbs border border-carbs/30 font-semibold">機械高度規</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            機械加工車間的高度標定儀（Height Stand）。底座平臺在下方，游標測量爪向上提拉增加重量，向下壓回歸零。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e3', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e3', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">標定高度</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e3" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e3" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground">0g 水平基準面在最底座</div>
+            </div>
+
+            <!-- 右側高度立柱與測量爪 -->
+            <div class="w-20 h-full relative cursor-fader border-l border-border pl-2"
+                 onwheel="handleElevationWheel(event, 'e3', 1, 300)"
+                 onmousedown="startFaderDrag(event, 'e3', 300)"
+                 ontouchstart="startFaderDrag(event, 'e3', 300)">
+              
+              <!-- 刻度文字標示 (由下至上增加) -->
+              <div class="absolute right-1 inset-y-1 flex flex-col justify-between text-[9px] font-mono text-muted-foreground/60 text-right pointer-events-none">
+                <div>300</div>
+                <div>200</div>
+                <div>100</div>
+                <div>0</div>
+              </div>
+
+              <!-- 向上升起的水平雷射測量爪 (Measuring Jaw) -->
+              <div id="jaw-e3" 
+                   class="absolute left-0 w-12 h-6 border-y-2 border-calories bg-calories/10 flex items-center justify-start transition-all duration-75 pointer-events-none"
+                   style="bottom: 16.6%;">
+                <div class="w-2 h-2 rounded-full bg-calories -ml-1"></div>
+                <span class="text-[10px] font-mono font-bold text-calories ml-1" id="jaw-val-e3">50</span>
+              </div>
+
+              <!-- 底部加粗固定底座 -->
+              <div class="absolute bottom-0 inset-x-0 h-1 bg-foreground rounded-full"></div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e3" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：拉起測量爪增加 / 壓下減少</span>
+          <span>特性：底座在下，極致物理真實</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 4: 雙速推桿 (50g 粗推 + 1g 微推) -->
+      <!-- ========================================== -->
+      <div id="card-e4" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 4</span>
+              <h2 class="text-base font-semibold tracking-tight">雙速並列推桿 (Coarse & Fine Dual Faders)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">雙軌解決長行程</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            兩條垂直推桿並排：外推桿每格 50g 快速上推；內推桿每格 1g 精密微雕。兩者皆嚴格「上推增加，下拉減少」。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e4', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e4', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">合併總量</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e4" class="text-5xl font-bold tracking-tight">100</span>
+                <span id="unit-disp-e4" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground flex gap-2 pt-1">
+                <span>粗調 <strong class="text-foreground" id="coarse-e4">100</strong></span>
+                <span>微調 +<strong class="text-foreground" id="fine-e4">0</strong></span>
+              </div>
+            </div>
+
+            <!-- 右側雙軌：內軌(微調) + 外軌(粗調) -->
+            <div class="flex h-full border-l border-border pl-2 gap-3 items-center">
+              <!-- 內軌：1g 微調推桿 -->
+              <div class="w-8 h-full relative cursor-fader flex flex-col items-center justify-center"
+                   title="微調推桿 (1g)"
+                   onwheel="handleDualFineWheel(event, 'e4')">
+                <div class="w-1 h-full bg-border rounded-full relative"></div>
+                <div id="knob-fine-e4"
+                     class="absolute w-7 h-4 rounded bg-card border border-foreground flex items-center justify-center transition-all duration-75 pointer-events-none"
+                     style="bottom: 0%;">
+                  <span class="text-[8px] font-mono font-bold">+0</span>
+                </div>
+                <div class="absolute -bottom-2 text-[8px] font-mono text-muted-foreground">微調</div>
+              </div>
+
+              <!-- 外軌：50g 粗調推桿 -->
+              <div class="w-9 h-full relative cursor-fader flex flex-col items-center justify-center"
+                   title="粗調推桿 (50g)"
+                   onwheel="handleDualCoarseWheel(event, 'e4')">
+                <div class="w-1.5 h-full bg-border rounded-full relative"></div>
+                <div id="knob-coarse-e4"
+                     class="absolute w-9 h-5 rounded bg-foreground text-background flex items-center justify-center transition-all duration-75 pointer-events-none"
+                     style="bottom: 20%;">
+                  <span class="text-[9px] font-mono font-bold" id="knob-coarse-txt-e4">100</span>
+                </div>
+                <div class="absolute -bottom-2 text-[8px] font-mono text-muted-foreground">粗調</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e4" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：外推桿大步進 + 內推桿微雕</span>
+          <span>特性：2cm 滑動直達 500g</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 5: 階梯段落跳轉升降軌 (Stepped Hopper Track) -->
+      <!-- ========================================== -->
+      <div id="card-e5" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 5</span>
+              <h2 class="text-base font-semibold tracking-tight">階梯磁吸升降軌 (Stepped Hopper Track)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">階梯躍升</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            將垂直軌道離散化為常用物理份量階梯（0 → 30 → 50 → 100 → 150 → 200g）。向上刷自動吸附至下一階梯，向上點擊直接到站。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e5', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e5', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">當前階位</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e5" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e5" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground">向上撥動跳階 · 向下撥動退階</div>
+            </div>
+
+            <!-- 右側階梯段落軌道 -->
+            <div class="w-16 h-full relative flex flex-col justify-between items-end border-l border-border pr-1"
+                 onwheel="handleStepWheel(event, 'e5')">
+              
+              <!-- 6 個階梯錨點按鈕 (由上到下：200, 150, 100, 50, 30, 0) -->
+              <button onclick="setStepVal('e5', 200)" class="step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted" data-val="200">200g</button>
+              <button onclick="setStepVal('e5', 150)" class="step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted" data-val="150">150g</button>
+              <button onclick="setStepVal('e5', 100)" class="step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted" data-val="100">100g</button>
+              <button onclick="setStepVal('e5', 50)" class="step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-foreground bg-foreground text-background font-bold" data-val="50">50g</button>
+              <button onclick="setStepVal('e5', 30)" class="step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted" data-val="30">30g</button>
+              <button onclick="setStepVal('e5', 0)" class="step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted" data-val="0">0g</button>
+            </div>
+          </div>
+
+          <div id="unit-hint-e5" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：上滑自動進階 / 下拉退階</span>
+          <span>特性：標準份量秒速直達</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 6: 垂直油門推力計 (Throttle Velocity Meter) -->
+      <!-- ========================================== -->
+      <div id="card-e6" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 6</span>
+              <h2 class="text-base font-semibold tracking-tight">垂直推力油門計 (Vertical Throttle Meter)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">動量加速</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            彈性回彈機制。大拇指向上推住不放：數值隨推力高度加速度飛漲；手指向下拉住不放：數值加速扣減；放手自動回彈中位。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e6', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e6', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">當前量值</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e6" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e6" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground pt-1" id="throttle-status-e6">
+                中立位 · 上推加速加重 · 下拉扣減
+              </div>
+            </div>
+
+            <!-- 右側油門推桿軌道 -->
+            <div class="w-14 h-full relative cursor-fader flex flex-col items-center justify-center border-l border-border"
+                 id="throttle-track-e6"
+                 onmousedown="startThrottleDrag(event, 'e6')"
+                 ontouchstart="startThrottleDrag(event, 'e6')">
+              
+              <div class="absolute inset-y-2 w-1 bg-border rounded-full"></div>
+              
+              <div class="absolute top-2 text-[9px] font-mono text-calories font-bold">▲ MAX</div>
+              <div class="absolute bottom-2 text-[9px] font-mono text-muted-foreground font-bold">▼ MIN</div>
+
+              <!-- 自回彈推力旋鈕 (初始在 50% 居中位置) -->
+              <div id="throttle-knob-e6"
+                   class="absolute w-10 h-7 rounded bg-card border-2 border-foreground flex items-center justify-center shadow-sm pointer-events-none transition-transform duration-100"
+                   style="top: calc(50% - 14px);">
+                <div class="w-4 h-0.5 bg-calories"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e6" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：上推按住加速暴增 / 下拉遞減</span>
+          <span>特性：微動拇指調整跨量級數值</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 7: 垂直雷射標高尺規 (Laser Calibrated Height) -->
+      <!-- ========================================== -->
+      <div id="card-e7" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 7</span>
+              <h2 class="text-base font-semibold tracking-tight">雷射標高游標尺 (Laser Height Gauge)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">1g 雷射對齊</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            將右側邊界作為垂直雷射投影尺。向上滑動手指，紅色雷射線向上掃描升起，數值以 1g 為精度逐幀躍動。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e7', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e7', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">雷射高度</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e7" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e7" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground pt-1">
+                ↑ 上推雷射線加量 · ↓ 下拉減量
+              </div>
+            </div>
+
+            <!-- 右側雷射尺規軌道 -->
+            <div class="w-16 h-full relative cursor-fader border-l border-border pr-2 flex items-center justify-end"
+                 onwheel="handleElevationWheel(event, 'e7', 1, 200)"
+                 onmousedown="startFaderDrag(event, 'e7', 200)"
+                 ontouchstart="startFaderDrag(event, 'e7', 200)">
+              
+              <!-- 刻度數字 (由下至上增加) -->
+              <div class="h-full flex flex-col justify-between text-[9px] font-mono text-muted-foreground/60 text-right pointer-events-none">
+                <div>200</div>
+                <div>150</div>
+                <div>100</div>
+                <div>50</div>
+                <div>0</div>
+              </div>
+
+              <!-- 全寬水平紅色雷射線 -->
+              <div id="laser-line-e7" 
+                   class="absolute inset-x-0 h-0.5 bg-calories pointer-events-none transition-all duration-75 flex items-center justify-between"
+                   style="bottom: 25%;">
+                <div class="w-2 h-2 rounded-full bg-calories -ml-1"></div>
+                <div class="w-2 h-2 rounded-full bg-calories -mr-1"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e7" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：上推雷射線向上 / 下拉向下</span>
+          <span>特性：高對比水平雷射指示線</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 8: 全域單手盲操觸控板 (Full-Zone Edge Slider) -->
+      <!-- ========================================== -->
+      <div id="card-e8" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 8</span>
+              <h2 class="text-base font-semibold tracking-tight">全感應盲操板 (Blind-Touch Edge Pad)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-fat/10 text-fat border border-fat/30 font-semibold">極速盲操</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            整塊右側為無邊界觸控感應熱區。無需精準瞄準推桿，大拇指隨手一落，向上推動直接累加，向下拉動直接扣減。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('e8', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('e8', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5">
+            <div class="font-mono space-y-1">
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest">盲操量規</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-e8" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-e8" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="flex items-center gap-1.5 pt-2">
+                <button onclick="changeElevationVal('e8', -5)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">-5</button>
+                <button onclick="changeElevationVal('e8', -1)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">-1</button>
+                <button onclick="changeElevationVal('e8', 1)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">+1</button>
+                <button onclick="changeElevationVal('e8', 5)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">+5</button>
+              </div>
+            </div>
+
+            <!-- 右側超寬感應區塊 -->
+            <div class="w-20 h-full rounded border border-border/80 bg-background/50 relative cursor-fader flex flex-col items-center justify-center p-2"
+                 onwheel="handleElevationWheel(event, 'e8', 1, 300)"
+                 onmousedown="startRelativeDrag(event, 'e8')"
+                 ontouchstart="startRelativeDrag(event, 'e8')">
+              
+              <div class="text-center font-mono text-[9px] text-muted-foreground/60 space-y-2 pointer-events-none">
+                <div>▲ 向上刷</div>
+                <div class="w-8 h-px bg-border mx-auto"></div>
+                <div class="text-foreground font-bold text-xs" id="relative-indicator-e8">50g</div>
+                <div class="w-8 h-px bg-border mx-auto"></div>
+                <div>▼ 向下刷</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-e8" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>操作：全域任意向上推/向下拉</span>
+          <span>特性：零瞄準成本，單手大拇指狂滑</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 底部物理動力學總結對照 -->
+    <div class="border-t border-border pt-6 pb-12">
+      <h3 class="text-base font-bold tracking-tight mb-3">「上滑增加 · 下拉降低」物理律全景對照</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono border border-border">
+          <thead class="bg-muted text-muted-foreground border-b border-border">
+            <tr>
+              <th class="p-2.5">方案代號</th>
+              <th class="p-2.5">方案名稱</th>
+              <th class="p-2.5">物理心智模型</th>
+              <th class="p-2.5">滾輪手勢</th>
+              <th class="p-2.5">觸控滑動手勢</th>
+              <th class="p-2.5">適用推薦度</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr>
+              <td class="p-2.5 font-bold">方案 1 (推薦)</td>
+              <td class="p-2.5">精密調音推桿</td>
+              <td class="p-2.5">專業混音推子 (Fader)</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">上推(+) / 下拉(-)</td>
+              <td class="p-2.5 text-calories font-bold">★★★★★ 首選</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 2</td>
+              <td class="p-2.5">液柱升降規</td>
+              <td class="p-2.5">水銀計量柱 / 液位計</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">上刷(+) / 下拉(-)</td>
+              <td class="p-2.5">★★★★☆ 直觀</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 3</td>
+              <td class="p-2.5">高度基準測量儀</td>
+              <td class="p-2.5">車間高度卡尺</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">提拉(+) / 壓下(-)</td>
+              <td class="p-2.5">★★★★☆ 硬核</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 4</td>
+              <td class="p-2.5">雙速並列推桿</td>
+              <td class="p-2.5">雙檔變速推子 (50g+1g)</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">雙軌上推(+) / 下拉(-)</td>
+              <td class="p-2.5">★★★★★ 速度之王</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 5</td>
+              <td class="p-2.5">階梯磁吸升降軌</td>
+              <td class="p-2.5">份量階梯 Hopper</td>
+              <td class="p-2.5 text-calories font-bold">上滾進階 / 下滾退階</td>
+              <td class="p-2.5 text-calories font-bold">向上階 / 向下退</td>
+              <td class="p-2.5">★★★★☆ 標準份量</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 6</td>
+              <td class="p-2.5">垂直推力油門計</td>
+              <td class="p-2.5">飛機油門推力計 (Throttle)</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">上推按住加速 / 下拉扣減</td>
+              <td class="p-2.5">★★★★☆ 極速微動</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 7</td>
+              <td class="p-2.5">雷射標高游標尺</td>
+              <td class="p-2.5">雷射投影儀表</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">上推雷射線 / 下拉</td>
+              <td class="p-2.5">★★★★☆ 精準</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">方案 8</td>
+              <td class="p-2.5">全感應盲操板</td>
+              <td class="p-2.5">全寬觸摸板 (Trackpad)</td>
+              <td class="p-2.5 text-calories font-bold">上滾(+) / 下滾(-)</td>
+              <td class="p-2.5 text-calories font-bold">任意上刷(+) / 下拉(-)</td>
+              <td class="p-2.5">★★★★★ 單手無腦</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 全新物理動力學腳本 (嚴格貫徹 Up = Increase, Down = Decrease) -->
+  <script>
+    const state = {
+      e1: 50,
+      e2: 50,
+      e3: 50,
+      e4_coarse: 100,
+      e4_fine: 0,
+      e5: 50,
+      e6: 50,
+      e7: 50,
+      e8: 50
+    };
+
+    const unitState = {
+      e1: 'g', e2: 'g', e3: 'g', e4: 'g', e5: 'g', e6: 'g', e7: 'g', e8: 'g'
+    };
+
+    let isUnitSwitchSupported = true;
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    function toggleUnitSupport() {
+      isUnitSwitchSupported = !isUnitSwitchSupported;
+      const dot = document.getElementById('unit-status-dot');
+      const text = document.getElementById('unit-support-text');
+      const schemes = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'];
+
+      if (isUnitSwitchSupported) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        text.innerText = '單位狀態：支援切換 (g/ml)';
+        schemes.forEach(s => {
+          const card = document.getElementById(`card-${s}`);
+          if (!card) return;
+          const mlBtn = card.querySelector('.unit-btn-ml');
+          if (mlBtn) {
+            mlBtn.classList.remove('opacity-30', 'cursor-not-allowed', 'line-through');
+            mlBtn.removeAttribute('disabled');
+          }
+          const hint = document.getElementById(`unit-hint-${s}`);
+          if (hint) hint.classList.add('hidden');
+        });
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.innerText = '單位狀態：鎖定反灰 (純固體僅限 g)';
+        schemes.forEach(s => {
+          handleUnitClick(s, 'g');
+          const card = document.getElementById(`card-${s}`);
+          if (!card) return;
+          const mlBtn = card.querySelector('.unit-btn-ml');
+          if (mlBtn) {
+            mlBtn.classList.add('opacity-30', 'cursor-not-allowed', 'line-through');
+            mlBtn.setAttribute('disabled', 'true');
+          }
+          const hint = document.getElementById(`unit-hint-${s}`);
+          if (hint) hint.classList.remove('hidden');
+        });
+      }
+    }
+
+    function handleUnitClick(scheme, unit) {
+      if (!isUnitSwitchSupported && unit === 'ml') return;
+      unitState[scheme] = unit;
+      const card = document.getElementById(`card-${scheme}`);
+      if (!card) return;
+
+      const gBtn = card.querySelector('.unit-btn-g');
+      const mlBtn = card.querySelector('.unit-btn-ml');
+      const unitDisp = document.getElementById(`unit-disp-${scheme}`);
+
+      if (unit === 'g') {
+        gBtn.className = 'unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium';
+        mlBtn.className = 'unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground';
+        if (unitDisp) unitDisp.innerText = 'g';
+      } else {
+        mlBtn.className = 'unit-btn-ml px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium';
+        gBtn.className = 'unit-btn-g px-2.5 py-0.5 rounded-full text-muted-foreground';
+        if (unitDisp) unitDisp.innerText = 'ml';
+      }
+    }
+
+    // ==========================================
+    // 核心物理法則：滾輪向上推 (deltaY < 0) = 增加 (+)；向下滾 (deltaY > 0) = 減少 (-)
+    // ==========================================
+    function handleElevationWheel(e, scheme, step, maxVal) {
+      e.preventDefault();
+      // 在瀏覽器滾輪中：e.deltaY < 0 表示滾輪向前/向上滾動！
+      const isUp = e.deltaY < 0;
+      const delta = isUp ? step : -step;
+      changeElevationVal(scheme, delta, maxVal);
+    }
+
+    function changeElevationVal(scheme, delta, maxVal = 300) {
+      state[scheme] = Math.max(0, Math.min(maxVal, state[scheme] + delta));
+      updateElevationDisplay(scheme, maxVal);
+    }
+
+    function updateElevationDisplay(scheme, maxVal = 250) {
+      const val = state[scheme];
+      const disp = document.getElementById(`disp-${scheme}`);
+      if (disp) disp.innerText = val;
+
+      const pct = Math.min(100, Math.max(0, (val / maxVal) * 100));
+
+      // 方案 1: 推桿位置 (Knob bottom pct)
+      if (scheme === 'e1') {
+        const knob = document.getElementById('knob-e1');
+        if (knob) knob.style.bottom = `calc(${pct}% - 12px)`;
+      }
+
+      // 方案 2: 水銀高度
+      if (scheme === 'e2') {
+        const liquid = document.getElementById('liquid-e2');
+        const sub = document.getElementById('sub-e2');
+        if (liquid) liquid.style.height = `${pct}%`;
+        if (sub) sub.innerText = `約佔基準 100g 份量 ${Math.round((val / 100) * 100)}%`;
+      }
+
+      // 方案 3: 測量爪高度
+      if (scheme === 'e3') {
+        const jaw = document.getElementById('jaw-e3');
+        const jawVal = document.getElementById('jaw-val-e3');
+        if (jaw) jaw.style.bottom = `calc(${pct}% - 12px)`;
+        if (jawVal) jawVal.innerText = val;
+      }
+
+      // 方案 7: 雷射線高度
+      if (scheme === 'e7') {
+        const laser = document.getElementById('laser-line-e7');
+        if (laser) laser.style.bottom = `${pct}%`;
+      }
+
+      // 方案 8
+      if (scheme === 'e8') {
+        const ind = document.getElementById('relative-indicator-e8');
+        if (ind) ind.innerText = val + 'g';
+      }
+    }
+
+    // ==========================================
+    // 方案 4: 雙軌推桿處理
+    // ==========================================
+    function handleDualCoarseWheel(e, scheme) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 50 : -50;
+      state[`${scheme}_coarse`] = Math.max(0, Math.min(500, state[`${scheme}_coarse`] + delta));
+      updateDualScheme(scheme);
+    }
+
+    function handleDualFineWheel(e, scheme) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1 : -1;
+      state[`${scheme}_fine`] = Math.max(0, Math.min(49, state[`${scheme}_fine`] + delta));
+      updateDualScheme(scheme);
+    }
+
+    function updateDualScheme(scheme) {
+      const coarse = state[`${scheme}_coarse`];
+      const fine = state[`${scheme}_fine`];
+      const total = coarse + fine;
+
+      document.getElementById(`disp-${scheme}`).innerText = total;
+      document.getElementById(`coarse-${scheme}`).innerText = coarse;
+      document.getElementById(`fine-${scheme}`).innerText = fine;
+
+      // 粗調推桿位置 (0~500)
+      const coarsePct = Math.min(100, (coarse / 500) * 100);
+      const coarseKnob = document.getElementById('knob-coarse-e4');
+      if (coarseKnob) {
+        coarseKnob.style.bottom = `calc(${coarsePct}% - 10px)`;
+        document.getElementById('knob-coarse-txt-e4').innerText = coarse;
+      }
+
+      // 微調推桿位置 (0~49)
+      const finePct = Math.min(100, (fine / 49) * 100);
+      const fineKnob = document.getElementById('knob-fine-e4');
+      if (fineKnob) {
+        fineKnob.style.bottom = `calc(${finePct}% - 8px)`;
+        fineKnob.querySelector('span').innerText = `+${fine}`;
+      }
+    }
+
+    // ==========================================
+    // 方案 5: 階梯磁吸段落處理
+    // ==========================================
+    const steps = [0, 30, 50, 100, 150, 200];
+
+    function handleStepWheel(e, scheme) {
+      e.preventDefault();
+      const isUp = e.deltaY < 0;
+      const cur = state[scheme];
+      let idx = steps.indexOf(cur);
+      if (idx === -1) {
+        idx = steps.findIndex(s => s >= cur);
+      }
+      if (isUp && idx < steps.length - 1) {
+        setStepVal(scheme, steps[idx + 1]);
+      } else if (!isUp && idx > 0) {
+        setStepVal(scheme, steps[idx - 1]);
+      }
+    }
+
+    function setStepVal(scheme, val) {
+      state[scheme] = val;
+      document.getElementById(`disp-${scheme}`).innerText = val;
+
+      const buttons = document.querySelectorAll('.step-node-e5');
+      buttons.forEach(b => {
+        const v = parseInt(b.getAttribute('data-val'), 10);
+        if (v === val) {
+          b.className = 'step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-foreground bg-foreground text-background font-bold';
+        } else {
+          b.className = 'step-node-e5 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted';
+        }
+      });
+    }
+
+    // ==========================================
+    // 方案 6: 垂直油門推桿 (按住上推加速增長，向下拉扣減)
+    // ==========================================
+    let throttleTimer = null;
+    let throttleRate = 0;
+
+    function startThrottleDrag(e, scheme) {
+      e.preventDefault();
+      const track = document.getElementById('throttle-track-e6');
+      const knob = document.getElementById('throttle-knob-e6');
+      const statusEl = document.getElementById('throttle-status-e6');
+      const rect = track.getBoundingClientRect();
+      const centerY = rect.top + rect.height / 2;
+
+      function onMove(me) {
+        const clientY = me.touches ? me.touches[0].clientY : me.clientY;
+        const diffY = centerY - clientY; // 向上為正
+        const clampedDiff = Math.max(-rect.height / 2 + 14, Math.min(rect.height / 2 - 14, diffY));
+
+        knob.style.transform = `translateY(${-clampedDiff}px)`;
+
+        // 計算推力速度 (推得越高，速率越大)
+        if (Math.abs(clampedDiff) > 8) {
+          throttleRate = Math.round(clampedDiff / 6);
+          statusEl.innerText = throttleRate > 0 ? `▲ 上推加速 +${throttleRate}g/次` : `▼ 下拉扣減 ${throttleRate}g/次`;
+        } else {
+          throttleRate = 0;
+          statusEl.innerText = '中立位 · 上推加速加重 · 下拉扣減';
+        }
+
+        if (throttleRate !== 0 && !throttleTimer) {
+          throttleTimer = setInterval(() => {
+            state[scheme] = Math.max(0, state[scheme] + throttleRate);
+            document.getElementById(`disp-${scheme}`).innerText = state[scheme];
+          }, 80);
+        } else if (throttleRate === 0 && throttleTimer) {
+          clearInterval(throttleTimer);
+          throttleTimer = null;
+        }
+      }
+
+      function onUp() {
+        if (throttleTimer) {
+          clearInterval(throttleTimer);
+          throttleTimer = null;
+        }
+        throttleRate = 0;
+        knob.style.transform = 'translateY(0px)';
+        statusEl.innerText = '中立位 · 上推加速加重 · 下拉扣減';
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onUp);
+      }
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
+    }
+
+    // ==========================================
+    // 物理拖曳：點擊軌道直接計算高度百分比 (底為 0，頂為 Max)
+    // ==========================================
+    function startFaderDrag(e, scheme, maxVal) {
+      e.preventDefault();
+      const track = e.currentTarget;
+      const rect = track.getBoundingClientRect();
+
+      function updateFromPos(clientY) {
+        // clientY 到底部距離
+        const bottomDist = rect.bottom - clientY;
+        const pct = Math.max(0, Math.min(1, bottomDist / rect.height));
+        const val = Math.round(pct * maxVal);
+        state[scheme] = val;
+        updateElevationDisplay(scheme, maxVal);
+      }
+
+      const initialY = e.touches ? e.touches[0].clientY : e.clientY;
+      updateFromPos(initialY);
+
+      function onMove(me) {
+        if (me.cancelable) me.preventDefault();
+        const y = me.touches ? me.touches[0].clientY : me.clientY;
+        updateFromPos(y);
+      }
+
+      function onEnd() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onEnd);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onEnd);
+      }
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+    }
+
+    // ==========================================
+    // 方案 8: 相對位移盲操板 (向上拖為增，向下拖為減)
+    // ==========================================
+    function startRelativeDrag(e, scheme) {
+      e.preventDefault();
+      let lastY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      function onMove(me) {
+        if (me.cancelable) me.preventDefault();
+        const y = me.touches ? me.touches[0].clientY : me.clientY;
+        const diff = lastY - y; // 向上為正
+        if (Math.abs(diff) >= 4) {
+          const delta = Math.round(diff / 4);
+          changeElevationVal(scheme, delta, 300);
+          lastY = y;
+        }
+      }
+
+      function onEnd() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onEnd);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onEnd);
+      }
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+    }
+
+    // 初始化所有推桿位置
+    window.addEventListener('DOMContentLoaded', () => {
+      updateElevationDisplay('e1', 250);
+      updateElevationDisplay('e2', 200);
+      updateElevationDisplay('e3', 300);
+      updateDualScheme('e4');
+      updateElevationDisplay('e7', 200);
+      updateElevationDisplay('e8', 300);
+    });
+  </script>
+</body>
+</html>

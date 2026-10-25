@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 方案 6 垂直標定尺規 8 大拓展設計 (Vertical Gauge Picker Extensions)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-fg)',
+            border: 'var(--border)',
+            calories: 'var(--calories)',
+            protein: 'var(--protein)',
+            carbs: 'var(--carbs)',
+            fat: 'var(--fat)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card: #ffffff;
+      --muted: #fafafa;
+      --muted-fg: #666666;
+      --border: #eaeaea;
+      --calories: #e11d48;
+      --protein: #0284c7;
+      --carbs: #d97706;
+      --fat: #7c3aed;
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card: #000000;
+      --muted: #0a0a0a;
+      --muted-fg: #a0a0a0;
+      --border: #262626;
+      --calories: #f43f5e;
+      --protein: #38bdf8;
+      --carbs: #f59e0b;
+      --fat: #a78bfa;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* 垂直刻度尺遮罩 (上下柔和淡出羽化) */
+    .vertical-mask {
+      mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    }
+    /* 隱藏滾動條 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* 金屬指撥凹槽線 */
+    .jog-strip {
+      background-image: repeating-linear-gradient(
+        to bottom,
+        var(--border) 0px,
+        var(--border) 1px,
+        transparent 1px,
+        transparent 6px
+      );
+    }
+    /* 觸摸滑動熱區光標 */
+    .cursor-gauge {
+      cursor: ns-resize;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 transition-colors duration-200">
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- 頂部標題與導航列 -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+      <div>
+        <div class="flex items-center gap-2">
+          <a href="number-wheel-picker-preview.html" class="text-xs font-mono px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors">
+            ← 返回 10 大全量方案
+          </a>
+          <a href="elevation-picker-preview.html" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-bold hover:bg-calories/20 transition-colors">
+            🔥 直覺物理律：「上滑增加 · 下拉降低」8 大升降推桿新方案 →
+          </a>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight mt-1">方案 6「垂直標定尺規」：8 大進階拓展設計</h1>
+        <p class="text-sm text-muted-foreground mt-1">
+          核心哲學：<strong class="text-foreground">「左側視野大數值 + 右側拇指尺規」</strong>，單手握持零遮擋，支持滑鼠滾輪與指針拖曳，整合單位切換與反灰鎖定。
+        </p>
+      </div>
+
+      <!-- 控制欄 -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="toggle-unit-support-btn" onclick="toggleUnitSupport()"
+                class="px-3 py-1.5 rounded-lg border border-border text-xs font-mono flex items-center gap-1.5 hover:bg-muted transition-colors">
+          <span class="w-2 h-2 rounded-full bg-emerald-500" id="unit-status-dot"></span>
+          <span id="unit-support-text">單位狀態：支援切換 (g/ml)</span>
+        </button>
+
+        <button onclick="toggleDarkMode()" 
+                class="px-3 py-1.5 rounded-lg border border-border text-xs font-mono hover:bg-muted transition-colors">
+          🌓 切換深淺模式
+        </button>
+      </div>
+    </div>
+
+    <!-- 方案 6 核心人機工學優勢說明卡片 -->
+    <div class="p-4 rounded-xl border border-border bg-card/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-foreground text-background font-semibold">人機工學核心</span>
+          <span class="text-sm font-semibold tracking-tight">為什麼側邊垂直尺規是最適合手機單手的解法？</span>
+        </div>
+        <p class="text-xs text-muted-foreground leading-relaxed">
+          手機單手握持時，大拇指自然落於螢幕右側 1/4（右撇子黃金弧線）。傳統居中滾輪會被大拇指完全遮住選中的數字；方案 6 將尺規移至右邊界，<strong>拇指在右側滑動，左側視野 100% 開闊無遮擋</strong>。
+        </p>
+      </div>
+      <div class="flex items-center gap-3 shrink-0 text-xs font-mono text-muted-foreground border-t sm:border-t-0 sm:border-l border-border pt-2 sm:pt-0 sm:pl-4">
+        <div><span class="text-foreground font-bold">100%</span> 視野無遮擋</div>
+        <div><span class="text-foreground font-bold">1g</span> 高精刻度</div>
+        <div><span class="text-foreground font-bold">Dual</span> 滾輪/拖曳</div>
+      </div>
+    </div>
+
+    <!-- 8 款拓展方案網格 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- ========================================== -->
+      <!-- 拓展 6A: 精密機械卡尺 (Precision Vernier Caliper) -->
+      <!-- ========================================== -->
+      <div id="card-6a" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6A</span>
+              <h2 class="text-base font-semibold tracking-tight">精密游標卡尺 (Vernier Caliper)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">推薦 · 極致機械</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            客觀測量儀典範。右側高密度機械刻度（10g 粗刻、5g 中刻、1g 細刻），紅色雷射游標固定居中對準，數值隨滾動即時躍動。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <!-- 頂部單位列 -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6a', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6a', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <!-- 核心量規展示區 -->
+          <div class="relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3">
+            <!-- 左側大字數值與次級資訊 -->
+            <div class="font-mono space-y-1">
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6a" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-6a" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-calories"></span>
+                <span id="sub-6a">約 82 kcal · 15.5g 蛋白質</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground/80">電子秤客觀物理生重</div>
+            </div>
+
+            <!-- 右側精密游標卡尺軌道 -->
+            <div class="w-20 h-full vertical-mask overflow-hidden border-l border-border relative cursor-gauge flex items-center justify-end"
+                 id="track-6a"
+                 onwheel="handleGaugeWheel(event, '6a', 1)"
+                 onmousedown="startDrag(event, '6a', 1)"
+                 ontouchstart="startDrag(event, '6a', 1)">
+              
+              <!-- 刻度容器 -->
+              <div id="scale-6a" class="absolute right-0 pr-2 space-y-2 text-right font-mono text-[10px] text-muted-foreground pointer-events-none transition-transform duration-75">
+                <!-- 動態注入刻度 -->
+              </div>
+
+              <!-- 中央固定紅色雷射游標指針 -->
+              <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10 pointer-events-none">
+                <div class="w-2 h-2 rounded-full bg-calories ring-2 ring-background"></div>
+                <div class="w-8 h-[2px] bg-calories"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部客觀反灰警告 -->
+          <div id="unit-hint-6a" class="hidden text-[11px] font-mono text-muted-foreground flex items-center gap-1">
+            <span>ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</span>
+          </div>
+
+          <!-- 動作按鈕 -->
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：右側滑鼠滾輪 / 拖曳</span>
+          <span>特性：1g 雷射精準標定</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6B: 雙軌分速尺規 (Dual-Speed Coarse/Fine) -->
+      <!-- ========================================== -->
+      <div id="card-6b" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6B</span>
+              <h2 class="text-base font-semibold tracking-tight">雙軌分速尺規 (Coarse & Fine Dual Tracks)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">極速直達</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            徹底解決「大範圍」與「1g 精度」的衝突。右邊界分割為兩條垂直軌：外軌 50g 快速粗調，內軌 1g 精密微調。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6b', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6b', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3">
+            <!-- 左側大字 -->
+            <div class="font-mono space-y-1">
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6b" class="text-5xl font-bold tracking-tight">150</span>
+                <span id="unit-disp-6b" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground flex items-center gap-2 pt-1">
+                <span class="px-1.5 py-0.5 rounded bg-background border border-border text-[10px]">粗調 <span id="coarse-disp-6b" class="font-bold text-foreground">150</span></span>
+                <span class="px-1.5 py-0.5 rounded bg-background border border-border text-[10px]">微調 +<span id="fine-disp-6b" class="font-bold text-foreground">0</span></span>
+              </div>
+            </div>
+
+            <!-- 右側雙軌：內軌(微調) + 外軌(粗調) -->
+            <div class="flex h-full border-l border-border">
+              <!-- 內軌：1g 微調 -->
+              <div class="w-12 h-full vertical-mask relative border-r border-border/50 cursor-gauge flex items-center justify-center bg-muted/20"
+                   title="微調軌道 (±1g)"
+                   onwheel="handleFineWheel(event, '6b')">
+                <div class="text-[9px] font-mono text-muted-foreground text-center space-y-2">
+                  <div>+2</div>
+                  <div>+1</div>
+                  <div class="font-bold text-foreground bg-foreground/10 px-1 rounded">±0</div>
+                  <div>-1</div>
+                  <div>-2</div>
+                </div>
+                <div class="absolute inset-x-0 bottom-1 text-[8px] font-mono text-center text-muted-foreground/60 uppercase">微調</div>
+              </div>
+
+              <!-- 外軌：50g 粗調 -->
+              <div class="w-14 h-full vertical-mask relative cursor-gauge flex items-center justify-center"
+                   title="粗調軌道 (±50g)"
+                   onwheel="handleGaugeWheel(event, '6b', 50)">
+                <div class="text-[10px] font-mono text-muted-foreground text-right space-y-2 pr-1">
+                  <div>250</div>
+                  <div>200</div>
+                  <div class="font-bold text-calories flex items-center gap-1 justify-end">
+                    <span>150</span>
+                    <div class="w-2.5 h-0.5 bg-calories"></div>
+                  </div>
+                  <div>100</div>
+                  <div>50</div>
+                </div>
+                <div class="absolute inset-x-0 bottom-1 text-[8px] font-mono text-center text-muted-foreground/60 uppercase">粗調</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-6b" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：內外雙軌獨立滾動</span>
+          <span>特性：外軌 50g 飛躍 + 內軌 1g 微雕</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6C: 快捷錨點躍遷 + 垂直尺規 (Anchor Hop & Vertical Tape) -->
+      <!-- ========================================== -->
+      <div id="card-6c" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6C</span>
+              <h2 class="text-base font-semibold tracking-tight">快捷錨點躍遷 (Anchor Hop & Tape)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-carbs/10 text-carbs border border-carbs/30 font-semibold">雙模輸入</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            下方整合一組常用物理份量膠囊（50g、100g、150g、200g），點擊一鍵跳轉基準量，右側垂直尺規自由滑動微調。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6c', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6c', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-36 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3">
+            <!-- 左側大字 -->
+            <div class="font-mono">
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6c" class="text-5xl font-bold tracking-tight">100</span>
+                <span id="unit-disp-6c" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground mt-1">基準參考：1 份掌心大肉排</div>
+            </div>
+
+            <!-- 右側尺規 -->
+            <div class="w-16 h-full vertical-mask overflow-hidden border-l border-border relative cursor-gauge flex items-center justify-end"
+                 onwheel="handleGaugeWheel(event, '6c', 1)">
+              <div class="space-y-2 text-right pr-2 font-mono text-[10px] text-muted-foreground">
+                <div class="flex items-center gap-1 justify-end"><span>120</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>110</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span class="text-foreground font-bold" id="center-6c">100</span><div class="w-5 h-0.5 bg-calories"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>90</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>80</span><div class="w-3 h-px bg-border"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 常用錨點快選膠囊列 -->
+          <div class="flex items-center gap-1.5 pt-1">
+            <button onclick="setVal('6c', 30)" class="flex-1 py-1 rounded border border-border text-[11px] font-mono hover:bg-muted transition-colors">30g</button>
+            <button onclick="setVal('6c', 50)" class="flex-1 py-1 rounded border border-border text-[11px] font-mono hover:bg-muted transition-colors">50g</button>
+            <button onclick="setVal('6c', 100)" class="flex-1 py-1 rounded border border-border text-[11px] font-mono bg-foreground/5 font-bold hover:bg-muted transition-colors">100g</button>
+            <button onclick="setVal('6c', 150)" class="flex-1 py-1 rounded border border-border text-[11px] font-mono hover:bg-muted transition-colors">150g</button>
+            <button onclick="setVal('6c', 200)" class="flex-1 py-1 rounded border border-border text-[11px] font-mono hover:bg-muted transition-colors">200g</button>
+          </div>
+
+          <div id="unit-hint-6c" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：膠囊直達基準 + 尺規微調</span>
+          <span>特性：跳轉與滑動無縫互補</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6D: 左右手自適應對調 (Ambidextrous Swappable Gauge) -->
+      <!-- ========================================== -->
+      <div id="card-6d" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6D</span>
+              <h2 class="text-base font-semibold tracking-tight">左右手自適應尺規 (Ambidextrous Gauge)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-foreground border border-border font-semibold">全人機工學</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            兼顧左手與右手單手握持習慣。點擊切換手向，尺規與數值左右鏡像對調，永遠讓拇指位於邊界、數值處於開闊視野。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <!-- 左右手切換開關 -->
+            <button onclick="toggleHandedness('6d')" class="px-2 py-0.5 rounded border border-border text-[10px] font-mono flex items-center gap-1 hover:bg-muted">
+              <span>手向：</span>
+              <span id="hand-label-6d" class="font-bold text-foreground">右手 (尺在右)</span>
+              <span class="text-muted-foreground">⇄</span>
+            </button>
+
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6d', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6d', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <!-- 容器結構：透過 flex-row 或 flex-row-reverse 切換 -->
+          <div id="container-6d" class="relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex flex-row items-center justify-between p-3 transition-all duration-300">
+            <!-- 大數值區 -->
+            <div class="font-mono">
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6d" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-6d" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground mt-1">單手大拇指零遮擋模式</div>
+            </div>
+
+            <!-- 垂直尺規區 -->
+            <div id="gauge-rail-6d" class="w-16 h-full vertical-mask overflow-hidden border-l border-border relative cursor-gauge flex items-center justify-end"
+                 onwheel="handleGaugeWheel(event, '6d', 1)">
+              <div class="space-y-2 text-right pr-2 font-mono text-[10px] text-muted-foreground">
+                <div class="flex items-center gap-1 justify-end"><span>70</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>60</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span class="text-foreground font-bold" id="center-6d">50</span><div class="w-5 h-0.5 bg-calories"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>40</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>30</span><div class="w-3 h-px bg-border"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-6d" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：手向鏡像對調</span>
+          <span>特性：左右撇子完美相容</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6E: 金屬指撥凹槽帶 + 光學透鏡 (Jog Strip & Optical Lens) -->
+      <!-- ========================================== -->
+      <div id="card-6e" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6E</span>
+              <h2 class="text-base font-semibold tracking-tight">金屬指撥帶與光學透鏡 (Jog Strip & Lens)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-fat/10 text-fat border border-fat/30 font-semibold">工業儀表</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            Teenage Engineering 質感。右側為凹凸立體指撥帶（Jog Strip），中央對齊游標具有放大透鏡視覺效果（1.3x 亮白，上下虛化縮小）。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6e', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6e', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3">
+            <!-- 左側大字 -->
+            <div class="font-mono">
+              <div class="text-xs text-muted-foreground mb-1 uppercase tracking-widest">當前量規</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6e" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-6e" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <!-- 快速微調步進按鈕 -->
+              <div class="flex items-center gap-1 mt-3">
+                <button onclick="changeVal('6e', -5)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">-5</button>
+                <button onclick="changeVal('6e', -1)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">-1</button>
+                <button onclick="changeVal('6e', 1)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">+1</button>
+                <button onclick="changeVal('6e', 5)" class="h-6 px-2 rounded border border-border text-[10px] font-mono hover:bg-muted">+5</button>
+              </div>
+            </div>
+
+            <!-- 右側凹凸金屬指撥帶 (Jog Strip) -->
+            <div class="w-14 h-full vertical-mask border-l border-border relative cursor-gauge overflow-hidden flex items-center justify-center bg-background/50"
+                 onwheel="handleGaugeWheel(event, '6e', 1)">
+              <!-- 金屬條紋底紋 -->
+              <div class="absolute inset-0 jog-strip opacity-60"></div>
+
+              <!-- 數字光學透鏡容器 -->
+              <div class="space-y-3 text-center font-mono text-[10px] z-10 relative pointer-events-none">
+                <div class="opacity-30 scale-90">52</div>
+                <div class="opacity-60 scale-95">51</div>
+                <div class="text-xs font-bold text-foreground bg-foreground/15 border-y border-border py-0.5 scale-125 transition-transform" id="center-6e">50</div>
+                <div class="opacity-60 scale-95">49</div>
+                <div class="opacity-30 scale-90">48</div>
+              </div>
+
+              <!-- 兩側定位標記點 -->
+              <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-calories rounded-r"></div>
+              <div class="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-calories rounded-l"></div>
+            </div>
+          </div>
+
+          <div id="unit-hint-6e" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：Jog Strip 指撥滑動</span>
+          <span>特性：中央放大 1.3x 光學透鏡</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6F: 雙軸同動單位尺規 (Dual-Metric Sync: g & ml) -->
+      <!-- ========================================== -->
+      <div id="card-6f" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6F</span>
+              <h2 class="text-base font-semibold tracking-tight">雙單位同動標定尺 (Dual Metric Sync: g ∥ ml)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">物理換算</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            右側並列展示克數 (g) 與容積 (ml) 雙平行軌道，物理同動！當食材不支援容積時，ml 軌道直接反灰鎖定，展現無歧義的客觀真實。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量換算</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6f', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6f', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3">
+            <!-- 左側大字 -->
+            <div class="font-mono space-y-1">
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6f" class="text-5xl font-bold tracking-tight">100</span>
+                <span id="unit-disp-6f" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground flex items-center gap-1 pt-1">
+                <span class="text-foreground">⇄</span>
+                <span id="sync-secondary-6f">約 97.1 ml (按 1.03g/ml 密度)</span>
+              </div>
+            </div>
+
+            <!-- 右側雙平行軌道 -->
+            <div class="flex h-full border-l border-border">
+              <!-- g 軌道 -->
+              <div id="rail-g-6f" class="w-11 h-full vertical-mask relative cursor-gauge flex items-center justify-center border-r border-border/40"
+                   onwheel="handleGaugeWheel(event, '6f', 1)">
+                <div class="text-[10px] font-mono text-center space-y-2">
+                  <div class="text-muted-foreground">120</div>
+                  <div class="text-muted-foreground">110</div>
+                  <div class="font-bold text-foreground bg-foreground/10 px-1 rounded" id="center-g-6f">100g</div>
+                  <div class="text-muted-foreground">90</div>
+                  <div class="text-muted-foreground">80</div>
+                </div>
+              </div>
+
+              <!-- ml 軌道 (受單位支援狀態動態反灰) -->
+              <div id="rail-ml-6f" class="w-11 h-full vertical-mask relative cursor-gauge flex items-center justify-center bg-muted/30 transition-all duration-200"
+                   onwheel="handleGaugeWheel(event, '6f', 1)">
+                <div class="text-[10px] font-mono text-center space-y-2 text-muted-foreground/80">
+                  <div>116</div>
+                  <div>107</div>
+                  <div class="font-bold text-calories" id="center-ml-6f">97ml</div>
+                  <div>87</div>
+                  <div>78</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-6f" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量，ml 軌道已反灰停用</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：g / ml 平行軌同動</span>
+          <span>特性：不支援時 ml 軌道即時反灰</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6G: 垂直流體注入柱規 (Hydrostatic Level Gauge) -->
+      <!-- ========================================== -->
+      <div id="card-6g" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6G</span>
+              <h2 class="text-base font-semibold tracking-tight">垂直流體注入柱規 (Hydrostatic Level Gauge)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">份量視覺化</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            將右側刻度尺與「垂直液位量筒」合而為一。隨手指滑動，透明液柱升降，一眼看出佔全日份量或參考容器的物理飽和比例。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-muted-foreground">份量重量</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button onclick="handleUnitClick('6g', 'g')" class="unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors">g</button>
+              <button onclick="handleUnitClick('6g', 'ml')" class="unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3">
+            <!-- 左側大字 -->
+            <div class="font-mono space-y-2">
+              <div class="text-xs text-muted-foreground uppercase tracking-wider">注入量</div>
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6g" class="text-5xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-6g" class="text-lg font-bold text-muted-foreground">g</span>
+              </div>
+              <!-- 佔比刻度說明 -->
+              <div class="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-foreground/40"></span>
+                <span id="percent-6g">約佔預設單餐份量 33%</span>
+              </div>
+            </div>
+
+            <!-- 右側柱狀量筒與刻度 -->
+            <div class="w-16 h-full border-l border-border relative cursor-gauge flex items-center justify-end"
+                 onwheel="handleGaugeWheel(event, '6g', 1)"
+                 onmousedown="startDrag(event, '6g', 1)"
+                 ontouchstart="startDrag(event, '6g', 1)">
+              
+              <!-- 垂直升降液位柱 (自底向上撐起) -->
+              <div class="absolute inset-x-2 bottom-0 bg-foreground/15 border-t-2 border-calories rounded-t transition-all duration-75 pointer-events-none"
+                   id="liquid-bar-6g"
+                   style="height: 33%;">
+              </div>
+
+              <!-- 表面刻度標線 -->
+              <div class="relative z-10 space-y-4 text-right pr-2 font-mono text-[9px] text-muted-foreground pointer-events-none">
+                <div class="flex items-center gap-1 justify-end"><span>150</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>100</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>50</span><div class="w-4 h-0.5 bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>0</span><div class="w-3 h-px bg-border"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="unit-hint-6g" class="hidden text-[11px] font-mono text-muted-foreground">ℹ️ 原型固體食材已鎖定克重 (g) 物理計量</div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">確認</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：柱狀量筒垂直拖曳</span>
+          <span>特性：實體容積份量感一眼明瞭</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 拓展 6H: 超緊湊邊緣彈出抽屜 (Ultra-Compact Edge Drawer) -->
+      <!-- ========================================== -->
+      <div id="card-6h" class="border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">拓展 6H</span>
+              <h2 class="text-base font-semibold tracking-tight">超緊湊邊界微型規 (Edge Micro-Gauge)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-carbs/10 text-carbs border border-carbs/30 font-semibold">極致克制</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            專為高頻閃電記錄打造。高度僅 88px 的超微型模組，右側極窄 24px 觸控軌，最小化視窗佔用面積，瞬間確認回填。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗模擬 -->
+        <div class="w-full max-w-[340px] mx-auto border border-border rounded-lg bg-card p-3 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-mono text-muted-foreground">微型量規</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[10px] font-mono">
+              <button onclick="handleUnitClick('6h', 'g')" class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button onclick="handleUnitClick('6h', 'ml')" class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="relative h-24 rounded border border-border bg-muted/40 overflow-hidden flex items-center justify-between px-3">
+            <div class="font-mono">
+              <div class="flex items-baseline gap-1">
+                <span id="disp-6h" class="text-4xl font-bold tracking-tight">50</span>
+                <span id="unit-disp-6h" class="text-sm font-bold text-muted-foreground">g</span>
+              </div>
+              <div class="text-[10px] text-muted-foreground mt-0.5">閃電錄入模式</div>
+            </div>
+
+            <!-- 超窄邊界滑動軌 -->
+            <div class="w-12 h-full vertical-mask border-l border-border relative cursor-gauge flex items-center justify-center"
+                 onwheel="handleGaugeWheel(event, '6h', 1)">
+              <div class="space-y-1 text-center font-mono text-[9px] text-muted-foreground">
+                <div>52</div>
+                <div>51</div>
+                <div class="font-bold text-foreground bg-foreground/15 px-1 rounded" id="center-6h">50</div>
+                <div>49</div>
+                <div>48</div>
+              </div>
+              <div class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-0.5 bg-calories"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-7 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-7 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：超窄熱區微幅滑動</span>
+          <span>特性：高度僅 88px 閃電響應</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 底部綜合對比總結 -->
+    <div class="border-t border-border pt-6 pb-12">
+      <h3 class="text-base font-bold tracking-tight mb-3">8 大拓展方案特性決策維度</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono border border-border">
+          <thead class="bg-muted text-muted-foreground border-b border-border">
+            <tr>
+              <th class="p-2.5">方案代號</th>
+              <th class="p-2.5">拓展名稱</th>
+              <th class="p-2.5">大範圍躍遷</th>
+              <th class="p-2.5">1g 微雕精度</th>
+              <th class="p-2.5">單手無遮擋</th>
+              <th class="p-2.5">核心適用哲學</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr>
+              <td class="p-2.5 font-bold">6A (推薦)</td>
+              <td class="p-2.5">精密游標卡尺</td>
+              <td class="p-2.5 text-muted-foreground">中 (滑鼠/長滑)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">極高 (1g 雷射線)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分 (左視窗右刻度)</td>
+              <td class="p-2.5">硬核客觀測量儀，質感最強</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6B</td>
+              <td class="p-2.5">雙軌分速尺規</td>
+              <td class="p-2.5 text-emerald-500 font-bold">極高 (50g 外軌)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">極高 (1g 內軌)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分</td>
+              <td class="p-2.5">徹底解決大數字長行程痛點</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6C</td>
+              <td class="p-2.5">快捷錨點躍遷</td>
+              <td class="p-2.5 text-emerald-500 font-bold">極高 (膠囊直達)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">高 (右側尺規)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分</td>
+              <td class="p-2.5">標準份量頻繁記錄最高效</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6D</td>
+              <td class="p-2.5">左右手自適應</td>
+              <td class="p-2.5 text-muted-foreground">中</td>
+              <td class="p-2.5 text-emerald-500 font-bold">高</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分 (雙手鏡像)</td>
+              <td class="p-2.5">極致人機工學包容性</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6E</td>
+              <td class="p-2.5">金屬指撥與光學透鏡</td>
+              <td class="p-2.5 text-muted-foreground">中 (步進按鈕)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">高 (指撥帶)</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分</td>
+              <td class="p-2.5">Teenage Engineering 工業儀表美學</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6F</td>
+              <td class="p-2.5">雙單位同動標定尺</td>
+              <td class="p-2.5 text-muted-foreground">中</td>
+              <td class="p-2.5 text-emerald-500 font-bold">高</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分</td>
+              <td class="p-2.5">物理密度換算無歧義</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6G</td>
+              <td class="p-2.5">垂直流體注入柱規</td>
+              <td class="p-2.5 text-muted-foreground">中</td>
+              <td class="p-2.5 text-muted-foreground">中</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分</td>
+              <td class="p-2.5">份量空間感知直觀化</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-bold">6H</td>
+              <td class="p-2.5">超緊湊邊界微型規</td>
+              <td class="p-2.5 text-muted-foreground">中</td>
+              <td class="p-2.5 text-muted-foreground">高</td>
+              <td class="p-2.5 text-emerald-500 font-bold">滿分</td>
+              <td class="p-2.5">遮擋面積最小，閃電記錄</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 全域狀態與事件處理 -->
+  <script>
+    // 8 款方案的獨立數值狀態
+    const state = {
+      '6a': 50,
+      '6b': 150,
+      '6b_fine': 0,
+      '6c': 100,
+      '6d': 50,
+      '6d_hand': 'right',
+      '6e': 50,
+      '6f': 100,
+      '6g': 50,
+      '6h': 50
+    };
+
+    // 單位狀態 (g ↔ ml)
+    const unitState = {
+      '6a': 'g',
+      '6b': 'g',
+      '6c': 'g',
+      '6d': 'g',
+      '6e': 'g',
+      '6f': 'g',
+      '6g': 'g',
+      '6h': 'g'
+    };
+
+    // 全域單位切換支援性 (支援切換 vs 純固體鎖定反灰)
+    let isUnitSwitchSupported = true;
+
+    // 深色模式開關
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    // 全局切換單位支援狀態
+    function toggleUnitSupport() {
+      isUnitSwitchSupported = !isUnitSwitchSupported;
+      const dot = document.getElementById('unit-status-dot');
+      const text = document.getElementById('unit-support-text');
+      
+      const schemes = ['6a', '6b', '6c', '6d', '6e', '6f', '6g', '6h'];
+
+      if (isUnitSwitchSupported) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        text.innerText = '單位狀態：支援切換 (g/ml)';
+        
+        schemes.forEach(s => {
+          const card = document.getElementById(`card-${s}`);
+          if (!card) return;
+          const mlBtn = card.querySelector('.unit-btn-ml');
+          if (mlBtn) {
+            mlBtn.classList.remove('opacity-30', 'cursor-not-allowed', 'line-through');
+            mlBtn.removeAttribute('disabled');
+          }
+          const hint = document.getElementById(`unit-hint-${s}`);
+          if (hint) hint.classList.add('hidden');
+          
+          if (s === '6f') {
+            const mlRail = document.getElementById('rail-ml-6f');
+            if (mlRail) mlRail.classList.remove('opacity-25', 'grayscale');
+          }
+        });
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.innerText = '單位狀態：鎖定反灰 (純固體僅限 g)';
+        
+        schemes.forEach(s => {
+          // 強制回歸 g
+          handleUnitClick(s, 'g');
+
+          const card = document.getElementById(`card-${s}`);
+          if (!card) return;
+          const mlBtn = card.querySelector('.unit-btn-ml');
+          if (mlBtn) {
+            mlBtn.classList.add('opacity-30', 'cursor-not-allowed', 'line-through');
+            mlBtn.setAttribute('disabled', 'true');
+          }
+          const hint = document.getElementById(`unit-hint-${s}`);
+          if (hint) hint.classList.remove('hidden');
+
+          if (s === '6f') {
+            const mlRail = document.getElementById('rail-ml-6f');
+            if (mlRail) mlRail.classList.add('opacity-25', 'grayscale');
+          }
+        });
+      }
+    }
+
+    // 單位按鈕點擊處理
+    function handleUnitClick(scheme, unit) {
+      if (!isUnitSwitchSupported && unit === 'ml') return;
+
+      unitState[scheme] = unit;
+      const card = document.getElementById(`card-${scheme}`);
+      if (!card) return;
+
+      const gBtn = card.querySelector('.unit-btn-g');
+      const mlBtn = card.querySelector('.unit-btn-ml');
+      const unitDisp = document.getElementById(`unit-disp-${scheme}`);
+
+      if (unit === 'g') {
+        gBtn.className = 'unit-btn-g px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors';
+        mlBtn.className = 'unit-btn-ml px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors';
+        if (unitDisp) unitDisp.innerText = 'g';
+      } else {
+        mlBtn.className = 'unit-btn-ml px-2.5 py-0.5 rounded-full bg-foreground text-background font-medium transition-colors';
+        gBtn.className = 'unit-btn-g px-2.5 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-colors';
+        if (unitDisp) unitDisp.innerText = 'ml';
+      }
+    }
+
+    // 方案 6 專用垂直滑鼠滾輪處理
+    function handleGaugeWheel(e, scheme, step) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -step : step;
+      changeVal(scheme, delta);
+    }
+
+    // 方案 6B 內軌微調滾輪處理
+    function handleFineWheel(e, scheme) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      state[`${scheme}_fine`] = Math.max(-20, Math.min(20, state[`${scheme}_fine`] + delta));
+      const fineEl = document.getElementById(`fine-disp-${scheme}`);
+      if (fineEl) fineEl.innerText = state[`${scheme}_fine`];
+      updateScheme6B(scheme);
+    }
+
+    function updateScheme6B(scheme) {
+      const total = Math.max(0, state[scheme] + state[`${scheme}_fine`]);
+      document.getElementById(`disp-${scheme}`).innerText = total;
+      document.getElementById(`coarse-disp-${scheme}`).innerText = state[scheme];
+    }
+
+    // 數值增減核心分發
+    function changeVal(scheme, delta) {
+      if (scheme === '6b') {
+        state[scheme] = Math.max(0, state[scheme] + delta);
+        updateScheme6B(scheme);
+        return;
+      }
+
+      state[scheme] = Math.max(0, state[scheme] + delta);
+      updateDisplay(scheme);
+    }
+
+    function setVal(scheme, val) {
+      state[scheme] = val;
+      updateDisplay(scheme);
+    }
+
+    function updateDisplay(scheme) {
+      const val = state[scheme];
+      const el = document.getElementById(`disp-${scheme}`);
+      if (el) el.innerText = val;
+
+      // 6A 動態刻度與次級卡路里計算
+      if (scheme === '6a') {
+        renderScale6A(val);
+        const kcal = Math.round(val * 1.64);
+        const protein = (val * 0.31).toFixed(1);
+        const subEl = document.getElementById('sub-6a');
+        if (subEl) subEl.innerText = `約 ${kcal} kcal · ${protein}g 蛋白質`;
+      }
+
+      // 6C 中央刻度更新
+      if (scheme === '6c') {
+        const cEl = document.getElementById('center-6c');
+        if (cEl) cEl.innerText = val;
+      }
+
+      // 6D 中央刻度更新
+      if (scheme === '6d') {
+        const cEl = document.getElementById('center-6d');
+        if (cEl) cEl.innerText = val;
+      }
+
+      // 6E 中央透鏡數字更新
+      if (scheme === '6e') {
+        const cEl = document.getElementById('center-6e');
+        if (cEl) cEl.innerText = val;
+      }
+
+      // 6F 雙單位同動換算
+      if (scheme === '6f') {
+        const cG = document.getElementById('center-g-6f');
+        const cMl = document.getElementById('center-ml-6f');
+        const subF = document.getElementById('sync-secondary-6f');
+        const mlVal = (val * 0.971).toFixed(1);
+        if (cG) cG.innerText = val + 'g';
+        if (cMl) cMl.innerText = Math.round(val * 0.971) + 'ml';
+        if (subF) subF.innerText = `約 ${mlVal} ml (按 1.03g/ml 密度)`;
+      }
+
+      // 6G 流體液位高度與百分比
+      if (scheme === '6g') {
+        const bar = document.getElementById('liquid-bar-6g');
+        const pctEl = document.getElementById('percent-6g');
+        const pct = Math.min(100, Math.round((val / 150) * 100));
+        if (bar) bar.style.height = `${pct}%`;
+        if (pctEl) pctEl.innerText = `約佔預設單餐份量 ${pct}%`;
+      }
+
+      // 6H
+      if (scheme === '6h') {
+        const cH = document.getElementById('center-6h');
+        if (cH) cH.innerText = val;
+      }
+    }
+
+    // 方案 6A 動態渲染刻度尺
+    function renderScale6A(centerVal) {
+      const container = document.getElementById('scale-6a');
+      if (!container) return;
+
+      let html = '';
+      // 上下各渲染 5 個主要刻度點
+      for (let offset = 4; offset >= -4; offset--) {
+        const v = centerVal + offset * 5;
+        if (v < 0) continue;
+        const isCenter = offset === 0;
+        const isTen = v % 10 === 0;
+
+        if (isCenter) {
+          html += `
+            <div class="flex items-center gap-1.5 justify-end">
+              <span class="text-foreground font-bold text-xs">${v}</span>
+              <div class="w-6 h-0.5 bg-calories"></div>
+            </div>
+          `;
+        } else if (isTen) {
+          html += `
+            <div class="flex items-center gap-1.5 justify-end">
+              <span class="text-muted-foreground text-[10px]">${v}</span>
+              <div class="w-4 h-px bg-border"></div>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="flex items-center gap-1.5 justify-end">
+              <div class="w-2 h-px bg-border/60"></div>
+            </div>
+          `;
+        }
+      }
+      container.innerHTML = html;
+    }
+
+    // 方案 6D 左右手手向對調切換
+    function toggleHandedness(scheme) {
+      const container = document.getElementById(`container-${scheme}`);
+      const rail = document.getElementById(`gauge-rail-${scheme}`);
+      const label = document.getElementById(`hand-label-${scheme}`);
+
+      if (state[`${scheme}_hand`] === 'right') {
+        state[`${scheme}_hand`] = 'left';
+        label.innerText = '左手 (尺在左)';
+        container.className = 'relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex flex-row-reverse items-center justify-between p-3 transition-all duration-300';
+        rail.className = 'w-16 h-full vertical-mask overflow-hidden border-r border-border relative cursor-gauge flex items-center justify-start';
+      } else {
+        state[`${scheme}_hand`] = 'right';
+        label.innerText = '右手 (尺在右)';
+        container.className = 'relative h-44 rounded-lg border border-border bg-muted/40 overflow-hidden flex flex-row items-center justify-between p-3 transition-all duration-300';
+        rail.className = 'w-16 h-full vertical-mask overflow-hidden border-l border-border relative cursor-gauge flex items-center justify-end';
+      }
+    }
+
+    // 拖曳互動支援 (Mouse & Touch)
+    let activeDrag = null;
+    let startY = 0;
+    let startVal = 0;
+
+    function startDrag(e, scheme, step) {
+      activeDrag = { scheme, step };
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      startVal = state[scheme];
+
+      window.addEventListener('mousemove', onDragMove);
+      window.addEventListener('touchmove', onDragMove, { passive: false });
+      window.addEventListener('mouseup', endDrag);
+      window.addEventListener('touchend', endDrag);
+    }
+
+    function onDragMove(e) {
+      if (!activeDrag) return;
+      if (e.cancelable) e.preventDefault();
+      const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+      const diffY = startY - currentY; // 往上拖為增加
+      const delta = Math.round(diffY / 8) * activeDrag.step;
+      const targetVal = Math.max(0, startVal + delta);
+      if (targetVal !== state[activeDrag.scheme]) {
+        state[activeDrag.scheme] = targetVal;
+        updateDisplay(activeDrag.scheme);
+      }
+    }
+
+    function endDrag() {
+      activeDrag = null;
+      window.removeEventListener('mousemove', onDragMove);
+      window.removeEventListener('touchmove', onDragMove);
+      window.removeEventListener('mouseup', endDrag);
+      window.removeEventListener('touchend', endDrag);
+    }
+
+    // 初始化渲染
+    window.addEventListener('DOMContentLoaded', () => {
+      renderScale6A(state['6a']);
+      updateDisplay('6a');
+      updateDisplay('6b');
+      updateDisplay('6c');
+      updateDisplay('6d');
+      updateDisplay('6e');
+      updateDisplay('6f');
+      updateDisplay('6g');
+      updateDisplay('6h');
+    });
+  </script>
+</body>
+</html>

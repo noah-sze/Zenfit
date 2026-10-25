@@ -40,6 +40,9 @@ import { triggerHaptic } from '@/lib/haptics';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { useAppStore } from '@/store/useAppStore';
+import { calculateScaledNutrition } from '@/utils/nutritionMath';
+import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
 import type { RecipeIngredient } from '@/types';
 
 export default function RecipeDetails() {
@@ -50,6 +53,7 @@ export default function RecipeDetails() {
 
   const { allFoods } = useFoods();
   const { updateRecipe, archiveRecipe, unarchiveRecipe, deleteRecipe } = useRecipes();
+  const { nutritionDisplayMode } = useAppStore();
 
   // 響應式取得特定菜餚資料
   const recipe = useLiveQuery(
@@ -163,6 +167,22 @@ export default function RecipeDetails() {
     if (!recipe) return null;
     return calculateRecipeTotals(recipe, foodMap);
   }, [recipe, foodMap]);
+
+  // 依據顯示模式推算顯示數值（全配方每份 vs 每 100g 密度）
+  const scaledRecipeTotals = useMemo(() => {
+    if (!standardTotals) return null;
+    return calculateScaledNutrition(
+      {
+        calories: standardTotals.calories,
+        protein: standardTotals.protein,
+        carbs: standardTotals.carbs,
+        fat: standardTotals.fat,
+        servingSize: standardTotals.totalWeightGrams || 100,
+        servingUnit: 'g',
+      },
+      nutritionDisplayMode
+    );
+  }, [standardTotals, nutritionDisplayMode]);
 
   // 菜餚無油/瀝乾客觀對比數值
   const oilFreeTotals = useMemo(() => {
@@ -450,38 +470,43 @@ export default function RecipeDetails() {
 
       {/* 配方營養素總計卡片 */}
       <div className="space-y-1.5">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1">
-          {t('diet.recipeNutrients', '配方營養素總計')}
+        <div className="flex items-center justify-between px-1">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">
+            {t('diet.recipeNutrients', '配方營養素總計')}
+          </div>
+          <NutritionBasisToggle />
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.calories')}</span>
             <span className="font-mono text-foreground font-medium">
-              {standardTotals.calories} kcal
+              {scaledRecipeTotals?.calories ?? standardTotals.calories} kcal
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
-            <span className="text-muted-foreground">{t('diet.unit')} (g)</span>
+            <span className="text-muted-foreground">
+              {nutritionDisplayMode === 'per100g' ? t('diet.per100gDensity', '100g 密度') : `${t('diet.unit')} (g)`}
+            </span>
             <span className="font-mono text-foreground font-medium">
-              {standardTotals.totalWeightGrams} g
+              {scaledRecipeTotals?.servingSize ?? standardTotals.totalWeightGrams} g
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.protein')}</span>
             <span className="font-mono text-foreground font-medium">
-              {standardTotals.protein} g ({macroRatio.p}%)
+              {scaledRecipeTotals?.protein ?? standardTotals.protein} g ({macroRatio.p}%)
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.carbs')}</span>
             <span className="font-mono text-foreground font-medium">
-              {standardTotals.carbs} g ({macroRatio.c}%)
+              {scaledRecipeTotals?.carbs ?? standardTotals.carbs} g ({macroRatio.c}%)
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.fat')}</span>
             <span className="font-mono text-foreground font-medium">
-              {standardTotals.fat} g ({macroRatio.f}%)
+              {scaledRecipeTotals?.fat ?? standardTotals.fat} g ({macroRatio.f}%)
             </span>
           </div>
         </div>

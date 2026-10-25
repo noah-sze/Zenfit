@@ -36,7 +36,10 @@
   --color-header-bg: var(--header-bg);
   --color-destructive-subtle: var(--destructive-subtle);
 
-  /* 三大營養素語意色彩 (Carbs, Protein, Fat) */
+  /* 熱量與三大營養素語意色彩 (Calories, Carbs, Protein, Fat) */
+  --color-calories: var(--calories);
+  --color-calories-foreground: var(--calories-foreground);
+  --color-calories-subtle: var(--calories-subtle);
   --color-carbs: var(--carbs);
   --color-carbs-foreground: var(--carbs-foreground);
   --color-carbs-subtle: var(--carbs-subtle);
@@ -121,7 +124,10 @@
     --header-bg: rgba(255, 255, 255, 0.9);
     --destructive-subtle: rgba(255, 0, 0, 0.08);
 
-    /* 三大營養素 - 亮色模式 (高對比、WCAG AA 達標且純淨洗練) */
+    /* 熱量與三大營養素 - 亮色模式 (高對比、WCAG AA 達標且純淨洗練) */
+    --calories: #e11d48; /* 玫瑰珊瑚暖紅 - 活力卡路里 */
+    --calories-foreground: #ffffff;
+    --calories-subtle: rgba(225, 29, 72, 0.12);
     --carbs: #d97706; /* 琥珀金 - 穀物能量 */
     --carbs-foreground: #ffffff;
     --carbs-subtle: rgba(217, 119, 6, 0.12);
@@ -159,7 +165,10 @@
     --header-bg: rgba(0, 0, 0, 0.9);
     --destructive-subtle: rgba(255, 69, 58, 0.15);
 
-    /* 三大營養素 - 深色模式 (純黑背景下明快清透、無光暈污染) */
+    /* 熱量與三大營養素 - 深色模式 (純黑背景下明快清透、無光暈污染) */
+    --calories: #f43f5e; /* 玫瑰珊瑚暖紅 - 活力卡路里 */
+    --calories-foreground: #000000;
+    --calories-subtle: rgba(244, 63, 94, 0.18);
     --carbs: #f59e0b;
     --carbs-foreground: #000000;
     --carbs-subtle: rgba(245, 158, 11, 0.18);

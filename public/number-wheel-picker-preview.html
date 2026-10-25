@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 獨立數字滑動選擇器 10 大設計方案 (Precision Number Picker)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-fg)',
+            border: 'var(--border)',
+            calories: 'var(--calories)',
+            protein: 'var(--protein)',
+            carbs: 'var(--carbs)',
+            fat: 'var(--fat)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card: #ffffff;
+      --muted: #fafafa;
+      --muted-fg: #666666;
+      --border: #eaeaea;
+      --calories: #e11d48;
+      --protein: #0284c7;
+      --carbs: #d97706;
+      --fat: #7c3aed;
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card: #000000;
+      --muted: #0a0a0a;
+      --muted-fg: #a0a0a0;
+      --border: #262626;
+      --calories: #f43f5e;
+      --protein: #38bdf8;
+      --carbs: #f59e0b;
+      --fat: #a78bfa;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+    /* 滾輪漸層羽化遮罩 */
+    .wheel-mask {
+      mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
+    }
+    .tape-mask {
+      mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+    }
+    /* 隱藏原生滾動條 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 transition-colors duration-200">
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- 頂部標題與全域控制列 -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-mono px-2 py-0.5 rounded border border-border uppercase tracking-widest text-muted-foreground">L2 Primitive Spec</span>
+          <a href="elevation-picker-preview.html" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-calories text-white font-bold hover:opacity-90 transition-opacity">
+            ★ 最新心智模型：8 款「上滑增加 · 下拉降低」直覺升降推桿 →
+          </a>
+          <a href="vertical-gauge-picker-preview.html" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-bold hover:bg-calories/20 transition-colors">
+            方案 6 垂直尺規
+          </a>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight mt-1">獨立數字輸入機制：10 款滑動滾輪視窗設計</h1>
+        <p class="text-sm text-muted-foreground mt-1">
+          點擊數字彈出獨立 Modal，支援「手機上下/左右滑動」與「桌面滑鼠滾輪/拖曳選擇」，整合單位切換（不支援則反灰）。
+        </p>
+      </div>
+
+      <!-- 控制選項：模式切換 + 單位切換測試 -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- 單位支援模擬開關 -->
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-mono">
+          <span class="text-muted-foreground">單位切換狀態:</span>
+          <button onclick="toggleUnitSupport(true)" id="unitSupportBtn" class="px-2 py-0.5 rounded font-medium bg-foreground text-background transition-colors cursor-pointer">
+            支援 (g ↔ ml)
+          </button>
+          <button onclick="toggleUnitSupport(false)" id="unitDisabledBtn" class="px-2 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            不可切換 (反灰)
+          </button>
+        </div>
+
+        <button onclick="toggleTheme()" class="h-8 px-3 rounded-lg border border-border text-xs font-mono hover:bg-muted transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span id="themeText">切換亮色模式</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 方案切換快速 Tab (10 個方案索引) -->
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 text-xs font-mono border-b border-border/60">
+      <span class="text-muted-foreground shrink-0 uppercase tracking-wider text-[11px] font-semibold mr-1">選擇方案:</span>
+      <button onclick="showScheme('all')" class="scheme-tab-btn px-3 py-1.5 rounded border border-foreground bg-foreground text-background shrink-0 font-medium cursor-pointer" data-target="all">
+        全部 10 款並列檢視
+      </button>
+      <button onclick="showScheme(1)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="1">
+        1. 雙軸精密滾輪
+      </button>
+      <button onclick="showScheme(2)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="2">
+        2. 橫向機械刻度尺
+      </button>
+      <button onclick="showScheme(3)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="3">
+        3. 多階快速步進軸
+      </button>
+      <button onclick="showScheme(4)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="4">
+        4. 工業觸覺旋鈕
+      </button>
+      <button onclick="showScheme(5)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="5">
+        5. 分列里程滾筒
+      </button>
+      <button onclick="showScheme(6)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="6">
+        6. 垂直標定高度尺
+      </button>
+      <button onclick="showScheme(7)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="7">
+        7. 粗調/微調雙滑塊
+      </button>
+      <button onclick="showScheme(8)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="8">
+        8. 擦拭輪+微鍵盤
+      </button>
+      <button onclick="showScheme(9)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="9">
+        9. 透視景深波形軸
+      </button>
+      <button onclick="showScheme(10)" class="scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" data-target="10">
+        10. 極簡浮層長膠囊
+      </button>
+    </div>
+
+    <!-- 10 款設計卡片網格 (自適應排列) -->
+    <div id="schemesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- ========================================== -->
+      <!-- 方案 1: iOS / Braun 經典雙滾輪 (Classic Dual Drum) -->
+      <!-- ========================================== -->
+      <div id="card-1" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 1</span>
+              <h2 class="text-base font-semibold tracking-tight">經典雙軸精密滾輪 (Classic Dual Drum Wheel)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">推薦</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            左滾輪撥動整數十位/百位（步進 5 或 10），右滾輪微調個位或小數，雙側羽化漸層，中央以細邊框聚焦線鎖定。
+          </p>
+        </div>
+
+        <!-- 獨立彈窗實機模擬視窗 (320px) -->
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <!-- 頂部：標題與單位切換 -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">份量數值</span>
+            <!-- 單位切換區 -->
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground hover:text-foreground transition-opacity">ml</button>
+            </div>
+          </div>
+
+          <!-- 滾輪容器：支援上下滑鼠滾動 / 拖曳 -->
+          <div class="relative h-44 wheel-mask overflow-hidden border border-border/70 rounded-lg bg-muted/10 flex items-center justify-center cursor-ns-resize"
+               onwheel="handleWheel(event, 's1')"
+               id="drum-s1">
+            <!-- 中央聚焦邊框標記線 -->
+            <div class="absolute inset-x-2 h-10 border-y border-foreground/30 pointer-events-none flex items-center justify-end pr-8">
+              <span class="unit-label text-xs font-mono text-muted-foreground">g</span>
+            </div>
+
+            <!-- 數字滾筒列表 (整數列 + 零頭列) -->
+            <div class="flex items-center gap-6 font-mono text-center">
+              <div id="drum-s1-major" class="transition-transform duration-150 space-y-2">
+                <div class="text-muted-foreground/30 text-base">30</div>
+                <div class="text-muted-foreground/60 text-lg">40</div>
+                <div class="text-foreground text-3xl font-bold tracking-tight py-1" id="val-s1-major">50</div>
+                <div class="text-muted-foreground/60 text-lg">60</div>
+                <div class="text-muted-foreground/30 text-base">70</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部確認按鈕 -->
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <div class="text-xs font-mono text-muted-foreground">當前: <strong id="disp-s1" class="text-foreground">50</strong> <span class="unit-label">g</span></div>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：垂直上下滑動 / 滾輪</span>
+          <span>特點：直覺、零學習成本</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 2: 精密機械橫向刻度尺 (Horizontal Tape Ruler) -->
+      <!-- ========================================== -->
+      <div id="card-2" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 2</span>
+              <h2 class="text-base font-semibold tracking-tight">精密機械橫向刻度尺 (Horizontal Tape Ruler)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">高精密</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            如同精密游標卡尺。水平滑動帶動刻度尺橫向滾動，中央紅色指針鎖定刻度，上方展示巨幅等寬數值。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-4 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">設定數值</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 頂部巨型數值 -->
+          <div class="text-center font-mono">
+            <span id="disp-s2" class="text-4xl font-bold tracking-tight">50</span>
+            <span class="unit-label text-sm text-muted-foreground ml-1">g</span>
+          </div>
+
+          <!-- 橫向刻度尺規 (支援滑鼠水平拖曳/滾輪) -->
+          <div class="relative h-20 tape-mask overflow-hidden border border-border rounded-lg bg-muted/10 cursor-ew-resize flex items-center justify-center"
+               onwheel="handleHorizontalWheel(event, 's2')">
+            <!-- 中央垂直紅標針線 -->
+            <div class="absolute inset-y-0 w-0.5 bg-calories left-1/2 -translate-x-1/2 z-10 pointer-events-none"></div>
+
+            <!-- 動態刻度線軌道 -->
+            <div id="ruler-s2" class="flex items-end gap-2.5 transition-transform duration-100 font-mono text-[9px] text-muted-foreground select-none">
+              <div class="flex flex-col items-center gap-1"><div class="w-px h-6 bg-border"></div><span>30</span></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="flex flex-col items-center gap-1"><div class="w-px h-6 bg-border"></div><span>40</span></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="flex flex-col items-center gap-1"><div class="w-px h-7 bg-foreground"></div><span class="text-foreground font-bold">50</span></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="flex flex-col items-center gap-1"><div class="w-px h-6 bg-border"></div><span>60</span></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="w-px h-3 bg-border/50"></div>
+              <div class="flex flex-col items-center gap-1"><div class="w-px h-6 bg-border"></div><span>70</span></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：水平左右拖曳 / 滾輪</span>
+          <span>特點：測量儀擬物感強烈</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 3: 多階快速步進軸 (Multi-Tier Step Hopper) -->
+      <!-- ========================================== -->
+      <div id="card-3" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 3</span>
+              <h2 class="text-base font-semibold tracking-tight">多階快速步進軸 (Multi-Tier Step Hopper)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-carbs/10 text-carbs border border-carbs/30 font-semibold">高效率</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            滾輪上下微調（±1g），底部搭配常用高頻量（`20g`, `50g`, `100g`, `200g`）與階梯按鈕（`+10`, `-10`），秒級跳轉。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">輸入數值</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 步進調整區：按鈕 + 滾軸 -->
+          <div class="flex items-center justify-between gap-3 border border-border rounded-lg p-3 bg-muted/20">
+            <button onclick="changeVal('s3', -10)" class="size-8 rounded border border-border hover:bg-muted font-mono text-xs font-bold cursor-pointer">-10</button>
+            <div class="text-center font-mono flex-1 cursor-ns-resize" onwheel="handleWheel(event, 's3')">
+              <div id="disp-s3" class="text-3xl font-bold tracking-tight">50</div>
+              <div class="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">滑動微調</div>
+            </div>
+            <button onclick="changeVal('s3', 10)" class="size-8 rounded border border-border hover:bg-muted font-mono text-xs font-bold cursor-pointer">+10</button>
+          </div>
+
+          <!-- 高頻快選膠囊列 -->
+          <div class="grid grid-cols-4 gap-1.5 font-mono text-xs">
+            <button onclick="setVal('s3', 20)" class="py-1 rounded border border-border hover:border-foreground/50 text-muted-foreground hover:text-foreground">20g</button>
+            <button onclick="setVal('s3', 50)" class="py-1 rounded border border-foreground bg-foreground text-background font-bold">50g</button>
+            <button onclick="setVal('s3', 100)" class="py-1 rounded border border-border hover:border-foreground/50 text-muted-foreground hover:text-foreground">100g</button>
+            <button onclick="setVal('s3', 200)" class="py-1 rounded border border-border hover:border-foreground/50 text-muted-foreground hover:text-foreground">200g</button>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：滾輪滾動 + 快選矩陣</span>
+          <span>特點：大區間跳轉效率極高</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 4: 工業觸覺旋鈕 (Tactile Radial Dial Wheel) -->
+      <!-- ========================================== -->
+      <div id="card-4" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 4</span>
+              <h2 class="text-base font-semibold tracking-tight">工業觸覺弧形旋鈕 (Tactile Radial Dial)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-fat/10 text-fat border border-fat/30 font-semibold">極致儀表</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            Teenage Engineering 風格。旋鈕刻度盤以弧形佈局，手指沿弧形滑動或上下滾輪帶動轉盤旋轉，中央顯示數值。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">測量旋鈕</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 圓形轉盤本體 (支援旋轉拖曳/滾輪) -->
+          <div class="relative size-40 mx-auto rounded-full border border-border flex items-center justify-center bg-muted/10 cursor-ns-resize"
+               onwheel="handleWheel(event, 's4')">
+            <!-- 刻度環點 (雷射環形刻度) -->
+            <div class="absolute inset-1.5 rounded-full border border-dashed border-border/80"></div>
+            <!-- 指針短標記 -->
+            <div class="absolute top-2 w-1 h-3 bg-calories rounded-full"></div>
+
+            <!-- 核心顯示區 -->
+            <div class="text-center font-mono">
+              <div id="disp-s4" class="text-3xl font-bold tracking-tight">50</div>
+              <div class="unit-label text-xs text-muted-foreground">g</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：環形滑動 / 滾輪旋轉</span>
+          <span>特點：強烈硬件測量質感</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 5: 分列里程表滾筒 (Split-Digit Odometer) -->
+      <!-- ========================================== -->
+      <div id="card-5" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 5</span>
+              <h2 class="text-base font-semibold tracking-tight">分列里程表滾筒 (Split-Digit Odometer)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">分位調控</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            將數值拆分為【百位】、【十位】、【個位】三個獨立小滾輪。想調大數字不必死命滑動，直接撥動十位或百位！
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-4 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">里程滾輪</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 三列獨立滾筒 (百 / 十 / 個) -->
+          <div class="flex items-center justify-center gap-2 font-mono">
+            <!-- 百位 -->
+            <div class="w-16 h-28 border border-border rounded-lg bg-muted/20 flex flex-col items-center justify-center wheel-mask overflow-hidden cursor-ns-resize"
+                 onwheel="handleDigitWheel(event, 's5-hundred')">
+              <span class="text-xs text-muted-foreground/30">9</span>
+              <span id="digit-s5-hundred" class="text-2xl font-bold py-1">0</span>
+              <span class="text-xs text-muted-foreground/30">1</span>
+            </div>
+            <!-- 十位 -->
+            <div class="w-16 h-28 border border-border rounded-lg bg-muted/20 flex flex-col items-center justify-center wheel-mask overflow-hidden cursor-ns-resize"
+                 onwheel="handleDigitWheel(event, 's5-ten')">
+              <span class="text-xs text-muted-foreground/30">4</span>
+              <span id="digit-s5-ten" class="text-2xl font-bold py-1">5</span>
+              <span class="text-xs text-muted-foreground/30">6</span>
+            </div>
+            <!-- 個位 -->
+            <div class="w-16 h-28 border border-border rounded-lg bg-muted/20 flex flex-col items-center justify-center wheel-mask overflow-hidden cursor-ns-resize"
+                 onwheel="handleDigitWheel(event, 's5-one')">
+              <span class="text-xs text-muted-foreground/30">9</span>
+              <span id="digit-s5-one" class="text-2xl font-bold py-1">0</span>
+              <span class="text-xs text-muted-foreground/30">1</span>
+            </div>
+            <!-- 單位固定在右側 -->
+            <span class="unit-label text-lg font-bold text-muted-foreground ml-1">g</span>
+          </div>
+
+          <div class="text-center font-mono text-xs text-muted-foreground">
+            總值: <strong id="disp-s5" class="text-foreground text-sm font-bold">50</strong> <span class="unit-label">g</span>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：三欄位獨立撥動</span>
+          <span>特點：行程極短，直達大數字</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 6: 垂直標定高度尺 (Vertical Tape Gauge) -->
+      <!-- ========================================== -->
+      <div id="card-6" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 6</span>
+              <h2 class="text-base font-semibold tracking-tight">垂直標定高度尺規 (Vertical Calibrated Tape)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">單手手勢</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            刻度尺直立於右側，左側展示放大數字。手機單手握持時，大拇指在右側邊緣即可隨意滑動調整。
+          </p>
+          <div class="mt-2.5">
+            <a href="vertical-gauge-picker-preview.html" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-calories/10 text-calories border border-calories/30 text-xs font-mono font-bold hover:bg-calories/20 transition-colors">
+              <span>👉 點擊查看本方案專屬 8 款深層拓展設計</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">直立尺規</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 左數值、右刻度尺 -->
+          <div class="h-36 border border-border rounded-lg p-3 flex items-center justify-between bg-muted/10">
+            <div class="font-mono pl-3">
+              <div id="disp-s6" class="text-4xl font-bold tracking-tight">50</div>
+              <div class="unit-label text-xs text-muted-foreground mt-1 uppercase tracking-wider">克 (g)</div>
+            </div>
+
+            <!-- 右側垂直刻度尺 -->
+            <div class="w-16 h-full wheel-mask overflow-hidden border-l border-border flex items-center justify-center cursor-ns-resize"
+                 onwheel="handleWheel(event, 's6')">
+              <div class="space-y-2 text-right pr-2 font-mono text-[10px] text-muted-foreground">
+                <div class="flex items-center gap-1 justify-end"><span>70</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>60</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span class="text-foreground font-bold">50</span><div class="w-5 h-0.5 bg-calories"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>40</span><div class="w-3 h-px bg-border"></div></div>
+                <div class="flex items-center gap-1 justify-end"><span>30</span><div class="w-3 h-px bg-border"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：右緣垂直滑動</span>
+          <span>特點：右單手拇指黃金操作區</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 7: 粗調/微調雙軌游標滑塊 (Coarse & Fine Dual Sliders) -->
+      <!-- ========================================== -->
+      <div id="card-7" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 7</span>
+              <h2 class="text-base font-semibold tracking-tight">粗調/微調雙軌游標滑塊 (Coarse & Fine Dual Sliders)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-carbs/10 text-carbs border border-carbs/30 font-semibold">雙軌精度</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            上滑塊粗調大範圍（0~500g，步進 50g），下滑塊微調小零頭（0~50g，步進 1g），兩者即時相加，無滑動行程過長之煩惱。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-4 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">雙軌滑塊</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <div class="text-center font-mono">
+            <span id="disp-s7" class="text-3xl font-bold">50</span>
+            <span class="unit-label text-sm text-muted-foreground ml-1">g</span>
+          </div>
+
+          <!-- 雙軌滑動條 -->
+          <div class="space-y-3 font-mono text-xs">
+            <div>
+              <div class="flex justify-between text-[11px] text-muted-foreground mb-1">
+                <span>粗調 (0 ~ 500)</span>
+                <span id="label-s7-coarse">50g</span>
+              </div>
+              <input type="range" min="0" max="500" step="50" value="50" id="slider-s7-coarse"
+                     oninput="updateDualSlider()"
+                     class="w-full accent-foreground cursor-pointer h-1.5 bg-muted rounded-lg" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] text-muted-foreground mb-1">
+                <span>微調 (0 ~ 50)</span>
+                <span id="label-s7-fine">0g</span>
+              </div>
+              <input type="range" min="0" max="50" step="1" value="0" id="slider-s7-fine"
+                     oninput="updateDualSlider()"
+                     class="w-full accent-foreground cursor-pointer h-1.5 bg-muted rounded-lg" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：雙滑塊拖動 / 點擊</span>
+          <span>特點：零滑動阻滯，精確到達</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 8: 擦拭滾輪 + 數字微鍵盤 (Hybrid Scrub Wheel & Pad) -->
+      <!-- ========================================== -->
+      <div id="card-8" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 8</span>
+              <h2 class="text-base font-semibold tracking-tight">擦拭輪 + 數字微鍵盤 (Hybrid Scrub Wheel & Pad)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">雙模合一</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            上部為水平擦拭輪（Scrubber，左右滑動即可微調），下部整合 3x4 扁平微鍵盤，既可直接點選輸入，亦可手勢滾動。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">雙模輸入</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 擦拭滾輪區 -->
+          <div class="border border-border rounded p-2 text-center bg-muted/20 cursor-ew-resize"
+               onwheel="handleHorizontalWheel(event, 's8')">
+            <div class="text-2xl font-mono font-bold">
+              <span id="disp-s8">50</span>
+              <span class="unit-label text-xs text-muted-foreground ml-1">g</span>
+            </div>
+            <div class="text-[10px] font-mono text-muted-foreground mt-1 flex items-center justify-center gap-1">
+              <span>‹ 滑鼠左右拖曳 / 滾輪微調 ›</span>
+            </div>
+          </div>
+
+          <!-- 微型 3x4 數字鍵盤 -->
+          <div class="grid grid-cols-3 gap-1 font-mono text-xs text-center">
+            <button onclick="appendNum('s8', '1')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">1</button>
+            <button onclick="appendNum('s8', '2')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">2</button>
+            <button onclick="appendNum('s8', '3')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">3</button>
+            <button onclick="appendNum('s8', '4')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">4</button>
+            <button onclick="appendNum('s8', '5')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">5</button>
+            <button onclick="appendNum('s8', '6')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">6</button>
+            <button onclick="appendNum('s8', '7')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">7</button>
+            <button onclick="appendNum('s8', '8')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">8</button>
+            <button onclick="appendNum('s8', '9')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">9</button>
+            <button onclick="clearNum('s8')" class="py-1.5 rounded border border-border hover:bg-muted text-muted-foreground">C</button>
+            <button onclick="appendNum('s8', '0')" class="py-1.5 rounded border border-border hover:bg-muted font-bold">0</button>
+            <button onclick="backspaceNum('s8')" class="py-1.5 rounded border border-border hover:bg-muted text-muted-foreground">⌫</button>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：手勢滾動 + 數字直輸</span>
+          <span>特點：全面包容所有使用者偏好</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 9: 透視景深波形軸 (Magnetic Depth Wave Column) -->
+      <!-- ========================================== -->
+      <div id="card-9" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 9</span>
+              <h2 class="text-base font-semibold tracking-tight">透視景深波形滾輪 (Magnetic Depth Wave Column)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-protein/10 text-protein border border-protein/30 font-semibold">視覺層次</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            中央當前數值最大（32px font-bold），上下相鄰數值逐級縮小淡化，如同 3D 圓柱滾筒旋轉，具備物理磁吸停靠反饋感。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">景深滾輪</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 景深層次容器 -->
+          <div class="relative h-44 wheel-mask overflow-hidden border border-border rounded-lg bg-muted/10 flex items-center justify-center cursor-ns-resize"
+               onwheel="handleWheel(event, 's9')">
+            <div class="absolute inset-x-3 h-10 border-y border-foreground/30 pointer-events-none flex items-center justify-end pr-8">
+              <span class="unit-label text-xs font-mono text-muted-foreground">g</span>
+            </div>
+
+            <div class="font-mono text-center space-y-1.5 transition-all">
+              <div class="text-muted-foreground/20 text-xs scale-75">30</div>
+              <div class="text-muted-foreground/50 text-sm scale-90">40</div>
+              <div id="disp-s9" class="text-foreground text-3xl font-bold py-1">50</div>
+              <div class="text-muted-foreground/50 text-sm scale-90">60</div>
+              <div class="text-muted-foreground/20 text-xs scale-75">70</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：上下滑動 / 滾輪旋轉</span>
+          <span>特點：立體景深高對比度</span>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 方案 10: 極簡浮層長膠囊 (Minimal Floating Pill Drawer) -->
+      <!-- ========================================== -->
+      <div id="card-10" class="scheme-card border border-border rounded-xl p-5 bg-card space-y-4 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-border/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-foreground">方案 10</span>
+              <h2 class="text-base font-semibold tracking-tight">極簡緊湊型長膠囊 (Minimal Floating Pill)</h2>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-calories/10 text-calories border border-calories/30 font-semibold">超緊湊</span>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            高度僅 140px 的極致收斂浮層。左右兩端為滑動增減熱區，中央為數值與單位切換，不遮擋上下文，毫秒級完成記錄。
+          </p>
+        </div>
+
+        <div class="w-full max-w-[320px] mx-auto border border-border rounded-lg bg-card p-4 space-y-3 shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold tracking-tight">極速設定</span>
+            <div class="unit-toggle-group flex items-center p-0.5 rounded-full border border-border bg-background text-[11px] font-mono">
+              <button class="unit-btn-g px-2 py-0.5 rounded-full bg-foreground text-background font-medium">g</button>
+              <button class="unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground">ml</button>
+            </div>
+          </div>
+
+          <!-- 緊湊長膠囊交互條 (支援左右拖曳/滾輪) -->
+          <div class="h-14 border border-border rounded-full bg-muted/20 px-4 flex items-center justify-between cursor-ew-resize select-none"
+               onwheel="handleHorizontalWheel(event, 's10')">
+            <button onclick="changeVal('s10', -5)" class="size-8 rounded-full border border-border hover:bg-muted font-mono text-xs font-bold cursor-pointer">-5</button>
+            <div class="font-mono text-center">
+              <span id="disp-s10" class="text-2xl font-bold tracking-tight">50</span>
+              <span class="unit-label text-xs text-muted-foreground ml-0.5">g</span>
+            </div>
+            <button onclick="changeVal('s10', 5)" class="size-8 rounded-full border border-border hover:bg-muted font-mono text-xs font-bold cursor-pointer">+5</button>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button class="h-8 px-3 rounded border border-border text-xs font-mono hover:bg-muted">取消</button>
+            <button class="h-8 px-4 rounded bg-foreground text-background text-xs font-medium">完成</button>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-muted-foreground pt-2 border-t border-border/40 flex justify-between">
+          <span>交互：水平擦拭 / 雙向微點擊</span>
+          <span>特點：體積最小、無遮擋</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 10 款設計多維度專業評估表 (Decision Matrix) -->
+    <div class="border border-border rounded-xl p-6 bg-card space-y-4">
+      <h2 class="text-base font-bold tracking-tight">10 款設計方案人機工程學客觀對比 (UI/UX Decision Matrix)</h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-sans border border-border">
+          <thead class="bg-muted text-muted-foreground border-b border-border uppercase tracking-wider font-mono">
+            <tr>
+              <th class="p-3">方案名稱</th>
+              <th class="p-3">手機端上下滑動手感</th>
+              <th class="p-3">桌面端滾輪相容性</th>
+              <th class="p-3">單位整合與反灰表現</th>
+              <th class="p-3">跨大數值跳轉效率</th>
+              <th class="p-3">綜合推薦</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border font-mono">
+            <tr class="bg-calories/5">
+              <td class="p-3 font-semibold text-foreground">1. 經典雙軸精密滾輪</td>
+              <td class="p-3 text-calories">★★★★★ 原生 iOS 手感</td>
+              <td class="p-3 text-calories">★★★★★ 滾輪極度流暢</td>
+              <td class="p-3 text-calories">★★★★★ 膠囊高亮/反灰極清晰</td>
+              <td class="p-3">★★★★☆ 雙欄分工良好</td>
+              <td class="p-3 text-calories font-bold">首選推薦 (98分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">2. 精密機械橫向刻度尺</td>
+              <td class="p-3">★★★★☆ 水平滑動爽快</td>
+              <td class="p-3">★★★★☆ 滾輪左右換算</td>
+              <td class="p-3">★★★★★ 極佳</td>
+              <td class="p-3">★★★☆☆ 行程略長</td>
+              <td class="p-3">硬核工業 (91分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">3. 多階快速步進軸</td>
+              <td class="p-3">★★★★★ 滑動+快選矩陣</td>
+              <td class="p-3">★★★★★ 極快</td>
+              <td class="p-3">★★★★★ 極佳</td>
+              <td class="p-3 text-calories">★★★★★ 最快秒達</td>
+              <td class="p-3 font-bold text-foreground">效率首選 (96分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">4. 工業觸覺旋鈕</td>
+              <td class="p-3">★★★★☆ 弧形轉盤新穎</td>
+              <td class="p-3">★★★★☆ 順時針增/逆時針減</td>
+              <td class="p-3">★★★★☆ 良好</td>
+              <td class="p-3">★★★☆☆ 需多圈轉動</td>
+              <td class="p-3">設計感強 (88分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">5. 分列里程滾筒</td>
+              <td class="p-3">★★★★★ 百/十/個獨立直達</td>
+              <td class="p-3">★★★★★ 鼠標指到哪滾到哪</td>
+              <td class="p-3">★★★★★ 極佳</td>
+              <td class="p-3 text-calories">★★★★★ 零行程消耗</td>
+              <td class="p-3 font-bold text-foreground">直覺推薦 (95分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">6. 垂直標定高度尺</td>
+              <td class="p-3">★★★★★ 大拇指黃金操作</td>
+              <td class="p-3">★★★★☆ 良好</td>
+              <td class="p-3">★★★★☆ 良好</td>
+              <td class="p-3">★★★☆☆ 行程偏長</td>
+              <td class="p-3">單手極致 (89分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">7. 粗調/微調雙滑塊</td>
+              <td class="p-3">★★★★☆ 橫向滑塊拉動</td>
+              <td class="p-3">★★★★☆ 拖曳精確</td>
+              <td class="p-3">★★★★★ 極佳</td>
+              <td class="p-3">★★★★★ 雙軌定位極速</td>
+              <td class="p-3">精準調控 (92分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">8. 擦拭輪+數字微鍵盤</td>
+              <td class="p-3">★★★★★ 點按+滑動全包容</td>
+              <td class="p-3">★★★★★ 滾輪+鍵盤打字</td>
+              <td class="p-3">★★★★★ 極佳</td>
+              <td class="p-3 text-calories">★★★★★ 數字直打最快</td>
+              <td class="p-3 font-bold text-foreground">全面型 (94分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">9. 透視景深波形軸</td>
+              <td class="p-3">★★★★★ 3D 景深聚焦</td>
+              <td class="p-3">★★★★★ 物理慣性吸附</td>
+              <td class="p-3">★★★★☆ 良好</td>
+              <td class="p-3">★★★★☆ 良好</td>
+              <td class="p-3">視覺系 (90分)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">10. 極簡浮層長膠囊</td>
+              <td class="p-3">★★★★☆ 雙向按鈕+微拖曳</td>
+              <td class="p-3">★★★★☆ 緊湊無遮擋</td>
+              <td class="p-3">★★★★★ 極佳</td>
+              <td class="p-3">★★★☆☆ 適合日常中頻量</td>
+              <td class="p-3">極簡輕量 (89分)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 全域狀態：數值與單位
+    const state = {
+      s1: 50,
+      s2: 50,
+      s3: 50,
+      s4: 50,
+      s5: { hundred: 0, ten: 5, one: 0 },
+      s6: 50,
+      s7: { coarse: 50, fine: 0 },
+      s8: '50',
+      s9: 50,
+      s10: 50,
+      unitSupport: true,
+      currentUnit: 'g',
+    };
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const themeText = document.getElementById('themeText');
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        themeText.innerText = '切換深色模式';
+      } else {
+        html.classList.add('dark');
+        themeText.innerText = '切換亮色模式';
+      }
+    }
+
+    // 切換單位支援狀態（支援 vs 不支援反灰）
+    function toggleUnitSupport(supported) {
+      state.unitSupport = supported;
+      const sBtn = document.getElementById('unitSupportBtn');
+      const dBtn = document.getElementById('unitDisabledBtn');
+
+      if (supported) {
+        sBtn.className = "px-2 py-0.5 rounded font-medium bg-foreground text-background transition-colors cursor-pointer";
+        dBtn.className = "px-2 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer";
+      } else {
+        dBtn.className = "px-2 py-0.5 rounded font-medium bg-foreground text-background transition-colors cursor-pointer";
+        sBtn.className = "px-2 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer";
+      }
+
+      // 更新所有方案中的單位按鈕外觀
+      document.querySelectorAll('.unit-btn-ml').forEach(btn => {
+        if (!supported) {
+          btn.className = "unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground/30 opacity-30 cursor-not-allowed select-none line-through";
+          btn.title = "當前食材為固體，不支援切換至毫升 (ml)";
+        } else {
+          btn.className = "unit-btn-ml px-2 py-0.5 rounded-full text-muted-foreground hover:text-foreground cursor-pointer transition-all";
+          btn.title = "點擊切換為 ml";
+        }
+      });
+    }
+
+    // 方案單獨切換或全顯
+    function showScheme(target) {
+      document.querySelectorAll('.scheme-tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-target') == target) {
+          btn.className = "scheme-tab-btn px-3 py-1.5 rounded border border-foreground bg-foreground text-background shrink-0 font-medium cursor-pointer";
+        } else {
+          btn.className = "scheme-tab-btn px-3 py-1.5 rounded border border-border hover:border-foreground/50 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer";
+        }
+      });
+
+      const cards = document.querySelectorAll('.scheme-card');
+      const container = document.getElementById('schemesContainer');
+      if (target === 'all') {
+        container.className = "grid grid-cols-1 md:grid-cols-2 gap-6";
+        cards.forEach(card => card.style.display = 'flex');
+      } else {
+        container.className = "grid grid-cols-1 max-w-xl mx-auto gap-6";
+        cards.forEach(card => card.style.display = 'none');
+        const activeCard = document.getElementById(`card-${target}`);
+        if (activeCard) activeCard.style.display = 'flex';
+      }
+    }
+
+    // 垂直滾輪滾動處理
+    function handleWheel(e, scheme) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      changeVal(scheme, delta);
+    }
+
+    // 水平滾輪滾動處理
+    function handleHorizontalWheel(e, scheme) {
+      e.preventDefault();
+      const delta = (e.deltaX || e.deltaY) > 0 ? -1 : 1;
+      changeVal(scheme, delta);
+    }
+
+    function changeVal(scheme, delta) {
+      if (typeof state[scheme] === 'number') {
+        state[scheme] = Math.max(0, state[scheme] + delta);
+        const el = document.getElementById(`disp-${scheme}`);
+        if (el) el.innerText = state[scheme];
+        if (scheme === 's1') {
+          const mEl = document.getElementById('val-s1-major');
+          if (mEl) mEl.innerText = state[scheme];
+        }
+      } else if (scheme === 's8') {
+        let cur = parseInt(state.s8, 10) || 0;
+        cur = Math.max(0, cur + delta);
+        state.s8 = String(cur);
+        document.getElementById('disp-s8').innerText = state.s8;
+      }
+    }
+
+    function setVal(scheme, val) {
+      state[scheme] = val;
+      const el = document.getElementById(`disp-${scheme}`);
+      if (el) el.innerText = val;
+    }
+
+    // 方案 5 分位滾輪處理
+    function handleDigitWheel(e, digitId) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      const el = document.getElementById(`digit-${digitId}`);
+      let cur = parseInt(el.innerText, 10);
+      cur = (cur + delta + 10) % 10;
+      el.innerText = cur;
+
+      const h = parseInt(document.getElementById('digit-s5-hundred').innerText, 10);
+      const t = parseInt(document.getElementById('digit-s5-ten').innerText, 10);
+      const o = parseInt(document.getElementById('digit-s5-one').innerText, 10);
+      const total = h * 100 + t * 10 + o;
+      document.getElementById('disp-s5').innerText = total;
+    }
+
+    // 方案 7 雙軌滑塊處理
+    function updateDualSlider() {
+      const c = parseInt(document.getElementById('slider-s7-coarse').value, 10);
+      const f = parseInt(document.getElementById('slider-s7-fine').value, 10);
+      document.getElementById('label-s7-coarse').innerText = c + 'g';
+      document.getElementById('label-s7-fine').innerText = f + 'g';
+      document.getElementById('disp-s7').innerText = (c + f);
+    }
+
+    // 方案 8 微鍵盤處理
+    function appendNum(scheme, char) {
+      if (state[scheme] === '0') state[scheme] = char;
+      else if (state[scheme].length < 4) state[scheme] += char;
+      document.getElementById(`disp-${scheme}`).innerText = state[scheme];
+    }
+    function clearNum(scheme) {
+      state[scheme] = '0';
+      document.getElementById(`disp-${scheme}`).innerText = state[scheme];
+    }
+    function backspaceNum(scheme) {
+      if (state[scheme].length <= 1) state[scheme] = '0';
+      else state[scheme] = state[scheme].slice(0, -1);
+      document.getElementById(`disp-${scheme}`).innerText = state[scheme];
+    }
+  </script>
+</body>
+</html>

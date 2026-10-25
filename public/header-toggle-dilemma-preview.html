@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 表頭按鈕邊距與行高矛盾優化方案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card-bg)',
+            border: 'var(--border-color)',
+            muted: 'var(--muted-bg)',
+            'muted-foreground': 'var(--muted-fg)',
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card-bg: #ffffff;
+      --border-color: #e5e5e5;
+      --muted-bg: #f4f4f5;
+      --muted-fg: #71717a;
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card-bg: #000000;
+      --border-color: #27272a;
+      --muted-bg: #09090b;
+      --muted-fg: #a1a1aa;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    .theme-transition {
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+  </style>
+</head>
+<body class="theme-transition min-h-screen pb-24">
+
+  <!-- 頂部全局導航 -->
+  <header class="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border py-3 px-4 sm:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-foreground"></span>
+          <h1 class="text-sm sm:text-base font-semibold tracking-tight">表頭「缺少邊距 vs 行高過高」設計難題解法</h1>
+          <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground">UI/UX Pro Max</span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          解析厚膠囊造成結構擠壓的根本原因，提供 4 種優雅兼顧「呼吸留白」與「精緻行高」的專家解法
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-end">
+        <button
+          onclick="toggleTheme()"
+          class="h-8 px-2.5 rounded-lg border border-border bg-card text-xs font-mono flex items-center gap-1.5 hover:bg-muted text-foreground cursor-pointer"
+        >
+          <span id="theme-icon">☀️</span>
+          <span id="theme-text">淺色</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-8 pt-8 space-y-10">
+
+    <!-- 難題診斷卡片 -->
+    <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 font-mono text-xs space-y-2">
+      <div class="font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
+        <span>⚡ 設計難題核心本質 (The Core Conflict)</span>
+      </div>
+      <div class="text-[11px] text-muted-foreground leading-relaxed space-y-1">
+        <div>• <strong>厚重膠囊的雙層嵌套開銷</strong>：傳統 Capsule 是「容器外邊框 + 容器 Padding + 按鈕內邊框 + 按鈕 Padding」，光是裝飾外殼就吃掉 12px~14px 的高度。</div>
+        <div>• <strong>矛盾點</strong>：若表頭維持精緻的 32px~36px，按鈕上下就幾乎零留白（貼頂貼底）；若為了留白把表頭撐到 44px~48px，表頭又會變得過高、笨重，搶走下方內容焦點。</div>
+        <div>• <strong>解法核心</strong>：<strong>輕量化按鈕結構</strong>，降低內部嵌套層次，讓高度自然釋放給「上下呼吸邊距 (Breathing Room)」。</div>
+      </div>
+    </div>
+
+    <!-- 方案展示網格 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+      <!-- ========================================================================= -->
+      <!-- 方案 1: 精密微型緊湊滑塊 (Compact Inset Slider) ★★★★★ 首選推薦 -->
+      <!-- ========================================================================= -->
+      <section class="border border-border rounded-2xl bg-card p-4 space-y-3">
+        <div class="flex items-center justify-between pb-1 border-b border-border">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-foreground text-background">方案 1</span>
+            <h2 class="text-xs font-semibold text-foreground">精密微型無框滑塊 (首選推薦)</h2>
+          </div>
+          <span class="text-[10px] font-mono text-emerald-500 font-semibold">上下留白充裕 · 行高克制</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground leading-tight">
+          <strong>行高維持精緻的 36px (h-9)</strong>；切換器去掉外層厚邊框，改為純內嵌微滑塊（高度 24px），<strong>上下擁有均勻舒適的 6px 留白呼吸感</strong>，完美平衡。
+        </p>
+
+        <!-- 手機模擬框 (360px) -->
+        <div class="w-full max-w-[360px] mx-auto rounded-xl border border-border bg-background p-3 space-y-3 font-mono text-xs">
+          <!-- 示意上方工具列 -->
+          <div class="flex items-center justify-between gap-1 text-[11px] text-muted-foreground">
+            <div class="flex gap-1 overflow-hidden">
+              <span class="px-2 py-0.5 rounded-full bg-foreground text-background">全部 14</span>
+              <span class="px-2 py-0.5 rounded-full bg-muted/40">天然 8</span>
+              <span class="px-2 py-0.5 rounded-full bg-muted/40">工業 3</span>
+            </div>
+            <span class="px-2 py-0.5 rounded border border-border">特徵 ▾</span>
+          </div>
+
+          <!-- 清單卡片 -->
+          <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-xs">
+            <!-- 方案 1 表頭：h-9 (36px)，上下邊距各 6px，滑塊高度 24px -->
+            <div class="h-9 px-4 bg-muted/40 flex items-center justify-between text-xs font-mono">
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-foreground">14 項</span>
+
+              <!-- 輕量微型滑塊 (無外層厚邊框，高度 24px，上下呼吸邊距達 6px) -->
+              <div class="h-6 p-0.5 rounded-full bg-background border border-border flex items-center select-none">
+                <button
+                  onclick="setSol1Mode('serving')"
+                  id="sol1-btn-s"
+                  class="h-full px-2.5 rounded-full transition-all cursor-pointer bg-foreground text-background font-medium text-[10px] flex items-center"
+                >
+                  每份
+                </button>
+                <button
+                  onclick="setSol1Mode('100g')"
+                  id="sol1-btn-100"
+                  class="h-full px-2.5 rounded-full transition-all cursor-pointer text-muted-foreground hover:text-foreground text-[10px] flex items-center"
+                >
+                  每 100g
+                </button>
+              </div>
+            </div>
+
+            <!-- 清單項目示意 -->
+            <div class="p-3 flex items-center justify-between">
+              <div>
+                <div class="font-medium text-sm text-foreground">大燕麥片</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">
+                  <span id="sol1-size" class="font-medium text-foreground">35g</span> · <span id="sol1-cal">136 kcal</span>
+                </div>
+              </div>
+              <div class="flex gap-1 text-center font-mono">
+                <div class="w-10 py-1 rounded border border-sky-500/60 bg-sky-500/10 text-foreground">
+                  <div class="text-[8px] text-sky-500 font-bold">P</div>
+                  <div id="sol1-p" class="text-[11px] font-semibold">4.8g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">C</div>
+                  <div id="sol1-c" class="text-[11px] font-semibold">23.1g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">F</div>
+                  <div id="sol1-f" class="text-[11px] font-semibold">2.4g</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-[11px] font-mono text-muted-foreground border-t border-border pt-2">
+          <div>📏 <strong>尺寸規格</strong>：表頭 <code>h-9 (36px)</code>，滑塊 <code>h-6 (24px)</code>。</div>
+          <div>✅ <strong>留白呼吸感</strong>：上下各有 6px 留白，完全不貼邊，再無壓迫感。</div>
+          <div>✅ <strong>高度克制</strong>：僅 36px，絕不顯得臃腫或搶佔視線。</div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================================= -->
+      <!-- 方案 2: 極簡文字分段標籤 (Borderless Text Segments) ★★★★☆ -->
+      <!-- ========================================================================= -->
+      <section class="border border-border rounded-2xl bg-card p-4 space-y-3">
+        <div class="flex items-center justify-between pb-1 border-b border-border">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-muted text-foreground border border-border">方案 2</span>
+            <h2 class="text-xs font-semibold text-foreground">純文字極簡分段器 (Vercel Style)</h2>
+          </div>
+          <span class="text-[10px] font-mono text-muted-foreground">零膠囊 · 最扁平</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground leading-tight">
+          <strong>徹底告別膠囊</strong>！採用 Vercel / GitHub 經典的文字切換，選中項加粗純黑，未選中項為淺灰，行高即便在 <strong>32px (h-8)</strong> 依然上下透氣。
+        </p>
+
+        <!-- 手機模擬框 (360px) -->
+        <div class="w-full max-w-[360px] mx-auto rounded-xl border border-border bg-background p-3 space-y-3 font-mono text-xs">
+          <!-- 示意上方工具列 -->
+          <div class="flex items-center justify-between gap-1 text-[11px] text-muted-foreground">
+            <div class="flex gap-1 overflow-hidden">
+              <span class="px-2 py-0.5 rounded-full bg-foreground text-background">全部 14</span>
+              <span class="px-2 py-0.5 rounded-full bg-muted/40">天然 8</span>
+              <span class="px-2 py-0.5 rounded-full bg-muted/40">工業 3</span>
+            </div>
+            <span class="px-2 py-0.5 rounded border border-border">特徵 ▾</span>
+          </div>
+
+          <!-- 清單卡片 -->
+          <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-xs">
+            <!-- 方案 2 表頭：h-8.5 (34px)，純文字形式，上下留白高達 10px -->
+            <div class="h-8.5 py-2 px-4 bg-muted/40 flex items-center justify-between text-xs font-mono">
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-foreground">14 項</span>
+
+              <!-- 純文字切換器 (零容器邊界，天然透氣) -->
+              <div class="flex items-center gap-1.5 text-[11px] select-none">
+                <button
+                  onclick="setSol2Mode('serving')"
+                  id="sol2-btn-s"
+                  class="font-semibold text-foreground cursor-pointer transition-colors"
+                >
+                  每份
+                </button>
+                <span class="text-muted-foreground/40 text-[10px]">/</span>
+                <button
+                  onclick="setSol2Mode('100g')"
+                  id="sol2-btn-100"
+                  class="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                >
+                  每 100g
+                </button>
+              </div>
+            </div>
+
+            <!-- 清單項目示意 -->
+            <div class="p-3 flex items-center justify-between">
+              <div>
+                <div class="font-medium text-sm text-foreground">牛板腱</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">
+                  <span id="sol2-size" class="font-medium text-foreground">100g</span> · <span id="sol2-cal">180 kcal</span>
+                </div>
+              </div>
+              <div class="flex gap-1 text-center font-mono">
+                <div class="w-10 py-1 rounded border border-sky-500/60 bg-sky-500/10 text-foreground">
+                  <div class="text-[8px] text-sky-500 font-bold">P</div>
+                  <div id="sol2-p" class="text-[11px] font-semibold">24.0g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">C</div>
+                  <div id="sol2-c" class="text-[11px] font-semibold">0.0g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">F</div>
+                  <div id="sol2-f" class="text-[11px] font-semibold">9.0g</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-[11px] font-mono text-muted-foreground border-t border-border pt-2">
+          <div>📏 <strong>尺寸規格</strong>：表頭 <code>h-8.5 (34px)</code>，文字 <code>11px</code>。</div>
+          <div>✅ <strong>完全無外框包袱</strong>：沒有盒子套盒子的厚重感，上下留白空間極大。</div>
+          <div>✅ <strong>極致極簡</strong>：只有純文字的高亮切換，符合文字極簡主義。</div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================================= -->
+      <!-- 方案 3: 底部微型滑線指標 (Underline Tab Indicator) ★★★★☆ -->
+      <!-- ========================================================================= -->
+      <section class="border border-border rounded-2xl bg-card p-4 space-y-3">
+        <div class="flex items-center justify-between pb-1 border-b border-border">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-muted text-foreground border border-border">方案 3</span>
+            <h2 class="text-xs font-semibold text-foreground">底線微滑標 (Underline Tab)</h2>
+          </div>
+          <span class="text-[10px] font-mono text-muted-foreground">優雅指示</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground leading-tight">
+          不用背景色塊填充，改用<strong>當前選中項下方一條精緻的 2px 實線</strong>標註，消除厚重外殼，表頭保持極限乾淨。
+        </p>
+
+        <!-- 手機模擬框 (360px) -->
+        <div class="w-full max-w-[360px] mx-auto rounded-xl border border-border bg-background p-3 space-y-3 font-mono text-xs">
+          <!-- 示意上方工具列 -->
+          <div class="flex items-center justify-between gap-1 text-[11px] text-muted-foreground">
+            <div class="flex gap-1 overflow-hidden">
+              <span class="px-2 py-0.5 rounded-full bg-foreground text-background">全部 14</span>
+              <span class="px-2 py-0.5 rounded-full bg-muted/40">天然 8</span>
+            </div>
+            <span class="px-2 py-0.5 rounded border border-border">特徵 ▾</span>
+          </div>
+
+          <!-- 清單卡片 -->
+          <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-xs">
+            <!-- 方案 3 表頭 -->
+            <div class="h-9 px-4 bg-muted/40 flex items-center justify-between text-xs font-mono">
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-foreground">14 項</span>
+
+              <div class="flex items-center gap-3 text-[11px] select-none h-full">
+                <button
+                  onclick="setSol3Mode('serving')"
+                  id="sol3-btn-s"
+                  class="h-full flex items-center font-semibold text-foreground border-b-2 border-foreground cursor-pointer transition-all"
+                >
+                  每份
+                </button>
+                <button
+                  onclick="setSol3Mode('100g')"
+                  id="sol3-btn-100"
+                  class="h-full flex items-center text-muted-foreground hover:text-foreground border-b-2 border-transparent cursor-pointer transition-all"
+                >
+                  每 100g
+                </button>
+              </div>
+            </div>
+
+            <!-- 清單項目示意 -->
+            <div class="p-3 flex items-center justify-between">
+              <div>
+                <div class="font-medium text-sm text-foreground">牛番茄</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">
+                  <span id="sol3-size" class="font-medium text-foreground">100g</span> · <span id="sol3-cal">18 kcal</span>
+                </div>
+              </div>
+              <div class="flex gap-1 text-center font-mono">
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">P</div>
+                  <div class="text-[11px] font-semibold">0.9g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">C</div>
+                  <div class="text-[11px] font-semibold">3.9g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">F</div>
+                  <div class="text-[11px] font-semibold">0.2g</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-[11px] font-mono text-muted-foreground border-t border-border pt-2">
+          <div>📏 <strong>尺寸規格</strong>：表頭 <code>h-9 (36px)</code>，指示線貼齊表頭底線。</div>
+          <div>✅ <strong>零塊狀堆疊</strong>：不用按鈕膠囊，直接以 Tab 形式融入表頭底線。</div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================================= -->
+      <!-- 方案 4: 輕量度量標籤翻轉鈕 (Single Minimal Flip Stamp) ★★★★☆ -->
+      <!-- ========================================================================= -->
+      <section class="border border-border rounded-2xl bg-card p-4 space-y-3">
+        <div class="flex items-center justify-between pb-1 border-b border-border">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-muted text-foreground border border-border">方案 4</span>
+            <h2 class="text-xs font-semibold text-foreground">微型翻轉標籤 (Flip Stamp)</h2>
+          </div>
+          <span class="text-[10px] font-mono text-muted-foreground">單鍵超緊湊</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground leading-tight">
+          不堆疊雙按鈕，右側以一個<strong>小巧微型的狀態標籤印章</strong>呈現（高度 22px），點擊直接切換，留白空間最充沛。
+        </p>
+
+        <!-- 手機模擬框 (360px) -->
+        <div class="w-full max-w-[360px] mx-auto rounded-xl border border-border bg-background p-3 space-y-3 font-mono text-xs">
+          <!-- 示意上方工具列 -->
+          <div class="flex items-center justify-between gap-1 text-[11px] text-muted-foreground">
+            <div class="flex gap-1 overflow-hidden">
+              <span class="px-2 py-0.5 rounded-full bg-foreground text-background">全部 14</span>
+              <span class="px-2 py-0.5 rounded-full bg-muted/40">天然 8</span>
+            </div>
+            <span class="px-2 py-0.5 rounded border border-border">特徵 ▾</span>
+          </div>
+
+          <!-- 清單卡片 -->
+          <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-xs">
+            <!-- 方案 4 表頭：h-8.5 (34px)，標籤 22px，留白充足 -->
+            <div class="h-8.5 py-1.5 px-4 bg-muted/40 flex items-center justify-between text-xs font-mono">
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-foreground">14 項</span>
+
+              <button
+                onclick="toggleSol4Mode()"
+                class="h-5.5 px-2 rounded border border-border bg-background text-[10px] font-medium text-foreground flex items-center gap-1 hover:border-foreground/40 cursor-pointer shadow-none"
+              >
+                <span id="sol4-text">每份</span>
+                <span class="text-[8px] opacity-40">⇄</span>
+              </button>
+            </div>
+
+            <!-- 清單項目示意 -->
+            <div class="p-3 flex items-center justify-between">
+              <div>
+                <div class="font-medium text-sm text-foreground">白米飯</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">
+                  <span id="sol4-size" class="font-medium text-foreground">100g</span> · <span id="sol4-cal">130 kcal</span>
+                </div>
+              </div>
+              <div class="flex gap-1 text-center font-mono">
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">P</div>
+                  <div class="text-[11px] font-semibold">2.7g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">C</div>
+                  <div class="text-[11px] font-semibold">28.0g</div>
+                </div>
+                <div class="w-10 py-1 rounded border border-border bg-muted/30 text-foreground">
+                  <div class="text-[8px] text-muted-foreground">F</div>
+                  <div class="text-[11px] font-semibold">0.3g</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-[11px] font-mono text-muted-foreground border-t border-border pt-2">
+          <div>📏 <strong>尺寸規格</strong>：表頭 <code>h-8.5 (34px)</code>，翻轉標籤 <code>h-5.5 (22px)</code>。</div>
+          <div>✅ <strong>上下留白極充裕</strong>：留白高達 6px，而且寬度超省，單手大拇指一觸即換。</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 方案全維度對比總結 -->
+    <div class="border border-border rounded-xl overflow-hidden bg-card font-mono text-xs max-w-4xl mx-auto">
+      <div class="p-3 border-b border-border bg-muted/30 font-bold uppercase tracking-wider text-foreground">
+        📊 4 種留白矛盾解法全維度對比
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-[11px]">
+          <thead>
+            <tr class="border-b border-border text-muted-foreground">
+              <th class="p-3">方案</th>
+              <th class="p-3">表頭行高</th>
+              <th class="p-3">按鈕結構</th>
+              <th class="p-3">上下留白空間</th>
+              <th class="p-3">推薦指數</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr class="bg-foreground/5">
+              <td class="p-3 font-semibold text-foreground">方案 1: 精密微型緊湊滑塊</td>
+              <td class="p-3 text-emerald-500 font-bold">36px (h-9，最適中)</td>
+              <td class="p-3">24px 微型雙滑塊</td>
+              <td class="p-3 text-emerald-500 font-semibold">6px (充裕呼吸感，不貼邊)</td>
+              <td class="p-3 text-emerald-500 font-bold">★★★★★ (首選推薦)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">方案 2: 純文字極簡分段器</td>
+              <td class="p-3">34px (h-8.5，極限扁平)</td>
+              <td class="p-3">純文字鏈接 (無外框)</td>
+              <td class="p-3 text-emerald-500 font-semibold">10px (極大呼吸感)</td>
+              <td class="p-3">★★★★☆</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">方案 3: 底線微滑標</td>
+              <td class="p-3">36px (h-9)</td>
+              <td class="p-3">Tab 底線指示</td>
+              <td class="p-3">全高貼齊底線</td>
+              <td class="p-3">★★★★☆</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-foreground">方案 4: 微型翻轉標籤</td>
+              <td class="p-3">34px (h-8.5)</td>
+              <td class="p-3">單鍵印章 (22px)</td>
+              <td class="p-3 text-emerald-500 font-semibold">6px (極充裕)</td>
+              <td class="p-3">★★★★☆</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        document.getElementById('theme-icon').textContent = '🌙';
+        document.getElementById('theme-text').textContent = '深色';
+      } else {
+        html.classList.add('dark');
+        document.getElementById('theme-icon').textContent = '☀️';
+        document.getElementById('theme-text').textContent = '淺色';
+      }
+    }
+
+    // Sol 1 Demo
+    function setSol1Mode(mode) {
+      const bS = document.getElementById('sol1-btn-s');
+      const b100 = document.getElementById('sol1-btn-100');
+      const size = document.getElementById('sol1-size');
+      const cal = document.getElementById('sol1-cal');
+      const p = document.getElementById('sol1-p');
+      const c = document.getElementById('sol1-c');
+      const f = document.getElementById('sol1-f');
+
+      if (mode === '100g') {
+        b100.className = 'h-full px-2.5 rounded-full transition-all cursor-pointer bg-foreground text-background font-medium text-[10px] flex items-center';
+        bS.className = 'h-full px-2.5 rounded-full transition-all cursor-pointer text-muted-foreground hover:text-foreground text-[10px] flex items-center';
+        size.textContent = '100g';
+        cal.textContent = '389 kcal';
+        p.textContent = '13.7g';
+        c.textContent = '66.0g';
+        f.textContent = '6.9g';
+      } else {
+        bS.className = 'h-full px-2.5 rounded-full transition-all cursor-pointer bg-foreground text-background font-medium text-[10px] flex items-center';
+        b100.className = 'h-full px-2.5 rounded-full transition-all cursor-pointer text-muted-foreground hover:text-foreground text-[10px] flex items-center';
+        size.textContent = '35g';
+        cal.textContent = '136 kcal';
+        p.textContent = '4.8g';
+        c.textContent = '23.1g';
+        f.textContent = '2.4g';
+      }
+    }
+
+    // Sol 2 Demo
+    function setSol2Mode(mode) {
+      const bS = document.getElementById('sol2-btn-s');
+      const b100 = document.getElementById('sol2-btn-100');
+      const size = document.getElementById('sol2-size');
+      const cal = document.getElementById('sol2-cal');
+      const p = document.getElementById('sol2-p');
+      const c = document.getElementById('sol2-c');
+      const f = document.getElementById('sol2-f');
+
+      if (mode === '100g') {
+        b100.className = 'font-semibold text-foreground cursor-pointer transition-colors';
+        bS.className = 'text-muted-foreground hover:text-foreground cursor-pointer transition-colors';
+        size.textContent = '100g';
+        cal.textContent = '180 kcal';
+        p.textContent = '24.0g';
+        c.textContent = '0.0g';
+        f.textContent = '9.0g';
+      } else {
+        bS.className = 'font-semibold text-foreground cursor-pointer transition-colors';
+        b100.className = 'text-muted-foreground hover:text-foreground cursor-pointer transition-colors';
+        size.textContent = '150g';
+        cal.textContent = '270 kcal';
+        p.textContent = '36.0g';
+        c.textContent = '0.0g';
+        f.textContent = '13.5g';
+      }
+    }
+
+    // Sol 3 Demo
+    function setSol3Mode(mode) {
+      const bS = document.getElementById('sol3-btn-s');
+      const b100 = document.getElementById('sol3-btn-100');
+      const size = document.getElementById('sol3-size');
+      const cal = document.getElementById('sol3-cal');
+
+      if (mode === '100g') {
+        b100.className = 'h-full flex items-center font-semibold text-foreground border-b-2 border-foreground cursor-pointer transition-all';
+        bS.className = 'h-full flex items-center text-muted-foreground hover:text-foreground border-b-2 border-transparent cursor-pointer transition-all';
+        size.textContent = '100g';
+        cal.textContent = '18 kcal';
+      } else {
+        bS.className = 'h-full flex items-center font-semibold text-foreground border-b-2 border-foreground cursor-pointer transition-all';
+        b100.className = 'h-full flex items-center text-muted-foreground hover:text-foreground border-b-2 border-transparent cursor-pointer transition-all';
+        size.textContent = '200g';
+        cal.textContent = '36 kcal';
+      }
+    }
+
+    // Sol 4 Demo
+    let sol4Mode = 'serving';
+    function toggleSol4Mode() {
+      const text = document.getElementById('sol4-text');
+      const size = document.getElementById('sol4-size');
+      const cal = document.getElementById('sol4-cal');
+
+      if (sol4Mode === 'serving') {
+        sol4Mode = '100g';
+        text.textContent = '每 100g';
+        size.textContent = '100g';
+        cal.textContent = '130 kcal';
+      } else {
+        sol4Mode = 'serving';
+        text.textContent = '每份';
+        size.textContent = '150g';
+        cal.textContent = '195 kcal';
+      }
+    }
+  </script>
+</body>
+</html>

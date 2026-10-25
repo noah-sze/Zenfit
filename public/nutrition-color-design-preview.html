@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 營養素顏色設計方案預覽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--bg)',
+            foreground: 'var(--fg)',
+            card: 'var(--card-bg)',
+            border: 'var(--border-color)',
+            muted: 'var(--muted-bg)',
+            'muted-foreground': 'var(--muted-fg)',
+            // 專案官方真理源配色
+            protein: '#38bdf8', // 冰川青藍 (Protein)
+            'protein-subtle': 'rgba(56, 189, 248, 0.15)',
+            carbs: '#f59e0b', // 琥珀金 (Carbs)
+            'carbs-subtle': 'rgba(245, 158, 11, 0.15)',
+            fat: '#a78bfa', // 洗練紫羅蘭 (Fat)
+            'fat-subtle': 'rgba(167, 139, 250, 0.15)',
+            // 熱量配色候選
+            calories: '#f43f5e', // 珊瑚火焰暖紅 (Calories - 活力卡路里)
+            'calories-subtle': 'rgba(244, 63, 94, 0.15)',
+            caloriesGreen: '#10b981', // 翡翠能量綠 (Calories - 總能量)
+            'caloriesGreen-subtle': 'rgba(16, 185, 129, 0.15)',
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --card-bg: #ffffff;
+      --border-color: #e5e5e5;
+      --muted-bg: #f4f4f5;
+      --muted-fg: #71717a;
+    }
+    .dark {
+      --bg: #000000;
+      --fg: #ffffff;
+      --card-bg: #000000;
+      --border-color: #27272a;
+      --muted-bg: #09090b;
+      --muted-fg: #a1a1aa;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-24">
+
+  <!-- 頂部導航 -->
+  <header class="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border py-3 px-6 flex items-center justify-between">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-foreground"></span>
+        <h1 class="text-sm font-semibold tracking-tight">熱量與三大營養素色彩視覺方案設計</h1>
+        <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground">Design Options</span>
+      </div>
+      <p class="text-xs text-muted-foreground mt-0.5">
+        熱量 (Calories) · 蛋白質 (Protein) · 碳水 (Carbs) · 脂肪 (Fat) 的高級工程美學配對
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button
+        onclick="document.documentElement.classList.toggle('dark')"
+        class="h-8 px-3 rounded-lg border border-border bg-card text-xs font-mono cursor-pointer hover:bg-muted"
+      >
+        切換淺 / 深色
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pt-8 space-y-10">
+
+    <!-- 色彩系統說明看板 -->
+    <div class="border border-border rounded-xl bg-card p-4 sm:p-5">
+      <div class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+        官方色彩語意真理源 (Design Tokens)
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+        <!-- 熱量 -->
+        <div class="p-3 rounded-lg border border-border bg-muted/20 flex flex-col justify-between h-20">
+          <div class="flex items-center justify-between">
+            <span class="text-foreground font-semibold">熱量 Calories</span>
+            <span class="w-3 h-3 rounded-full bg-[#f43f5e]"></span>
+          </div>
+          <div class="text-[11px] text-[#f43f5e] font-medium flex items-center justify-between">
+            <span>#f43f5e 珊瑚暖紅</span>
+            <span class="text-[10px] text-muted-foreground">能量燃燒</span>
+          </div>
+        </div>
+
+        <!-- 蛋白質 -->
+        <div class="p-3 rounded-lg border border-border bg-muted/20 flex flex-col justify-between h-20">
+          <div class="flex items-center justify-between">
+            <span class="text-foreground font-semibold">蛋白質 Protein</span>
+            <span class="w-3 h-3 rounded-full bg-[#38bdf8]"></span>
+          </div>
+          <div class="text-[11px] text-[#38bdf8] font-medium flex items-center justify-between">
+            <span>#38bdf8 冰川天藍</span>
+            <span class="text-[10px] text-muted-foreground">肌肉科技</span>
+          </div>
+        </div>
+
+        <!-- 碳水 -->
+        <div class="p-3 rounded-lg border border-border bg-muted/20 flex flex-col justify-between h-20">
+          <div class="flex items-center justify-between">
+            <span class="text-foreground font-semibold">碳水 Carbs</span>
+            <span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span>
+          </div>
+          <div class="text-[11px] text-[#f59e0b] font-medium flex items-center justify-between">
+            <span>#f59e0b 穀物琥珀</span>
+            <span class="text-[10px] text-muted-foreground">主食動力</span>
+          </div>
+        </div>
+
+        <!-- 脂肪 -->
+        <div class="p-3 rounded-lg border border-border bg-muted/20 flex flex-col justify-between h-20">
+          <div class="flex items-center justify-between">
+            <span class="text-foreground font-semibold">脂肪 Fat</span>
+            <span class="w-3 h-3 rounded-full bg-[#a78bfa]"></span>
+          </div>
+          <div class="text-[11px] text-[#a78bfa] font-medium flex items-center justify-between">
+            <span>#a78bfa 洗練紫羅蘭</span>
+            <span class="text-[10px] text-muted-foreground">優質儲備</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案網格對比 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+
+      <!-- ======================================================== -->
+      <!-- 方案 1：精緻微指標點 (Micro-Dot Indicator) [推薦] -->
+      <!-- ======================================================== -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-semibold">方案 1：微圓點指標 (推薦)</span>
+          </div>
+          <span class="text-[10px] font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">
+            極致耐看
+          </span>
+        </div>
+
+        <div class="w-full border border-border rounded-xl bg-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold">新增食材</h3>
+            <span class="text-xs text-muted-foreground font-mono">✕</span>
+          </div>
+
+          <!-- 段落 1: 基本資訊 -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] uppercase tracking-widest text-muted-foreground px-1 font-semibold">
+              基本資訊
+            </div>
+            <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">食物名稱</span>
+                <span class="text-xs font-medium">全麥吐司</span>
+              </div>
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">分類</span>
+                <span class="text-xs">天然食材</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 段落 2: 份量 -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] uppercase tracking-widest text-muted-foreground px-1 font-semibold">
+              份量
+            </div>
+            <div class="border border-border rounded-lg overflow-hidden bg-card text-sm">
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">份量</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="font-bold text-foreground">35</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 段落 3: 基準營養素 (方案 1: 微圓點) -->
+          <div class="space-y-1.5 pt-0.5">
+            <div class="flex items-center justify-between px-1">
+              <div class="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                基準營養素
+              </div>
+              <div class="h-7 p-0.5 rounded-full border border-border bg-background inline-flex items-center text-xs font-mono select-none">
+                <button class="h-full px-2.5 rounded-full bg-foreground text-background font-medium text-[11px]">份量</button>
+                <button class="h-full px-2.5 rounded-full text-[11px] text-muted-foreground">自定義</button>
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+              <!-- 每 xxx 固定行 -->
+              <div class="h-10 px-4 flex items-center justify-between bg-muted/20">
+                <span></span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-muted-foreground/50">每</span>
+                  <span class="text-muted-foreground/50 font-bold px-1">35</span>
+                  <span class="text-muted-foreground/50">g</span>
+                </div>
+              </div>
+
+              <!-- 熱量: 珊瑚暖紅圓點 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#f43f5e] shrink-0"></span>
+                  <span class="text-foreground text-xs font-medium">熱量</span>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">88</span>
+                  <span class="text-muted-foreground">kcal</span>
+                </div>
+              </div>
+
+              <!-- 蛋白質: 冰川天藍圓點 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#38bdf8] shrink-0"></span>
+                  <span class="text-foreground text-xs font-medium">蛋白質</span>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">3.5</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+
+              <!-- 碳水: 穀物琥珀圓點 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#f59e0b] shrink-0"></span>
+                  <span class="text-foreground text-xs font-medium">碳水</span>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">15.0</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+
+              <!-- 脂肪: 洗練紫羅蘭圓點 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#a78bfa] shrink-0"></span>
+                  <span class="text-foreground text-xs font-medium">脂肪</span>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">1.2</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <button class="h-8 px-4 rounded border border-border text-xs">取消</button>
+            <button class="h-8 px-5 rounded bg-foreground text-background text-xs font-medium">新增</button>
+          </div>
+        </div>
+
+        <p class="text-xs text-muted-foreground px-1 leading-relaxed">
+          <strong>設計解析</strong>：以 8px 精緻圓點作為視覺導引，文字保持經典對比，維持 Vercel 冷靜高質感的客觀工程儀表風格，長時間凝視完全不視覺疲勞。
+        </p>
+      </div>
+
+
+      <!-- ======================================================== -->
+      <!-- 方案 2：微型語意膠囊 (Micro-Badge Pill) -->
+      <!-- ======================================================== -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="text-xs font-semibold">方案 2：微型語意膠囊標籤</span>
+          </div>
+          <span class="text-[10px] font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">
+            認知最高效
+          </span>
+        </div>
+
+        <div class="w-full border border-border rounded-xl bg-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold">新增食材</h3>
+            <span class="text-xs text-muted-foreground font-mono">✕</span>
+          </div>
+
+          <!-- 段落 1: 基本資訊 -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] uppercase tracking-widest text-muted-foreground px-1 font-semibold">
+              基本資訊
+            </div>
+            <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">食物名稱</span>
+                <span class="text-xs font-medium">全麥吐司</span>
+              </div>
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">分類</span>
+                <span class="text-xs">天然食材</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 段落 2: 份量 -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] uppercase tracking-widest text-muted-foreground px-1 font-semibold">
+              份量
+            </div>
+            <div class="border border-border rounded-lg overflow-hidden bg-card text-sm">
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">份量</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="font-bold text-foreground">35</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 段落 3: 基準營養素 (方案 2: 微膠囊) -->
+          <div class="space-y-1.5 pt-0.5">
+            <div class="flex items-center justify-between px-1">
+              <div class="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                基準營養素
+              </div>
+              <div class="h-7 p-0.5 rounded-full border border-border bg-background inline-flex items-center text-xs font-mono select-none">
+                <button class="h-full px-2.5 rounded-full bg-foreground text-background font-medium text-[11px]">份量</button>
+                <button class="h-full px-2.5 rounded-full text-[11px] text-muted-foreground">自定義</button>
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+              <!-- 每 xxx 固定行 -->
+              <div class="h-10 px-4 flex items-center justify-between bg-muted/20">
+                <span></span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-muted-foreground/50">每</span>
+                  <span class="text-muted-foreground/50 font-bold px-1">35</span>
+                  <span class="text-muted-foreground/50">g</span>
+                </div>
+              </div>
+
+              <!-- 熱量: 膠囊標籤 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-[#f43f5e]/30 bg-[#f43f5e]/10 text-[#f43f5e] font-semibold">
+                  熱量
+                </span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">88</span>
+                  <span class="text-muted-foreground">kcal</span>
+                </div>
+              </div>
+
+              <!-- 蛋白質: 膠囊標籤 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-[#38bdf8]/30 bg-[#38bdf8]/10 text-[#38bdf8] font-semibold">
+                  蛋白質
+                </span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">3.5</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+
+              <!-- 碳水: 膠囊標籤 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b] font-semibold">
+                  碳水
+                </span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">15.0</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+
+              <!-- 脂肪: 膠囊標籤 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-[#a78bfa]/30 bg-[#a78bfa]/10 text-[#a78bfa] font-semibold">
+                  脂肪
+                </span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">1.2</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <button class="h-8 px-4 rounded border border-border text-xs">取消</button>
+            <button class="h-8 px-5 rounded bg-foreground text-background text-xs font-medium">新增</button>
+          </div>
+        </div>
+
+        <p class="text-xs text-muted-foreground px-1 leading-relaxed">
+          <strong>設計解析</strong>：將標籤做成微透光的彩色膠囊（Subtle Badge），即使在快速輸入大量食材時，視線也能在 0.1 秒內瞬間鎖定 P / C / F 與熱量欄位。
+        </p>
+      </div>
+
+
+      <!-- ======================================================== -->
+      <!-- 方案 3：標籤純文字語意色 (Pure Text Accent) -->
+      <!-- ======================================================== -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            <span class="text-xs font-semibold">方案 3：標籤純文字語意色</span>
+          </div>
+          <span class="text-[10px] font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">
+            極簡直白
+          </span>
+        </div>
+
+        <div class="w-full border border-border rounded-xl bg-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold">新增食材</h3>
+            <span class="text-xs text-muted-foreground font-mono">✕</span>
+          </div>
+
+          <!-- 段落 1: 基本資訊 -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] uppercase tracking-widest text-muted-foreground px-1 font-semibold">
+              基本資訊
+            </div>
+            <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">食物名稱</span>
+                <span class="text-xs font-medium">全麥吐司</span>
+              </div>
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">分類</span>
+                <span class="text-xs">天然食材</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 段落 2: 份量 -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] uppercase tracking-widest text-muted-foreground px-1 font-semibold">
+              份量
+            </div>
+            <div class="border border-border rounded-lg overflow-hidden bg-card text-sm">
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">份量</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="font-bold text-foreground">35</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 段落 3: 基準營養素 (方案 3: 純文字色) -->
+          <div class="space-y-1.5 pt-0.5">
+            <div class="flex items-center justify-between px-1">
+              <div class="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                基準營養素
+              </div>
+              <div class="h-7 p-0.5 rounded-full border border-border bg-background inline-flex items-center text-xs font-mono select-none">
+                <button class="h-full px-2.5 rounded-full bg-foreground text-background font-medium text-[11px]">份量</button>
+                <button class="h-full px-2.5 rounded-full text-[11px] text-muted-foreground">自定義</button>
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+              <!-- 每 xxx 固定行 -->
+              <div class="h-10 px-4 flex items-center justify-between bg-muted/20">
+                <span></span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-muted-foreground/50">每</span>
+                  <span class="text-muted-foreground/50 font-bold px-1">35</span>
+                  <span class="text-muted-foreground/50">g</span>
+                </div>
+              </div>
+
+              <!-- 熱量: 純文字色 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#f43f5e]">熱量</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">88</span>
+                  <span class="text-muted-foreground">kcal</span>
+                </div>
+              </div>
+
+              <!-- 蛋白質: 純文字色 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#38bdf8]">蛋白質</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">3.5</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+
+              <!-- 碳水: 純文字色 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#f59e0b]">碳水</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">15.0</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+
+              <!-- 脂肪: 純文字色 -->
+              <div class="h-10 px-4 flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#a78bfa]">脂肪</span>
+                <div class="flex items-center gap-1 font-mono text-xs">
+                  <span class="text-foreground font-semibold">1.2</span>
+                  <span class="text-muted-foreground">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <button class="h-8 px-4 rounded border border-border text-xs">取消</button>
+            <button class="h-8 px-5 rounded bg-foreground text-background text-xs font-medium">新增</button>
+          </div>
+        </div>
+
+        <p class="text-xs text-muted-foreground px-1 leading-relaxed">
+          <strong>設計解析</strong>：將左側「熱量、蛋白質、碳水、脂肪」字元本身直接賦予顏色，零多餘元素，版面極度乾淨通透。
+        </p>
+      </div>
+
+    </div>
+
+  </main>
+</body>
+</html>

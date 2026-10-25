@@ -37,14 +37,14 @@ export function MacroSquares({
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
           highlights?.protein
-            ? "border-sky-500/60 bg-sky-500/10 text-foreground shadow-none"
+            ? "border-protein bg-protein-subtle text-foreground shadow-none"
             : "border-border bg-muted/30 text-foreground"
         )}
       >
         <div
           className={cn(
             "text-[9px] uppercase tracking-wider",
-            highlights?.protein ? "text-sky-500 font-bold" : "text-muted-foreground"
+            highlights?.protein ? "text-protein font-bold" : "text-muted-foreground"
           )}
         >
           P
@@ -59,14 +59,14 @@ export function MacroSquares({
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
           highlights?.carbs
-            ? "border-amber-500/60 bg-amber-500/10 text-foreground shadow-none"
+            ? "border-carbs bg-carbs-subtle text-foreground shadow-none"
             : "border-border bg-muted/30 text-foreground"
         )}
       >
         <div
           className={cn(
             "text-[9px] uppercase tracking-wider",
-            highlights?.carbs ? "text-amber-500 font-bold" : "text-muted-foreground"
+            highlights?.carbs ? "text-carbs font-bold" : "text-muted-foreground"
           )}
         >
           C
@@ -81,14 +81,14 @@ export function MacroSquares({
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
           highlights?.fat
-            ? "border-purple-500/60 bg-purple-500/10 text-foreground shadow-none"
+            ? "border-fat bg-fat-subtle text-foreground shadow-none"
             : "border-border bg-muted/30 text-foreground"
         )}
       >
         <div
           className={cn(
             "text-[9px] uppercase tracking-wider",
-            highlights?.fat ? "text-purple-500 font-bold" : "text-muted-foreground"
+            highlights?.fat ? "text-fat font-bold" : "text-muted-foreground"
           )}
         >
           F

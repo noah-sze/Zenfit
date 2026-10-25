@@ -16,6 +16,13 @@ export interface FoodItem {
   carbs: number;
   fat: number;
   fiber?: number;
+  labelBasisSize?: number; // 營養標籤依據克數（如每 100g 或每 30g）
+  rawNutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
   isCustom: boolean;
   isArchived?: boolean;
   createdAt: number;
