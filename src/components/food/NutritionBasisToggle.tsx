@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +19,11 @@ export interface NutritionBasisToggleProps {
 export function NutritionBasisToggle({ className }: NutritionBasisToggleProps) {
   const { t } = useTranslation();
   const { nutritionDisplayMode, setNutritionDisplayMode } = useAppStore();
+  const { foodWeightUnit } = useUnitPreferences();
+
+  const densityLabel = foodWeightUnit === 'oz'
+    ? t('diet.per1oz')
+    : t('diet.per100g');
 
   return (
     <div
@@ -61,7 +67,7 @@ export function NutritionBasisToggle({ className }: NutritionBasisToggleProps) {
             : "text-muted-foreground hover:text-foreground"
         )}
       >
-        {t('diet.per100g')}
+        {densityLabel}
       </button>
     </div>
   );

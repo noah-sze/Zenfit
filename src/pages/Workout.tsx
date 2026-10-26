@@ -13,10 +13,13 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { v4 as uuidv4 } from 'uuid';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { kgToLbs, lbsToKg } from '@/utils/unitMath';
 
 export default function Workout() {
   const { t } = useTranslation();
   const { selectedDate, openAddModal } = useAppStore();
+  const { bodyWeightUnit } = useUnitPreferences();
   const {
     workouts,
     addWorkout,
@@ -252,7 +255,7 @@ export default function Workout() {
                   <div className="border border-border/60 rounded-lg overflow-hidden divide-y divide-border/40 text-xs">
                     <div className="grid grid-cols-4 px-3.5 py-2.5 bg-muted/30 text-xs sm:text-sm font-mono uppercase text-muted-foreground">
                       <span>{t('workout.set')}</span>
-                      <span>{t('workout.weight')}</span>
+                      <span>{t('workout.weight')} ({bodyWeightUnit})</span>
                       <span>{t('workout.reps')}</span>
                       <span className="text-right">{t('workout.completed')}</span>
                     </div>
@@ -268,16 +271,27 @@ export default function Workout() {
                         <div>
                           <Input
                             type="number"
-                            value={set.weight || ''}
-                            onChange={(e) =>
+                            step="0.5"
+                            value={
+                              set.weight
+                                ? bodyWeightUnit === 'lbs'
+                                  ? kgToLbs(set.weight, 1)
+                                  : set.weight
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const rawInput = parseFloat(e.target.value);
+                              const inputVal = isNaN(rawInput) ? 0 : rawInput;
+                              const finalWeightKg =
+                                bodyWeightUnit === 'lbs' ? lbsToKg(inputVal, 2) : inputVal;
                               updateSetValues(
                                 workout.id,
                                 exIdx,
                                 setIdx,
-                                parseFloat(e.target.value) || 0,
+                                finalWeightKg,
                                 set.reps || 0
-                              )
-                            }
+                              );
+                            }}
                             className="h-9 w-20 text-sm font-mono px-2.5"
                           />
                         </div>

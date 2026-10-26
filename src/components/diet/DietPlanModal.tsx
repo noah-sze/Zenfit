@@ -24,6 +24,7 @@ import {
   calculateAgeFromBirth,
   calculateMacrosFromSplit,
 } from '@/utils/weightMath';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import type { UserProfile, MacroSplit, DietPlan } from '@/types';
 
 export interface DietPlanModalProps {
@@ -45,6 +46,7 @@ export function DietPlanModal({
   onSave,
 }: DietPlanModalProps) {
   const { t } = useTranslation();
+  const { energyUnit } = useUnitPreferences();
 
   // 計算客觀生理常數 BMR
   const age = profile.birthDate
@@ -77,8 +79,9 @@ export function DietPlanModal({
       setActivityLevel(act);
 
       // 優先讀取當日專屬計劃之目標熱量，若無則讀取 profile 或計算之 TDEE
-      const defTarget = currentPlan?.caloriesTarget || profile.dailyCaloriesTarget || calculateTDEE(currentBMR, act);
-      setTargetCalories(String(defTarget));
+      const defTargetKcal = currentPlan?.caloriesTarget || profile.dailyCaloriesTarget || calculateTDEE(currentBMR, act);
+      const displayTarget = energyUnit === 'kJ' ? Math.round(defTargetKcal * 4.184) : defTargetKcal;
+      setTargetCalories(String(displayTarget));
 
       // 若 currentPlan 有宏量目標克數，反推熱量百分比；否則使用 profile.macroSplit
       let split = profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
@@ -111,14 +114,17 @@ export function DietPlanModal({
         setTemplate('custom');
       }
     }
-  }, [isOpen, profile, currentPlan, currentBMR]);
+  }, [isOpen, profile, currentPlan, currentBMR, energyUnit]);
 
 
-  // 當前推算的 TDEE
-  const currentTDEE = calculateTDEE(currentBMR, activityLevel);
+  // 當前推算的 TDEE (kcal)
+  const currentTDEEKcal = calculateTDEE(currentBMR, activityLevel);
+  const displayTDEE = energyUnit === 'kJ' ? Math.round(currentTDEEKcal * 4.184) : currentTDEEKcal;
+  const displayBMR = energyUnit === 'kJ' ? Math.round(currentBMR * 4.184) : currentBMR;
 
   // 數值解析
-  const parsedCalories = Math.max(0, parseInt(targetCalories, 10) || 0);
+  const parsedInputCalories = Math.max(0, parseInt(targetCalories, 10) || 0);
+  const targetCaloriesKcal = energyUnit === 'kJ' ? Math.round(parsedInputCalories / 4.184) : parsedInputCalories;
   const parsedCarbs = Math.max(0, parseInt(carbsPercent, 10) || 0);
   const parsedProtein = Math.max(0, parseInt(proteinPercent, 10) || 0);
   const parsedFat = Math.max(0, parseInt(fatPercent, 10) || 0);
@@ -127,19 +133,19 @@ export function DietPlanModal({
 
   // 動態計算目標克數
   const calculatedMacros = calculateMacrosFromSplit(
-    parsedCalories,
+    targetCaloriesKcal,
     parsedCarbs,
     parsedProtein,
     parsedFat
   );
 
   // 三大營養素各別熱量 (kcal)
-  const carbsKcal = Math.round((parsedCalories * parsedCarbs) / 100);
-  const proteinKcal = Math.round((parsedCalories * parsedProtein) / 100);
-  const fatKcal = Math.round((parsedCalories * parsedFat) / 100);
+  const carbsKcal = Math.round((targetCaloriesKcal * parsedCarbs) / 100);
+  const proteinKcal = Math.round((targetCaloriesKcal * parsedProtein) / 100);
+  const fatKcal = Math.round((targetCaloriesKcal * parsedFat) / 100);
 
   // 目標熱量與 TDEE 差異
-  const calorieDelta = parsedCalories > 0 ? parsedCalories - currentTDEE : 0;
+  const calorieDelta = parsedInputCalories > 0 ? parsedInputCalories - displayTDEE : 0;
 
   // 供能比視覺標尺寬度推算
   const ratioScale = ratioTotal > 100 ? 100 / ratioTotal : 1;
@@ -205,18 +211,19 @@ export function DietPlanModal({
     setActivityLevel(act);
     triggerHaptic('selection');
     const newTDEE = calculateTDEE(currentBMR, act);
-    setTargetCalories(String(newTDEE));
+    const displayVal = energyUnit === 'kJ' ? Math.round(newTDEE * 4.184) : newTDEE;
+    setTargetCalories(String(displayVal));
   };
 
   // 一鍵同步目標熱量至 TDEE
   const handleSyncTdee = () => {
-    setTargetCalories(String(currentTDEE));
+    setTargetCalories(String(displayTDEE));
     triggerHaptic('light');
   };
 
-  // 儲存設定
+  // 儲存設定 (以 kcal 為單一真理源存入)
   const handleSave = async () => {
-    if (!isRatioValid || parsedCalories <= 0) return;
+    if (!isRatioValid || targetCaloriesKcal <= 0) return;
 
     const newSplit: MacroSplit = {
       carbs: parsedCarbs,
@@ -226,7 +233,7 @@ export function DietPlanModal({
 
     if (onSavePlan) {
       await onSavePlan({
-        caloriesTarget: parsedCalories,
+        caloriesTarget: targetCaloriesKcal,
         proteinTarget: calculatedMacros.proteinGrams,
         carbsTarget: calculatedMacros.carbsGrams,
         fatTarget: calculatedMacros.fatGrams,
@@ -236,7 +243,7 @@ export function DietPlanModal({
     if (onSave) {
       await onSave({
         activityLevel,
-        dailyCaloriesTarget: parsedCalories,
+        dailyCaloriesTarget: targetCaloriesKcal,
         macroSplit: newSplit,
         proteinGramsTarget: calculatedMacros.proteinGrams,
         carbsGramsTarget: calculatedMacros.carbsGrams,
@@ -299,9 +306,9 @@ export function DietPlanModal({
                   BMR
                 </span>
                 <span className="text-foreground font-medium font-mono">
-                  {currentBMR}
+                  {displayBMR}
                 </span>
-                <span className="text-2xs">kcal</span>
+                <span className="text-2xs">{energyUnit}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -310,12 +317,12 @@ export function DietPlanModal({
                     TDEE
                   </span>
                   <span className="text-foreground font-medium font-mono">
-                    {currentTDEE}
+                    {displayTDEE}
                   </span>
-                  <span className="text-2xs">kcal</span>
+                  <span className="text-2xs">{energyUnit}</span>
                 </div>
 
-                {parsedCalories !== currentTDEE && (
+                {parsedInputCalories !== displayTDEE && (
                   <button
                     type="button"
                     onClick={handleSyncTdee}
@@ -335,7 +342,7 @@ export function DietPlanModal({
                 <span className="text-xs font-normal text-foreground">
                   {t('dietPlan.targetCalories')}
                 </span>
-                {calorieDelta !== 0 && parsedCalories > 0 && (
+                {calorieDelta !== 0 && parsedInputCalories > 0 && (
                   <span className="text-2xs font-mono text-muted-foreground">
                     {calorieDelta > 0 ? `(+${calorieDelta})` : `(${calorieDelta})`}
                   </span>
@@ -350,7 +357,7 @@ export function DietPlanModal({
                   onChange={(e) => setTargetCalories(e.target.value.replace(/\D/g, ''))}
                   className="h-8 w-20 text-right text-sm font-mono font-semibold text-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
                 />
-                <span className="text-muted-foreground">kcal</span>
+                <span className="text-muted-foreground">{energyUnit}</span>
               </div>
             </div>
           </div>
@@ -536,7 +543,7 @@ export function DietPlanModal({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={!isRatioValid || parsedCalories <= 0}
+            disabled={!isRatioValid || targetCaloriesKcal <= 0}
             className="flex-1 text-xs h-9 rounded-lg bg-foreground text-background hover:opacity-90 font-mono disabled:opacity-40 cursor-pointer"
           >
             {t('dietPlan.save')}

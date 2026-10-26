@@ -163,6 +163,97 @@ describe('nutritionMath - calculateScaledNutrition', () => {
     expect(res.carbs).toBe(0);
     expect(res.fat).toBe(0);
   });
+
+  describe('方案 A：英制單位每 1 oz / 1 fl oz 密度基準', () => {
+    it('固體食材 (以 g 為單位)：正確折算為「每 1 oz」基準', () => {
+      // 100g 雞胸肉: 110 kcal, 24g p, 0g c, 1.5g f
+      // 1 oz = 28.349523125 g
+      // factor = 28.349523125 / 100 = 0.283495
+      // cal: 110 * 0.283495 = 31.18 -> 31
+      // p: 24 * 0.283495 = 6.80 -> 6.8
+      // f: 1.5 * 0.283495 = 0.425 -> 0.4
+      const item = {
+        calories: 110,
+        protein: 24,
+        carbs: 0,
+        fat: 1.5,
+        servingSize: 100,
+        servingUnit: 'g',
+      };
+
+      const res = calculateScaledNutrition(item, 'per100g', { foodWeightUnit: 'oz' });
+      expect(res.servingSize).toBe(1);
+      expect(res.servingUnit).toBe('oz');
+      expect(res.calories).toBe(31);
+      expect(res.protein).toBe(6.8);
+      expect(res.carbs).toBe(0);
+      expect(res.fat).toBe(0.4);
+    });
+
+    it('液體食材 (以 ml 為單位)：正確折算為「每 1 fl oz」基準', () => {
+      // 240ml 牛奶: 120 kcal, 8g p, 12g c, 5g f
+      // 1 fl oz = 29.5735295625 ml
+      // factor = 29.5735295625 / 240 = 0.123223...
+      // cal: 120 * 0.123223 = 14.78 -> 15
+      // p: 8 * 0.123223 = 0.985 -> 1.0
+      // c: 12 * 0.123223 = 1.478 -> 1.5
+      // f: 5 * 0.123223 = 0.616 -> 0.6
+      const item = {
+        calories: 120,
+        protein: 8,
+        carbs: 12,
+        fat: 5,
+        servingSize: 240,
+        servingUnit: 'ml',
+      };
+
+      const res = calculateScaledNutrition(item, 'per100g', { foodWeightUnit: 'oz', foodVolumeUnit: 'fl oz' });
+      expect(res.servingSize).toBe(1);
+      expect(res.servingUnit).toBe('fl oz');
+      expect(res.calories).toBe(15);
+      expect(res.protein).toBe(1.0);
+      expect(res.carbs).toBe(1.5);
+      expect(res.fat).toBe(0.6);
+    });
+
+    it('原始單位已為 oz 的食品在英制模式下正確折算為每 1 oz', () => {
+      // 4 oz 牛排: 240 kcal, 24g p, 0g c, 16g f
+      // factor = 1 / 4 = 0.25
+      const item = {
+        calories: 240,
+        protein: 24,
+        carbs: 0,
+        fat: 16,
+        servingSize: 4,
+        servingUnit: 'oz',
+      };
+
+      const res = calculateScaledNutrition(item, 'per100g', { foodWeightUnit: 'oz' });
+      expect(res.servingSize).toBe(1);
+      expect(res.servingUnit).toBe('oz');
+      expect(res.calories).toBe(60);
+      expect(res.protein).toBe(6.0);
+      expect(res.carbs).toBe(0);
+      expect(res.fat).toBe(4.0);
+    });
+
+    it('邊界防護：英制模式下份量為 0 或負數時安全防護除以零', () => {
+      const item = {
+        calories: 100,
+        protein: 10,
+        carbs: 20,
+        fat: 5,
+        servingSize: 0,
+        servingUnit: 'g',
+      };
+
+      const res = calculateScaledNutrition(item, 'per100g', { foodWeightUnit: 'oz' });
+      expect(res.servingSize).toBe(1);
+      expect(res.servingUnit).toBe('oz');
+      expect(res.calories).toBe(100);
+      expect(res.protein).toBe(10);
+    });
+  });
 });
 
 describe('nutritionMath - scaleNutritionFromBasis', () => {

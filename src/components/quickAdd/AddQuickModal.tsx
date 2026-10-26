@@ -25,6 +25,18 @@ import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import {
+  formatEnergy,
+  formatFoodServing,
+  convertEnergy,
+  kgToLbs,
+  lbsToKg,
+  cmToIn,
+  inToCm,
+  mlToFlOz,
+  flOzToMl,
+} from '@/utils/unitMath';
 
 export function AddQuickModal() {
   const { t } = useTranslation();
@@ -34,6 +46,13 @@ export function AddQuickModal() {
     closeAddModal,
     selectedDate,
   } = useAppStore();
+  const {
+    foodWeightUnit,
+    foodVolumeUnit,
+    energyUnit,
+    bodyWeightUnit,
+    lengthUnit,
+  } = useUnitPreferences();
 
   const [activeTab, setActiveTab] = useState<'food' | 'workout' | 'metric'>(addModalType);
 
@@ -60,8 +79,9 @@ export function AddQuickModal() {
   const [mealType, setMealType] = useState<MealType>('breakfast');
   const [foodEntryMode, setFoodEntryMode] = useState<'item' | 'recipe'>('item');
   const [foodName, setFoodName] = useState('');
-  const [quantity, setQuantity] = useState('100');
-  const [unit, setUnit] = useState('g');
+  const defaultQuantity = foodWeightUnit === 'oz' ? '1' : '100';
+  const [quantity, setQuantity] = useState(defaultQuantity);
+  const [unit, setUnit] = useState<string>(foodWeightUnit);
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
@@ -109,20 +129,28 @@ export function AddQuickModal() {
 
   useEffect(() => {
     if (metricToday) {
-      if (metricToday.weight) setWeight(String(metricToday.weight));
-      if (metricToday.bodyFat) setBodyFat(String(metricToday.bodyFat));
-      if (metricToday.waistCm) setWaist(String(metricToday.waistCm));
-      if (metricToday.waterMl) setWaterMl(String(metricToday.waterMl));
+      if (typeof metricToday.weight === 'number' && metricToday.weight > 0) {
+        setWeight(String(bodyWeightUnit === 'lbs' ? kgToLbs(metricToday.weight, 1) : metricToday.weight));
+      }
+      if (typeof metricToday.bodyFat === 'number') setBodyFat(String(metricToday.bodyFat));
+      if (typeof metricToday.waistCm === 'number' && metricToday.waistCm > 0) {
+        setWaist(String(lengthUnit === 'in' ? cmToIn(metricToday.waistCm, 1) : metricToday.waistCm));
+      }
+      if (typeof metricToday.waterMl === 'number' && metricToday.waterMl > 0) {
+        setWaterMl(String(foodVolumeUnit === 'fl oz' ? mlToFlOz(metricToday.waterMl, 1) : metricToday.waterMl));
+      }
     }
-  }, [metricToday, isAddModalOpen]);
+  }, [metricToday, isAddModalOpen, bodyWeightUnit, lengthUnit, foodVolumeUnit]);
 
   const handleSelectPresetFood = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const found = foods.find((f) => f.id === e.target.value);
     if (found) {
       setFoodName(formatFoodDisplayName(found));
-      setQuantity(String(found.servingSize));
-      setUnit(found.servingUnit);
-      setCalories(String(found.calories));
+      const s = formatFoodServing(found.servingSize, found.servingUnit, foodWeightUnit, foodVolumeUnit);
+      setQuantity(String(s.size));
+      setUnit(s.unit);
+      const scaledEnergy = formatEnergy(found.calories, energyUnit);
+      setCalories(String(scaledEnergy.value));
       setProtein(String(found.protein));
       setCarbs(String(found.carbs));
       setFat(String(found.fat));
@@ -134,13 +162,16 @@ export function AddQuickModal() {
       toast.show(t('common.required'));
       return;
     }
+    const rawCal = parseFloat(calories) || 0;
+    const finalCalKcal = energyUnit === 'kJ' ? convertEnergy(rawCal, 'kJ', 'kcal') : rawCal;
+
     await addFoodLog({
       date: selectedDate,
       mealType,
       foodName: foodName.trim(),
-      quantity: parseFloat(quantity) || 100,
-      unit: unit || 'g',
-      calories: parseFloat(calories) || 0,
+      quantity: parseFloat(quantity) || (foodWeightUnit === 'oz' ? 1 : 100),
+      unit: unit || foodWeightUnit,
+      calories: finalCalKcal,
       protein: parseFloat(protein) || 0,
       carbs: parseFloat(carbs) || 0,
       fat: parseFloat(fat) || 0,
@@ -190,6 +221,8 @@ export function AddQuickModal() {
   const handleSaveWorkout = async () => {
     const title = workoutTitle.trim() || t('workout.newWorkout');
     const ex = exercises.find((item) => item.id === selectedExerciseId) || exercises[0];
+    const rawWeight = parseFloat(firstSetWeight) || (bodyWeightUnit === 'lbs' ? 45 : 20);
+    const weightKg = bodyWeightUnit === 'lbs' ? lbsToKg(rawWeight) : rawWeight;
     
     await addWorkout({
       date: selectedDate,
@@ -204,7 +237,7 @@ export function AddQuickModal() {
                 {
                   id: uuidv4(),
                   setNumber: 1,
-                  weight: parseFloat(firstSetWeight) || 20,
+                  weight: weightKg,
                   reps: parseInt(firstSetReps, 10) || 10,
                   isCompleted: false,
                 },
@@ -259,11 +292,26 @@ export function AddQuickModal() {
   };
 
   const handleSaveMetric = async () => {
+    const rawWeight = weight ? parseFloat(weight) : undefined;
+    const weightKg = rawWeight !== undefined
+      ? (bodyWeightUnit === 'lbs' ? lbsToKg(rawWeight) : rawWeight)
+      : undefined;
+
+    const rawWaist = waist ? parseFloat(waist) : undefined;
+    const waistCm = rawWaist !== undefined
+      ? (lengthUnit === 'in' ? inToCm(rawWaist) : rawWaist)
+      : undefined;
+
+    const rawWater = waterMl ? parseFloat(waterMl) : undefined;
+    const waterMlFinal = rawWater !== undefined
+      ? (foodVolumeUnit === 'fl oz' ? flOzToMl(rawWater) : rawWater)
+      : undefined;
+
     await saveMetric({
-      weight: weight ? parseFloat(weight) : undefined,
+      weight: weightKg,
       bodyFat: bodyFat ? parseFloat(bodyFat) : undefined,
-      waistCm: waist ? parseFloat(waist) : undefined,
-      waterMl: waterMl ? parseFloat(waterMl) : undefined,
+      waistCm: waistCm,
+      waterMl: waterMlFinal,
     });
     toast.show(t('common.saved'));
     closeAddModal();
@@ -372,7 +420,7 @@ export function AddQuickModal() {
                     </option>
                     {foods.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {formatFoodDisplayName(f)} · {t(`diet.foodCategory.${f.category || 'natural'}`)} ({f.calories} kcal)
+                        {formatFoodDisplayName(f)} · {t(`diet.foodCategory.${f.category || 'natural'}`)} ({formatEnergy(f.calories, energyUnit).formatted} / {formatFoodServing(f.servingSize, f.servingUnit, foodWeightUnit, foodVolumeUnit).formatted})
                       </option>
                     ))}
                   </select>
@@ -392,7 +440,7 @@ export function AddQuickModal() {
                   </div>
                   <div>
                     <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                      {t('diet.calories')} (kcal)
+                      {t('diet.calories')} ({energyUnit})
                     </label>
                     <Input
                       type="number"
@@ -515,9 +563,9 @@ export function AddQuickModal() {
                                 </div>
                               </div>
                               <div className="font-mono text-right shrink-0 pl-2">
-                                <span className="text-foreground font-medium">{ingMacros.calories} kcal</span>
+                                <span className="text-foreground font-medium">{formatEnergy(ingMacros.calories, energyUnit).formatted}</span>
                                 <span className="text-muted-foreground ml-1">
-                                  ({ing.quantity} {ing.unit})
+                                  ({formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit).formatted})
                                 </span>
                               </div>
                             </label>
@@ -533,7 +581,7 @@ export function AddQuickModal() {
                           {t('diet.totalEstimated')}
                         </span>
                         <span className="text-sm font-semibold font-mono text-foreground">
-                          {currentRecipeTotals.calories} kcal
+                          {formatEnergy(currentRecipeTotals.calories, energyUnit).formatted}
                         </span>
                       </div>
                       <div className="text-[11px] font-mono text-muted-foreground flex gap-3 pt-0.5">
@@ -633,7 +681,7 @@ export function AddQuickModal() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                      {t('workout.set')} 1 {t('workout.weight')}
+                      {t('workout.set')} 1 {t('workout.weight')} ({bodyWeightUnit})
                     </label>
                     <Input
                       type="number"
@@ -729,14 +777,14 @@ export function AddQuickModal() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  {t('body.weight')} (kg)
+                  {t('body.weight')} ({bodyWeightUnit})
                 </label>
                 <Input
                   type="number"
                   step="0.1"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
-                  placeholder="如: 72.5"
+                  placeholder={bodyWeightUnit === 'lbs' ? '如: 160.0' : '如: 72.5'}
                   className="h-9 text-sm font-mono"
                 />
               </div>
@@ -758,28 +806,28 @@ export function AddQuickModal() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  {t('body.waist')} (cm)
+                  {t('body.waist')} ({lengthUnit})
                 </label>
                 <Input
                   type="number"
                   step="0.5"
                   value={waist}
                   onChange={(e) => setWaist(e.target.value)}
-                  placeholder="如: 78.0"
+                  placeholder={lengthUnit === 'in' ? '如: 30.0' : '如: 78.0'}
                   className="h-9 text-sm font-mono"
                 />
               </div>
 
               <div>
                 <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  {t('body.waterIntake')} (ml)
+                  {t('body.waterIntake')} ({foodVolumeUnit})
                 </label>
                 <Input
                   type="number"
-                  step="50"
+                  step={foodVolumeUnit === 'fl oz' ? '1' : '50'}
                   value={waterMl}
                   onChange={(e) => setWaterMl(e.target.value)}
-                  placeholder="如: 2000"
+                  placeholder={foodVolumeUnit === 'fl oz' ? '如: 64' : '如: 2000'}
                   className="h-9 text-sm font-mono"
                 />
               </div>

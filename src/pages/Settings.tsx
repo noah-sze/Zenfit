@@ -18,10 +18,20 @@ import { useRecipes } from '@/hooks/useRecipes';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import type {
+  UnitSystemPreset,
+  BodyWeightUnit,
+  FoodWeightUnit,
+  FoodVolumeUnit,
+  LengthUnit,
+  EnergyUnit,
+} from '@/types';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { preferences, updatePreset, updatePreference } = useUnitPreferences();
   const confirm = useConfirm();
   const { activeFoods, archivedFoods } = useFoods();
   const { activeRecipes, archivedRecipes } = useRecipes();
@@ -41,6 +51,12 @@ export default function Settings() {
     if (tVal === 'light') return t('settings.themeLight');
     if (tVal === 'dark') return t('settings.themeDark');
     return t('settings.themeSystem');
+  };
+
+  const getPresetLabel = (p: UnitSystemPreset) => {
+    if (p === 'metric') return t('settings.unitPresetMetric');
+    if (p === 'imperial') return t('settings.unitPresetImperial');
+    return t('settings.unitPresetCustom');
   };
 
   const getLanguageLabel = (lang: string) => {
@@ -202,6 +218,165 @@ export default function Settings() {
                 <SelectItem value="zh-TW">繁體中文 (台灣)</SelectItem>
                 <SelectItem value="zh-CN">简体中文</SelectItem>
                 <SelectItem value="en">English</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* 區塊：度量衡單位偏好 */}
+      <div>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
+          {t('settings.unitsSection')}
+        </div>
+        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          {/* 制式模板 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">{t('settings.unitPreset')}</span>
+            <Select
+              value={preferences.preset}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updatePreset(v as UnitSystemPreset);
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {getPresetLabel(preferences.preset)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-48">
+                <SelectItem value="metric">{t('settings.unitPresetMetric')}</SelectItem>
+                <SelectItem value="imperial">{t('settings.unitPresetImperial')}</SelectItem>
+                <SelectItem value="custom">{t('settings.unitPresetCustom')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 體重與訓練重量 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">{t('settings.unitBodyWeight')}</span>
+            <Select
+              value={preferences.bodyWeight}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updatePreference('bodyWeight', v as BodyWeightUnit);
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {preferences.bodyWeight}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="kg">kg</SelectItem>
+                <SelectItem value="lbs">lbs</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 食材重量 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">{t('settings.unitFoodWeight')}</span>
+            <Select
+              value={preferences.foodWeight}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updatePreference('foodWeight', v as FoodWeightUnit);
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {preferences.foodWeight}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="g">g</SelectItem>
+                <SelectItem value="oz">oz</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 液體容量 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">{t('settings.unitFoodVolume')}</span>
+            <Select
+              value={preferences.foodVolume}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updatePreference('foodVolume', v as FoodVolumeUnit);
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {preferences.foodVolume}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="ml">ml</SelectItem>
+                <SelectItem value="fl oz">fl oz</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 身高與圍度 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">{t('settings.unitLength')}</span>
+            <Select
+              value={preferences.length}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updatePreference('length', v as LengthUnit);
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {preferences.length}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="cm">cm</SelectItem>
+                <SelectItem value="in">in</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 熱量能量 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">{t('settings.unitEnergy')}</span>
+            <Select
+              value={preferences.energy}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updatePreference('energy', v as EnergyUnit);
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {preferences.energy}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="kcal">kcal</SelectItem>
+                <SelectItem value="kJ">kJ</SelectItem>
               </SelectContent>
             </Select>
           </div>

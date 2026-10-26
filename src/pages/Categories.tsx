@@ -41,12 +41,15 @@ import { useAppStore } from '@/store/useAppStore';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
 import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { formatEnergy, formatFoodServing, ozToG, flOzToMl } from '@/utils/unitMath';
 
 export default function Categories() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { nutritionDisplayMode } = useAppStore();
+  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   // 頂部視圖切換：食材 vs 食譜 (純本地狀態，不污染 URL，遵守 Rule 4)
   const [viewTab, setViewTab] = useState<'foods' | 'recipes'>('foods');
@@ -289,20 +292,28 @@ export default function Categories() {
     setRecipeName('');
     setRecipeDescription('');
     if (allFoods.length > 0) {
-      setRecipeIngredients([{ foodId: allFoods[0].id, quantity: '100', isOptional: false }]);
+      const firstFood = allFoods[0];
+      const isLiquid = (firstFood.servingUnit || 'g').toLowerCase().includes('ml') || firstFood.category === 'beverage';
+      const defaultQty = isLiquid
+        ? (foodVolumeUnit === 'fl oz' ? '8' : '250')
+        : (foodWeightUnit === 'oz' ? '1' : '100');
+      setRecipeIngredients([{ foodId: firstFood.id, quantity: defaultQty, isOptional: false }]);
     } else {
       setRecipeIngredients([]);
     }
     setIsRecipeDialogOpen(true);
   };
 
-
-
   const handleAddIngredientRow = () => {
     if (allFoods.length === 0) return;
+    const firstFood = allFoods[0];
+    const isLiquid = (firstFood.servingUnit || 'g').toLowerCase().includes('ml') || firstFood.category === 'beverage';
+    const defaultQty = isLiquid
+      ? (foodVolumeUnit === 'fl oz' ? '8' : '250')
+      : (foodWeightUnit === 'oz' ? '1' : '100');
     setRecipeIngredients((prev) => [
       ...prev,
-      { foodId: allFoods[0].id, quantity: '100', isOptional: false },
+      { foodId: firstFood.id, quantity: defaultQty, isOptional: false },
     ]);
   };
 
@@ -319,10 +330,18 @@ export default function Categories() {
       const targetFood = allFoods.find((f) => f.id === item.foodId);
       const qty = parseFloat(item.quantity);
       if (targetFood && qty > 0) {
+        const isLiquid = (targetFood.servingUnit || 'g').toLowerCase().includes('ml') || targetFood.category === 'beverage';
+        let normalizedQty = qty;
+        if (isLiquid && foodVolumeUnit === 'fl oz') {
+          normalizedQty = flOzToMl(qty, 2);
+        } else if (!isLiquid && foodWeightUnit === 'oz') {
+          normalizedQty = ozToG(qty, 2);
+        }
+
         validIngredients.push({
           foodId: targetFood.id,
           foodName: formatFoodDisplayName(targetFood),
-          quantity: qty,
+          quantity: normalizedQty,
           unit: targetFood.servingUnit || 'g',
           isOptional: item.isOptional,
         });
@@ -779,7 +798,17 @@ export default function Categories() {
                 filteredFoods.map((food) => {
                   const evalRes = evaluateNutritionalHighlight(food);
                   const isLowCalorie = evalRes.labels.includes('low-calorie');
-                  const scaledNutrition = calculateScaledNutrition(food, nutritionDisplayMode);
+                  const scaledNutrition = calculateScaledNutrition(food, nutritionDisplayMode, {
+                    foodWeightUnit,
+                    foodVolumeUnit,
+                  });
+                  const displayServing = formatFoodServing(
+                    scaledNutrition.servingSize,
+                    scaledNutrition.servingUnit,
+                    foodWeightUnit,
+                    foodVolumeUnit
+                  );
+                  const displayCal = formatEnergy(scaledNutrition.calories, energyUnit);
 
                   return (
                     <div
@@ -798,7 +827,7 @@ export default function Categories() {
 
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
                           <span className={cn(nutritionDisplayMode === 'per100g' && "font-medium text-foreground")}>
-                            {scaledNutrition.servingSize}{scaledNutrition.servingUnit}
+                            {displayServing.formatted}
                           </span>
                           <span className="opacity-40">·</span>
                           <span
@@ -807,7 +836,7 @@ export default function Categories() {
                                 "text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20"
                             )}
                           >
-                            {scaledNutrition.calories} kcal
+                            {displayCal.formatted}
                           </span>
                         </div>
                       </button>
@@ -1064,7 +1093,11 @@ export default function Categories() {
                       servingSize: macros.totalWeightGrams || 100,
                       servingUnit: 'g',
                     },
-                    nutritionDisplayMode
+                    nutritionDisplayMode,
+                    {
+                      foodWeightUnit,
+                      foodVolumeUnit,
+                    }
                   );
 
                   return (
@@ -1086,11 +1119,11 @@ export default function Categories() {
                           {nutritionDisplayMode === 'per100g' ? (
                             <>
                               <span className="font-medium text-foreground">
-                                100g
+                                {formatFoodServing(scaledRecipeMacros.servingSize, scaledRecipeMacros.servingUnit, foodWeightUnit, foodVolumeUnit).formatted}
                               </span>
                               <span className="opacity-40">·</span>
                               <span>
-                                {scaledRecipeMacros.calories} kcal
+                                {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
                               </span>
                             </>
                           ) : (
@@ -1100,7 +1133,7 @@ export default function Categories() {
                               </span>
                               <span className="opacity-40">·</span>
                               <span>
-                                {macros.calories} kcal
+                                {formatEnergy(macros.calories, energyUnit).formatted}
                               </span>
                             </>
                           )}
@@ -1235,7 +1268,7 @@ export default function Categories() {
                           >
                             {allFoods.map((f) => (
                               <option key={f.id} value={f.id}>
-                                {formatFoodDisplayName(f)} ({f.servingSize}{f.servingUnit})
+                                {formatFoodDisplayName(f)} ({formatEnergy(f.calories, energyUnit).formatted} / {formatFoodServing(f.servingSize, f.servingUnit, foodWeightUnit, foodVolumeUnit).formatted})
                               </option>
                             ))}
                           </select>
@@ -1265,7 +1298,7 @@ export default function Categories() {
                               }}
                               className="h-7 text-xs font-mono w-20"
                             />
-                            <span className="text-muted-foreground">{selFood?.servingUnit || 'g'}</span>
+                            <span className="text-muted-foreground">{formatFoodServing(1, selFood?.servingUnit || 'g', foodWeightUnit, foodVolumeUnit).unit}</span>
                           </div>
 
                           <label className="flex items-center gap-1.5 cursor-pointer select-none">

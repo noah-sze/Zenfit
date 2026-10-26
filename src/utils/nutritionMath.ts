@@ -1,3 +1,6 @@
+import type { FoodWeightUnit, FoodVolumeUnit } from '@/types';
+import { OZ_TO_G_RATIO, FL_OZ_TO_ML_RATIO } from './unitMath';
+
 export type NutritionDisplayMode = 'serving' | 'per100g';
 
 export interface BaseNutritionInput {
@@ -18,13 +21,23 @@ export interface ScaledNutritionResult {
   servingUnit: string;
 }
 
+export interface ScaledNutritionOptions {
+  foodWeightUnit?: FoodWeightUnit;
+  foodVolumeUnit?: FoodVolumeUnit;
+}
+
 /**
- * 依據顯示模式（每份基準 vs 每 100g 密度基準），精確推算熱量與三大營養素
+ * 依據顯示模式（每份基準 vs 密度基準 100g / 1 oz），精確推算熱量與三大營養素
  * 純數學無副作用函數，100% 覆蓋邊界情況（除以零、無效數值、負數防護）
+ * 
+ * 方案 A 國際化密度標準 (SSOT)：
+ * - 公制 (g / ml)：以「每 100g」（液體為「每 100ml」）為密度標準
+ * - 英制 (oz / fl oz)：以「每 1 oz」（液體為「每 1 fl oz」）為密度標準
  */
 export function calculateScaledNutrition(
   item: BaseNutritionInput | null | undefined,
-  mode: NutritionDisplayMode = 'serving'
+  mode: NutritionDisplayMode = 'serving',
+  options?: ScaledNutritionOptions
 ): ScaledNutritionResult {
   const safeCalories = Math.max(0, typeof item?.calories === 'number' && !isNaN(item.calories) ? item.calories : 0);
   const safeProtein = Math.max(0, typeof item?.protein === 'number' && !isNaN(item.protein) ? item.protein : 0);
@@ -45,30 +58,106 @@ export function calculateScaledNutrition(
     };
   }
 
-  // 「每 100g」模式：
-  // 邊界防護：若份量無效或 <= 0，除以零防護，回退為原始數值或預設 100
+  // 「密度」模式 (per100g / per 1 oz)：
+  const normalizedRawUnit = rawUnit.toLowerCase();
+  const isLiquid = normalizedRawUnit.includes('ml') || normalizedRawUnit.includes('fl');
+  const isImperial = options?.foodWeightUnit === 'oz';
+
+  // 邊界防護：若份量無效或 <= 0，除以零防護，回退為原始數值或預設基準
   if (rawSize <= 0) {
+    if (isImperial) {
+      return {
+        calories: Math.round(safeCalories),
+        protein: Math.round(safeProtein * 10) / 10,
+        carbs: Math.round(safeCarbs * 10) / 10,
+        fat: Math.round(safeFat * 10) / 10,
+        servingSize: 1,
+        servingUnit: isLiquid ? 'fl oz' : 'oz',
+      };
+    }
     return {
       calories: Math.round(safeCalories),
       protein: Math.round(safeProtein * 10) / 10,
       carbs: Math.round(safeCarbs * 10) / 10,
       fat: Math.round(safeFat * 10) / 10,
       servingSize: 100,
-      servingUnit: rawUnit.toLowerCase().includes('ml') ? 'ml' : 'g',
+      servingUnit: isLiquid ? 'ml' : 'g',
     };
   }
 
-  const factor = 100 / rawSize;
-  const isLiquid = rawUnit.toLowerCase().includes('ml');
+  if (isImperial) {
+    // 方案 A 英制密度基準：固體為 1 oz，液體為 1 fl oz
+    let factor = 1;
+    if (isLiquid) {
+      // 基準為 1 fl oz
+      if (normalizedRawUnit.includes('fl')) {
+        // 原始單位已是 fl oz
+        factor = 1 / rawSize;
+      } else {
+        // 原始單位為 ml (1 fl oz = FL_OZ_TO_ML_RATIO ml)
+        factor = FL_OZ_TO_ML_RATIO / rawSize;
+      }
+      return {
+        calories: Math.round(safeCalories * factor),
+        protein: Math.round(safeProtein * factor * 10) / 10,
+        carbs: Math.round(safeCarbs * factor * 10) / 10,
+        fat: Math.round(safeFat * factor * 10) / 10,
+        servingSize: 1,
+        servingUnit: 'fl oz',
+      };
+    } else {
+      // 基準為 1 oz
+      if (normalizedRawUnit.includes('oz')) {
+        // 原始單位已是 oz
+        factor = 1 / rawSize;
+      } else {
+        // 原始單位為 g (1 oz = OZ_TO_G_RATIO g)
+        factor = OZ_TO_G_RATIO / rawSize;
+      }
+      return {
+        calories: Math.round(safeCalories * factor),
+        protein: Math.round(safeProtein * factor * 10) / 10,
+        carbs: Math.round(safeCarbs * factor * 10) / 10,
+        fat: Math.round(safeFat * factor * 10) / 10,
+        servingSize: 1,
+        servingUnit: 'oz',
+      };
+    }
+  }
 
-  return {
-    calories: Math.round(safeCalories * factor),
-    protein: Math.round(safeProtein * factor * 10) / 10,
-    carbs: Math.round(safeCarbs * factor * 10) / 10,
-    fat: Math.round(safeFat * factor * 10) / 10,
-    servingSize: 100,
-    servingUnit: isLiquid ? 'ml' : 'g',
-  };
+  // 公制密度基準：固體為 100g，液體為 100ml
+  let factor = 1;
+  if (isLiquid) {
+    if (normalizedRawUnit.includes('fl')) {
+      // 原始單位為 fl oz，100ml = 100 / FL_OZ_TO_ML_RATIO fl oz
+      factor = (100 / FL_OZ_TO_ML_RATIO) / rawSize;
+    } else {
+      factor = 100 / rawSize;
+    }
+    return {
+      calories: Math.round(safeCalories * factor),
+      protein: Math.round(safeProtein * factor * 10) / 10,
+      carbs: Math.round(safeCarbs * factor * 10) / 10,
+      fat: Math.round(safeFat * factor * 10) / 10,
+      servingSize: 100,
+      servingUnit: 'ml',
+    };
+  } else {
+    if (normalizedRawUnit.includes('oz')) {
+      // 原始單位為 oz，100g = 100 / OZ_TO_G_RATIO oz
+      factor = (100 / OZ_TO_G_RATIO) / rawSize;
+    } else {
+      factor = 100 / rawSize;
+    }
+    return {
+      calories: Math.round(safeCalories * factor),
+      protein: Math.round(safeProtein * factor * 10) / 10,
+      carbs: Math.round(safeCarbs * factor * 10) / 10,
+      fat: Math.round(safeFat * factor * 10) / 10,
+      servingSize: 100,
+      servingUnit: 'g',
+    };
+  }
 }
 
 export interface ScaleBasisParams {

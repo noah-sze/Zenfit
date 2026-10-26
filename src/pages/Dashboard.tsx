@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/button';
 import { SpringNumber } from '@/components/ui/SpringNumber';
 import { Plus, Flame, Droplet, Dumbbell, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { formatEnergy, convertFoodVolume, FL_OZ_TO_ML_RATIO } from '@/utils/unitMath';
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { selectedDate, openAddModal } = useAppStore();
+  const { energyUnit, foodVolumeUnit } = useUnitPreferences();
 
   const { plan: dietPlan } = useDietPlan(selectedDate);
   const { totals } = useFoodLogs(selectedDate);
@@ -25,6 +28,10 @@ export default function Dashboard() {
   const calorieConsumed = totals.calories || 0;
   const calorieRemaining = Math.max(0, calorieTarget - calorieConsumed);
   const calorieProgress = Math.min(100, Math.round((calorieConsumed / calorieTarget) * 100));
+
+  const displayCalorieTarget = formatEnergy(calorieTarget, energyUnit).value;
+  const displayCalorieConsumed = formatEnergy(calorieConsumed, energyUnit).value;
+  const displayCalorieRemaining = formatEnergy(calorieRemaining, energyUnit).value;
 
   const proteinTarget = dietPlan.proteinTarget || 140;
   const proteinConsumed = totals.protein || 0;
@@ -41,6 +48,14 @@ export default function Dashboard() {
   const waterTarget = dietPlan.waterMlTarget || 2500;
   const waterConsumed = metricToday?.waterMl || 0;
   const waterProgress = Math.min(100, Math.round((waterConsumed / waterTarget) * 100));
+
+  const isFlOz = foodVolumeUnit === 'fl oz';
+  const displayWaterConsumed = isFlOz
+    ? convertFoodVolume(waterConsumed, 'ml', 'fl oz', 1)
+    : waterConsumed;
+  const displayWaterTarget = isFlOz
+    ? convertFoodVolume(waterTarget, 'ml', 'fl oz', 1)
+    : waterTarget;
 
   // 計算今日訓練總容量與完成組數
   let totalSetsCount = 0;
@@ -79,8 +94,8 @@ export default function Dashboard() {
           <div className="flex items-baseline justify-between">
             <div>
               <div className="hero-number flex items-baseline gap-1">
-                <SpringNumber value={calorieRemaining} />
-                <span className="text-xs font-normal text-muted-foreground font-sans">kcal</span>
+                <SpringNumber value={displayCalorieRemaining} />
+                <span className="text-xs font-normal text-muted-foreground font-sans">{energyUnit}</span>
               </div>
 
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -90,10 +105,10 @@ export default function Dashboard() {
 
             <div className="text-right font-mono text-xs space-y-0.5">
               <div className="text-muted-foreground">
-                {t('diet.consumed')}: <span className="text-foreground font-medium">{calorieConsumed}</span>
+                {t('diet.consumed')}: <span className="text-foreground font-medium">{displayCalorieConsumed}</span>
               </div>
               <div className="text-muted-foreground">
-                {t('diet.target')}: <span className="text-foreground">{calorieTarget}</span>
+                {t('diet.target')}: <span className="text-foreground">{displayCalorieTarget}</span>
               </div>
             </div>
           </div>
@@ -238,7 +253,7 @@ export default function Dashboard() {
             </CardTitle>
           </div>
           <span className="text-xs font-mono text-muted-foreground">
-            {waterConsumed} / {waterTarget} ml
+            {displayWaterConsumed} / {displayWaterTarget} {foodVolumeUnit}
           </span>
         </CardHeader>
 
@@ -251,22 +266,45 @@ export default function Dashboard() {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => addWater(250)}
-              className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
-            >
-              +250 ml
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => addWater(500)}
-              className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
-            >
-              +500 ml
-            </Button>
+            {isFlOz ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWater(Math.round(8 * FL_OZ_TO_ML_RATIO))}
+                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
+                >
+                  +8 fl oz
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWater(Math.round(16 * FL_OZ_TO_ML_RATIO))}
+                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
+                >
+                  +16 fl oz
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWater(250)}
+                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
+                >
+                  +250 ml
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWater(500)}
+                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
+                >
+                  +500 ml
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

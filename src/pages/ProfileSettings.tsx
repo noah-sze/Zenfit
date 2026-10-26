@@ -9,46 +9,63 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weightMath';
+import { cmToIn, inToCm, kgToLbs, lbsToKg } from '@/utils/unitMath';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { CalendarDays } from 'lucide-react';
 
 export default function ProfileSettings() {
   const { t } = useTranslation();
   const { profile, updateProfile } = useUserProfile();
+  const { lengthUnit, bodyWeightUnit, updatePreference } = useUnitPreferences();
 
   // 本地表單狀態
   const [name, setName] = useState(profile.name || 'Noah');
   const [gender, setGender] = useState<'male' | 'female'>(profile.gender || 'male');
   const [birthDate, setBirthDate] = useState(profile.birthDate || '1999-01');
-  const [heightCm, setHeightCm] = useState(String(profile.heightCm || 175));
-  const [currentWeightKg, setCurrentWeightKg] = useState(String(profile.currentWeightKg || 70));
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(profile.weightUnit || 'kg');
+
+  // 身高與體重：依據偏好單位展示
+  const getInitialHeight = () => {
+    const rawCm = profile.heightCm || 175;
+    return lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm);
+  };
+  const getInitialWeight = () => {
+    const rawKg = profile.currentWeightKg || 70;
+    return bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg);
+  };
+
+  const [displayHeight, setDisplayHeight] = useState(getInitialHeight);
+  const [displayWeight, setDisplayWeight] = useState(getInitialWeight);
 
   useEffect(() => {
     if (profile) {
       setName(profile.name || 'Noah');
       setGender(profile.gender || 'male');
       setBirthDate(profile.birthDate || '1999-01');
-      setHeightCm(String(profile.heightCm || 175));
-      setCurrentWeightKg(String(profile.currentWeightKg || 70));
-      setWeightUnit(profile.weightUnit || 'kg');
+      const rawCm = profile.heightCm || 175;
+      setDisplayHeight(lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm));
+      const rawKg = profile.currentWeightKg || 70;
+      setDisplayWeight(bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg));
     }
-  }, [profile]);
+  }, [profile, lengthUnit, bodyWeightUnit]);
 
-  // 即時計算客觀生理常數
-  const parsedWeight = parseFloat(currentWeightKg) || 0;
-  const parsedHeight = parseFloat(heightCm) || 0;
+  // 即時計算客觀生理常數（折算為物理基準 kg & cm 計算）
+  const parsedDisplayWeight = parseFloat(displayWeight) || 0;
+  const parsedDisplayHeight = parseFloat(displayHeight) || 0;
+  const weightInKg = bodyWeightUnit === 'lbs' ? lbsToKg(parsedDisplayWeight) : parsedDisplayWeight;
+  const heightInCm = lengthUnit === 'in' ? inToCm(parsedDisplayHeight) : parsedDisplayHeight;
+
   const calculatedAge = calculateAgeFromBirth(birthDate);
-  const currentBMI = calculateBMI(parsedWeight, parsedHeight);
-  const currentBMR = calculateBMR(parsedWeight, parsedHeight, gender, calculatedAge);
+  const currentBMI = calculateBMI(weightInKg, heightInCm);
+  const currentBMR = calculateBMR(weightInKg, heightInCm, gender, calculatedAge);
 
   const handleSave = async () => {
     const finalName = name.trim() || 'Noah';
-    const finalHeight = parseFloat(heightCm) || 175;
-    const finalWeight = parseFloat(currentWeightKg) || 70;
+    const finalHeight = heightInCm > 0 ? heightInCm : 175;
+    const finalWeight = weightInKg > 0 ? weightInKg : 70;
 
     await updateProfile({
       name: finalName,
@@ -57,7 +74,7 @@ export default function ProfileSettings() {
       age: calculatedAge,
       heightCm: finalHeight,
       currentWeightKg: finalWeight,
-      weightUnit,
+      weightUnit: bodyWeightUnit,
     });
 
     triggerHaptic('success');
@@ -142,11 +159,11 @@ export default function ProfileSettings() {
               <input
                 type="text"
                 inputMode="decimal"
-                value={heightCm}
-                onChange={(e) => setHeightCm(e.target.value)}
+                value={displayHeight}
+                onChange={(e) => setDisplayHeight(e.target.value)}
                 className="h-8 w-16 text-right text-sm font-mono text-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
               />
-              <span>cm</span>
+              <span>{lengthUnit}</span>
             </div>
           </div>
         </div>
@@ -164,9 +181,9 @@ export default function ProfileSettings() {
               {t('profileSettings.unit')}
             </span>
             <Select
-              value={weightUnit}
+              value={bodyWeightUnit}
               onValueChange={(v) => {
-                setWeightUnit(v as 'kg' | 'lbs');
+                updatePreference('bodyWeight', v as 'kg' | 'lbs');
                 triggerHaptic('selection');
               }}
             >
@@ -175,7 +192,7 @@ export default function ProfileSettings() {
                 className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
               >
                 <SelectValue className="flex-none text-right">
-                  {weightUnit}
+                  {bodyWeightUnit}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent align="end">
@@ -194,11 +211,11 @@ export default function ProfileSettings() {
               <input
                 type="text"
                 inputMode="decimal"
-                value={currentWeightKg}
-                onChange={(e) => setCurrentWeightKg(e.target.value)}
+                value={displayWeight}
+                onChange={(e) => setDisplayWeight(e.target.value)}
                 className="h-8 w-16 text-right text-sm font-mono text-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
               />
-              <span>{weightUnit}</span>
+              <span>{bodyWeightUnit}</span>
             </div>
           </div>
 

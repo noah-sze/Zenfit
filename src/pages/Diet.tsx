@@ -24,6 +24,8 @@ import {
   calculateMacrosFromSplit,
 } from '@/utils/weightMath';
 import { triggerHaptic } from '@/lib/haptics';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 
 export default function Diet() {
   const { t } = useTranslation();
@@ -31,6 +33,7 @@ export default function Diet() {
   const { mealGroups, deleteFoodLog, totals } = useFoodLogs(selectedDate);
   const { profile, updateProfile } = useUserProfile();
   const { plan, saveDietPlan } = useDietPlan(selectedDate);
+  const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
   const confirm = useConfirm();
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -142,7 +145,7 @@ export default function Diet() {
               className="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors px-2.5 py-0.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50"
               title={t('dietPlan.title')}
             >
-              <span>{t('diet.target')} {targetCalories}</span>
+              <span>{t('diet.target')} {formatEnergy(targetCalories, energyUnit).value.toLocaleString()} {energyUnit}</span>
               <SlidersHorizontal className="size-2.5 text-muted-foreground ml-0.5" />
             </button>
           </div>
@@ -150,9 +153,9 @@ export default function Diet() {
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-2 pb-1 text-center">
             <div className="hero-number flex items-baseline justify-center gap-1.5">
-              <span>{totals.calories}</span>
+              <span>{formatEnergy(totals.calories, energyUnit).value.toLocaleString()}</span>
               <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
-                kcal
+                {energyUnit}
               </span>
             </div>
 
@@ -160,8 +163,8 @@ export default function Diet() {
             <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
               <span>
                 {calorieDiff >= 0
-                  ? `${t('dietPlan.underBudget')} ${calorieDiff} kcal`
-                  : `${t('dietPlan.overBudget')} +${Math.abs(calorieDiff)} kcal`}
+                  ? `${t('dietPlan.underBudget')} ${formatEnergy(calorieDiff, energyUnit).value.toLocaleString()} ${energyUnit}`
+                  : `${t('dietPlan.overBudget')} +${formatEnergy(Math.abs(calorieDiff), energyUnit).value.toLocaleString()} ${energyUnit}`}
               </span>
 
             </div>
@@ -287,7 +290,7 @@ export default function Diet() {
                   {t(`diet.${type}`)}
                 </CardTitle>
                 <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-                  <span>{groupCalories} kcal</span>
+                  <span>{formatEnergy(groupCalories, energyUnit).formatted}</span>
                   <span className="text-border">·</span>
                   <span className="inline-flex items-center gap-1">
                     <span className="size-2 rounded-full bg-protein shrink-0" />
@@ -320,7 +323,7 @@ export default function Diet() {
                           {item.foodName}
                         </div>
                         <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs font-mono text-muted-foreground">
-                          <span>{item.quantity} {item.unit}</span>
+                          <span>{formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}</span>
                           <span className="text-border/70">·</span>
                           <span className="inline-flex items-center gap-1">
                             <span className="size-2 rounded-full bg-carbs shrink-0" />
@@ -339,7 +342,7 @@ export default function Diet() {
 
                       <div className="flex items-center gap-2.5">
                         <span className="font-mono text-base font-semibold">
-                          {item.calories} <span className="text-xs text-muted-foreground font-normal">kcal</span>
+                          {formatEnergy(item.calories, energyUnit).value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{energyUnit}</span>
                         </span>
                         <button
                           type="button"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -9,14 +9,17 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
 import { WeightTrendChart } from '@/components/body/WeightTrendChart';
 import { calculateBMI } from '@/utils/weightMath';
+import { convertBodyWeight, cmToIn, inToCm } from '@/utils/unitMath';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import type { BodyMetric } from '@/types';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 
 export default function Body() {
   const { t } = useTranslation();
   const { selectedDate } = useAppStore();
   const { profile, updateProfile } = useUserProfile();
+  const { bodyWeightUnit, lengthUnit } = useUnitPreferences();
   const {
     metricToday,
     recentHistory,
@@ -41,13 +44,16 @@ export default function Body() {
   // 當切換日期或今天數據變更時同步
   useEffect(() => {
     if (metricToday) {
-      setWeight(metricToday.weight ? String(metricToday.weight) : '');
+      const wVal = metricToday.weight
+        ? convertBodyWeight(metricToday.weight, 'kg', bodyWeightUnit)
+        : '';
+      setWeight(wVal ? String(wVal) : '');
       setBodyFat(metricToday.bodyFat ? String(metricToday.bodyFat) : '');
-      setWaist(metricToday.waistCm ? String(metricToday.waistCm) : '');
-      setHips(metricToday.hipsCm ? String(metricToday.hipsCm) : '');
-      setChest(metricToday.chestCm ? String(metricToday.chestCm) : '');
-      setArms(metricToday.armsCm ? String(metricToday.armsCm) : '');
-      setThighs(metricToday.thighsCm ? String(metricToday.thighsCm) : '');
+      setWaist(metricToday.waistCm ? String(lengthUnit === 'in' ? cmToIn(metricToday.waistCm, 1) : metricToday.waistCm) : '');
+      setHips(metricToday.hipsCm ? String(lengthUnit === 'in' ? cmToIn(metricToday.hipsCm, 1) : metricToday.hipsCm) : '');
+      setChest(metricToday.chestCm ? String(lengthUnit === 'in' ? cmToIn(metricToday.chestCm, 1) : metricToday.chestCm) : '');
+      setArms(metricToday.armsCm ? String(lengthUnit === 'in' ? cmToIn(metricToday.armsCm, 1) : metricToday.armsCm) : '');
+      setThighs(metricToday.thighsCm ? String(lengthUnit === 'in' ? cmToIn(metricToday.thighsCm, 1) : metricToday.thighsCm) : '');
     } else {
       setWeight('');
       setBodyFat('');
@@ -57,7 +63,7 @@ export default function Body() {
       setArms('');
       setThighs('');
     }
-  }, [metricToday, selectedDate]);
+  }, [metricToday, selectedDate, bodyWeightUnit, lengthUnit]);
 
   const rawWeight = metricToday?.weight || (weight ? parseFloat(weight) : undefined);
   const displayWeight = currentTrendWeight || rawWeight || profile.currentWeightKg || 70;
@@ -69,14 +75,44 @@ export default function Body() {
     leanMassKg = Math.round(metricToday.weight * (1 - metricToday.bodyFat / 100) * 10) / 10;
   }
 
+  const displayTrendPoints = useMemo(() => {
+    if (bodyWeightUnit === 'kg') return trendPoints;
+    return trendPoints.map((p) => ({
+      ...p,
+      rawWeight: p.rawWeight ? convertBodyWeight(p.rawWeight, 'kg', 'lbs') : undefined,
+      trendWeight: convertBodyWeight(p.trendWeight, 'kg', 'lbs'),
+    }));
+  }, [trendPoints, bodyWeightUnit]);
+
+  const displayTrendWeight = currentTrendWeight
+    ? convertBodyWeight(currentTrendWeight, 'kg', bodyWeightUnit)
+    : null;
+  const displayCurrentWeight = convertBodyWeight(profile.currentWeightKg, 'kg', bodyWeightUnit);
+  const displayWeeklyRate = weeklyRate !== null
+    ? (bodyWeightUnit === 'lbs' ? Math.round(weeklyRate * 2.20462 * 100) / 100 : weeklyRate)
+    : null;
+  const displayLeanMass = leanMassKg !== null
+    ? convertBodyWeight(leanMassKg, 'kg', bodyWeightUnit)
+    : null;
+
   const handleSave = async () => {
-    const weightVal = weight ? parseFloat(weight) : undefined;
+    const parsedInputWeight = weight ? parseFloat(weight) : undefined;
+    const weightVal = parsedInputWeight !== undefined
+      ? convertBodyWeight(parsedInputWeight, bodyWeightUnit, 'kg')
+      : undefined;
     const bodyFatVal = bodyFat ? parseFloat(bodyFat) : undefined;
-    const waistVal = waist ? parseFloat(waist) : undefined;
-    const hipsVal = hips ? parseFloat(hips) : undefined;
-    const chestVal = chest ? parseFloat(chest) : undefined;
-    const armsVal = arms ? parseFloat(arms) : undefined;
-    const thighsVal = thighs ? parseFloat(thighs) : undefined;
+
+    const parseCirc = (valStr: string) => {
+      const n = valStr ? parseFloat(valStr) : undefined;
+      if (n === undefined) return undefined;
+      return lengthUnit === 'in' ? inToCm(n, 2) : n;
+    };
+
+    const waistVal = parseCirc(waist);
+    const hipsVal = parseCirc(hips);
+    const chestVal = parseCirc(chest);
+    const armsVal = parseCirc(arms);
+    const thighsVal = parseCirc(thighs);
 
     if (
       weightVal === undefined &&
@@ -128,12 +164,12 @@ export default function Body() {
           {profile.name} · {t('body.title')}
         </div>
         <h1 className="text-xl font-bold tracking-tight">
-          {currentTrendWeight ? (
+          {displayTrendWeight ? (
             <>
-              {currentTrendWeight} <span className="text-xs font-normal text-muted-foreground font-mono">{profile.weightUnit} ({t('body.trend')})</span>
+              {displayTrendWeight} <span className="text-xs font-normal text-muted-foreground font-mono">{bodyWeightUnit} ({t('body.trend')})</span>
             </>
           ) : (
-            `${profile.currentWeightKg} ${profile.weightUnit}`
+            `${displayCurrentWeight} ${bodyWeightUnit}`
           )}
         </h1>
       </div>
@@ -145,7 +181,7 @@ export default function Body() {
             {t('body.trendWeight')}
           </span>
           <span className="text-base sm:text-lg font-bold font-mono">
-            {currentTrendWeight ? `${currentTrendWeight}` : '--'}
+            {displayTrendWeight ? `${displayTrendWeight}` : '--'}
           </span>
         </div>
 
@@ -154,7 +190,7 @@ export default function Body() {
             {t('body.weeklyRate')}
           </span>
           <span className="text-base sm:text-lg font-bold font-mono">
-            {weeklyRate !== null ? `${weeklyRate > 0 ? '+' : ''}${weeklyRate}` : '--'}
+            {displayWeeklyRate !== null ? `${displayWeeklyRate > 0 ? '+' : ''}${displayWeeklyRate}` : '--'}
           </span>
         </div>
 
@@ -163,7 +199,7 @@ export default function Body() {
             {t('body.leanBodyMass')}
           </span>
           <span className="text-base sm:text-lg font-bold font-mono">
-            {leanMassKg ? `${leanMassKg}` : '--'}
+            {displayLeanMass ? `${displayLeanMass}` : '--'}
           </span>
         </div>
 
@@ -181,7 +217,7 @@ export default function Body() {
       <Card className="border border-border bg-card text-card-foreground shadow-none rounded-lg p-5 space-y-4">
         <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
           <span>{selectedDate} {t('body.rawWeight')}</span>
-          <span>{profile.weightUnit}</span>
+          <span>{bodyWeightUnit}</span>
         </div>
 
         {/* 無邊界超大字體輸入 */}
@@ -191,7 +227,7 @@ export default function Body() {
             step="0.1"
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
-            placeholder={String(profile.currentWeightKg || '70.0')}
+            placeholder={String(profile.currentWeightKg ? convertBodyWeight(profile.currentWeightKg, 'kg', bodyWeightUnit) : (bodyWeightUnit === 'lbs' ? '154.0' : '70.0'))}
             className="w-full text-center text-5xl font-bold font-mono tracking-tight bg-transparent border-0 outline-none placeholder:text-muted-foreground/30 focus:ring-0 text-foreground"
           />
         </div>
@@ -213,14 +249,14 @@ export default function Body() {
           </div>
           <div>
             <label className="text-xs font-mono text-muted-foreground block mb-1">
-              {t('body.waist')} (cm)
+              {t('body.waist')} ({lengthUnit})
             </label>
             <Input
               type="number"
               step="0.5"
               value={waist}
               onChange={(e) => setWaist(e.target.value)}
-              placeholder="如: 78.0"
+              placeholder={lengthUnit === 'in' ? '如: 30.5' : '如: 78.0'}
               className="h-10 text-sm font-mono"
             />
           </div>
@@ -250,56 +286,56 @@ export default function Body() {
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/40 animate-in fade-in duration-200">
               <div>
                 <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('body.chest')} (cm)
+                  {t('body.chest')} ({lengthUnit})
                 </label>
                 <Input
                   type="number"
                   step="0.5"
                   value={chest}
                   onChange={(e) => setChest(e.target.value)}
-                  placeholder="如: 98.0"
+                  placeholder={lengthUnit === 'in' ? '如: 38.5' : '如: 98.0'}
                   className="h-10 text-sm font-mono"
                 />
               </div>
 
               <div>
                 <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('body.hips')} (cm)
+                  {t('body.hips')} ({lengthUnit})
                 </label>
                 <Input
                   type="number"
                   step="0.5"
                   value={hips}
                   onChange={(e) => setHips(e.target.value)}
-                  placeholder="如: 95.0"
+                  placeholder={lengthUnit === 'in' ? '如: 37.5' : '如: 95.0'}
                   className="h-10 text-sm font-mono"
                 />
               </div>
 
               <div>
                 <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('body.arms')} (cm)
+                  {t('body.arms')} ({lengthUnit})
                 </label>
                 <Input
                   type="number"
                   step="0.5"
                   value={arms}
                   onChange={(e) => setArms(e.target.value)}
-                  placeholder="如: 35.0"
+                  placeholder={lengthUnit === 'in' ? '如: 14.0' : '如: 35.0'}
                   className="h-10 text-sm font-mono"
                 />
               </div>
 
               <div>
                 <label className="text-xs font-mono text-muted-foreground block mb-1">
-                  {t('body.thighs')} (cm)
+                  {t('body.thighs')} ({lengthUnit})
                 </label>
                 <Input
                   type="number"
                   step="0.5"
                   value={thighs}
                   onChange={(e) => setThighs(e.target.value)}
-                  placeholder="如: 56.0"
+                  placeholder={lengthUnit === 'in' ? '如: 22.0' : '如: 56.0'}
                   className="h-10 text-sm font-mono"
                 />
               </div>
@@ -318,8 +354,8 @@ export default function Body() {
 
       {/* 雙軌體重視覺化折線圖 (散點 + EWMA 平滑線) */}
       <WeightTrendChart
-        data={trendPoints}
-        unit={profile.weightUnit}
+        data={displayTrendPoints}
+        unit={bodyWeightUnit}
       />
 
       {/* 歷史時序流水記錄表 */}
@@ -342,9 +378,9 @@ export default function Body() {
                     <span className="font-semibold text-foreground">{rec.date}</span>
                     {(rec.waistCm || rec.chestCm || rec.armsCm) && (
                       <div className="text-xs text-muted-foreground">
-                        {rec.waistCm && `腰: ${rec.waistCm}cm `}
-                        {rec.chestCm && `胸: ${rec.chestCm}cm `}
-                        {rec.armsCm && `臂: ${rec.armsCm}cm`}
+                        {rec.waistCm && `腰: ${lengthUnit === 'in' ? cmToIn(rec.waistCm, 1) : rec.waistCm}${lengthUnit} `}
+                        {rec.chestCm && `胸: ${lengthUnit === 'in' ? cmToIn(rec.chestCm, 1) : rec.chestCm}${lengthUnit} `}
+                        {rec.armsCm && `臂: ${lengthUnit === 'in' ? cmToIn(rec.armsCm, 1) : rec.armsCm}${lengthUnit}`}
                       </div>
                     )}
                   </div>
@@ -353,7 +389,7 @@ export default function Body() {
                     <div className="text-right">
                       {rec.weight && (
                         <div className="font-semibold text-foreground">
-                          {rec.weight} {profile.weightUnit}
+                          {convertBodyWeight(rec.weight, 'kg', bodyWeightUnit)} {bodyWeightUnit}
                         </div>
                       )}
                       {rec.bodyFat && (

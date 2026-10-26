@@ -16,6 +16,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
 import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 
 export default function CategoryDetails() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,7 @@ export default function CategoryDetails() {
   const confirm = useConfirm();
   const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood, deleteFood } = useFoods();
   const { nutritionDisplayMode } = useAppStore();
+  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   const food = useMemo(() => {
     return allFoods.find((f) => f.id === id);
@@ -31,8 +34,11 @@ export default function CategoryDetails() {
 
   const scaledNutrition = useMemo(() => {
     if (!food) return null;
-    return calculateScaledNutrition(food, nutritionDisplayMode);
-  }, [food, nutritionDisplayMode]);
+    return calculateScaledNutrition(food, nutritionDisplayMode, {
+      foodWeightUnit,
+      foodVolumeUnit,
+    });
+  }, [food, nutritionDisplayMode, foodWeightUnit, foodVolumeUnit]);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -252,10 +258,10 @@ export default function CategoryDetails() {
           </div>
           <AutoMarquee align="center" className="text-4xl sm:text-5xl font-mono tracking-tighter font-medium px-4 leading-none">
             <span className="tabular-nums font-mono">
-              {allTimeCalories.toLocaleString()}
+              {formatEnergy(allTimeCalories, energyUnit).value.toLocaleString()}
             </span>
             <span className="text-lg sm:text-xl font-normal text-muted-foreground ml-1.5">
-              kcal
+              {energyUnit}
             </span>
           </AutoMarquee>
         </div>
@@ -273,10 +279,10 @@ export default function CategoryDetails() {
             </div>
             <div className="text-xl sm:text-2xl font-mono tracking-tight font-medium leading-none mt-2 truncate">
               <span className="tabular-nums font-mono">
-                {pastMonthCalories.toLocaleString()}
+                {formatEnergy(pastMonthCalories, energyUnit).value.toLocaleString()}
               </span>
               <span className="text-xs font-normal text-muted-foreground ml-1">
-                kcal
+                {energyUnit}
               </span>
             </div>
           </div>
@@ -292,10 +298,10 @@ export default function CategoryDetails() {
             </div>
             <div className="text-xl sm:text-2xl font-mono tracking-tight font-medium leading-none mt-2 truncate">
               <span className="tabular-nums font-mono">
-                {pastYearCalories.toLocaleString()}
+                {formatEnergy(pastYearCalories, energyUnit).value.toLocaleString()}
               </span>
               <span className="text-xs font-normal text-muted-foreground ml-1">
-                kcal
+                {energyUnit}
               </span>
             </div>
           </div>
@@ -320,13 +326,13 @@ export default function CategoryDetails() {
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.serving')}</span>
             <span className="font-mono text-foreground font-medium">
-              {scaledNutrition?.servingSize ?? food.servingSize} {scaledNutrition?.servingUnit ?? food.servingUnit}
+              {formatFoodServing(scaledNutrition?.servingSize ?? food.servingSize, scaledNutrition?.servingUnit ?? food.servingUnit, foodWeightUnit, foodVolumeUnit).formatted}
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-calories font-medium">{t('diet.calories')}</span>
             <span className="font-mono text-foreground font-medium">
-              {scaledNutrition?.calories ?? food.calories} kcal
+              {formatEnergy(scaledNutrition?.calories ?? food.calories, energyUnit).formatted}
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
@@ -385,7 +391,7 @@ export default function CategoryDetails() {
                             {getMealTypeLabel(log.mealType)}
                           </span>
                           <span className="text-xs font-mono text-muted-foreground truncate">
-                            {log.quantity} {log.unit}
+                            {formatFoodServing(log.quantity, log.unit, foodWeightUnit, foodVolumeUnit).formatted}
                           </span>
                         </div>
                         {log.notes && (
@@ -397,7 +403,7 @@ export default function CategoryDetails() {
 
                       <div className="text-right shrink-0">
                         <div className="text-sm font-mono font-medium text-foreground">
-                          {log.calories} kcal
+                          {formatEnergy(log.calories, energyUnit).formatted}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground/70">
                           P: {log.protein}g · C: {log.carbs}g · F: {log.fat}g

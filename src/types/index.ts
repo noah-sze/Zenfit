@@ -273,3 +273,30 @@ export interface UserProfile {
   updatedAt: number;
 }
 
+// 度量衡單位偏好體系
+export type UnitSystemPreset = 'metric' | 'imperial' | 'custom';
+export type BodyWeightUnit = 'kg' | 'lbs';
+export type FoodWeightUnit = 'g' | 'oz';
+export type FoodVolumeUnit = 'ml' | 'fl oz';
+export type LengthUnit = 'cm' | 'in';
+export type EnergyUnit = 'kcal' | 'kJ';
+
+export interface UnitPreferences {
+  preset: UnitSystemPreset;
+  bodyWeight: BodyWeightUnit;
+  foodWeight: FoodWeightUnit;
+  foodVolume: FoodVolumeUnit;
+  length: LengthUnit;
+  energy: EnergyUnit;
+}
+
+export const DEFAULT_UNIT_PREFERENCES: UnitPreferences = {
+  preset: 'metric',
+  bodyWeight: 'kg',
+  foodWeight: 'g',
+  foodVolume: 'ml',
+  length: 'cm',
+  energy: 'kcal',
+};
+
+
