@@ -10,7 +10,11 @@ export interface AmountPopoverKeypadProps {
   onSubmit?: () => void;
   onClose?: () => void;
   allowNegative?: boolean;
+  allowDecimals?: boolean;
+  maxDecimals?: number;
   currencySymbol?: string;
+  title?: string;
+  unit?: string;
   className?: string;
 }
 
@@ -39,6 +43,10 @@ export function AmountPopoverKeypad({
   onSubmit,
   onClose,
   allowNegative = false,
+  allowDecimals = true,
+  maxDecimals = 2,
+  title,
+  unit,
   className,
 }: AmountPopoverKeypadProps) {
   const { t } = useTranslation();
@@ -95,6 +103,10 @@ export function AmountPopoverKeypad({
     }
 
     if (key === '.') {
+      if (!allowDecimals) {
+        triggerHaptic('warning');
+        return;
+      }
       const { leadingText, operand } = getLastOperand(value);
       if (!operand) {
         triggerHaptic('light');
@@ -119,7 +131,7 @@ export function AmountPopoverKeypad({
       }
       if (operand.includes('.')) {
         const dec = operand.split('.')[1] || '';
-        if (dec.length >= 2) {
+        if (dec.length >= maxDecimals) {
           triggerHaptic('warning');
           return;
         }
@@ -138,15 +150,17 @@ export function AmountPopoverKeypad({
       }
       if (operand.includes('.')) {
         const dec = operand.split('.')[1] || '';
-        if (dec.length >= 2) {
+        if (dec.length >= maxDecimals) {
           triggerHaptic('warning');
           return;
         }
         triggerHaptic('light');
-        if (dec.length === 1) {
+        if (dec.length === 1 && maxDecimals >= 2) {
           onChange(value + '0');
-        } else {
+        } else if (dec.length === 0) {
           onChange(value + '00');
+        } else {
+          triggerHaptic('warning');
         }
         return;
       }
@@ -166,7 +180,7 @@ export function AmountPopoverKeypad({
       }
       if (operand.includes('.')) {
         const dec = operand.split('.')[1] || '';
-        if (dec.length >= 2) {
+        if (dec.length >= maxDecimals) {
           triggerHaptic('warning');
           return;
         }
@@ -208,17 +222,23 @@ export function AmountPopoverKeypad({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('C')}
           className="text-xs font-medium h-7 px-2.5 rounded-lg bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-transform duration-75 active:scale-95 cursor-pointer"
-          title={t('keypad.clear', '清空')}
+          title={t('keypad.clear')}
         >
-          {t('keypad.clear', '清空')}
+          {t('keypad.clear')}
         </button>
+
+        {(title || unit) && (
+          <div className="text-xs font-mono font-medium text-muted-foreground truncate max-w-[140px] px-1 select-none">
+            {title} {unit ? `(${unit})` : ''}
+          </div>
+        )}
 
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onClose?.()}
           className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-transform duration-75 active:scale-95 cursor-pointer"
-          title={t('keypad.collapse', '收起鍵盤')}
+          title={t('keypad.collapse')}
         >
           <X className="size-4" />
         </button>
@@ -256,7 +276,7 @@ export function AmountPopoverKeypad({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('DEL')}
           className="h-12 rounded-lg bg-muted/60 text-destructive hover:bg-destructive/10 hover:text-destructive border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none"
-          title={t('keypad.backspace', '退格')}
+          title={t('keypad.backspace')}
         >
           <Delete className="size-5" />
         </button>
@@ -334,7 +354,11 @@ export function AmountPopoverKeypad({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleKey('.')}
-          className={btnBaseClass}
+          disabled={!allowDecimals}
+          className={cn(
+            btnBaseClass,
+            !allowDecimals && "opacity-30 cursor-not-allowed active:scale-100"
+          )}
         >
           .
         </button>
@@ -364,7 +388,7 @@ export function AmountPopoverKeypad({
               ? "bg-muted/60 text-foreground hover:bg-muted border-border/40 font-bold active:bg-foreground active:text-background active:border-foreground"
               : "bg-primary text-primary-foreground hover:bg-primary/90 border-primary font-bold active:bg-primary/80"
           )}
-          title={isExpression ? t('keypad.calculate', '計算') : t('keypad.done', '完成')}
+          title={isExpression ? t('keypad.calculate') : t('keypad.done')}
         >
           {isExpression ? (
             <Equal className="size-5" />

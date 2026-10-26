@@ -346,3 +346,80 @@
 
 
 
+
+/* 升降條頂部 10% 彈性擴容區斜紋 (>=90%) */
+.stripes-expand {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.05) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+:root:not(.dark) .stripes-expand {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.04),
+    rgba(0, 0, 0, 0.04) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+/* 升降條底部 10% 彈性縮容區斜紋 (<=10%) */
+.stripes-shrink {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.05) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+:root:not(.dark) .stripes-shrink {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(0, 0, 0, 0.04),
+    rgba(0, 0, 0, 0.04) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+/* 升降條聚焦狀態水平十字定錨準心細線 (Center Reticle Line) */
+.reticle-center-line {
+  position: absolute;
+  top: 50%;
+  left: -2px;
+  right: -2px;
+  height: 1px;
+  background-color: var(--foreground);
+  opacity: 0.85;
+  z-index: 25;
+  pointer-events: none;
+}
+
+/* 升降條頂底開放端槽 (極簡虛線槽，象徵局部浮動窗口) */
+.open-cap-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-top: 1px dashed var(--foreground);
+  opacity: 0.4;
+  z-index: 20;
+  pointer-events: none;
+}
+.open-cap-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-bottom: 1px dashed var(--foreground);
+  opacity: 0.4;
+  z-index: 20;
+  pointer-events: none;
+}

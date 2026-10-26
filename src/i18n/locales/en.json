@@ -70,7 +70,6 @@
       "serving": "Serving",
       "amount": "Amount",
       "dragElevationTip": "Drag up to increase · Drag down to decrease",
-      "solidFoodGramOnly": "Whole foods locked to grams (g) physics basis",
       "perServing": "Per Serving",
       "per100g": "Per 100g",
       "nutritionBenchmark": "Basis",
@@ -432,6 +431,13 @@
         "May", "Jun", "Jul", "Aug",
         "Sep", "Oct", "Nov", "Dec"
       ]
+    },
+    "keypad": {
+      "clear": "Clear",
+      "collapse": "Collapse",
+      "backspace": "Backspace",
+      "calculate": "Calculate",
+      "done": "Done"
     }
   }
 }

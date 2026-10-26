@@ -14,11 +14,17 @@ import { Button } from "@/components/ui/button"
 
 import {
   clampAndStep,
+  alignToStep,
   calculateFillPercentage,
   calculateValueFromBottomDist,
   isUnitDisabled,
   resolveActiveUnit,
-  calculateElasticMax,
+  settleElevationWindow,
+  shiftWindowToFitValue,
+  calculateElevationTicks,
+  getStepPrecision,
+  getMacroMaxFloor,
+  calculateInitialElevationWindow,
 } from "@/utils/elevationMath"
 
 export type LiquidPickerUnit = 'g' | 'ml' | 'kg' | 'oz' | 'lb' | string
@@ -96,8 +102,9 @@ export function LiquidElevationPicker({
 }: LiquidElevationPickerProps) {
   const { t } = useTranslation()
 
-  // 初始預設量程上限 (縮容時的最低極限保護)
-  const initialMax = max || 200
+  // 基礎下限與初始上限 (由調用方針對具體字段自由設置，不寫死)
+  const baseMin = min !== undefined ? min : 0
+  const initialMax = max !== undefined && max > baseMin ? max : 100
 
   // 內部暫存數值狀態 (彈窗內的操作始終反映在此狀態上)
   const [internalValue, setInternalValue] = React.useState<number>(
@@ -112,40 +119,49 @@ export function LiquidElevationPicker({
   const prevOpenRef = React.useRef(false)
   const prevControlledValRef = React.useRef(controlledValue)
 
-  // 動態彈性上限狀態 (支援擴容與縮容，下限保底為 initialMax)
-  const [currentMax, setCurrentMax] = React.useState<number>(() => {
-    const initVal = controlledValue !== undefined ? controlledValue : defaultValue
-    return calculateElasticMax(initVal, initialMax, initialMax)
-  })
+  // 動態視窗狀態：windowMin (當前視窗下限)、windowMax (當前視窗上限)、macroMax (宏觀總上限)
+  const [windowMin, setWindowMin] = React.useState<number>(baseMin)
+  const [windowMax, setWindowMax] = React.useState<number>(initialMax)
+  const [macroMax, setMacroMax] = React.useState<number>(initialMax)
 
   React.useEffect(() => {
     if (open && !prevOpenRef.current) {
       const initVal = controlledValue !== undefined ? controlledValue : defaultValue
-      setInternalValue(initVal)
       const initUnit = resolveActiveUnit(allowedUnits, controlledUnit || defaultUnit, disabledUnits)
       setInternalUnit(initUnit)
-      const initMax = calculateElasticMax(initVal, initialMax, initialMax)
-      setCurrentMax(initMax)
+
+      // 計算重置視窗：若用戶之前已選擇數值 (如 10)，上限重置為 20 (10 x 2)，升降條位置居中 (50%)
+      const initWin = calculateInitialElevationWindow(initVal, baseMin, initialMax, step)
+      const safeVal = initVal !== undefined && !isNaN(initVal) && initVal > baseMin
+        ? alignToStep(initVal, step)
+        : clampAndStep(initVal ?? baseMin, baseMin, initWin.macroMax, step)
+
+      setInternalValue(safeVal)
+      setWindowMin(initWin.windowMin)
+      setWindowMax(initWin.windowMax)
+      setMacroMax(initWin.macroMax)
     } else if (open && controlledValue !== undefined && controlledValue !== prevControlledValRef.current) {
       setInternalValue(controlledValue)
-      const nextMax = calculateElasticMax(controlledValue, currentMax, initialMax)
-      setCurrentMax(nextMax)
+      const nextWin = settleElevationWindow(controlledValue, windowMin, windowMax, macroMax, baseMin, initialMax, step)
+      setWindowMin(nextWin.windowMin)
+      setWindowMax(nextWin.windowMax)
+      setMacroMax(nextWin.macroMax)
     }
     prevOpenRef.current = !!open
     prevControlledValRef.current = controlledValue
-  }, [open, controlledValue, defaultValue, controlledUnit, defaultUnit, allowedUnits, disabledUnits, initialMax, currentMax])
+  }, [open, controlledValue, defaultValue, controlledUnit, defaultUnit, allowedUnits, disabledUnits, initialMax, baseMin, step])
 
   // 彈窗內部顯示與渲染一律以 internalValue / internalUnit 為準
   const currentValue = internalValue
   const currentUnit = internalUnit
 
-  // 數值更新 (受限於當前動態上限 currentMax)
+  // 數值更新 (受限於當前動態視窗 [windowMin, windowMax])
   const handleValueChange = React.useCallback(
     (nextVal: number) => {
-      const finalVal = clampAndStep(nextVal, min, currentMax, step)
+      const finalVal = clampAndStep(nextVal, windowMin, windowMax, step)
       setInternalValue(finalVal)
     },
-    [min, currentMax, step]
+    [windowMin, windowMax, step]
   )
 
   // 單位切換
@@ -155,20 +171,20 @@ export function LiquidElevationPicker({
     onUnitChange?.(u)
   }
 
-  // 微調按鈕點擊更新
+  // 微調按鈕點擊更新 (當前視窗內平滑微調；若超出視窗自動平移邊界)
   const handleStepClick = (delta: number) => {
-    const nextVal = clampAndStep(currentValue + delta, min, currentMax, step)
+    const nextVal = clampAndStep(currentValue + delta, baseMin, macroMax, step)
     setInternalValue(nextVal)
 
-    // 結算動態量程 (上升擴容 / 下降縮容，下限保底 initialMax)
-    const nextMax = calculateElasticMax(nextVal, currentMax, initialMax)
-    if (nextMax !== currentMax) {
-      setCurrentMax(nextMax)
+    const nextWin = shiftWindowToFitValue(nextVal, windowMin, windowMax, macroMax, baseMin, step)
+    if (nextWin.windowMin !== windowMin || nextWin.windowMax !== windowMax) {
+      setWindowMin(nextWin.windowMin)
+      setWindowMax(nextWin.windowMax)
     }
   }
 
-  // 計算液柱高度百分比 (底為 min, 頂為 currentMax)
-  const fillPercentage = calculateFillPercentage(currentValue, min, currentMax)
+  // 計算液柱高度百分比 (底為 windowMin, 頂為 windowMax)
+  const fillPercentage = calculateFillPercentage(currentValue, windowMin, windowMax)
 
   // 柱體容器引用
   const cylinderRef = React.useRef<HTMLDivElement>(null)
@@ -179,13 +195,13 @@ export function LiquidElevationPicker({
     e.preventDefault()
     const isUp = e.deltaY < 0
     const delta = isUp ? step : -step
-    const nextVal = clampAndStep(currentValue + delta, min, currentMax, step)
+    const nextVal = clampAndStep(currentValue + delta, baseMin, macroMax, step)
     setInternalValue(nextVal)
 
-    // 滾輪更新後結算動態量程 (上升擴容 / 下降縮容，下限保底 initialMax)
-    const nextMax = calculateElasticMax(nextVal, currentMax, initialMax)
-    if (nextMax !== currentMax) {
-      setCurrentMax(nextMax)
+    const nextWin = shiftWindowToFitValue(nextVal, windowMin, windowMax, macroMax, baseMin, step)
+    if (nextWin.windowMin !== windowMin || nextWin.windowMax !== windowMax) {
+      setWindowMin(nextWin.windowMin)
+      setWindowMax(nextWin.windowMax)
     }
   }
 
@@ -204,7 +220,7 @@ export function LiquidElevationPicker({
 
     const rect = el.getBoundingClientRect()
     const bottomDist = rect.bottom - e.clientY
-    const nextVal = calculateValueFromBottomDist(bottomDist, rect.height, min, currentMax, step)
+    const nextVal = calculateValueFromBottomDist(bottomDist, rect.height, windowMin, windowMax, step)
     handleValueChange(nextVal)
   }
 
@@ -215,7 +231,7 @@ export function LiquidElevationPicker({
 
     const rect = el.getBoundingClientRect()
     const bottomDist = rect.bottom - e.clientY
-    const nextVal = calculateValueFromBottomDist(bottomDist, rect.height, min, currentMax, step)
+    const nextVal = calculateValueFromBottomDist(bottomDist, rect.height, windowMin, windowMax, step)
     handleValueChange(nextVal)
   }
 
@@ -231,13 +247,11 @@ export function LiquidElevationPicker({
         }
       }
 
-      // 方案 B: 抬手結算動態量程 (Release-to-Settle: 擴容 / 縮容)
-      // 擴容：若當前值達到或超過上限的 75%，提升上限使當前值處於新量程的 1/3 (例如 175 -> 525)
-      // 縮容：若當前值降至上限的 20% 且處於擴容態，縮小上限使當前值處於 50%，下限保底為 initialMax (例如 200)
-      const nextMax = calculateElasticMax(internalValue, currentMax, initialMax)
-      if (nextMax !== currentMax) {
-        setCurrentMax(nextMax)
-      }
+      // 選項 A: 抬手結算動態視窗 (Release-to-Settle: 90% 增加上限 / 10% 降低上限 / 居中多次聚焦收斂)
+      const settled = settleElevationWindow(internalValue, windowMin, windowMax, macroMax, baseMin, initialMax, step)
+      setWindowMin(settled.windowMin)
+      setWindowMax(settled.windowMax)
+      setMacroMax(settled.macroMax)
     }
   }
 
@@ -253,16 +267,50 @@ export function LiquidElevationPicker({
     onOpenChange?.(false)
   }
 
-  // 中間標記刻度數值 (依據動態上限 currentMax 計算)
-  const midValue = Math.round((min + currentMax) / 2)
+  // 粗調步進值 (0.1 步進時粗調為 1；整數步進時粗調為 10)
+  const largeStep = step < 1 ? 1 : 10
+
+  // 判定當前是否處於聚焦狀態
+  const isFocused = windowMin !== baseMin || windowMax !== macroMax
+
+  // 5 道等距刻度數值 (透過 calculateElevationTicks 精確對齊 step，消除一切怪異殘留小數)
+  const ticks = calculateElevationTicks(windowMin, windowMax, step)
+  const precision = getStepPrecision(step)
+  const formatTick = (n: number) => precision > 0 ? n.toFixed(precision) : String(n)
+
+  // 聚焦狀態邊界檢測與密齒游標刻度 (維持純粹客觀數值，無任何 UNLOCK 字樣)
+  const minMacroFloor = getMacroMaxFloor(step)
+  const isBottomTrigger = isFocused
+    ? fillPercentage <= 10
+    : fillPercentage <= 10 && macroMax > minMacroFloor
+
+  const vernierItems = [
+    { isMajor: true, val: formatTick(ticks.top) },
+    { isMajor: false, val: '' },
+    { isMajor: true, val: formatTick(ticks.q3) },
+    { isMajor: false, val: '' },
+    { isMajor: true, val: formatTick(ticks.mid) },
+    { isMajor: false, val: '' },
+    { isMajor: true, val: formatTick(ticks.q1) },
+    { isMajor: false, val: '' },
+    { isMajor: true, val: formatTick(ticks.bottom) },
+  ]
 
   const content = (
     <div className="space-y-4">
       {/* 頂部標題與單位切換列 */}
       <div className="flex items-center justify-between pb-1 border-b border-border/60">
-        <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          {title || t("diet.amount", "份量")}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            {title || t("diet.amount", "份量")}
+          </span>
+          {isFocused && (
+            <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest text-foreground bg-muted border border-border px-1.5 py-0.5 rounded">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              FOCUS
+            </span>
+          )}
+        </div>
 
         {/* 單位切換：若 allowedUnits > 1 則顯示膠囊切換；否則僅顯示當前靜態單位 */}
         {allowedUnits.length > 1 ? (
@@ -297,87 +345,205 @@ export function LiquidElevationPicker({
         )}
       </div>
 
-      {/* 核心升降卡槽 (高度恆定 h-48，無佈局抖動) */}
-      <div className="relative h-48 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5 select-none">
-        {/* 左側數值與微調按鈕 */}
-        <div className="font-mono space-y-2.5">
-          <div className="flex items-baseline gap-1">
-            <span className="text-5xl font-bold tracking-tight text-foreground font-mono">
-              {currentValue}
+      {/* 核心升降卡槽 (方案 A：矮屏保底 192px，隨可視高度流體延展至上限 320px) */}
+      <div
+        className="relative rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-between p-3.5 select-none"
+        style={{ height: 'clamp(192px, 32dvh, 320px)' }}
+      >
+        {/* 左側數值與微調按鈕：垂直均勻置中 */}
+        <div className="font-mono flex flex-col justify-center h-full space-y-3.5 py-1">
+          {/* 大數字數值顯示 */}
+          <div className="flex items-baseline gap-1 select-none">
+            <span className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground font-mono">
+              {formatTick(currentValue)}
             </span>
             <span className="text-lg font-bold text-muted-foreground font-mono">
               {currentUnit}
             </span>
           </div>
 
-          {/* 步進微調按鈕群組 (簡化為 2 個：減 / 加) */}
-          <div className="flex items-center gap-1.5">
+          {/* 步進微調按鈕群組：2x2 對齊矩陣 ([-step] [-largeStep] / [+step] [+largeStep]) */}
+          <div className="grid grid-cols-2 gap-1.5 w-32 font-mono">
             <button
               type="button"
               onClick={() => handleStepClick(-step)}
-              className="h-6 px-3 rounded border border-border text-[11px] font-mono hover:bg-muted active:scale-95 transition-all text-muted-foreground cursor-pointer"
+              className="h-6.5 rounded border border-border/80 bg-background/60 hover:bg-muted text-[11px] font-mono hover:text-foreground active:scale-95 transition-all text-foreground cursor-pointer font-medium flex items-center justify-center"
+              title={`-${step}`}
             >
               -{step}
             </button>
             <button
               type="button"
+              onClick={() => handleStepClick(-largeStep)}
+              className="h-6.5 rounded border border-border/80 bg-background/60 hover:bg-muted text-[10px] font-mono hover:text-foreground active:scale-95 transition-all text-muted-foreground cursor-pointer flex items-center justify-center"
+              title={`-${largeStep}`}
+            >
+              -{largeStep}
+            </button>
+            <button
+              type="button"
               onClick={() => handleStepClick(step)}
-              className="h-6 px-3 rounded border border-border text-[11px] font-mono hover:bg-muted active:scale-95 transition-all text-muted-foreground cursor-pointer"
+              className="h-6.5 rounded border border-border/80 bg-background/60 hover:bg-muted text-[11px] font-mono hover:text-foreground active:scale-95 transition-all text-foreground cursor-pointer font-medium flex items-center justify-center"
+              title={`+${step}`}
             >
               +{step}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStepClick(largeStep)}
+              className="h-6.5 rounded border border-border/80 bg-background/60 hover:bg-muted text-[10px] font-mono hover:text-foreground active:scale-95 transition-all text-muted-foreground cursor-pointer flex items-center justify-center"
+              title={`+${largeStep}`}
+            >
+              +{largeStep}
             </button>
           </div>
         </div>
 
-        {/* 右側液柱升降規 (方案 2A 本體，寬度優化為 w-12 更加修長精緻) */}
-        <div
-          ref={cylinderRef}
-          onWheel={handleWheel}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          className="w-12 h-full border border-border rounded-md bg-background relative cursor-ns-resize overflow-hidden flex flex-col justify-end p-0.5 touch-none"
-          title={t("diet.dragElevationTip", "上推增加 · 下拉降低")}
-        >
-          {/* 底層未覆蓋刻度 (未覆蓋時為優雅低干擾灰色，符合視覺階層) */}
-          <div className="absolute inset-0 z-0 flex flex-col justify-between p-1.5 pointer-events-none text-[8px] font-mono text-muted-foreground/60 text-right select-none">
-            <div className="flex items-center justify-between border-b border-border/40 pb-0.5">
-              <span>{currentMax}</span>
-              <span>—</span>
+        {/* 右側液柱升降規容器 */}
+        <div className="relative h-full flex items-center justify-center">
+          {/* 已聚焦狀態外圍卡尺導軌 [ ] */}
+          {isFocused && (
+            <div className="absolute -inset-x-1.5 -inset-y-0.5 pointer-events-none flex justify-between z-15">
+              <div className="relative w-1.5 h-full">
+                <div className="absolute inset-y-0 left-0 w-0.5 bg-foreground" />
+                <div className="absolute top-0 left-0 w-1.5 h-0.5 bg-foreground" />
+                <div className="absolute bottom-0 left-0 w-1.5 h-0.5 bg-foreground" />
+              </div>
+              <div className="relative w-1.5 h-full">
+                <div className="absolute inset-y-0 right-0 w-0.5 bg-foreground" />
+                <div className="absolute top-0 right-0 w-1.5 h-0.5 bg-foreground" />
+                <div className="absolute bottom-0 right-0 w-1.5 h-0.5 bg-foreground" />
+              </div>
             </div>
-            <div className="flex items-center justify-between border-b border-border/40 pb-0.5">
-              <span>{midValue}</span>
-              <span>—</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>{min}</span>
-              <span>—</span>
-            </div>
-          </div>
+          )}
 
-          {/* 向上充滿的液柱 (自底向上撐起) */}
+          {/* 升降柱體本體 */}
           <div
-            className="w-full bg-foreground rounded-xs transition-[height] duration-75 ease-out flex items-center justify-center font-mono text-[9px] font-bold pointer-events-none z-10"
-            style={{ height: `${fillPercentage}%` }}
-          />
-
-          {/* 頂層覆蓋刻度 (隨液位高度精確幾何裁切，液柱覆蓋處呈現純白/純黑極致高對比) */}
-          <div
-            className="absolute inset-0 z-20 flex flex-col justify-between p-1.5 pointer-events-none text-[8px] font-mono text-background text-right select-none"
-            style={{ clipPath: `inset(calc(100% - ${fillPercentage}%) 0 0 0)` }}
+            ref={cylinderRef}
+            onWheel={handleWheel}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className={cn(
+              "w-12 h-full border rounded-md bg-background relative cursor-ns-resize overflow-hidden flex flex-col justify-end p-0.5 touch-none select-none",
+              isFocused ? "border-foreground" : "border-border"
+            )}
+            title={t("diet.dragElevationTip", "上推增加 · 下拉降低")}
           >
-            <div className="flex items-center justify-between border-b border-background/60 pb-0.5">
-              <span>{currentMax}</span>
-              <span>—</span>
+            {/* 方案 1: 工業精密斜紋區 (聚焦後與聚焦前皆呈現一致的斑馬紋理) */}
+            {/* 頂部 10% 緩衝區 (放手擴展上限 / 解鎖宏觀) */}
+            <div
+              className={cn(
+                "absolute top-0 inset-x-0 h-[10%] pointer-events-none z-5 border-b border-dashed border-border/40 transition-all",
+                fillPercentage >= 90
+                  ? "bg-[repeating-linear-gradient(-45deg,rgba(161,161,170,0.2),rgba(161,161,170,0.2)_3px,currentColor_3px,currentColor_4.5px)] opacity-90 border-foreground"
+                  : "bg-[repeating-linear-gradient(-45deg,transparent,transparent_3px,rgba(161,161,170,0.22)_3px,rgba(161,161,170,0.22)_4.5px)]"
+              )}
+            />
+            {/* 底部 10% 緩衝區 (放手收斂上限 / 解鎖宏觀) */}
+            <div
+              className={cn(
+                "absolute bottom-0 inset-x-0 h-[10%] pointer-events-none z-5 border-t border-dashed border-border/40 transition-all",
+                isBottomTrigger
+                  ? "bg-[repeating-linear-gradient(-45deg,rgba(161,161,170,0.2),rgba(161,161,170,0.2)_3px,currentColor_3px,currentColor_4.5px)] opacity-90 border-foreground"
+                  : "bg-[repeating-linear-gradient(-45deg,transparent,transparent_3px,rgba(161,161,170,0.22)_3px,rgba(161,161,170,0.22)_4.5px)]"
+              )}
+            />
+
+            {/* 底層未覆蓋刻度 */}
+            <div className="absolute inset-0 z-0 flex flex-col justify-between p-1.5 pointer-events-none font-mono text-[8px] text-muted-foreground/70 text-right select-none">
+              {isFocused ? (
+                vernierItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-end gap-1 h-[1px]">
+                    {item.isMajor ? (
+                      <>
+                        <span className="text-[7px] text-muted-foreground/70">
+                          {item.val}
+                        </span>
+                        <span className="w-3.5 h-[1px] bg-muted-foreground/60" />
+                      </>
+                    ) : (
+                      <span className="w-1.5 h-[1px] bg-muted-foreground/30" />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="flex items-center justify-between border-b border-border/40 pb-0.5">
+                    <span>{formatTick(ticks.top)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-border/25 pb-0.5">
+                    <span>{formatTick(ticks.q3)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-border/40 pb-0.5">
+                    <span>{formatTick(ticks.mid)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-border/25 pb-0.5">
+                    <span>{formatTick(ticks.q1)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{formatTick(ticks.bottom)}</span>
+                    <span>—</span>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="flex items-center justify-between border-b border-background/60 pb-0.5">
-              <span>{midValue}</span>
-              <span>—</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>{min}</span>
-              <span>—</span>
+
+            {/* 向上充滿的液柱 (自底向上撐起) */}
+            <div
+              className="w-full bg-foreground rounded-xs transition-[height] duration-75 ease-out flex items-center justify-center font-mono text-[9px] font-bold pointer-events-none z-10"
+              style={{ height: `${fillPercentage}%` }}
+            />
+
+            {/* 頂層覆蓋刻度 (液柱覆蓋處純白/純黑極致高對比，嚴格維持與底層相同 text-[8px] 字級) */}
+            <div
+              className="absolute inset-0 z-20 flex flex-col justify-between p-1.5 pointer-events-none font-mono text-[8px] text-background text-right select-none"
+              style={{ clipPath: `inset(calc(100% - ${fillPercentage}%) 0 0 0)` }}
+            >
+              {isFocused ? (
+                vernierItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-end gap-1 h-[1px]">
+                    {item.isMajor ? (
+                      <>
+                        <span className="text-[7px] text-background">
+                          {item.val}
+                        </span>
+                        <span className="w-3.5 h-[1px] bg-background" />
+                      </>
+                    ) : (
+                      <span className="w-1.5 h-[1px] bg-background/50" />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="flex items-center justify-between border-b border-background/60 pb-0.5">
+                    <span>{formatTick(ticks.top)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-background/40 pb-0.5">
+                    <span>{formatTick(ticks.q3)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-background/60 pb-0.5">
+                    <span>{formatTick(ticks.mid)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-background/40 pb-0.5">
+                    <span>{formatTick(ticks.q1)}</span>
+                    <span>—</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{formatTick(ticks.bottom)}</span>
+                    <span>—</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

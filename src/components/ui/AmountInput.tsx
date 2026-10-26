@@ -9,8 +9,13 @@ export interface AmountInputProps extends Omit<React.ComponentProps<'input'>, 'o
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onValueChange?: (val: string) => void;
   allowNegative?: boolean;
+  allowDecimals?: boolean;
+  maxDecimals?: number;
   currencySymbol?: string;
+  title?: string;
+  unit?: string;
   disableKeypad?: boolean;
+  enableMobileKeypad?: boolean;
   onSubmitAmount?: () => void;
   unstyled?: boolean;
 }
@@ -28,8 +33,13 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
     onChange,
     onValueChange,
     allowNegative = false,
+    allowDecimals = true,
+    maxDecimals = 2,
     currencySymbol,
+    title,
+    unit,
     disableKeypad = false,
+    enableMobileKeypad = true,
     onSubmitAmount,
     unstyled = false,
     className,
@@ -66,18 +76,27 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
   const calculateCoords = (): Coords | null => {
     if (!inputRef.current) return null;
     const rect = inputRef.current.getBoundingClientRect();
-    const keypadHeight = 240;
+    const keypadHeight = 250;
+    const isSmallScreen = window.innerWidth < 640;
+
+    // Desired width: matches input or default 280~320px; centered on small screens
+    const popoverWidth = isSmallScreen
+      ? Math.min(window.innerWidth - 24, 300)
+      : Math.min(Math.max(rect.width, 280), 320);
+
+    let left = isSmallScreen
+      ? Math.max(12, Math.round((window.innerWidth - popoverWidth) / 2))
+      : rect.left;
+
+    if (!isSmallScreen) {
+      if (left + popoverWidth > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - popoverWidth - 12);
+      }
+      if (left < 12) left = 12;
+    }
+
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-
-    // Desired width: matches input or default 300px
-    const popoverWidth = Math.min(Math.max(rect.width, 280), 320);
-
-    let left = rect.left;
-    if (left + popoverWidth > window.innerWidth - 12) {
-      left = Math.max(12, window.innerWidth - popoverWidth - 12);
-    }
-    if (left < 12) left = 12;
 
     if (spaceBelow < keypadHeight && spaceAbove > spaceBelow) {
       return {
@@ -88,7 +107,7 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
       };
     } else {
       return {
-        top: rect.bottom + 8,
+        top: Math.min(rect.bottom + 8, window.innerHeight - keypadHeight - 8),
         left,
         width: popoverWidth,
         placement: 'bottom',
@@ -96,9 +115,8 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
     }
   };
 
-  // Only open custom popover on desktop; on mobile we use native decimal keyboard with native auto-scroll
   const openKeypad = () => {
-    if (disableKeypad || isMobile) return;
+    if (disableKeypad || (!enableMobileKeypad && isMobile)) return;
     const initialCoords = calculateCoords();
     if (initialCoords) {
       setCoords(initialCoords);
@@ -111,9 +129,9 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
     setCoords(null);
   };
 
-  // Re-calculate position before paint and on scroll/resize (desktop only)
+  // Re-calculate position before paint and on scroll/resize
   useLayoutEffect(() => {
-    if (!isOpen || isMobile) return;
+    if (!isOpen) return;
 
     const nextCoords = calculateCoords();
     if (nextCoords) {
@@ -134,11 +152,11 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
       window.removeEventListener('resize', handleScrollOrResize);
       window.removeEventListener('scroll', handleScrollOrResize, { capture: true });
     };
-  }, [isOpen, isMobile]);
+  }, [isOpen]);
 
-  // Click outside to close (desktop only)
+  // Click outside to close
   useEffect(() => {
-    if (!isOpen || isMobile) return;
+    if (!isOpen) return;
 
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node | null;
@@ -157,7 +175,7 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('touchstart', handlePointerDown);
     };
-  }, [isOpen, isMobile]);
+  }, [isOpen]);
 
   const triggerChange = (nextVal: string) => {
     onValueChange?.(nextVal);
@@ -223,12 +241,6 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     openKeypad();
     onFocus?.(e);
-    if (isMobile) {
-      // Ensure input scrolls into visual viewport when soft keyboard appears
-      setTimeout(() => {
-        inputRef.current?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-      }, 300);
-    }
   };
 
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -275,7 +287,7 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
     onSubmitAmount?.();
   };
 
-  const effectiveInputMode = disableKeypad || isMobile ? "decimal" : "none";
+  const effectiveInputMode = disableKeypad ? "decimal" : "none";
   const displayValue = formatDisplayAmount(value, { preserveEmpty: true });
 
   return (
@@ -312,7 +324,6 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
 
       {isOpen &&
         !disableKeypad &&
-        !isMobile &&
         coords !== null &&
         typeof document !== 'undefined' &&
         createPortal(
@@ -333,7 +344,11 @@ export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(functi
               onSubmit={handleKeypadSubmit}
               onClose={closeKeypad}
               allowNegative={allowNegative}
+              allowDecimals={allowDecimals}
+              maxDecimals={maxDecimals}
               currencySymbol={currencySymbol}
+              title={title}
+              unit={unit}
               className="w-full"
             />
           </div>,
