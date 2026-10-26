@@ -6,6 +6,16 @@ import {
   isUnitDisabled,
   resolveActiveUnit,
   calculateElasticMax,
+  settleElevationWindow,
+  roundToNiceMax,
+  shiftWindowToFitValue,
+  getStepPrecision,
+  alignToStep,
+  getFocusRadiusFloor,
+  calculateElevationTicks,
+  getMacroMaxFloor,
+  hasDecimalStep,
+  calculateInitialElevationWindow,
 } from "./elevationMath"
 
 describe("elevationMath", () => {
@@ -182,6 +192,370 @@ describe("elevationMath", () => {
       // safeVal = 150 >= 200 * 0.75 (150) -> 150 * 3 = 450
       expect(calculateElasticMax(150, 0, 200)).toBe(450)
       expect(calculateElasticMax(150, NaN, 200)).toBe(450)
+    })
+  })
+
+  describe("roundToNiceMax", () => {
+    it("should round numbers into clean UI steps", () => {
+      expect(roundToNiceMax(35)).toBe(40)
+      expect(roundToNiceMax(48)).toBe(50)
+      expect(roundToNiceMax(92)).toBe(100)
+      expect(roundToNiceMax(184)).toBe(200)
+      expect(roundToNiceMax(350)).toBe(350)
+      expect(roundToNiceMax(420)).toBe(450)
+      expect(roundToNiceMax(720)).toBe(800)
+      expect(roundToNiceMax(0)).toBe(100)
+    })
+  })
+
+  describe("settleElevationWindow", () => {
+    describe("用戶範例與聚焦機制 (10% < val < 90%)", () => {
+      it("應該完全匹配用戶範例：下限 0 上限 100 選擇 51 -> 聚焦後下限 36 上限 66，51 居中", () => {
+        const result = settleElevationWindow(51, 0, 100, 100, 0, 100)
+        expect(result.windowMin).toBe(36)
+        expect(result.windowMax).toBe(66)
+        expect(result.macroMax).toBe(100)
+        // 驗證 51 恰好在正中間 (50%)
+        expect((result.windowMin + result.windowMax) / 2).toBe(51)
+        expect(result.windowMax - result.windowMin).toBe(30)
+      })
+
+      it("支援任意外部傳入的初始上限 (例如 initialMax = 200，選中 100 -> 聚焦 [70, 130])", () => {
+        // 200 跨度，30% = 60，半徑 = 30
+        const result = settleElevationWindow(100, 0, 200, 200, 0, 200)
+        expect(result.windowMin).toBe(70)
+        expect(result.windowMax).toBe(130)
+        expect((result.windowMin + result.windowMax) / 2).toBe(100)
+      })
+
+      it("邊界平移防護 (靠近底端)：選中 12，下限平移對齊 0，上限為 30，下限不小於 0", () => {
+        // 12 介於 10 與 90 之間，未觸發 10% 且未觸發 90%
+        // idealMin = 12 - 15 = -3 < 0 -> 平移為 [0, 30]
+        const result = settleElevationWindow(12, 0, 100, 100, 0, 100)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(30)
+        expect(result.windowMax - result.windowMin).toBe(30)
+      })
+
+      it("邊界平移防護 (靠近頂端)：選中 88，上限平移對齊 100，下限為 70，上限不大於 100", () => {
+        // 88 < 90，未觸發 90% 增加上限
+        // idealMax = 88 + 15 = 103 > 100 -> 平移為 [70, 100]
+        const result = settleElevationWindow(88, 0, 100, 100, 0, 100)
+        expect(result.windowMin).toBe(70)
+        expect(result.windowMax).toBe(100)
+        expect(result.windowMax - result.windowMin).toBe(30)
+      })
+
+      it("支援多次聚焦機制：在聚焦視窗內再次操作會進一步收斂半徑，個位數最終下限為上下 +- 5", () => {
+        // 第 1 級聚焦：0~100 選中 51 -> [36, 66] (跨度 30, 半徑 15)
+        const stage1 = settleElevationWindow(51, 0, 100, 100, 0, 100, 1)
+        expect(stage1.windowMin).toBe(36)
+        expect(stage1.windowMax).toBe(66)
+
+        // 第 2 級聚焦：在 [36, 66] 再次選中 51 -> 半徑從 15 減半收斂為 8 -> [43, 59]
+        const stage2 = settleElevationWindow(51, stage1.windowMin, stage1.windowMax, 100, 0, 100, 1)
+        expect(stage2.windowMin).toBe(43)
+        expect(stage2.windowMax).toBe(59)
+        expect((stage2.windowMin + stage2.windowMax) / 2).toBe(51)
+
+        // 第 3 級聚焦：在 [43, 59] 再次選中 51 -> 半徑從 8 收斂觸發個位數下限 +- 5 -> [46, 56]
+        const stage3 = settleElevationWindow(51, stage2.windowMin, stage2.windowMax, 100, 0, 100, 1)
+        expect(stage3.windowMin).toBe(46)
+        expect(stage3.windowMax).toBe(56)
+        expect(stage3.windowMax - stage3.windowMin).toBe(10) // 跨度 10 (上下 +- 5)
+
+        // 第 4 級聚焦：達到下限 +- 5 後持續保持最小下限跨度，隨新選中值 (如 52) 居中平移
+        const stage4 = settleElevationWindow(52, stage3.windowMin, stage3.windowMax, 100, 0, 100, 1)
+        expect(stage4.windowMin).toBe(47)
+        expect(stage4.windowMax).toBe(57)
+        expect((stage4.windowMin + stage4.windowMax) / 2).toBe(52)
+      })
+
+      it("小數點精度與合法數字保障：step=0.1 時上下限永遠為合法一位小數，聚焦下限為上下 +- 0.5", () => {
+        // 用戶提出案例：合法單位是 11.1，嚴格杜絕如 1.0222313 的不合法數字
+        // 初次聚焦：0~50 選中 11.1
+        const stage1 = settleElevationWindow(11.1, 0, 50, 50, 0, 50, 0.1)
+        expect(stage1.windowMin).toBe(3.6)
+        expect(stage1.windowMax).toBe(18.6)
+        expect(alignToStep((stage1.windowMin + stage1.windowMax) / 2, 0.1)).toBe(11.1)
+
+        // 連續聚焦收斂至達到小數點下限 +- 0.5 (即半徑 0.5, 跨度 1.0)
+        let current = stage1
+        for (let i = 0; i < 5; i++) {
+          current = settleElevationWindow(11.1, current.windowMin, current.windowMax, 50, 0, 50, 0.1)
+        }
+
+        // 驗證最終觸發小數點下限 +- 0.5 -> [10.6, 11.6]
+        expect(current.windowMin).toBe(10.6)
+        expect(current.windowMax).toBe(11.6)
+        expect(alignToStep(current.windowMax - current.windowMin, 0.1)).toBe(1.0)
+        expect(alignToStep((current.windowMin + current.windowMax) / 2, 0.1)).toBe(11.1)
+
+        // 驗證所有數值絕無多餘無窮小數 (例如 1.0222313)
+        expect(Number.isInteger(current.windowMin * 10)).toBe(true)
+        expect(Number.isInteger(current.windowMax * 10)).toBe(true)
+      })
+    })
+
+    describe("增加上限機制 (選擇數字達到總上限 90% 以上)", () => {
+      it("宏觀視野下達到 90% 以上 (如 92 >= 90)：下限回歸 0，上限擴充至 200", () => {
+        const result = settleElevationWindow(92, 0, 100, 100, 0, 100)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(200)
+        expect(result.macroMax).toBe(200)
+      })
+
+      it("精確在 90% 門檻時觸發增加上限", () => {
+        const result = settleElevationWindow(90, 0, 100, 100, 0, 100)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(180)
+        expect(result.macroMax).toBe(180)
+      })
+
+      it("在聚焦視窗內達到頂端 90% (如在 [36, 66] 選中 64)：解開聚焦回到宏觀視野", () => {
+        // 64 >= 36 + 30 * 0.9 = 63
+        const result = settleElevationWindow(64, 36, 66, 100, 0, 100)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(100)
+        expect(result.macroMax).toBe(100)
+      })
+    })
+
+    describe("降低上限機制 (選擇數字是總上限 10% 以下，最低下限規範：無小數 10 / 有小數 1)", () => {
+      it("getMacroMaxFloor: 無小數最低是 10，有小數最低是 1", () => {
+        expect(getMacroMaxFloor(1)).toBe(10)
+        expect(getMacroMaxFloor(5)).toBe(10)
+        expect(getMacroMaxFloor(0.1)).toBe(1)
+        expect(getMacroMaxFloor(0.5)).toBe(1)
+        expect(hasDecimalStep(1)).toBe(false)
+        expect(hasDecimalStep(0.1)).toBe(true)
+      })
+
+      it("roundToNiceMax: 支援小數與整數階梯，小數保底1，整數保底10", () => {
+        // 無小數
+        expect(roundToNiceMax(3, 1)).toBe(10)
+        expect(roundToNiceMax(10, 1)).toBe(10)
+        expect(roundToNiceMax(15, 1)).toBe(20)
+        expect(roundToNiceMax(35, 1)).toBe(40)
+
+        // 有小數
+        expect(roundToNiceMax(0.5, 0.1)).toBe(1)
+        expect(roundToNiceMax(1.0, 0.1)).toBe(1)
+        expect(roundToNiceMax(1.5, 0.1)).toBe(2)
+        expect(roundToNiceMax(3.0, 0.1)).toBe(5)
+      })
+
+      it("無小數情境：初始 100，數值降至 10% 以下 (如選 3 <= 10)，縮減上限至最低下限 10", () => {
+        const result = settleElevationWindow(3, 0, 100, 100, 0, 100, 1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(10) // 3 * 2.5 = 7.5 -> roundToNiceMax(7.5, 1) = 10
+        expect(result.macroMax).toBe(10)
+      })
+
+      it("無小數情境：當用戶選擇 0 也會觸發降低下限機制，上限縮減為最低下限 10", () => {
+        const result = settleElevationWindow(0, 0, 100, 100, 0, 100, 1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(10)
+        expect(result.macroMax).toBe(10)
+      })
+
+      it("無小數情境：當已經達到最低下限 10，數值即使更小 (如選 1 <= 1 或 0)，維持最低下限 10，不再降低", () => {
+        const result = settleElevationWindow(1, 0, 10, 10, 0, 100, 1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(10)
+        expect(result.macroMax).toBe(10)
+
+        const result0 = settleElevationWindow(0, 0, 10, 10, 0, 100, 1)
+        expect(result0.windowMin).toBe(0)
+        expect(result0.windowMax).toBe(10)
+        expect(result0.macroMax).toBe(10)
+      })
+
+      it("有小數情境：step=0.1，當用戶選擇 0 也會觸發降低下限機制，上限縮減為最低下限 1", () => {
+        const result = settleElevationWindow(0, 0, 50, 50, 0, 50, 0.1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(1)
+        expect(result.macroMax).toBe(1)
+      })
+
+      it("有小數情境：step=0.1，初始 50，數值降至 10% 以下 (如選 0.2 <= 5)，縮減上限至最低下限 1", () => {
+        const result = settleElevationWindow(0.2, 0, 50, 50, 0, 50, 0.1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(1) // 0.2 * 2.5 = 0.5 -> roundToNiceMax(0.5, 0.1) = 1
+        expect(result.macroMax).toBe(1)
+      })
+
+      it("有小數情境：step=0.1，當已經達到最低下限 1，數值即使更小 (如選 0.05 <= 0.1)，維持最低下限 1，不再降低", () => {
+        const result = settleElevationWindow(0.05, 0, 1, 1, 0, 50, 0.1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(1)
+        expect(result.macroMax).toBe(1)
+      })
+
+      it("在聚焦視窗內達到低端 10% (如在 [36, 66] 選中 38)：解開聚焦回到宏觀視野", () => {
+        // 38 <= 36 + 30 * 0.1 = 39
+        const result = settleElevationWindow(38, 36, 66, 100, 0, 100, 1)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(100)
+        expect(result.macroMax).toBe(100)
+      })
+    })
+
+    describe("異常與邊界保護", () => {
+      it("處理 NaN 或負數輸入", () => {
+        const result = settleElevationWindow(NaN, 0, 100, 100, 0, 100)
+        expect(result.windowMin).toBe(0)
+        expect(result.windowMax).toBe(100)
+
+        const resultNeg = settleElevationWindow(-10, 0, 100, 100, 0, 100)
+        expect(resultNeg.windowMin).toBe(0)
+      })
+    })
+  })
+
+  describe("shiftWindowToFitValue", () => {
+    it("當數值在視窗內時不改變視窗", () => {
+      expect(shiftWindowToFitValue(50, 36, 66, 100, 0, 1)).toEqual({
+        windowMin: 36,
+        windowMax: 66,
+      })
+    })
+
+    it("當數值大於 windowMax 時推移視窗包含新數值", () => {
+      // 點擊 +1 到了 67，跨度為 30，新視窗為 [37, 67]
+      expect(shiftWindowToFitValue(67, 36, 66, 100, 0, 1)).toEqual({
+        windowMin: 37,
+        windowMax: 67,
+      })
+    })
+
+    it("當數值小於 windowMin 時推移視窗包含新數值", () => {
+      // 點擊 -1 到了 35，跨度為 30，新視窗為 [35, 65]
+      expect(shiftWindowToFitValue(35, 36, 66, 100, 0, 1)).toEqual({
+        windowMin: 35,
+        windowMax: 65,
+      })
+    })
+  })
+
+  describe("calculateElevationTicks", () => {
+    it("整數 step 刻度完全合法", () => {
+      const ticks = calculateElevationTicks(36, 66, 1)
+      expect(ticks).toEqual({
+        bottom: 36,
+        q1: 44,
+        mid: 51,
+        q3: 59,
+        top: 66,
+      })
+    })
+
+    it("小數 step=0.1 刻度完全合法且杜絕奇異小數殘留", () => {
+      const ticks = calculateElevationTicks(10.6, 11.6, 0.1)
+      expect(ticks).toEqual({
+        bottom: 10.6,
+        q1: 10.9,
+        mid: 11.1,
+        q3: 11.4,
+        top: 11.6,
+      })
+    })
+  })
+
+  describe("alignToStep & getFocusRadiusFloor", () => {
+    it("正確返回小數精度位數", () => {
+      expect(getStepPrecision(1)).toBe(0)
+      expect(getStepPrecision(0.1)).toBe(1)
+      expect(getStepPrecision(0.01)).toBe(2)
+    })
+
+    it("嚴格校準小數精度", () => {
+      expect(alignToStep(1.0222313, 0.1)).toBe(1)
+      expect(alignToStep(11.100000000004, 0.1)).toBe(11.1)
+      expect(alignToStep(1.0222313, 1)).toBe(1)
+    })
+
+    it("正確返回聚焦半徑下限", () => {
+      expect(getFocusRadiusFloor(1)).toBe(5)
+      expect(getFocusRadiusFloor(2)).toBe(5)
+      expect(getFocusRadiusFloor(0.1)).toBe(0.5)
+      expect(getFocusRadiusFloor(0.2)).toBe(0.5)
+    })
+  })
+
+  describe("calculateInitialElevationWindow (再次打開重置視窗且數值置中)", () => {
+    it("用戶範例：之前已經選擇 10 並保存，再次打開重置狀態，上限為 20 (10 x 2)，升降條位置恰好居中 (50%)", () => {
+      const result = calculateInitialElevationWindow(10, 0, 100, 1)
+      expect(result).toEqual({
+        windowMin: 0,
+        windowMax: 20,
+        macroMax: 20,
+      })
+      // 驗證 10 在 [0, 20] 中恰好為 50%
+      expect(calculateFillPercentage(10, result.windowMin, result.windowMax)).toBe(50)
+    })
+
+    it("最高優先級約束：沒小數點用戶選擇 1，上限保底為 10 (絕不變為 2)", () => {
+      const result = calculateInitialElevationWindow(1, 0, 100, 1)
+      expect(result).toEqual({
+        windowMin: 0,
+        windowMax: 10,
+        macroMax: 10,
+      })
+      expect(result.windowMax).toBe(10) // 1 * 2 = 2，但無小數最低上限 10 為最高優先級
+    })
+
+    it("最高優先級約束：有小數點 (step=0.1) 用戶選擇 0.2，上限保底為 1 (絕不變為 0.4)", () => {
+      const result = calculateInitialElevationWindow(0.2, 0, 50, 0.1)
+      expect(result).toEqual({
+        windowMin: 0,
+        windowMax: 1,
+        macroMax: 1,
+      })
+      expect(result.windowMax).toBe(1) // 0.2 * 2 = 0.4，但有小數最低上限 1 為最高優先級
+    })
+
+    it("整數數值居中：之前選擇了 50，再次打開上限為 100 (50 x 2)，液柱居中 50%", () => {
+      const result = calculateInitialElevationWindow(50, 0, 200, 1)
+      expect(result).toEqual({
+        windowMin: 0,
+        windowMax: 100,
+        macroMax: 100,
+      })
+      expect(calculateFillPercentage(50, result.windowMin, result.windowMax)).toBe(50)
+    })
+
+    it("小數數值居中：step=0.1，之前選擇了 2.5，再次打開上限為 5.0 (2.5 x 2)，液柱居中 50%", () => {
+      const result = calculateInitialElevationWindow(2.5, 0, 50, 0.1)
+      expect(result).toEqual({
+        windowMin: 0,
+        windowMax: 5.0,
+        macroMax: 5.0,
+      })
+      expect(calculateFillPercentage(2.5, result.windowMin, result.windowMax)).toBe(50)
+    })
+
+    it("未設置或數值為 0 (<= baseMin)：使用 defaultMax (如 100)，數值位於底端 0%", () => {
+      const result0 = calculateInitialElevationWindow(0, 0, 100, 1)
+      expect(result0).toEqual({
+        windowMin: 0,
+        windowMax: 100,
+        macroMax: 100,
+      })
+      expect(calculateFillPercentage(0, result0.windowMin, result0.windowMax)).toBe(0)
+
+      const resultUndef = calculateInitialElevationWindow(undefined, 0, 100, 1)
+      expect(resultUndef.macroMax).toBe(100)
+    })
+
+    it("異常邊界輸入保護 (NaN / 負數輸入)", () => {
+      const resultNaN = calculateInitialElevationWindow(NaN, 0, 100, 1)
+      expect(resultNaN.windowMin).toBe(0)
+      expect(resultNaN.windowMax).toBe(100)
+
+      const resultNeg = calculateInitialElevationWindow(-5, 0, 100, 1)
+      expect(resultNeg.windowMin).toBe(0)
+      expect(resultNeg.windowMax).toBe(100)
     })
   })
 })

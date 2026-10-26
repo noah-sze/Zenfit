@@ -70,7 +70,6 @@
       "serving": "份量",
       "amount": "份量",
       "dragElevationTip": "上推增加 · 下拉降低",
-      "solidFoodGramOnly": "原型固體食材已鎖定克重 (g) 物理計量",
       "perServing": "每份",
       "per100g": "每 100g",
       "nutritionBenchmark": "營養基準",
@@ -432,6 +431,13 @@
         "5 月", "6 月", "7 月", "8 月",
         "9 月", "10 月", "11 月", "12 月"
       ]
+    },
+    "keypad": {
+      "clear": "清空",
+      "collapse": "收起",
+      "backspace": "退格",
+      "calculate": "計算",
+      "done": "完成"
     }
   }
 }

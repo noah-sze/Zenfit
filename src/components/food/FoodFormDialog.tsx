@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useId } from 'react';
+import { useState, useEffect, useMemo, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -16,26 +16,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LiquidElevationPicker } from '@/components/ui/LiquidElevationPicker';
+import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import type { FoodItem, FoodCategory } from '@/types';
 import { triggerHaptic } from '@/lib/haptics';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayAmount } from '@/lib/utils';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
 import { Utensils, X, ChevronRight } from 'lucide-react';
 
-type PickerField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
+type KeypadField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
 
-interface PickerConfig {
-  field: PickerField;
+interface KeypadConfig {
+  field: KeypadField;
   title: string;
   value: number;
   unit: string;
-  allowedUnits: string[];
-  disabledUnits?: string[];
-  min: number;
-  max: number;
-  step: number;
-  hint?: string;
+  allowedUnits?: string[];
+  allowDecimals?: boolean;
+  maxDecimals?: number;
+  anchorEl?: HTMLElement | null;
+  valueClassName?: string;
+  titleClassName?: string;
 }
 
 export type FoodFormData = Omit<
@@ -101,12 +101,15 @@ export function FoodFormDialog({
   }, [name, namePlaceholder]);
 
   // 物理份量與單位
-  const [servingSize, setServingSize] = useState('100');
+  const [servingSize, setServingSize] = useState('');
   const [servingUnit, setServingUnit] = useState('g');
 
   // 標籤基準模式 ('serving' = 依份量, 'custom' = 自定義標籤依據如每 100g 或每 30g)
   const [basisMode, setBasisMode] = useState<'serving' | 'custom'>('serving');
-  const [basisSize, setBasisSize] = useState('100');
+  const [basisSize, setBasisSize] = useState('');
+
+  // 熱量單位 ('kcal' | 'kJ')
+  const [calorieUnit, setCalorieUnit] = useState<'kcal' | 'kJ'>('kcal');
 
   // 輸入之營養素數值 (對應當前 basisMode 下的輸入值)
   const [calories, setCalories] = useState('');
@@ -115,7 +118,7 @@ export function FoodFormDialog({
   const [fat, setFat] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pickerConfig, setPickerConfig] = useState<PickerConfig | null>(null);
+  const [keypadConfig, setKeypadConfig] = useState<KeypadConfig | null>(null);
 
   // 當彈窗開啟或 initialData 改變時，智能識別並回填表單
   useEffect(() => {
@@ -125,8 +128,9 @@ export function FoodFormDialog({
       setName(initialData.name || '');
       setCategory(initialData.category || 'natural');
       setBrand(initialData.brand || '');
-      setServingSize(String(initialData.servingSize || 100));
+      setServingSize(initialData.servingSize ? String(initialData.servingSize) : '');
       setServingUnit(initialData.servingUnit || 'g');
+      setCalorieUnit('kcal');
 
       // 智能判斷原始信息：
       // 若有記錄 labelBasisSize 且與份量不同，則判定為自定義標籤依據
@@ -147,28 +151,29 @@ export function FoodFormDialog({
           setFat(String(initialData.rawNutrition.fat));
         } else {
           const ratio = (initialData.labelBasisSize || 100) / (initialData.servingSize || 100);
-          setCalories(String(Math.round(initialData.calories * ratio)));
-          setProtein(String(Math.round(initialData.protein * ratio * 10) / 10));
-          setCarbs(String(Math.round(initialData.carbs * ratio * 10) / 10));
-          setFat(String(Math.round(initialData.fat * ratio * 10) / 10));
+          setCalories(String(Math.round(initialData.calories * ratio * 100) / 100));
+          setProtein(String(Math.round(initialData.protein * ratio * 100) / 100));
+          setCarbs(String(Math.round(initialData.carbs * ratio * 100) / 100));
+          setFat(String(Math.round(initialData.fat * ratio * 100) / 100));
         }
       } else {
         setBasisMode('serving');
-        setBasisSize(String(initialData.servingSize || 100));
+        setBasisSize(initialData.servingSize ? String(initialData.servingSize) : '');
         setCalories(String(initialData.calories));
         setProtein(String(initialData.protein));
         setCarbs(String(initialData.carbs));
         setFat(String(initialData.fat));
       }
     } else {
-      // 新增模式：乾淨預設值
+      // 新增模式：完全純淨無初始數值
       setName('');
       setCategory('natural');
       setBrand('');
-      setServingSize('100');
+      setServingSize('');
       setServingUnit('g');
       setBasisMode('serving');
-      setBasisSize('100');
+      setBasisSize('');
+      setCalorieUnit('kcal');
       setCalories('');
       setProtein('');
       setCarbs('');
@@ -179,166 +184,241 @@ export function FoodFormDialog({
   // 當分類切換時，自動同步預設單位
   const handleCategoryChange = (newCat: FoodCategory) => {
     setCategory(newCat);
-    if (newCat === 'beverage' && servingUnit === 'g') {
-      setServingUnit('ml');
-      if (servingSize === '100') setServingSize('250');
-    } else if (newCat !== 'beverage' && servingUnit === 'ml') {
-      setServingUnit('g');
-      if (servingSize === '250') setServingSize('100');
+    if (!servingSize) {
+      if (newCat === 'beverage' && servingUnit === 'g') {
+        setServingUnit('ml');
+      } else if (newCat !== 'beverage' && servingUnit === 'ml') {
+        setServingUnit('g');
+      }
     }
   };
 
   // 即時純數學折算單份數據
-  const parsedServing = Math.max(0, parseFloat(servingSize) || 100);
-  const parsedBasis = Math.max(0, parseFloat(basisSize) || 100);
+  const parsedServing = Math.max(0, parseFloat(servingSize) || 0);
+  const parsedBasis = Math.max(0, parseFloat(basisSize) || 0);
   const parsedCal = Math.max(0, parseFloat(calories) || 0);
   const parsedP = Math.max(0, parseFloat(protein) || 0);
   const parsedC = Math.max(0, parseFloat(carbs) || 0);
   const parsedF = Math.max(0, parseFloat(fat) || 0);
 
-  // 打開獨立數字升降選擇器
-  const openPicker = (field: PickerField) => {
+  const roundTo2 = (num: number) => Math.round(num * 100) / 100;
+  const formatNum2 = (val: number) => (val > 0 ? String(roundTo2(val)) : '');
+
+  // 記錄開啟鍵盤時的初始狀態，供取消時安全回滾 (Revert)
+  const initialKeypadValueRef = useRef<{ value: string; unit: string } | null>(null);
+
+  // 打開移植自 Zenance 的懸浮/吸附數字鍵盤
+  const openKeypad = (field: KeypadField, targetEl?: HTMLElement | null) => {
     triggerHaptic('selection');
     switch (field) {
       case 'serving': {
-        const isNatural = category === 'natural';
-        const isBeverage = category === 'beverage';
-        setPickerConfig({
+        initialKeypadValueRef.current = { value: servingSize, unit: servingUnit };
+        setKeypadConfig({
           field: 'serving',
           title: t('diet.serving'),
-          value: parsedServing,
+          value: parsedServing > 0 ? parsedServing : 0,
           unit: servingUnit,
-          allowedUnits: isBeverage ? ['ml', 'g'] : ['g', 'ml'],
-          disabledUnits: isNatural ? ['ml'] : [],
-          hint: isNatural ? t('diet.solidFoodGramOnly') : undefined,
-          min: 1,
-          max: 1000,
-          step: 1,
+          allowedUnits: ['g', 'ml'],
+          allowDecimals: true,
+          maxDecimals: 2,
+          anchorEl: targetEl || null,
+          valueClassName: 'text-foreground',
         });
         break;
       }
       case 'basis': {
-        setPickerConfig({
+        initialKeypadValueRef.current = { value: basisSize, unit: servingUnit };
+        setKeypadConfig({
           field: 'basis',
-          title: t('diet.nutritionBenchmark'),
-          value: parsedBasis,
+          title: t('diet.perLabelBasis'),
+          value: parsedBasis > 0 ? parsedBasis : 0,
           unit: servingUnit,
           allowedUnits: [servingUnit],
-          min: 1,
-          max: 1000,
-          step: 1,
+          allowDecimals: true,
+          maxDecimals: 2,
+          anchorEl: targetEl || null,
+          valueClassName: 'text-foreground',
         });
         break;
       }
       case 'calories': {
-        setPickerConfig({
+        initialKeypadValueRef.current = { value: calories, unit: calorieUnit };
+        setKeypadConfig({
           field: 'calories',
           title: t('diet.calories'),
-          value: parsedCal,
-          unit: 'kcal',
-          allowedUnits: ['kcal'],
-          min: 0,
-          max: 1500,
-          step: 1,
+          value: parsedCal > 0 ? parsedCal : 0,
+          unit: calorieUnit,
+          allowedUnits: ['kcal', 'kJ'],
+          allowDecimals: true,
+          maxDecimals: 2,
+          anchorEl: targetEl || null,
+          valueClassName: 'text-calories',
         });
         break;
       }
       case 'protein': {
-        setPickerConfig({
+        initialKeypadValueRef.current = { value: protein, unit: 'g' };
+        setKeypadConfig({
           field: 'protein',
           title: t('diet.protein'),
-          value: parsedP,
+          value: parsedP > 0 ? parsedP : 0,
           unit: 'g',
-          allowedUnits: ['g'],
-          min: 0,
-          max: 150,
-          step: 0.1,
+          allowDecimals: true,
+          maxDecimals: 2,
+          anchorEl: targetEl || null,
+          valueClassName: 'text-protein',
         });
         break;
       }
       case 'carbs': {
-        setPickerConfig({
+        initialKeypadValueRef.current = { value: carbs, unit: 'g' };
+        setKeypadConfig({
           field: 'carbs',
           title: t('diet.carbs'),
-          value: parsedC,
+          value: parsedC > 0 ? parsedC : 0,
           unit: 'g',
-          allowedUnits: ['g'],
-          min: 0,
-          max: 200,
-          step: 0.1,
+          allowDecimals: true,
+          maxDecimals: 2,
+          anchorEl: targetEl || null,
+          valueClassName: 'text-carbs',
         });
         break;
       }
       case 'fat': {
-        setPickerConfig({
+        initialKeypadValueRef.current = { value: fat, unit: 'g' };
+        setKeypadConfig({
           field: 'fat',
           title: t('diet.fat'),
-          value: parsedF,
+          value: parsedF > 0 ? parsedF : 0,
           unit: 'g',
-          allowedUnits: ['g'],
-          min: 0,
-          max: 150,
-          step: 0.1,
+          allowDecimals: true,
+          maxDecimals: 2,
+          anchorEl: targetEl || null,
+          valueClassName: 'text-fat',
         });
         break;
       }
     }
   };
 
-  const handlePickerConfirm = (val: number, nextUnit: string) => {
-    if (!pickerConfig) return;
-    triggerHaptic('success');
-    switch (pickerConfig.field) {
+  // 即時雙向鏡像同步：原位列表行即時隨鍵盤按鍵更新預覽
+  const handleKeypadLiveChange = (val: number, nextUnit: string) => {
+    if (!keypadConfig) return;
+    switch (keypadConfig.field) {
       case 'serving':
-        setServingSize(String(val));
+        setServingSize(formatNum2(val));
         setServingUnit(nextUnit);
         break;
       case 'basis':
-        setBasisSize(String(val));
+        setBasisSize(formatNum2(val));
         break;
       case 'calories':
-        setCalories(String(Math.round(val)));
+        setCalories(formatNum2(val));
+        setCalorieUnit(nextUnit as 'kcal' | 'kJ');
         break;
       case 'protein':
-        setProtein(String(Math.round(val * 10) / 10));
+        setProtein(formatNum2(val));
         break;
       case 'carbs':
-        setCarbs(String(Math.round(val * 10) / 10));
+        setCarbs(formatNum2(val));
         break;
       case 'fat':
-        setFat(String(Math.round(val * 10) / 10));
+        setFat(formatNum2(val));
         break;
     }
-    setPickerConfig(null);
   };
+
+  // 取消/關閉時安全回滾為開啟前的初始值
+  const handleKeypadCancel = () => {
+    if (!keypadConfig || !initialKeypadValueRef.current) {
+      setKeypadConfig(null);
+      return;
+    }
+    const { value: prevVal, unit: prevUnit } = initialKeypadValueRef.current;
+    switch (keypadConfig.field) {
+      case 'serving':
+        setServingSize(prevVal);
+        setServingUnit(prevUnit);
+        break;
+      case 'basis':
+        setBasisSize(prevVal);
+        break;
+      case 'calories':
+        setCalories(prevVal);
+        setCalorieUnit(prevUnit as 'kcal' | 'kJ');
+        break;
+      case 'protein':
+        setProtein(prevVal);
+        break;
+      case 'carbs':
+        setCarbs(prevVal);
+        break;
+      case 'fat':
+        setFat(prevVal);
+        break;
+    }
+    setKeypadConfig(null);
+  };
+
+  const handleKeypadConfirm = (val: number, nextUnit: string) => {
+    if (!keypadConfig) return;
+    switch (keypadConfig.field) {
+      case 'serving':
+        setServingSize(formatNum2(val));
+        setServingUnit(nextUnit);
+        break;
+      case 'basis':
+        setBasisSize(formatNum2(val));
+        break;
+      case 'calories':
+        setCalories(formatNum2(val));
+        setCalorieUnit(nextUnit as 'kcal' | 'kJ');
+        break;
+      case 'protein':
+        setProtein(formatNum2(val));
+        break;
+      case 'carbs':
+        setCarbs(formatNum2(val));
+        break;
+      case 'fat':
+        setFat(formatNum2(val));
+        break;
+    }
+    setKeypadConfig(null);
+  };
+
+  // 若以 kJ 輸入，存儲時以國際標準 1 kcal = 4.184 kJ 精確折算為大卡
+  const normalizedCalories = calorieUnit === 'kJ'
+    ? roundTo2(parsedCal / 4.184)
+    : roundTo2(parsedCal);
 
   const scaledSingleServing = useMemo(() => {
     if (basisMode === 'serving') {
       return {
-        calories: Math.round(parsedCal),
-        protein: Math.round(parsedP * 10) / 10,
-        carbs: Math.round(parsedC * 10) / 10,
-        fat: Math.round(parsedF * 10) / 10,
-        servingSize: parsedServing,
+        calories: normalizedCalories,
+        protein: roundTo2(parsedP),
+        carbs: roundTo2(parsedC),
+        fat: roundTo2(parsedF),
+        servingSize: roundTo2(parsedServing),
         servingUnit,
       };
     }
 
     return scaleNutritionFromBasis({
-      calories: parsedCal,
+      calories: normalizedCalories,
       protein: parsedP,
       carbs: parsedC,
       fat: parsedF,
       servingSize: parsedServing,
-      basisSize: parsedBasis,
+      basisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
       servingUnit,
     });
-  }, [basisMode, parsedCal, parsedP, parsedC, parsedF, parsedServing, parsedBasis, servingUnit]);
+  }, [basisMode, normalizedCalories, parsedP, parsedC, parsedF, parsedServing, parsedBasis, servingUnit]);
 
   // 表單送出處理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || isSubmitting) return;
+    if (!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0) return;
 
     setIsSubmitting(true);
     try {
@@ -349,16 +429,16 @@ export function FoodFormDialog({
           brand: brand.trim() || undefined,
           servingSize: parsedServing,
           servingUnit: servingUnit.trim() || 'g',
-          calories: Math.round(parsedCal),
-          protein: Math.round(parsedP * 10) / 10,
-          carbs: Math.round(parsedC * 10) / 10,
-          fat: Math.round(parsedF * 10) / 10,
+          calories: normalizedCalories,
+          protein: roundTo2(parsedP),
+          carbs: roundTo2(parsedC),
+          fat: roundTo2(parsedF),
           labelBasisSize: parsedServing,
           rawNutrition: {
-            calories: Math.round(parsedCal),
-            protein: Math.round(parsedP * 10) / 10,
-            carbs: Math.round(parsedC * 10) / 10,
-            fat: Math.round(parsedF * 10) / 10,
+            calories: roundTo2(parsedCal),
+            protein: roundTo2(parsedP),
+            carbs: roundTo2(parsedC),
+            fat: roundTo2(parsedF),
           },
         });
       } else {
@@ -373,12 +453,12 @@ export function FoodFormDialog({
           protein: scaledSingleServing.protein,
           carbs: scaledSingleServing.carbs,
           fat: scaledSingleServing.fat,
-          labelBasisSize: parsedBasis,
+          labelBasisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
           rawNutrition: {
-            calories: parsedCal,
-            protein: parsedP,
-            carbs: parsedC,
-            fat: parsedF,
+            calories: roundTo2(parsedCal),
+            protein: roundTo2(parsedP),
+            carbs: roundTo2(parsedC),
+            fat: roundTo2(parsedF),
           },
         });
       }
@@ -401,8 +481,8 @@ export function FoodFormDialog({
         >
           <DialogHeader className="p-0 pb-0 shrink-0">
             <div className="flex items-center justify-between w-full h-7">
-              <DialogTitle className="text-foreground text-base sm:text-lg font-bold tracking-tight font-sans flex items-center gap-2">
-                <Utensils className="size-4.5 text-foreground shrink-0" />
+              <DialogTitle className="text-foreground text-sm sm:text-base font-semibold tracking-tight font-sans flex items-center gap-2">
+                <Utensils className="size-4 text-foreground shrink-0" />
                 <span>{isEdit ? t('settings.editCustomFood') : t('diet.addFood', '新增單品食材')}</span>
               </DialogTitle>
               <DialogClose
@@ -499,10 +579,10 @@ export function FoodFormDialog({
                 <span className="text-muted-foreground text-xs">{t('diet.serving')}</span>
                 <button
                   type="button"
-                  onClick={() => openPicker('serving')}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95"
+                  onClick={(e) => openKeypad('serving', e.currentTarget)}
+                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
                 >
-                  <span className="font-bold">{servingSize}</span>
+                  <span className="font-bold">{servingSize ? formatDisplayAmount(servingSize) : '-'}</span>
                   <span className="text-muted-foreground">{servingUnit}</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -566,16 +646,16 @@ export function FoodFormDialog({
                 </span>
                 {basisMode === 'serving' ? (
                   <div className="h-7 px-3 rounded-full border border-border/50 bg-muted/40 font-mono text-xs flex items-center gap-1.5 text-muted-foreground select-none">
-                    <span className="font-bold text-foreground/75">{servingSize}</span>
+                    <span className="font-bold text-foreground/75">{servingSize ? formatDisplayAmount(servingSize) : '-'}</span>
                     <span className="text-xs text-muted-foreground">{servingUnit}</span>
                   </div>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => openPicker('basis')}
-                    className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95"
+                    onClick={(e) => openKeypad('basis', e.currentTarget)}
+                    className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
                   >
-                    <span className="font-bold">{basisSize}</span>
+                    <span className="font-bold">{basisSize ? formatDisplayAmount(basisSize) : '-'}</span>
                     <span className="text-muted-foreground">{servingUnit}</span>
                     <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                   </button>
@@ -587,11 +667,11 @@ export function FoodFormDialog({
                 <span className="text-calories text-xs font-medium">{t('diet.calories')}</span>
                 <button
                   type="button"
-                  onClick={() => openPicker('calories')}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-calories active:scale-95"
+                  onClick={(e) => openKeypad('calories', e.currentTarget)}
+                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-calories active:scale-95 select-none"
                 >
-                  <span className="font-bold">{calories || '0'}</span>
-                  <span className="text-xs text-muted-foreground">kcal</span>
+                  <span className="font-bold">{calories ? formatDisplayAmount(calories) : '-'}</span>
+                  <span className="text-xs text-muted-foreground">{calorieUnit}</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
               </div>
@@ -601,10 +681,10 @@ export function FoodFormDialog({
                 <span className="text-protein text-xs font-medium">{t('diet.protein')}</span>
                 <button
                   type="button"
-                  onClick={() => openPicker('protein')}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-protein active:scale-95"
+                  onClick={(e) => openKeypad('protein', e.currentTarget)}
+                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-protein active:scale-95 select-none"
                 >
-                  <span className="font-bold">{protein || '0'}</span>
+                  <span className="font-bold">{protein ? formatDisplayAmount(protein) : '-'}</span>
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -615,10 +695,10 @@ export function FoodFormDialog({
                 <span className="text-carbs text-xs font-medium">{t('diet.carbs')}</span>
                 <button
                   type="button"
-                  onClick={() => openPicker('carbs')}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-carbs active:scale-95"
+                  onClick={(e) => openKeypad('carbs', e.currentTarget)}
+                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-carbs active:scale-95 select-none"
                 >
-                  <span className="font-bold">{carbs || '0'}</span>
+                  <span className="font-bold">{carbs ? formatDisplayAmount(carbs) : '-'}</span>
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -629,10 +709,10 @@ export function FoodFormDialog({
                 <span className="text-fat text-xs font-medium">{t('diet.fat')}</span>
                 <button
                   type="button"
-                  onClick={() => openPicker('fat')}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-fat active:scale-95"
+                  onClick={(e) => openKeypad('fat', e.currentTarget)}
+                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-fat active:scale-95 select-none"
                 >
-                  <span className="font-bold">{fat || '0'}</span>
+                  <span className="font-bold">{fat ? formatDisplayAmount(fat) : '-'}</span>
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -647,7 +727,7 @@ export function FoodFormDialog({
             </DialogClose>
             <Button
               type="submit"
-              disabled={!name.trim() || isSubmitting}
+              disabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
               className="cursor-pointer h-8 text-xs min-w-[72px] px-4 font-medium"
             >
               {isEdit ? t('common.save') : t('common.add')}
@@ -657,26 +737,25 @@ export function FoodFormDialog({
       </DialogContent>
     </Dialog>
 
-    {/* 次級獨立數字升降選擇器：層級 z-[80]，平級兄弟節點聲明 (No Nested Dialogs) */}
-    {pickerConfig && (
-      <LiquidElevationPicker
-        open={!!pickerConfig}
+    {/* 響應式精密數字鍵盤輸入器：桌面端懸浮 Popover / 手機端底部吸附鍵盤 */}
+    {keypadConfig && (
+      <NumericKeypadDialog
+        open={!!keypadConfig}
         onOpenChange={(isOpen) => {
-          if (!isOpen) setPickerConfig(null);
+          if (!isOpen) setKeypadConfig(null);
         }}
-        title={pickerConfig.title}
-        value={pickerConfig.value}
-        unit={pickerConfig.unit}
-        allowedUnits={pickerConfig.allowedUnits}
-        disabledUnits={pickerConfig.disabledUnits}
-        hint={pickerConfig.hint}
-        min={pickerConfig.min}
-        max={pickerConfig.max}
-        step={pickerConfig.step}
-        overlayClassName="z-[80]"
-        className="z-[80]"
-        onConfirm={handlePickerConfirm}
-        onCancel={() => setPickerConfig(null)}
+        anchorEl={keypadConfig.anchorEl}
+        title={keypadConfig.title}
+        value={keypadConfig.value}
+        unit={keypadConfig.unit}
+        allowedUnits={keypadConfig.allowedUnits}
+        allowDecimals={keypadConfig.allowDecimals}
+        maxDecimals={keypadConfig.maxDecimals}
+        onConfirm={handleKeypadConfirm}
+        onCancel={handleKeypadCancel}
+        onLiveChange={handleKeypadLiveChange}
+        valueClassName={keypadConfig.valueClassName}
+        titleClassName={keypadConfig.titleClassName || keypadConfig.valueClassName}
       />
     )}
     </>
