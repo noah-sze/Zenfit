@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import type { UserBaseInfo, UserProfile } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { useUnitPreferences } from './useUnitPreferences';
 
 const PRIMARY_USER_ID = 'primary_user';
 
@@ -17,6 +18,8 @@ const DEFAULT_BASE_INFO: UserBaseInfo = {
 };
 
 export function useUserProfile() {
+  const { bodyWeightUnit } = useUnitPreferences();
+
   // 1. 讀取獨立的用戶基礎資訊（名字、性別、身高、出生日期）
   const baseInfo = useLiveQuery(async () => {
     const existing = await db.user_base_info.get(PRIMARY_USER_ID);
@@ -43,7 +46,7 @@ export function useUserProfile() {
     age: 25,
     heightCm: baseInfo?.heightCm || 175,
     currentWeightKg,
-    weightUnit: baseInfo?.weightUnit || 'kg',
+    weightUnit: bodyWeightUnit,
     activityLevel: 1.55,
     dailyCaloriesTarget: 2000,
     proteinGramsTarget: 140,

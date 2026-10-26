@@ -43,6 +43,8 @@ import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { useAppStore } from '@/store/useAppStore';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { formatEnergy, formatFoodServing, ozToG, flOzToMl } from '@/utils/unitMath';
 import type { RecipeIngredient } from '@/types';
 
 export default function RecipeDetails() {
@@ -54,6 +56,7 @@ export default function RecipeDetails() {
   const { allFoods } = useFoods();
   const { updateRecipe, archiveRecipe, unarchiveRecipe, deleteRecipe } = useRecipes();
   const { nutritionDisplayMode } = useAppStore();
+  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   // 響應式取得特定菜餚資料
   const recipe = useLiveQuery(
@@ -168,7 +171,7 @@ export default function RecipeDetails() {
     return calculateRecipeTotals(recipe, foodMap);
   }, [recipe, foodMap]);
 
-  // 依據顯示模式推算顯示數值（全配方每份 vs 每 100g 密度）
+  // 依據顯示模式推算顯示數值（全配方每份 vs 每 100g / 1 oz 密度）
   const scaledRecipeTotals = useMemo(() => {
     if (!standardTotals) return null;
     return calculateScaledNutrition(
@@ -180,9 +183,13 @@ export default function RecipeDetails() {
         servingSize: standardTotals.totalWeightGrams || 100,
         servingUnit: 'g',
       },
-      nutritionDisplayMode
+      nutritionDisplayMode,
+      {
+        foodWeightUnit,
+        foodVolumeUnit,
+      }
     );
-  }, [standardTotals, nutritionDisplayMode]);
+  }, [standardTotals, nutritionDisplayMode, foodWeightUnit, foodVolumeUnit]);
 
   // 菜餚無油/瀝乾客觀對比數值
   const oilFreeTotals = useMemo(() => {
@@ -226,20 +233,28 @@ export default function RecipeDetails() {
     setEditName(recipe.name);
     setEditDescription(recipe.description || '');
     setEditIngredients(
-      recipe.ingredients.map((ing) => ({
-        foodId: ing.foodId,
-        quantity: String(ing.quantity),
-        isOptional: !!ing.isOptional,
-      }))
+      recipe.ingredients.map((ing) => {
+        const displayServing = formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit);
+        return {
+          foodId: ing.foodId,
+          quantity: String(displayServing.size),
+          isOptional: !!ing.isOptional,
+        };
+      })
     );
     setIsEditDialogOpen(true);
   };
 
   const handleAddIngredientRow = () => {
     if (allFoods.length === 0) return;
+    const firstFood = allFoods[0];
+    const isLiquid = (firstFood.servingUnit || 'g').toLowerCase().includes('ml') || firstFood.category === 'beverage';
+    const defaultQty = isLiquid
+      ? (foodVolumeUnit === 'fl oz' ? '8' : '250')
+      : (foodWeightUnit === 'oz' ? '1' : '100');
     setEditIngredients((prev) => [
       ...prev,
-      { foodId: allFoods[0].id, quantity: '100', isOptional: false },
+      { foodId: firstFood.id, quantity: defaultQty, isOptional: false },
     ]);
   };
 
@@ -256,10 +271,18 @@ export default function RecipeDetails() {
       const targetFood = allFoods.find((f) => f.id === item.foodId);
       const qty = parseFloat(item.quantity);
       if (targetFood && qty > 0) {
+        const isLiquid = (targetFood.servingUnit || 'g').toLowerCase().includes('ml') || targetFood.category === 'beverage';
+        let normalizedQty = qty;
+        if (isLiquid && foodVolumeUnit === 'fl oz') {
+          normalizedQty = flOzToMl(qty, 2);
+        } else if (!isLiquid && foodWeightUnit === 'oz') {
+          normalizedQty = ozToG(qty, 2);
+        }
+
         validIngredients.push({
           foodId: targetFood.id,
           foodName: formatFoodDisplayName(targetFood),
-          quantity: qty,
+          quantity: normalizedQty,
           unit: targetFood.servingUnit || 'g',
           isOptional: item.isOptional,
         });
@@ -418,10 +441,10 @@ export default function RecipeDetails() {
           </div>
           <AutoMarquee align="center" className="text-4xl sm:text-5xl font-mono tracking-tighter font-medium px-4 leading-none">
             <span className="tabular-nums font-mono">
-              {allTimeCalories.toLocaleString()}
+              {formatEnergy(allTimeCalories, energyUnit).value.toLocaleString()}
             </span>
             <span className="text-lg sm:text-xl font-normal text-muted-foreground ml-1.5">
-              kcal
+              {energyUnit}
             </span>
           </AutoMarquee>
         </div>
@@ -439,10 +462,10 @@ export default function RecipeDetails() {
             </div>
             <div className="text-xl sm:text-2xl font-mono tracking-tight font-medium leading-none mt-2 truncate">
               <span className="tabular-nums font-mono">
-                {pastMonthCalories.toLocaleString()}
+                {formatEnergy(pastMonthCalories, energyUnit).value.toLocaleString()}
               </span>
               <span className="text-xs font-normal text-muted-foreground ml-1">
-                kcal
+                {energyUnit}
               </span>
             </div>
           </div>
@@ -458,10 +481,10 @@ export default function RecipeDetails() {
             </div>
             <div className="text-xl sm:text-2xl font-mono tracking-tight font-medium leading-none mt-2 truncate">
               <span className="tabular-nums font-mono">
-                {pastYearCalories.toLocaleString()}
+                {formatEnergy(pastYearCalories, energyUnit).value.toLocaleString()}
               </span>
               <span className="text-xs font-normal text-muted-foreground ml-1">
-                kcal
+                {energyUnit}
               </span>
             </div>
           </div>
@@ -480,15 +503,17 @@ export default function RecipeDetails() {
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.calories')}</span>
             <span className="font-mono text-foreground font-medium">
-              {scaledRecipeTotals?.calories ?? standardTotals.calories} kcal
+              {formatEnergy(scaledRecipeTotals?.calories ?? standardTotals.calories, energyUnit).formatted}
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">
-              {nutritionDisplayMode === 'per100g' ? t('diet.per100gDensity', '100g 密度') : `${t('diet.unit')} (g)`}
+              {nutritionDisplayMode === 'per100g'
+                ? (foodWeightUnit === 'oz' ? t('diet.per1ozDensity', '1 oz 密度') : t('diet.per100gDensity', '100g 密度'))
+                : `${t('diet.unit')}`}
             </span>
             <span className="font-mono text-foreground font-medium">
-              {scaledRecipeTotals?.servingSize ?? standardTotals.totalWeightGrams} g
+              {formatFoodServing(scaledRecipeTotals?.servingSize ?? standardTotals.totalWeightGrams, scaledRecipeTotals?.servingUnit ?? 'g', foodWeightUnit, foodVolumeUnit).formatted}
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
@@ -546,13 +571,13 @@ export default function RecipeDetails() {
                     )}
                   </div>
                   <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
-                    {ing.quantity} {ing.unit} · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
+                    {formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit).formatted} · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-mono font-medium text-foreground text-sm">
-                    {macros.calories} kcal
+                    {formatEnergy(macros.calories, energyUnit).formatted}
                   </span>
                   <ChevronRight className="size-4 text-muted-foreground opacity-40 group-hover:opacity-100 transition-opacity" />
                 </div>
@@ -575,7 +600,7 @@ export default function RecipeDetails() {
                   {t('diet.standardRecipe')}
                 </div>
                 <div className="text-sm font-semibold font-mono text-foreground mt-0.5">
-                  {standardTotals.calories} kcal
+                  {formatEnergy(standardTotals.calories, energyUnit).formatted}
                 </div>
                 <div className="text-[10px] font-mono text-muted-foreground">
                   {standardTotals.fat} g {t('diet.fat')}
@@ -587,7 +612,7 @@ export default function RecipeDetails() {
                   {t('diet.oilFreeDrained')}
                 </div>
                 <div className="text-sm font-semibold font-mono text-foreground mt-0.5">
-                  {oilFreeTotals.calories} kcal
+                  {formatEnergy(oilFreeTotals.calories, energyUnit).formatted}
                 </div>
                 <div className="text-[10px] font-mono text-muted-foreground">
                   {oilFreeTotals.fat} g {t('diet.fat')}
@@ -598,7 +623,7 @@ export default function RecipeDetails() {
             <div className="text-center font-mono text-xs text-muted-foreground pt-1 border-t border-border/50">
               {t('diet.oilReductionDelta')}:{' '}
               <span className="text-foreground font-medium">
-                -{standardTotals.calories - oilFreeTotals.calories} kcal
+                -{formatEnergy(standardTotals.calories - oilFreeTotals.calories, energyUnit).formatted}
               </span>{' '}
               (
               <span>
@@ -648,7 +673,7 @@ export default function RecipeDetails() {
                         </span>
                       </div>
                       <div className="font-mono text-sm text-foreground shrink-0 pl-2">
-                        {log.calories} kcal
+                        {formatEnergy(log.calories, energyUnit).formatted}
                       </div>
                     </div>
                   ))}
@@ -732,7 +757,7 @@ export default function RecipeDetails() {
                           >
                             {allFoods.map((f) => (
                               <option key={f.id} value={f.id}>
-                                {formatFoodDisplayName(f)} ({f.calories} kcal / {f.servingSize} {f.servingUnit})
+                                {formatFoodDisplayName(f)} ({formatEnergy(f.calories, energyUnit).formatted} / {formatFoodServing(f.servingSize, f.servingUnit, foodWeightUnit, foodVolumeUnit).formatted})
                               </option>
                             ))}
                           </select>
@@ -764,7 +789,7 @@ export default function RecipeDetails() {
                               className="h-7 w-20 text-xs font-mono"
                             />
                             <span className="text-muted-foreground text-xs font-mono">
-                              {selFood?.servingUnit || 'g'}
+                              {formatFoodServing(1, selFood?.servingUnit || 'g', foodWeightUnit, foodVolumeUnit).unit}
                             </span>
                           </div>
 

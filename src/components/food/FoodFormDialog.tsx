@@ -20,6 +20,7 @@ import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import type { FoodItem, FoodCategory } from '@/types';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn, formatDisplayAmount } from '@/lib/utils';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
 import { Utensils, X, ChevronRight } from 'lucide-react';
 
@@ -77,6 +78,7 @@ export function FoodFormDialog({
   onSubmit,
 }: FoodFormDialogProps) {
   const { t } = useTranslation();
+  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
   const isEdit = !!initialData;
 
   // 基本資訊狀態
@@ -102,14 +104,14 @@ export function FoodFormDialog({
 
   // 物理份量與單位
   const [servingSize, setServingSize] = useState('');
-  const [servingUnit, setServingUnit] = useState('g');
+  const [servingUnit, setServingUnit] = useState<string>(foodWeightUnit);
 
   // 標籤基準模式 ('serving' = 依份量, 'custom' = 自定義標籤依據如每 100g 或每 30g)
   const [basisMode, setBasisMode] = useState<'serving' | 'custom'>('serving');
   const [basisSize, setBasisSize] = useState('');
 
   // 熱量單位 ('kcal' | 'kJ')
-  const [calorieUnit, setCalorieUnit] = useState<'kcal' | 'kJ'>('kcal');
+  const [calorieUnit, setCalorieUnit] = useState<'kcal' | 'kJ'>(energyUnit);
 
   // 輸入之營養素數值 (對應當前 basisMode 下的輸入值)
   const [calories, setCalories] = useState('');
@@ -129,8 +131,9 @@ export function FoodFormDialog({
       setCategory(initialData.category || 'natural');
       setBrand(initialData.brand || '');
       setServingSize(initialData.servingSize ? String(initialData.servingSize) : '');
-      setServingUnit(initialData.servingUnit || 'g');
-      setCalorieUnit('kcal');
+      const defaultUnit = initialData.category === 'beverage' ? foodVolumeUnit : foodWeightUnit;
+      setServingUnit(initialData.servingUnit || defaultUnit);
+      setCalorieUnit(energyUnit);
 
       // 智能判斷原始信息：
       // 若有記錄 labelBasisSize 且與份量不同，則判定為自定義標籤依據
@@ -145,13 +148,18 @@ export function FoodFormDialog({
 
         // 優先帶入當初記錄的原始標籤數值；若無則依比例逆向還原
         if (initialData.rawNutrition) {
-          setCalories(String(initialData.rawNutrition.calories));
-          setProtein(String(initialData.rawNutrition.protein));
-          setCarbs(String(initialData.rawNutrition.carbs));
-          setFat(String(initialData.rawNutrition.fat));
+          const rawCal = energyUnit === 'kJ'
+            ? Math.round(initialData.rawNutrition.calories * 4.184 * 100) / 100
+            : initialData.rawNutrition.calories;
+          setCalories(rawCal > 0 ? String(rawCal) : '');
+          setProtein(initialData.rawNutrition.protein ? String(initialData.rawNutrition.protein) : '');
+          setCarbs(initialData.rawNutrition.carbs ? String(initialData.rawNutrition.carbs) : '');
+          setFat(initialData.rawNutrition.fat ? String(initialData.rawNutrition.fat) : '');
         } else {
           const ratio = (initialData.labelBasisSize || 100) / (initialData.servingSize || 100);
-          setCalories(String(Math.round(initialData.calories * ratio * 100) / 100));
+          const baseCalKcal = initialData.calories * ratio;
+          const finalCal = energyUnit === 'kJ' ? baseCalKcal * 4.184 : baseCalKcal;
+          setCalories(finalCal > 0 ? String(Math.round(finalCal * 100) / 100) : '');
           setProtein(String(Math.round(initialData.protein * ratio * 100) / 100));
           setCarbs(String(Math.round(initialData.carbs * ratio * 100) / 100));
           setFat(String(Math.round(initialData.fat * ratio * 100) / 100));
@@ -159,10 +167,13 @@ export function FoodFormDialog({
       } else {
         setBasisMode('serving');
         setBasisSize(initialData.servingSize ? String(initialData.servingSize) : '');
-        setCalories(String(initialData.calories));
-        setProtein(String(initialData.protein));
-        setCarbs(String(initialData.carbs));
-        setFat(String(initialData.fat));
+        const displayCal = energyUnit === 'kJ'
+          ? Math.round(initialData.calories * 4.184 * 100) / 100
+          : initialData.calories;
+        setCalories(displayCal > 0 ? String(displayCal) : '');
+        setProtein(initialData.protein ? String(initialData.protein) : '');
+        setCarbs(initialData.carbs ? String(initialData.carbs) : '');
+        setFat(initialData.fat ? String(initialData.fat) : '');
       }
     } else {
       // 新增模式：完全純淨無初始數值
@@ -170,25 +181,25 @@ export function FoodFormDialog({
       setCategory('natural');
       setBrand('');
       setServingSize('');
-      setServingUnit('g');
+      setServingUnit(foodWeightUnit);
       setBasisMode('serving');
       setBasisSize('');
-      setCalorieUnit('kcal');
+      setCalorieUnit(energyUnit);
       setCalories('');
       setProtein('');
       setCarbs('');
       setFat('');
     }
-  }, [open, initialData]);
+  }, [open, initialData, foodWeightUnit, foodVolumeUnit, energyUnit]);
 
   // 當分類切換時，自動同步預設單位
   const handleCategoryChange = (newCat: FoodCategory) => {
     setCategory(newCat);
     if (!servingSize) {
-      if (newCat === 'beverage' && servingUnit === 'g') {
-        setServingUnit('ml');
-      } else if (newCat !== 'beverage' && servingUnit === 'ml') {
-        setServingUnit('g');
+      if (newCat === 'beverage') {
+        setServingUnit(foodVolumeUnit);
+      } else {
+        setServingUnit(foodWeightUnit);
       }
     }
   };
@@ -212,13 +223,18 @@ export function FoodFormDialog({
     triggerHaptic('selection');
     switch (field) {
       case 'serving': {
+        const isLiquid = category === 'beverage' || servingUnit === 'ml' || servingUnit === 'fl oz';
+        const allowedUnits = isLiquid
+          ? (foodVolumeUnit === 'fl oz' ? ['fl oz', 'ml'] : ['ml', 'fl oz'])
+          : (foodWeightUnit === 'oz' ? ['oz', 'g'] : ['g', 'oz']);
+
         initialKeypadValueRef.current = { value: servingSize, unit: servingUnit };
         setKeypadConfig({
           field: 'serving',
           title: t('diet.serving'),
           value: parsedServing > 0 ? parsedServing : 0,
           unit: servingUnit,
-          allowedUnits: ['g', 'ml'],
+          allowedUnits,
           allowDecimals: true,
           maxDecimals: 2,
           anchorEl: targetEl || null,
@@ -248,7 +264,7 @@ export function FoodFormDialog({
           title: t('diet.calories'),
           value: parsedCal > 0 ? parsedCal : 0,
           unit: calorieUnit,
-          allowedUnits: ['kcal', 'kJ'],
+          allowedUnits: energyUnit === 'kJ' ? ['kJ', 'kcal'] : ['kcal', 'kJ'],
           allowDecimals: true,
           maxDecimals: 2,
           anchorEl: targetEl || null,

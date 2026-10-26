@@ -39,12 +39,15 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import type { EquipmentType, DetailedMuscle } from '@/types';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { convertBodyWeight } from '@/utils/unitMath';
 
 export default function ExerciseDetails() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const { bodyWeightUnit } = useUnitPreferences();
 
   const { allExercises, updateExercise, archiveExercise, unarchiveExercise, deleteExercise } = useExercises();
   const { allRoutines } = useRoutines();
@@ -318,8 +321,8 @@ export default function ExerciseDetails() {
               {t('workout.bestE1RM')}
             </div>
             <div className="text-lg font-mono font-bold text-foreground">
-              {stats.bestE1RM}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5">kg</span>
+              {convertBodyWeight(stats.bestE1RM, 'kg', bodyWeightUnit, 1)}
+              <span className="text-xs font-normal text-muted-foreground ml-0.5">{bodyWeightUnit}</span>
             </div>
           </div>
 
@@ -328,8 +331,8 @@ export default function ExerciseDetails() {
               {t('workout.totalLifetimeVolume')}
             </div>
             <div className="text-lg font-mono font-bold text-foreground truncate">
-              {stats.totalVolume}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5">kg</span>
+              {convertBodyWeight(stats.totalVolume, 'kg', bodyWeightUnit, 1)}
+              <span className="text-xs font-normal text-muted-foreground ml-0.5">{bodyWeightUnit}</span>
             </div>
           </div>
 

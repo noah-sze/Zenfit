@@ -37,11 +37,14 @@ import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { formatEnergy, formatFoodServing, ozToG, flOzToMl } from '@/utils/unitMath';
 
 export default function Recipes() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   const { allFoods } = useFoods();
   const {
@@ -87,7 +90,12 @@ export default function Recipes() {
     setRecipeName('');
     setRecipeDescription('');
     if (allFoods.length > 0) {
-      setRecipeIngredients([{ foodId: allFoods[0].id, quantity: '100', isOptional: false }]);
+      const firstFood = allFoods[0];
+      const isLiquid = (firstFood.servingUnit || 'g').toLowerCase().includes('ml') || firstFood.category === 'beverage';
+      const defaultQty = isLiquid
+        ? (foodVolumeUnit === 'fl oz' ? '8' : '250')
+        : (foodWeightUnit === 'oz' ? '1' : '100');
+      setRecipeIngredients([{ foodId: firstFood.id, quantity: defaultQty, isOptional: false }]);
     } else {
       setRecipeIngredients([]);
     }
@@ -99,20 +107,28 @@ export default function Recipes() {
     setRecipeName(recipe.name);
     setRecipeDescription(recipe.description || '');
     setRecipeIngredients(
-      recipe.ingredients.map((ing) => ({
-        foodId: ing.foodId,
-        quantity: String(ing.quantity),
-        isOptional: !!ing.isOptional,
-      }))
+      recipe.ingredients.map((ing) => {
+        const displayServing = formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit);
+        return {
+          foodId: ing.foodId,
+          quantity: String(displayServing.size),
+          isOptional: !!ing.isOptional,
+        };
+      })
     );
     setIsRecipeDialogOpen(true);
   };
 
   const handleAddIngredientRow = () => {
     if (allFoods.length === 0) return;
+    const firstFood = allFoods[0];
+    const isLiquid = (firstFood.servingUnit || 'g').toLowerCase().includes('ml') || firstFood.category === 'beverage';
+    const defaultQty = isLiquid
+      ? (foodVolumeUnit === 'fl oz' ? '8' : '250')
+      : (foodWeightUnit === 'oz' ? '1' : '100');
     setRecipeIngredients((prev) => [
       ...prev,
-      { foodId: allFoods[0].id, quantity: '100', isOptional: false },
+      { foodId: firstFood.id, quantity: defaultQty, isOptional: false },
     ]);
   };
 
@@ -129,10 +145,18 @@ export default function Recipes() {
       const targetFood = allFoods.find((f) => f.id === item.foodId);
       const qty = parseFloat(item.quantity);
       if (targetFood && qty > 0) {
+        const isLiquid = (targetFood.servingUnit || 'g').toLowerCase().includes('ml') || targetFood.category === 'beverage';
+        let normalizedQty = qty;
+        if (isLiquid && foodVolumeUnit === 'fl oz') {
+          normalizedQty = flOzToMl(qty, 2);
+        } else if (!isLiquid && foodWeightUnit === 'oz') {
+          normalizedQty = ozToG(qty, 2);
+        }
+
         validIngredients.push({
           foodId: targetFood.id,
           foodName: formatFoodDisplayName(targetFood),
-          quantity: qty,
+          quantity: normalizedQty,
           unit: targetFood.servingUnit || 'g',
           isOptional: item.isOptional,
         });
@@ -292,7 +316,7 @@ export default function Recipes() {
                           </span>
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
-                          {macros.calories} kcal · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
+                          {formatEnergy(macros.calories, energyUnit).formatted} · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 transition-transform group-hover:translate-x-0.5" />
@@ -450,7 +474,7 @@ export default function Recipes() {
                           >
                             {allFoods.map((f) => (
                               <option key={f.id} value={f.id}>
-                                {formatFoodDisplayName(f)} ({f.calories} kcal / {f.servingSize} {f.servingUnit})
+                                {formatFoodDisplayName(f)} ({formatEnergy(f.calories, energyUnit).formatted} / {formatFoodServing(f.servingSize, f.servingUnit, foodWeightUnit, foodVolumeUnit).formatted})
                               </option>
                             ))}
                           </select>
@@ -482,7 +506,7 @@ export default function Recipes() {
                               className="h-7 w-20 text-xs font-mono"
                             />
                             <span className="text-muted-foreground text-xs font-mono">
-                              {selFood?.servingUnit || 'g'}
+                              {formatFoodServing(1, selFood?.servingUnit || 'g', foodWeightUnit, foodVolumeUnit).unit}
                             </span>
                           </div>
 
