@@ -22,6 +22,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { cn, formatDisplayAmount } from '@/lib/utils';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
+import { convertFoodWeight, convertFoodVolume } from '@/utils/unitMath';
 import { Utensils, X, ChevronRight } from 'lucide-react';
 
 type KeypadField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
@@ -109,6 +110,7 @@ export function FoodFormDialog({
   // 標籤基準模式 ('serving' = 依份量, 'custom' = 自定義標籤依據如每 100g 或每 30g)
   const [basisMode, setBasisMode] = useState<'serving' | 'custom'>('serving');
   const [basisSize, setBasisSize] = useState('');
+  const [basisUnit, setBasisUnit] = useState<string>(foodWeightUnit);
 
   // 熱量單位 ('kcal' | 'kJ')
   const [calorieUnit, setCalorieUnit] = useState<'kcal' | 'kJ'>(energyUnit);
@@ -130,21 +132,55 @@ export function FoodFormDialog({
       setName(initialData.name || '');
       setCategory(initialData.category || 'natural');
       setBrand(initialData.brand || '');
-      setServingSize(initialData.servingSize ? String(initialData.servingSize) : '');
-      const defaultUnit = initialData.category === 'beverage' ? foodVolumeUnit : foodWeightUnit;
-      setServingUnit(initialData.servingUnit || defaultUnit);
       setCalorieUnit(energyUnit);
 
-      // 智能判斷原始信息：
-      // 若有記錄 labelBasisSize 且與份量不同，則判定為自定義標籤依據
+      // 1. 份量一律對齊當前使用者偏好單位，若與原記錄單位不同則進行數值物理換算
+      const isBeverage = initialData.category === 'beverage';
+      const prefServingUnit = isBeverage ? foodVolumeUnit : foodWeightUnit;
+      const rawServingUnit = initialData.servingUnit || prefServingUnit;
+      const rawServingSize = typeof initialData.servingSize === 'number' ? initialData.servingSize : 0;
+
+      let convertedServingSize = rawServingSize;
+      if (rawServingUnit !== prefServingUnit && rawServingSize > 0) {
+        if (isBeverage) {
+          convertedServingSize = convertFoodVolume(
+            rawServingSize,
+            rawServingUnit as 'ml' | 'fl oz',
+            prefServingUnit as 'ml' | 'fl oz',
+            2
+          );
+        } else {
+          convertedServingSize = convertFoodWeight(
+            rawServingSize,
+            rawServingUnit as 'g' | 'oz',
+            prefServingUnit as 'g' | 'oz',
+            2
+          );
+        }
+      }
+
+      setServingSize(convertedServingSize > 0 ? String(convertedServingSize) : '');
+      setServingUnit(prefServingUnit);
+
+      // 2. 下方的「每（標籤基準）」保持原樣：是英制就英制、公制就公制
+      const rawBasisUnit = initialData.labelBasisUnit || rawServingUnit;
+      const rawBasisSize =
+        typeof initialData.labelBasisSize === 'number' && initialData.labelBasisSize > 0
+          ? initialData.labelBasisSize
+          : rawServingSize;
+
+      setBasisUnit(rawBasisUnit);
+      setBasisSize(rawBasisSize > 0 ? String(rawBasisSize) : '');
+
+      // 3. 智能判斷原始信息：
+      // 若標籤基準單位與當前份量單位不同，或標籤基準數值與份量數值不同，則判定為自定義標籤依據
       const hasCustomBasis =
-        typeof initialData.labelBasisSize === 'number' &&
-        initialData.labelBasisSize > 0 &&
-        initialData.labelBasisSize !== initialData.servingSize;
+        rawBasisUnit !== prefServingUnit ||
+        (rawBasisSize > 0 && convertedServingSize > 0 && Math.abs(rawBasisSize - convertedServingSize) > 0.001) ||
+        (typeof initialData.labelBasisSize === 'number' && initialData.labelBasisSize > 0 && Math.abs(initialData.labelBasisSize - rawServingSize) > 0.001);
 
       if (hasCustomBasis) {
         setBasisMode('custom');
-        setBasisSize(String(initialData.labelBasisSize));
 
         // 優先帶入當初記錄的原始標籤數值；若無則依比例逆向還原
         if (initialData.rawNutrition) {
@@ -156,7 +192,7 @@ export function FoodFormDialog({
           setCarbs(initialData.rawNutrition.carbs ? String(initialData.rawNutrition.carbs) : '');
           setFat(initialData.rawNutrition.fat ? String(initialData.rawNutrition.fat) : '');
         } else {
-          const ratio = (initialData.labelBasisSize || 100) / (initialData.servingSize || 100);
+          const ratio = (rawBasisSize || 100) / (rawServingSize || 100);
           const baseCalKcal = initialData.calories * ratio;
           const finalCal = energyUnit === 'kJ' ? baseCalKcal * 4.184 : baseCalKcal;
           setCalories(finalCal > 0 ? String(Math.round(finalCal * 100) / 100) : '');
@@ -166,7 +202,6 @@ export function FoodFormDialog({
         }
       } else {
         setBasisMode('serving');
-        setBasisSize(initialData.servingSize ? String(initialData.servingSize) : '');
         const displayCal = energyUnit === 'kJ'
           ? Math.round(initialData.calories * 4.184 * 100) / 100
           : initialData.calories;
@@ -184,6 +219,7 @@ export function FoodFormDialog({
       setServingUnit(foodWeightUnit);
       setBasisMode('serving');
       setBasisSize('');
+      setBasisUnit(foodWeightUnit);
       setCalorieUnit(energyUnit);
       setCalories('');
       setProtein('');
@@ -192,15 +228,13 @@ export function FoodFormDialog({
     }
   }, [open, initialData, foodWeightUnit, foodVolumeUnit, energyUnit]);
 
-  // 當分類切換時，自動同步預設單位
+  // 當分類切換時，自動同步用戶偏好單位
   const handleCategoryChange = (newCat: FoodCategory) => {
     setCategory(newCat);
-    if (!servingSize) {
-      if (newCat === 'beverage') {
-        setServingUnit(foodVolumeUnit);
-      } else {
-        setServingUnit(foodWeightUnit);
-      }
+    const targetUnit = newCat === 'beverage' ? foodVolumeUnit : foodWeightUnit;
+    setServingUnit(targetUnit);
+    if (basisMode === 'serving') {
+      setBasisUnit(targetUnit);
     }
   };
 
@@ -223,18 +257,15 @@ export function FoodFormDialog({
     triggerHaptic('selection');
     switch (field) {
       case 'serving': {
-        const isLiquid = category === 'beverage' || servingUnit === 'ml' || servingUnit === 'fl oz';
-        const allowedUnits = isLiquid
-          ? (foodVolumeUnit === 'fl oz' ? ['fl oz', 'ml'] : ['ml', 'fl oz'])
-          : (foodWeightUnit === 'oz' ? ['oz', 'g'] : ['g', 'oz']);
-
-        initialKeypadValueRef.current = { value: servingSize, unit: servingUnit };
+        const prefUnit = category === 'beverage' ? foodVolumeUnit : foodWeightUnit;
+        const currentServingUnit = servingUnit || prefUnit;
+        initialKeypadValueRef.current = { value: servingSize, unit: currentServingUnit };
         setKeypadConfig({
           field: 'serving',
           title: t('diet.serving'),
           value: parsedServing > 0 ? parsedServing : 0,
-          unit: servingUnit,
-          allowedUnits,
+          unit: currentServingUnit,
+          // 份量無需多單位選擇，嚴格使用用戶偏好設置
           allowDecimals: true,
           maxDecimals: 2,
           anchorEl: targetEl || null,
@@ -243,13 +274,18 @@ export function FoodFormDialog({
         break;
       }
       case 'basis': {
-        initialKeypadValueRef.current = { value: basisSize, unit: servingUnit };
+        const isLiquid = category === 'beverage' || basisUnit === 'ml' || basisUnit === 'fl oz';
+        const allowedUnits = isLiquid
+          ? (foodVolumeUnit === 'fl oz' ? ['fl oz', 'ml'] : ['ml', 'fl oz'])
+          : (foodWeightUnit === 'oz' ? ['oz', 'g'] : ['g', 'oz']);
+
+        initialKeypadValueRef.current = { value: basisSize, unit: basisUnit };
         setKeypadConfig({
           field: 'basis',
           title: t('diet.perLabelBasis'),
           value: parsedBasis > 0 ? parsedBasis : 0,
-          unit: servingUnit,
-          allowedUnits: [servingUnit],
+          unit: basisUnit,
+          allowedUnits,
           allowDecimals: true,
           maxDecimals: 2,
           anchorEl: targetEl || null,
@@ -327,6 +363,7 @@ export function FoodFormDialog({
         break;
       case 'basis':
         setBasisSize(formatNum2(val));
+        setBasisUnit(nextUnit);
         break;
       case 'calories':
         setCalories(formatNum2(val));
@@ -358,6 +395,7 @@ export function FoodFormDialog({
         break;
       case 'basis':
         setBasisSize(prevVal);
+        setBasisUnit(prevUnit);
         break;
       case 'calories':
         setCalories(prevVal);
@@ -385,6 +423,7 @@ export function FoodFormDialog({
         break;
       case 'basis':
         setBasisSize(formatNum2(val));
+        setBasisUnit(nextUnit);
         break;
       case 'calories':
         setCalories(formatNum2(val));
@@ -426,10 +465,11 @@ export function FoodFormDialog({
       carbs: parsedC,
       fat: parsedF,
       servingSize: parsedServing,
-      basisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
       servingUnit,
+      basisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
+      basisUnit: parsedBasis > 0 ? basisUnit : servingUnit,
     });
-  }, [basisMode, normalizedCalories, parsedP, parsedC, parsedF, parsedServing, parsedBasis, servingUnit]);
+  }, [basisMode, normalizedCalories, parsedP, parsedC, parsedF, parsedServing, parsedBasis, servingUnit, basisUnit]);
 
   // 表單送出處理
   const handleSubmit = async (e: React.FormEvent) => {
@@ -450,6 +490,7 @@ export function FoodFormDialog({
           carbs: roundTo2(parsedC),
           fat: roundTo2(parsedF),
           labelBasisSize: parsedServing,
+          labelBasisUnit: servingUnit.trim() || 'g',
           rawNutrition: {
             calories: roundTo2(parsedCal),
             protein: roundTo2(parsedP),
@@ -458,7 +499,7 @@ export function FoodFormDialog({
           },
         });
       } else {
-        // 自定義基準模式：依比例折算為單份數值儲存，並記憶原始標籤數值
+        // 自定義基準模式：依比例折算為單份數值儲存，並記憶原始標籤數值與基準單位
         await onSubmit({
           name: name.trim(),
           category,
@@ -470,6 +511,7 @@ export function FoodFormDialog({
           carbs: scaledSingleServing.carbs,
           fat: scaledSingleServing.fat,
           labelBasisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
+          labelBasisUnit: parsedBasis > 0 ? basisUnit : servingUnit,
           rawNutrition: {
             calories: roundTo2(parsedCal),
             protein: roundTo2(parsedP),
@@ -485,11 +527,43 @@ export function FoodFormDialog({
     }
   };
 
+  // 處理主彈窗開關事件：當次級懸浮鍵盤 (keypadConfig) 處於開啟狀態時，
+  // 阻斷因鍵盤內部選單、單位切換或外部焦點轉移觸發的主彈窗非預期關閉
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && keypadConfig) {
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
+
+  // 即時單位變更聯動
+  const handleKeypadUnitChange = (nextUnit: string) => {
+    if (!keypadConfig) return;
+    if (keypadConfig.field === 'serving') {
+      setServingUnit(nextUnit);
+      if (basisMode === 'serving') {
+        setBasisUnit(nextUnit);
+      }
+    } else if (keypadConfig.field === 'basis') {
+      setBasisUnit(nextUnit);
+    } else if (keypadConfig.field === 'calories') {
+      setCalorieUnit(nextUnit as 'kcal' | 'kJ');
+    }
+  };
+
+  // 格式化數值膠囊內容：有值時加粗並賦予專屬色，為空 (-) 時呈現極淡佔位色
+  const renderAmountValue = (val: string, activeClass: string = 'text-foreground') => {
+    if (val) {
+      return <span className={cn("font-bold", activeClass)}>{formatDisplayAmount(val)}</span>;
+    }
+    return <span className="font-normal text-muted-foreground/40 select-none">-</span>;
+  };
+
   const formId = useId();
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent
           showCloseButton={false}
           overlayClassName="z-[70]"
@@ -596,9 +670,12 @@ export function FoodFormDialog({
                 <button
                   type="button"
                   onClick={(e) => openKeypad('serving', e.currentTarget)}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
+                  className={cn(
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    servingSize ? "text-foreground" : "text-muted-foreground"
+                  )}
                 >
-                  <span className="font-bold">{servingSize ? formatDisplayAmount(servingSize) : '-'}</span>
+                  {renderAmountValue(servingSize, "text-foreground")}
                   <span className="text-muted-foreground">{servingUnit}</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -621,6 +698,7 @@ export function FoodFormDialog({
                     if (basisMode !== 'serving') {
                       triggerHaptic('selection');
                       setBasisMode('serving');
+                      setBasisUnit(servingUnit);
                     }
                   }}
                   className={cn(
@@ -662,17 +740,20 @@ export function FoodFormDialog({
                 </span>
                 {basisMode === 'serving' ? (
                   <div className="h-7 px-3 rounded-full border border-border/50 bg-muted/40 font-mono text-xs flex items-center gap-1.5 text-muted-foreground select-none">
-                    <span className="font-bold text-foreground/75">{servingSize ? formatDisplayAmount(servingSize) : '-'}</span>
+                    {renderAmountValue(servingSize, "text-foreground/75")}
                     <span className="text-xs text-muted-foreground">{servingUnit}</span>
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={(e) => openKeypad('basis', e.currentTarget)}
-                    className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
+                    className={cn(
+                      "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                      basisSize ? "text-foreground" : "text-muted-foreground"
+                    )}
                   >
-                    <span className="font-bold">{basisSize ? formatDisplayAmount(basisSize) : '-'}</span>
-                    <span className="text-muted-foreground">{servingUnit}</span>
+                    {renderAmountValue(basisSize, "text-foreground")}
+                    <span className="text-muted-foreground">{basisUnit}</span>
                     <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                   </button>
                 )}
@@ -684,9 +765,12 @@ export function FoodFormDialog({
                 <button
                   type="button"
                   onClick={(e) => openKeypad('calories', e.currentTarget)}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-calories active:scale-95 select-none"
+                  className={cn(
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    calories ? "text-calories" : "text-muted-foreground"
+                  )}
                 >
-                  <span className="font-bold">{calories ? formatDisplayAmount(calories) : '-'}</span>
+                  {renderAmountValue(calories, "text-calories")}
                   <span className="text-xs text-muted-foreground">{calorieUnit}</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -698,9 +782,12 @@ export function FoodFormDialog({
                 <button
                   type="button"
                   onClick={(e) => openKeypad('protein', e.currentTarget)}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-protein active:scale-95 select-none"
+                  className={cn(
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    protein ? "text-protein" : "text-muted-foreground"
+                  )}
                 >
-                  <span className="font-bold">{protein ? formatDisplayAmount(protein) : '-'}</span>
+                  {renderAmountValue(protein, "text-protein")}
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -712,9 +799,12 @@ export function FoodFormDialog({
                 <button
                   type="button"
                   onClick={(e) => openKeypad('carbs', e.currentTarget)}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-carbs active:scale-95 select-none"
+                  className={cn(
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    carbs ? "text-carbs" : "text-muted-foreground"
+                  )}
                 >
-                  <span className="font-bold">{carbs ? formatDisplayAmount(carbs) : '-'}</span>
+                  {renderAmountValue(carbs, "text-carbs")}
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -726,9 +816,12 @@ export function FoodFormDialog({
                 <button
                   type="button"
                   onClick={(e) => openKeypad('fat', e.currentTarget)}
-                  className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-fat active:scale-95 select-none"
+                  className={cn(
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    fat ? "text-fat" : "text-muted-foreground"
+                  )}
                 >
-                  <span className="font-bold">{fat ? formatDisplayAmount(fat) : '-'}</span>
+                  {renderAmountValue(fat, "text-fat")}
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -770,6 +863,7 @@ export function FoodFormDialog({
         onConfirm={handleKeypadConfirm}
         onCancel={handleKeypadCancel}
         onLiveChange={handleKeypadLiveChange}
+        onUnitChange={handleKeypadUnitChange}
         valueClassName={keypadConfig.valueClassName}
         titleClassName={keypadConfig.titleClassName || keypadConfig.valueClassName}
       />

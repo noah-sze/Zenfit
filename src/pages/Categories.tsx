@@ -157,6 +157,7 @@ export default function Categories() {
       'carb-source': 0,
       'fat-source': 0,
       'low-calorie': 0,
+      'high-calorie': 0,
     };
     tabBaseFoods.forEach((food) => {
       const evalRes = evaluateNutritionalHighlight(food);
@@ -230,6 +231,7 @@ export default function Categories() {
       'carb-source': 0,
       'fat-source': 0,
       'low-calorie': 0,
+      'high-calorie': 0,
     };
     tabBaseRecipes.forEach((recipe) => {
       const macros = getRecipeMacros(recipe);
@@ -648,8 +650,8 @@ export default function Categories() {
                       {cat.label}
                       <span
                         className={cn(
-                          "ml-1 text-[10px]",
-                          isSelected ? "opacity-70" : "text-muted-foreground"
+                          "ml-1 text-[10px] tabular-nums",
+                          isSelected ? "opacity-60" : "opacity-45"
                         )}
                       >
                         {count}
@@ -679,8 +681,8 @@ export default function Categories() {
                   {t('common.archived', '已歸檔')}
                   <span
                     className={cn(
-                      "ml-1 text-[10px]",
-                      showFoodArchived ? "opacity-70" : "text-muted-foreground"
+                      "ml-1 text-[10px] tabular-nums",
+                      showFoodArchived ? "opacity-60" : "opacity-45"
                     )}
                   >
                     {archivedFoodsCount}
@@ -737,6 +739,7 @@ export default function Categories() {
                         { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
                         { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
                         { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
+                        { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
                       ] as const
                     ).map((tag) => (
                       <DropdownMenuItem
@@ -798,6 +801,7 @@ export default function Categories() {
                 filteredFoods.map((food) => {
                   const evalRes = evaluateNutritionalHighlight(food);
                   const isLowCalorie = evalRes.labels.includes('low-calorie');
+                  const isHighCalorie = evalRes.labels.includes('high-calorie');
                   const scaledNutrition = calculateScaledNutrition(food, nutritionDisplayMode, {
                     foodWeightUnit,
                     foodVolumeUnit,
@@ -826,14 +830,16 @@ export default function Categories() {
                         </div>
 
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                          <span className={cn(nutritionDisplayMode === 'per100g' && "font-medium text-foreground")}>
+                          <span>
                             {displayServing.formatted}
                           </span>
                           <span className="opacity-40">·</span>
                           <span
                             className={cn(
                               isLowCalorie &&
-                                "text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20"
+                                "text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20",
+                              isHighCalorie &&
+                                "text-rose-500 font-semibold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20"
                             )}
                           >
                             {displayCal.formatted}
@@ -930,8 +936,8 @@ export default function Categories() {
                   {t('diet.foodCategory.all', '全部')}
                   <span
                     className={cn(
-                      "ml-1 text-[10px]",
-                      !showRecipeArchived ? "opacity-70" : "text-muted-foreground"
+                      "ml-1 text-[10px] tabular-nums",
+                      !showRecipeArchived ? "opacity-60" : "opacity-45"
                     )}
                   >
                     {totalActiveRecipes.length}
@@ -958,8 +964,8 @@ export default function Categories() {
                   {t('common.archived', '已歸檔')}
                   <span
                     className={cn(
-                      "ml-1 text-[10px]",
-                      showRecipeArchived ? "opacity-70" : "text-muted-foreground"
+                      "ml-1 text-[10px] tabular-nums",
+                      showRecipeArchived ? "opacity-60" : "opacity-45"
                     )}
                   >
                     {totalArchivedRecipes.length}
@@ -1016,6 +1022,7 @@ export default function Categories() {
                         { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
                         { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
                         { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
+                        { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
                       ] as const
                     ).map((tag) => (
                       <DropdownMenuItem
@@ -1084,6 +1091,8 @@ export default function Categories() {
                     servingSize: macros.totalWeightGrams || 100,
                     servingUnit: 'g',
                   });
+                  const isLowCalorie = evalRes.labels.includes('low-calorie');
+                  const isHighCalorie = evalRes.labels.includes('high-calorie');
                   const scaledRecipeMacros = calculateScaledNutrition(
                     {
                       calories: macros.calories,
@@ -1118,11 +1127,18 @@ export default function Categories() {
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
                           {nutritionDisplayMode === 'per100g' ? (
                             <>
-                              <span className="font-medium text-foreground">
+                              <span>
                                 {formatFoodServing(scaledRecipeMacros.servingSize, scaledRecipeMacros.servingUnit, foodWeightUnit, foodVolumeUnit).formatted}
                               </span>
                               <span className="opacity-40">·</span>
-                              <span>
+                              <span
+                                className={cn(
+                                  isLowCalorie &&
+                                    "text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20",
+                                  isHighCalorie &&
+                                    "text-rose-500 font-semibold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20"
+                                )}
+                              >
                                 {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
                               </span>
                             </>
@@ -1132,7 +1148,14 @@ export default function Categories() {
                                 {t('diet.ingredientsCount', { count: recipe.ingredients.length })}
                               </span>
                               <span className="opacity-40">·</span>
-                              <span>
+                              <span
+                                className={cn(
+                                  isLowCalorie &&
+                                    "text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20",
+                                  isHighCalorie &&
+                                    "text-rose-500 font-semibold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20"
+                                )}
+                              >
                                 {formatEnergy(macros.calories, energyUnit).formatted}
                               </span>
                             </>

@@ -502,7 +502,7 @@ export default function ExerciseDetails() {
                                 {t(`workout.${group.id}`)}
                               </div>
                               {group.detailedMuscles.map((muscle) => (
-                                <SelectItem key={muscle} value={muscle} className="text-xs">
+                                <SelectItem key={muscle} value={muscle}>
                                   {getMuscleLabel(muscle)}
                                 </SelectItem>
                               ))}

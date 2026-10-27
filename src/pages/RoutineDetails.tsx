@@ -428,7 +428,7 @@ export default function RoutineDetails() {
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
                           {activeExercises.map((ex) => (
-                            <SelectItem key={ex.id} value={ex.id} className="text-xs">
+                            <SelectItem key={ex.id} value={ex.id}>
                               {ex.name}
                             </SelectItem>
                           ))}
