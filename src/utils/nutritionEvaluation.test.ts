@@ -111,7 +111,7 @@ describe('evaluateNutritionalHighlight', () => {
     expect(res.highlights.calories).toBe(false);
   });
 
-  it('食用植物油：應精確識別為脂質來源，不應被誤判為高蛋白或高碳水', () => {
+  it('食用植物油：應精確識別為脂質來源與高熱量，不應被誤判為高蛋白或高碳水', () => {
     const res = evaluateNutritionalHighlight({
       calories: 90,
       protein: 0,
@@ -122,7 +122,8 @@ describe('evaluateNutritionalHighlight', () => {
       category: 'oil',
     });
 
-    expect(res.labels).toEqual(['fat-source']);
+    expect(res.labels).toContain('fat-source');
+    expect(res.labels).toContain('high-calorie');
     expect(res.highlights.fat).toBe(true);
     expect(res.highlights.protein).toBe(false);
     expect(res.highlights.carbs).toBe(false);
@@ -193,5 +194,105 @@ describe('evaluateNutritionalHighlight', () => {
     expect(res.highlights.protein).toBe(false);
     expect(res.highlights.carbs).toBe(false);
     expect(res.highlights.fat).toBe(false);
+  });
+
+  it('堅果 (花生/核桃/杏仁)：能量密度高達 567 kcal/100g，應精確識別為脂質來源與高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 567,
+      protein: 25.8,
+      carbs: 16.1,
+      fat: 49.2,
+      servingSize: 100,
+      servingUnit: 'g',
+      category: 'natural',
+    });
+
+    expect(res.labels).toContain('high-calorie');
+    expect(res.labels).toContain('fat-source');
+  });
+
+  it('純乳清蛋白粉：乾粉能量達 400 kcal/100g，但蛋白供能比 80% 且極低脂，應受純蛋白防護，不歸為高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 120,
+      protein: 24,
+      carbs: 2,
+      fat: 1.5,
+      servingSize: 30,
+      servingUnit: 'g',
+      category: 'processed',
+    });
+
+    expect(res.labels).toContain('high-protein');
+    expect(res.labels).not.toContain('high-calorie');
+  });
+
+  it('生燕麥片：每 100g 389 kcal，主要為碳水主食，不應被誤判為高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 389,
+      protein: 16.9,
+      carbs: 66.3,
+      fat: 6.9,
+      servingSize: 100,
+      servingUnit: 'g',
+      category: 'natural',
+    });
+
+    expect(res.labels).toContain('carb-source');
+    expect(res.labels).not.toContain('high-calorie');
+  });
+
+  it('高能量液體 (重奶油/防彈生酮油飲)：每 100ml 達 345 kcal，應精確識別為高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 345,
+      protein: 2,
+      carbs: 3,
+      fat: 37,
+      servingSize: 100,
+      servingUnit: 'ml',
+      category: 'beverage',
+    });
+
+    expect(res.labels).toContain('high-calorie');
+  });
+
+  it('一般飲品 (可樂 42 kcal/100ml)：未達 100 kcal/100ml 閾值，不應識別為高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 42,
+      protein: 0,
+      carbs: 10.6,
+      fat: 0,
+      servingSize: 100,
+      servingUnit: 'ml',
+      category: 'beverage',
+    });
+
+    expect(res.labels).not.toContain('high-calorie');
+  });
+
+  it('複合高能餐食 (300g 漢堡套餐 650 kcal)：單份 >= 500 kcal 且密度 >= 200 kcal/100g，應識別為高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 650,
+      protein: 30,
+      carbs: 55,
+      fat: 35,
+      servingSize: 300,
+      servingUnit: 'g',
+    });
+
+    expect(res.labels).toContain('high-calorie');
+  });
+
+  it('大份量低密度水分蔬果 (1500g 西瓜 450 kcal)：密度僅 30 kcal/100g，防誤判防線生效，不應被識別為高熱量', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 450,
+      protein: 9,
+      carbs: 112,
+      fat: 2,
+      servingSize: 1500,
+      servingUnit: 'g',
+      category: 'natural',
+    });
+
+    expect(res.labels).not.toContain('high-calorie');
   });
 });

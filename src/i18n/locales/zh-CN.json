@@ -155,7 +155,8 @@
         "high-protein": "高蛋白",
         "carb-source": "碳水主食",
         "fat-source": "脂质来源",
-        "low-calorie": "低热量"
+        "low-calorie": "低热量",
+        "high-calorie": "高热量"
       }
     },
     "dietPlan": {
@@ -369,8 +370,8 @@
       "language": "界面语言",
       "unitsSection": "度量衡单位",
       "unitPreset": "制式模板",
-      "unitPresetMetric": "公制 (kg, g, ml, cm)",
-      "unitPresetImperial": "英制 (lbs, oz, fl oz, in)",
+      "unitPresetMetric": "公制",
+      "unitPresetImperial": "英制",
       "unitPresetCustom": "自定义",
       "unitBodyWeight": "体重与训练",
       "unitFoodWeight": "食材重量",

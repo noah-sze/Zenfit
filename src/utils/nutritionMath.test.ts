@@ -353,5 +353,68 @@ describe('nutritionMath - scaleNutritionFromBasis', () => {
     expect(resNaN.protein).toBe(0);
     expect(resNaN.servingSize).toBe(100);
   });
+
+  it('支援跨度量衡折算：英制標籤基準 (1 oz) 精確折算為公制食用份量 (30g)', () => {
+    const res = scaleNutritionFromBasis({
+      calories: 100,
+      protein: 10,
+      carbs: 5,
+      fat: 2,
+      servingSize: 30,
+      servingUnit: 'g',
+      basisSize: 1,
+      basisUnit: 'oz',
+    });
+
+    // 1 oz = 28.349523125g; 30 / 28.349523125 ≈ 1.058219
+    expect(res.calories).toBe(106); // 100 * 1.058219 ≈ 105.82 -> 106
+    expect(res.protein).toBe(10.6); // 10 * 1.058219 ≈ 10.58 -> 10.6
+    expect(res.carbs).toBe(5.3); // 5 * 1.058219 ≈ 5.29 -> 5.3
+    expect(res.fat).toBe(2.1); // 2 * 1.058219 ≈ 2.12 -> 2.1
+    expect(res.servingSize).toBe(30);
+    expect(res.servingUnit).toBe('g');
+  });
+
+  it('支援跨度量衡折算：公制標籤基準 (100g) 精確折算為英制食用份量 (2 oz)', () => {
+    const res = scaleNutritionFromBasis({
+      calories: 200,
+      protein: 20,
+      carbs: 10,
+      fat: 5,
+      servingSize: 2,
+      servingUnit: 'oz',
+      basisSize: 100,
+      basisUnit: 'g',
+    });
+
+    // 2 oz = 56.69904625g; ratio = 0.56699
+    expect(res.calories).toBe(113); // 200 * 0.56699 = 113.398 -> 113
+    expect(res.protein).toBe(11.3); // 20 * 0.56699 = 11.3398 -> 11.3
+    expect(res.carbs).toBe(5.7); // 10 * 0.56699 = 5.6699 -> 5.7
+    expect(res.fat).toBe(2.8); // 5 * 0.56699 = 2.83495 -> 2.8
+    expect(res.servingSize).toBe(2);
+    expect(res.servingUnit).toBe('oz');
+  });
+
+  it('支援液體跨度量衡折算：英制液體標籤基準 (8 fl oz) 精確折算為公制食用容量 (250ml)', () => {
+    const res = scaleNutritionFromBasis({
+      calories: 120,
+      protein: 2,
+      carbs: 28,
+      fat: 0,
+      servingSize: 250,
+      servingUnit: 'ml',
+      basisSize: 8,
+      basisUnit: 'fl oz',
+    });
+
+    // 8 fl oz = 8 * 29.5735295625 = 236.5882365 ml; 250 / 236.5882365 ≈ 1.056688
+    expect(res.calories).toBe(127); // 120 * 1.056688 ≈ 126.8 -> 127
+    expect(res.protein).toBe(2.1); // 2 * 1.056688 ≈ 2.11 -> 2.1
+    expect(res.carbs).toBe(29.6); // 28 * 1.056688 ≈ 29.587 -> 29.6
+    expect(res.fat).toBe(0);
+    expect(res.servingSize).toBe(250);
+    expect(res.servingUnit).toBe('ml');
+  });
 });
 

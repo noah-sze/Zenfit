@@ -2,7 +2,7 @@ export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export type FoodCategory = 'natural' | 'processed' | 'beverage' | 'oil' | 'condiment';
 
-export type NutritionTag = 'high-protein' | 'carb-source' | 'fat-source' | 'low-calorie';
+export type NutritionTag = 'high-protein' | 'carb-source' | 'fat-source' | 'low-calorie' | 'high-calorie';
 
 export interface FoodItem {
   id: string;
@@ -16,7 +16,8 @@ export interface FoodItem {
   carbs: number;
   fat: number;
   fiber?: number;
-  labelBasisSize?: number; // 營養標籤依據克數（如每 100g 或每 30g）
+  labelBasisSize?: number; // 營養標籤依據數值（如每 100g 或每 1 oz）
+  labelBasisUnit?: string; // 營養標籤依據單位（如 'g', 'oz', 'ml', 'fl oz'）
   rawNutrition?: {
     calories: number;
     protein: number;

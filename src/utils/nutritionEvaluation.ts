@@ -141,6 +141,30 @@ export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): Nu
     highlights.calories = true;
   }
 
+  // ⑤ 高熱量判定 (客觀物理高能量密度與實質高熱量餐食，與低熱量互斥)
+  let isHighCalQualified = false;
+  if (!isLowCalQualified) {
+    if (isLiquid) {
+      // 液體：客觀高能量密度基準 (>= 100 kcal/100ml，如防彈高脂油飲、煉乳、重奶油、高能奶昔)
+      isHighCalQualified = calPer100 >= 100;
+    } else {
+      // 固體：
+      // A. 客觀高能量密度 (>= 400 kcal/100g，如食用油、堅果種子、純巧克力、花生醬、高脂培根)
+      //    防線：純蛋白質粉防護 (若為脫水純蛋白分離粉 proteinPct >= 60% 且 fPer100 < 10，熱量來自純蛋白質，不歸為高熱量)
+      const isProteinDensePowder = proteinPct >= 60 && fPer100 < 10;
+      const isHighEnergyDensity = calPer100 >= 400 && !isProteinDensePowder;
+
+      // B. 單份實質高熱量餐食 (單份 >= 500 kcal 且能量密度 >= 200 kcal/100g，排除大份量低密度水分蔬果)
+      const isHighCalServing = calories >= 500 && calPer100 >= 200;
+
+      isHighCalQualified = isHighEnergyDensity || isHighCalServing;
+    }
+  }
+
+  if (isHighCalQualified) {
+    labels.push('high-calorie');
+  }
+
   return {
     labels,
     highlights,

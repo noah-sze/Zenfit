@@ -165,9 +165,10 @@ export interface ScaleBasisParams {
   protein: number;
   carbs: number;
   fat: number;
-  servingSize: number; // 食用單份克數 (如 20g)
-  basisSize: number;   // 標籤依據克數 (如 100g 或 30g)
-  servingUnit?: string;
+  servingSize: number; // 食用單份數值 (如 20g 或 2 oz)
+  servingUnit?: string; // 食用單份單位 (如 'g', 'oz', 'ml', 'fl oz')
+  basisSize: number;   // 標籤依據數值 (如 100g 或 1 oz)
+  basisUnit?: string;   // 標籤依據單位 (如 'g', 'oz', 'ml', 'fl oz')
 }
 
 export interface ScaledServingNutrition {
@@ -180,8 +181,26 @@ export interface ScaledServingNutrition {
 }
 
 /**
- * 依據自定義營養標籤依據（basisSize，如每 100g 或每 30g），精確等比折算出單份食用量（servingSize，如 20g）的實際營養數值
- * 遵循 Precision Metric 準則：純函數無副作用，100% 防護 NaN、負數、除以零
+ * 將數值依據單位歸一化為物理真理源基準 (固體為 g，液體為 ml)
+ */
+function normalizeToPhysicalBase(value: number, unit?: string): number {
+  if (value <= 0 || isNaN(value) || !isFinite(value)) return 0;
+  const normalizedUnit = (unit || 'g').trim().toLowerCase();
+
+  if (normalizedUnit === 'oz') {
+    return value * OZ_TO_G_RATIO;
+  }
+  if (normalizedUnit === 'fl oz') {
+    return value * FL_OZ_TO_ML_RATIO;
+  }
+  // 預設為 g 或 ml
+  return value;
+}
+
+/**
+ * 依據自定義營養標籤依據（basisSize 與 basisUnit，如每 100g 或每 1 oz），
+ * 精確等比折算出單份食用量（servingSize 與 servingUnit）的實際營養數值。
+ * 遵循 Precision Metric 準則：純函數無副作用，100% 防護 NaN、負數、跨度量衡單位折算與除以零
  */
 export function scaleNutritionFromBasis(params: ScaleBasisParams): ScaledServingNutrition {
   const safeCalories = Math.max(0, typeof params?.calories === 'number' && !isNaN(params.calories) ? params.calories : 0);
@@ -191,21 +210,25 @@ export function scaleNutritionFromBasis(params: ScaleBasisParams): ScaledServing
 
   const servingSize = Math.max(0, typeof params?.servingSize === 'number' && !isNaN(params.servingSize) ? params.servingSize : 100);
   const basisSize = typeof params?.basisSize === 'number' && !isNaN(params.basisSize) ? params.basisSize : 100;
-  const servingUnit = (params?.servingUnit || 'g').trim() || 'g';
+  const rawServingUnit = (params?.servingUnit || 'g').trim() || 'g';
+  const rawBasisUnit = (params?.basisUnit || rawServingUnit).trim() || rawServingUnit;
+
+  const servingPhysical = normalizeToPhysicalBase(servingSize, rawServingUnit);
+  const basisPhysical = normalizeToPhysicalBase(basisSize, rawBasisUnit);
 
   // 防護除以零或無效基準重量
-  if (basisSize <= 0 || servingSize <= 0) {
+  if (basisPhysical <= 0 || servingPhysical <= 0) {
     return {
       calories: Math.round(safeCalories),
       protein: Math.round(safeProtein * 10) / 10,
       carbs: Math.round(safeCarbs * 10) / 10,
       fat: Math.round(safeFat * 10) / 10,
       servingSize: servingSize > 0 ? servingSize : 100,
-      servingUnit,
+      servingUnit: rawServingUnit,
     };
   }
 
-  const ratio = servingSize / basisSize;
+  const ratio = servingPhysical / basisPhysical;
 
   return {
     calories: Math.round(safeCalories * ratio),
@@ -213,7 +236,7 @@ export function scaleNutritionFromBasis(params: ScaleBasisParams): ScaledServing
     carbs: Math.round(safeCarbs * ratio * 10) / 10,
     fat: Math.round(safeFat * ratio * 10) / 10,
     servingSize,
-    servingUnit,
+    servingUnit: rawServingUnit,
   };
 }
 

@@ -155,7 +155,8 @@
         "high-protein": "High Protein",
         "carb-source": "Carb Source",
         "fat-source": "Fat Source",
-        "low-calorie": "Low Calorie"
+        "low-calorie": "Low Calorie",
+        "high-calorie": "High Calorie"
       }
     },
     "dietPlan": {
@@ -369,8 +370,8 @@
       "language": "Language",
       "unitsSection": "Units",
       "unitPreset": "System Preset",
-      "unitPresetMetric": "Metric (kg, g, ml, cm)",
-      "unitPresetImperial": "Imperial (lbs, oz, fl oz, in)",
+      "unitPresetMetric": "Metric",
+      "unitPresetImperial": "Imperial",
       "unitPresetCustom": "Custom",
       "unitBodyWeight": "Body & Workout Weight",
       "unitFoodWeight": "Food Weight",

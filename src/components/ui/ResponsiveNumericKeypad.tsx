@@ -518,7 +518,11 @@ export function ResponsiveNumericKeypad({
           {renderContextRow ? (
             renderContextRow(displayVal || '0', currentUnit)
           ) : (
-            <div className="h-12 px-3.5 rounded-xl bg-card border border-border flex items-center justify-between text-foreground shadow-none">
+            <div
+              className="h-12 px-3.5 rounded-xl bg-card border border-border flex items-center justify-between text-foreground shadow-none"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-2 shrink-0">
                 <span
                   className={cn(
@@ -557,11 +561,7 @@ export function ResponsiveNumericKeypad({
                       className="min-w-20 z-[95] p-1 font-mono text-xs"
                     >
                       {allowedUnits.map((u) => (
-                        <SelectItem
-                          key={u}
-                          value={u}
-                          className="cursor-pointer text-xs font-mono py-1.5 px-2"
-                        >
+                        <SelectItem key={u} value={u}>
                           {u}
                         </SelectItem>
                       ))}
