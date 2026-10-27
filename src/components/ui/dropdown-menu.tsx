@@ -16,6 +16,9 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 
+const extractZIndex = (str?: unknown) =>
+  typeof str === "string" ? str.match(/(?:^|\s)(z-(?:\[\d+\]|\d+))(?:\s|$)/)?.[1] : undefined
+
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
@@ -28,11 +31,13 @@ function DropdownMenuContent({
     MenuPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
   >) {
+  const zIndex = extractZIndex(className) || "z-[90]"
+
   return (
     <MenuPrimitive.Portal>
-      <MenuPrimitive.Backdrop className="fixed inset-0 z-[70] bg-overlay backdrop-blur-[2px] data-closed:hidden touch-none" />
+      <MenuPrimitive.Backdrop className={cn("fixed inset-0 bg-overlay backdrop-blur-[2px] data-closed:hidden touch-none", zIndex)} />
       <MenuPrimitive.Positioner
-        className="isolate z-[70] outline-none"
+        className={cn("isolate outline-none", zIndex)}
         align={align}
         alignOffset={alignOffset}
         side={side}
@@ -40,7 +45,11 @@ function DropdownMenuContent({
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
-          className={cn("z-[70] max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-card p-1.5 flex flex-col gap-0.5 text-card-foreground border border-border shadow-none outline-none data-closed:hidden", className )}
+          className={cn(
+            zIndex,
+            "max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-card p-1.5 flex flex-col gap-0.5 text-card-foreground border border-border shadow-none outline-none data-closed:hidden",
+            className
+          )}
           {...props}
         />
       </MenuPrimitive.Positioner>

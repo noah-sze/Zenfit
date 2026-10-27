@@ -32,7 +32,9 @@
       "archived": "Archived",
       "restore": "Restore",
       "itemCount": "{{count}} items",
-      "currentValue": "Value"
+      "currentValue": "Value",
+      "select": "Select",
+      "noResults": "No results"
     },
     "nav": {
       "dashboard": "Overview",
@@ -128,6 +130,7 @@
       "includeOil": "Include Cooking Oil",
       "excludeOil": "No Oil or Drained",
       "totalEstimated": "Calculated Total",
+      "totalWeight": "Total Weight",
       "ingredientsCount": "{{count}} ingredient(s)",
       "recipeDetails": "Recipe Details",
       "cookingModifierImpact": "Cooking Modifier Comparison",

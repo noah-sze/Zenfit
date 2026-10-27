@@ -32,7 +32,9 @@
       "archived": "已归档",
       "restore": "恢复",
       "itemCount": "{{count}} 项",
-      "currentValue": "当前标定"
+      "currentValue": "当前标定",
+      "select": "选择",
+      "noResults": "无搜索结果"
     },
     "nav": {
       "dashboard": "总览",
@@ -128,6 +130,7 @@
       "includeOil": "包含烹调用油",
       "excludeOil": "无油或已沥干",
       "totalEstimated": "计算预估",
+      "totalWeight": "总重量",
       "ingredientsCount": "{{count}} 种食材",
       "recipeDetails": "配方详情",
       "cookingModifierImpact": "烹饪变量对比",

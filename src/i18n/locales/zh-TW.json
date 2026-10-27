@@ -32,7 +32,9 @@
       "archived": "已歸檔",
       "restore": "恢復",
       "itemCount": "{{count}} 項",
-      "currentValue": "當前標定"
+      "currentValue": "當前標定",
+      "select": "選擇",
+      "noResults": "無搜尋結果"
     },
     "nav": {
       "dashboard": "總覽",
@@ -128,6 +130,7 @@
       "includeOil": "包含烹調用油",
       "excludeOil": "無油或已瀝乾",
       "totalEstimated": "計算預估",
+      "totalWeight": "總重量",
       "ingredientsCount": "{{count}} 種食材",
       "recipeDetails": "配方詳情",
       "cookingModifierImpact": "烹飪變量對比",
