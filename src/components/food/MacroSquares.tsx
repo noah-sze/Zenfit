@@ -31,7 +31,7 @@ export function MacroSquares({
   className,
 }: MacroSquaresProps) {
   return (
-    <div className={cn("shrink-0 flex items-center gap-1 font-mono text-center", className)}>
+    <div className={cn("shrink-0 flex items-center gap-2 font-mono text-center", className)}>
       {/* P 蛋白質方塊 */}
       <div
         className={cn(

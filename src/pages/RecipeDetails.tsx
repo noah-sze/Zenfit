@@ -10,7 +10,6 @@ import {
   RefreshCcw,
   Trash2,
   MoreVertical,
-  Plus,
 } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
 import { useRecipes } from '@/hooks/useRecipes';
@@ -25,27 +24,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
-import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { useAppStore } from '@/store/useAppStore';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
+import { RecipeFormDialog, type RecipeFormData } from '@/components/food/RecipeFormDialog';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
-import { formatEnergy, formatFoodServing, ozToG, flOzToMl } from '@/utils/unitMath';
-import type { RecipeIngredient } from '@/types';
+import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 
 export default function RecipeDetails() {
   const { id } = useParams<{ id: string }>();
@@ -222,84 +210,14 @@ export default function RecipeDetails() {
 
   // 編輯 Dialog 狀態
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editIngredients, setEditIngredients] = useState<
-    Array<{ foodId: string; quantity: string; isOptional: boolean }>
-  >([]);
 
   const handleOpenEdit = () => {
-    if (!recipe) return;
-    setEditName(recipe.name);
-    setEditDescription(recipe.description || '');
-    setEditIngredients(
-      recipe.ingredients.map((ing) => {
-        const displayServing = formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit);
-        return {
-          foodId: ing.foodId,
-          quantity: String(displayServing.size),
-          isOptional: !!ing.isOptional,
-        };
-      })
-    );
     setIsEditDialogOpen(true);
   };
 
-  const handleAddIngredientRow = () => {
-    if (allFoods.length === 0) return;
-    const firstFood = allFoods[0];
-    const isLiquid = (firstFood.servingUnit || 'g').toLowerCase().includes('ml') || firstFood.category === 'beverage';
-    const defaultQty = isLiquid
-      ? (foodVolumeUnit === 'fl oz' ? '8' : '250')
-      : (foodWeightUnit === 'oz' ? '1' : '100');
-    setEditIngredients((prev) => [
-      ...prev,
-      { foodId: firstFood.id, quantity: defaultQty, isOptional: false },
-    ]);
-  };
-
-  const handleRemoveIngredientRow = (index: number) => {
-    setEditIngredients((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!recipe || !editName.trim()) return;
-
-    const validIngredients: RecipeIngredient[] = [];
-    for (const item of editIngredients) {
-      const targetFood = allFoods.find((f) => f.id === item.foodId);
-      const qty = parseFloat(item.quantity);
-      if (targetFood && qty > 0) {
-        const isLiquid = (targetFood.servingUnit || 'g').toLowerCase().includes('ml') || targetFood.category === 'beverage';
-        let normalizedQty = qty;
-        if (isLiquid && foodVolumeUnit === 'fl oz') {
-          normalizedQty = flOzToMl(qty, 2);
-        } else if (!isLiquid && foodWeightUnit === 'oz') {
-          normalizedQty = ozToG(qty, 2);
-        }
-
-        validIngredients.push({
-          foodId: targetFood.id,
-          foodName: formatFoodDisplayName(targetFood),
-          quantity: normalizedQty,
-          unit: targetFood.servingUnit || 'g',
-          isOptional: item.isOptional,
-        });
-      }
-    }
-
-    if (validIngredients.length === 0) {
-      toast.show(t('diet.noIngredients'));
-      return;
-    }
-
-    await updateRecipe(recipe.id, {
-      name: editName.trim(),
-      description: editDescription.trim() || undefined,
-      ingredients: validIngredients,
-    });
-
+  const handleEditSubmit = async (formData: RecipeFormData) => {
+    if (!recipe) return;
+    await updateRecipe(recipe.id, formData);
     triggerHaptic('success');
     toast.show(t('common.saved'));
     setIsEditDialogOpen(false);
@@ -685,149 +603,12 @@ export default function RecipeDetails() {
       </div>
 
       {/* 編輯菜餚 Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent
-          overlayClassName="z-[70]"
-          className="z-[70] w-[360px] max-w-[calc(100vw-32px)] sm:w-[420px] sm:max-w-[420px] max-h-[85vh] flex flex-col bg-card border border-border text-card-foreground p-5"
-        >
-          <DialogHeader className="shrink-0">
-            <DialogTitle className="text-card-foreground text-base font-semibold">
-              {t('diet.editRecipe')}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleEditSubmit} className="flex-1 flex flex-col min-h-0 space-y-3 py-2">
-            <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.recipeName')} *
-                </Label>
-                <Input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('diet.recipeDescription')}
-                </Label>
-                <Input
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                />
-              </div>
-
-              {/* 構成食材列表 */}
-              <div className="space-y-2 pt-2 border-t border-border/50">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    {t('diet.recipeIngredients')}
-                  </Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs text-primary cursor-pointer px-2"
-                    onClick={handleAddIngredientRow}
-                  >
-                    <Plus className="size-3.5 mr-1" />
-                    {t('diet.addIngredient')}
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  {editIngredients.map((item, idx) => {
-                    const selFood = allFoods.find((f) => f.id === item.foodId);
-                    return (
-                      <div
-                        key={idx}
-                        className="p-2 rounded border border-border bg-muted/20 space-y-2 text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={item.foodId}
-                            onChange={(e) => {
-                              const newId = e.target.value;
-                              setEditIngredients((prev) =>
-                                prev.map((ing, i) => (i === idx ? { ...ing, foodId: newId } : ing))
-                              );
-                            }}
-                            className="flex-1 h-8 rounded border border-border bg-background px-2 text-xs text-foreground cursor-pointer"
-                          >
-                            {allFoods.map((f) => (
-                              <option key={f.id} value={f.id}>
-                                {formatFoodDisplayName(f)} ({formatEnergy(f.calories, energyUnit).formatted} / {formatFoodServing(f.servingSize, f.servingUnit, foodWeightUnit, foodVolumeUnit).formatted})
-                              </option>
-                            ))}
-                          </select>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
-                            onClick={() => handleRemoveIngredientRow(idx)}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              value={item.quantity}
-                              onChange={(e) => {
-                                const newQty = e.target.value;
-                                setEditIngredients((prev) =>
-                                  prev.map((ing, i) =>
-                                    i === idx ? { ...ing, quantity: newQty } : ing
-                                  )
-                                );
-                              }}
-                              className="h-7 w-20 text-xs font-mono"
-                            />
-                            <span className="text-muted-foreground text-xs font-mono">
-                              {formatFoodServing(1, selFood?.servingUnit || 'g', foodWeightUnit, foodVolumeUnit).unit}
-                            </span>
-                          </div>
-
-                          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={item.isOptional}
-                              onChange={(e) => {
-                                const chk = e.target.checked;
-                                setEditIngredients((prev) =>
-                                  prev.map((ing, i) =>
-                                    i === idx ? { ...ing, isOptional: chk } : ing
-                                  )
-                                );
-                              }}
-                              className="size-3.5 rounded border-border"
-                            />
-                            <span>{t('diet.optionalModifier')}</span>
-                          </label>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="flex flex-row items-center justify-between gap-3 pt-3 shrink-0 border-t border-border/50">
-              <DialogClose render={<Button type="button" variant="outline" className="border-border cursor-pointer" />}>
-                {t('common.cancel')}
-              </DialogClose>
-              <Button type="submit" disabled={!editName.trim()} className="cursor-pointer">
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <RecipeFormDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        initialData={recipe}
+        onSubmit={handleEditSubmit}
+      />
     </div>
   );
 }
