@@ -16,6 +16,7 @@ export interface FoodListItemProps {
   food: FoodItem;
   onClick?: () => void;
   disabled?: boolean;
+  selected?: boolean;
   showActions?: boolean;
   onRestore?: () => void;
   onDelete?: () => void;
@@ -26,6 +27,7 @@ export const FoodListItem = React.memo(function FoodListItem({
   food,
   onClick,
   disabled = false,
+  selected = false,
   showActions = false,
   onRestore,
   onDelete,
@@ -64,11 +66,14 @@ export const FoodListItem = React.memo(function FoodListItem({
 
   return (
     <div
+      onClick={handleClick}
       className={cn(
         'min-h-16 py-2.5 flex items-center justify-between px-4 transition-colors',
         disabled
           ? 'opacity-40 select-none bg-muted/10 cursor-not-allowed'
-          : 'group hover:bg-muted/30',
+          : selected
+          ? 'bg-muted/70 ring-1 ring-inset ring-foreground/25 cursor-pointer'
+          : 'group hover:bg-muted/30 cursor-pointer',
         className
       )}
     >

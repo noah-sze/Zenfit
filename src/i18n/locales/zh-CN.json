@@ -34,7 +34,9 @@
       "itemCount": "{{count}} 项",
       "currentValue": "当前标定",
       "select": "选择",
-      "noResults": "无搜索结果"
+      "noResults": "无搜索结果",
+      "adjust": "微调",
+      "confirmDelete": "确认删除？"
     },
     "nav": {
       "dashboard": "总览",
@@ -114,7 +116,7 @@
       "recipes": "菜肴",
       "addRecipe": "新增",
       "editRecipe": "编辑",
-      "recipeName": "菜肴名称",
+      "recipeName": "名称",
       "recipeNamePlaceholder": "例如 家常番茄炒蛋",
       "recipeDescription": "备注 (选填)",
       "recipeIngredients": "构成食材",
@@ -453,7 +455,8 @@
       "collapse": "收起",
       "backspace": "退格",
       "calculate": "计算",
-      "done": "完成"
+      "done": "完成",
+      "input": "数值输入"
     }
   }
 }

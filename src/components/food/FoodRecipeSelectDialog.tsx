@@ -1,19 +1,19 @@
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import {
   FoodRecipeBrowser,
   type FoodSelectMode,
 } from '@/components/food/FoodRecipeBrowser';
 import type { FoodItem, FoodRecipe } from '@/types';
 import { cn } from '@/lib/utils';
+import { triggerHaptic } from '@/lib/haptics';
 
 export interface FoodRecipeSelectDialogProps {
   /** 控制彈窗開關 */
@@ -71,53 +71,64 @@ export function FoodRecipeSelectDialog({
 
   const zIndexClass = `z-[${zIndex}]`;
 
+  // 點擊即選擇：觸發觸覺反饋、回傳選中物件並關閉彈窗
+  const handleItemClick = (item: FoodItem | FoodRecipe, type: 'food' | 'recipe') => {
+    triggerHaptic('selection');
+    onSelect(item, type);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        showCloseButton={false}
         overlayClassName={zIndexClass}
         className={cn(
           zIndexClass,
-          'w-[350px] max-w-[calc(100vw-24px)] sm:w-[350px] sm:max-w-[350px] h-[85vh] sm:h-[80vh] flex flex-col p-4 bg-card border border-border text-card-foreground overflow-hidden select-none'
+          'w-[350px] max-w-[calc(100vw-24px)] sm:w-[350px] sm:max-w-[350px] h-[85vh] sm:h-[80vh] flex flex-col p-4 sm:p-5 bg-card border border-border text-card-foreground overflow-hidden select-none shadow-none font-mono text-xs'
         )}
         initialFocus={false}
       >
-        <DialogHeader className="shrink-0 pb-1">
-          <DialogTitle className="text-base font-semibold text-foreground tracking-tight">
-            {resolvedTitle}
-          </DialogTitle>
+        {/* 彈窗標頭 (全新設計：左側 ✕ 圓形取消膠囊，中間標題居中，無底欄) */}
+        <DialogHeader className="p-0 pb-2 shrink-0">
+          <div className="flex items-center justify-between w-full h-7">
+            {/* 左側純圖標：取消 (✕) */}
+            <DialogClose
+              render={
+                <button
+                  type="button"
+                  className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
+                  title={t('common.cancel')}
+                  aria-label={t('common.cancel')}
+                />
+              }
+            >
+              <X className="size-3.5 stroke-[2.2]" />
+            </DialogClose>
+
+            {/* 中間標題 (置中對稱) */}
+            <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2 text-center">
+              <span className="truncate">{resolvedTitle}</span>
+            </DialogTitle>
+
+            {/* 右側佔位（與左側按鈕等寬，確保標題完美居中） */}
+            <div className="size-7 shrink-0 pointer-events-none" aria-hidden="true" />
+          </div>
         </DialogHeader>
 
-        {/* 核心瀏覽與選擇區 (100% 複用管理介面 UI 與過濾計算) */}
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden py-1">
+        {/* 核心瀏覽與選擇區 (點擊即選擇，直達底部) */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden pt-1">
           <FoodRecipeBrowser
             mode={mode}
             interactiveMode="select"
             showArchivedOption={allowArchived}
             disabledIds={disabledIds}
             isItemDisabled={isItemDisabled}
-            onItemClick={(item, type) => {
-              onSelect(item, type);
-              onOpenChange(false);
-            }}
+            onItemClick={handleItemClick}
             className="flex-1 min-h-0"
             listContainerClassName="flex-1 min-h-0"
           />
         </div>
-
-        {/* 底部動作列 (取消按鈕靠左對齊，符合 Rule 4 規範) */}
-        <DialogFooter className="flex flex-row items-center justify-between pt-2 shrink-0 border-t border-border/50">
-          <DialogClose
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                className="border-border cursor-pointer text-xs font-mono h-8"
-              >
-                {t('common.cancel')}
-              </Button>
-            }
-          />
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

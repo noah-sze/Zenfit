@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyRound, Lock, Loader2, Unlink } from 'lucide-react';
+import { Lock, Loader2, Unlink } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -79,9 +79,8 @@ export function E2EEUnlockDialog({
     <Dialog open={open} onOpenChange={(val) => !isUnlocking && (val ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-[340px] max-w-[340px] p-5 gap-4">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold tracking-tight text-foreground flex items-center gap-2">
-            <KeyRound className="size-4 text-primary shrink-0" />
-            <span>{t('settings.unlockE2eeTitle', '解鎖端到端加密')}</span>
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+            {t('settings.unlockE2eeTitle', '解鎖端到端加密')}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
             {t('settings.unlockE2eeDesc', '雲端資料庫已啟用 E2EE 加密保護。請輸入您的同步主密碼以解鎖本地金鑰。')}

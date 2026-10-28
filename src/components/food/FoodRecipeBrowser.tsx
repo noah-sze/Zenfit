@@ -38,6 +38,8 @@ export interface FoodRecipeBrowserProps {
   disabledIds?: string[];
   /** 自訂項目是否禁用的判斷函數 */
   isItemDisabled?: (item: FoodItem | FoodRecipe, type: 'food' | 'recipe') => boolean;
+  /** 當前在選擇模式下被選中的項目 ID */
+  selectedId?: string;
   /** 歸檔管理操作回調 */
   onDeleteFood?: (food: FoodItem) => void;
   onUnarchiveFood?: (food: FoodItem) => void;
@@ -58,6 +60,7 @@ export function FoodRecipeBrowser({
   showArchivedOption = interactiveMode === 'manage',
   disabledIds,
   isItemDisabled,
+  selectedId,
   onDeleteFood,
   onUnarchiveFood,
   onDeleteRecipe,
@@ -645,6 +648,7 @@ export function FoodRecipeBrowser({
                       key={food.id}
                       food={food}
                       disabled={isDisabled}
+                      selected={interactiveMode === 'select' && selectedId === food.id}
                       onClick={() => {
                         if (isDisabled) return;
                         onItemClick?.(food, 'food');
@@ -867,6 +871,7 @@ export function FoodRecipeBrowser({
                       recipe={recipe}
                       macros={getRecipeMacros(recipe)}
                       disabled={isDisabled}
+                      selected={interactiveMode === 'select' && selectedId === recipe.id}
                       onClick={() => {
                         if (isDisabled) return;
                         onItemClick?.(recipe, 'recipe');
