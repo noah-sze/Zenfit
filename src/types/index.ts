@@ -62,6 +62,8 @@ export interface FoodLog {
   carbs: number;
   fat: number;
   notes?: string;
+  bundleId?: string; // 同一次食譜添加的食材共用此 UUID
+  bundleName?: string; // 食譜/分組名稱 (例如「番茄炒蛋」)
   createdAt: number;
   updatedAt: number;
 }

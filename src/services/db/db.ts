@@ -240,6 +240,22 @@ export class ZenfitDatabase extends Dexie {
         await tx.table('equipments').update('leg_press', { name: '腿舉機' });
       }
     });
+
+    this.version(8).stores({
+      foods: 'id, name, category, updatedAt',
+      recipes: 'id, name, isCustom, isArchived, updatedAt',
+      food_logs: 'id, date, mealType, foodId, bundleId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      routines: 'id, name, isCustom, isArchived, updatedAt',
+      equipments: 'id, name, isCustom, isArchived, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (_tx) => {
+      // 升級版本 8：為 food_logs 新增 bundleId 索引以支援食材動態分組 (Meal Bundle)，平滑向下相容既有數據
+    });
   }
 
   async seedDefaultData() {

@@ -18,14 +18,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Utensils, Dumbbell, Activity, Layers, UtensilsCrossed } from 'lucide-react';
-import type { MealType } from '@/types';
+import { Utensils, Dumbbell, Activity, Layers, UtensilsCrossed, SlidersHorizontal } from 'lucide-react';
+import type { MealType, FoodRecipe } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import {
   formatEnergy,
   formatFoodServing,
@@ -63,7 +64,7 @@ export function AddQuickModal() {
   }, [isAddModalOpen, addModalType]);
 
   // Hooks
-  const { addFoodLog } = useFoodLogs(selectedDate);
+  const { addFoodLog, addFoodLogBundle } = useFoodLogs(selectedDate);
   const { addWorkout } = useWorkoutLogs(selectedDate);
   const { saveMetric, metricToday } = useBodyMetrics(selectedDate);
   const { foods, allFoods } = useFoods();
@@ -90,6 +91,7 @@ export function AddQuickModal() {
   // 菜餚組合狀態
   const [selectedRecipeId, setSelectedRecipeId] = useState('');
   const [recipeExcludedIndices, setRecipeExcludedIndices] = useState<number[]>([]);
+  const [stagingRecipe, setStagingRecipe] = useState<FoodRecipe | null>(null);
 
   // 當前選中菜餚物件
   const currentRecipe = activeRecipes.find((r) => r.id === selectedRecipeId);
@@ -195,12 +197,16 @@ export function AddQuickModal() {
       return;
     }
 
-    for (const ing of ingredientsToLog) {
+    const bundleId = uuidv4();
+    const bundleName = currentRecipe.name;
+
+    const logItems = ingredientsToLog.map((ing) => {
       const targetFood = allFoods.find((f) => f.id === ing.foodId);
       const macros = calculateIngredientMacros(targetFood, ing.quantity);
-      await addFoodLog({
+      return {
         date: selectedDate,
         mealType,
+        foodId: ing.foodId,
         foodName: ing.foodName,
         quantity: ing.quantity,
         unit: ing.unit || 'g',
@@ -208,9 +214,11 @@ export function AddQuickModal() {
         protein: macros.protein,
         carbs: macros.carbs,
         fat: macros.fat,
-        notes: `[${currentRecipe.name}]`,
-      });
-    }
+        notes: `[${bundleName}]`,
+      };
+    });
+
+    await addFoodLogBundle(bundleId, bundleName, logItems);
 
     toast.show(t('common.saved'));
     setSelectedRecipeId('');
@@ -331,7 +339,8 @@ export function AddQuickModal() {
   };
 
   return (
-    <Dialog open={isAddModalOpen} onOpenChange={(open) => !open && closeAddModal()}>
+    <>
+      <Dialog open={isAddModalOpen} onOpenChange={(open) => !open && closeAddModal()}>
       <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-lg">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-base font-semibold tracking-tight">
@@ -601,14 +610,27 @@ export function AddQuickModal() {
                   <Button variant="outline" size="sm" onClick={closeAddModal} className="cursor-pointer">
                     {t('common.cancel')}
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSaveRecipe}
-                    disabled={!currentRecipe}
-                    className="cursor-pointer"
-                  >
-                    {t('diet.logRecipe')}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => currentRecipe && setStagingRecipe(currentRecipe)}
+                      disabled={!currentRecipe}
+                      className="cursor-pointer gap-1.5"
+                    >
+                      <SlidersHorizontal className="size-3.5" />
+                      <span>{t('common.adjust', '微調')}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveRecipe}
+                      disabled={!currentRecipe}
+                      className="cursor-pointer"
+                    >
+                      {t('diet.logRecipe')}
+                    </Button>
+                  </div>
                 </DialogFooter>
               </div>
             )}
@@ -845,5 +867,22 @@ export function AddQuickModal() {
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    {/* 動態活體食材分組檢查台 (可改重量、增刪食材) */}
+    <RecipeStagingDialog
+      open={!!stagingRecipe}
+      onOpenChange={(open) => {
+        if (!open) setStagingRecipe(null);
+      }}
+      recipe={stagingRecipe}
+      mealType={mealType}
+      date={selectedDate}
+      onSuccess={() => {
+        setSelectedRecipeId('');
+        setRecipeExcludedIndices([]);
+        closeAddModal();
+      }}
+    />
+  </>
   );
 }

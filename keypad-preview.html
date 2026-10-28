@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit 數字鍵盤 UI 重新設計與方案預覽</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #09090b;
+      --card: #ffffff;
+      --card-fg: #09090b;
+      --border: #e4e4e7;
+      --border-subtle: #f4f4f5;
+      --muted: #f4f4f5;
+      --muted-fg: #71717a;
+      --primary: #09090b;
+      --primary-fg: #ffffff;
+      --destructive: #ef4444;
+      --destructive-fg: #ffffff;
+      --overlay: rgba(255, 255, 255, 0.82);
+      --key-bg: #f4f4f5;
+      --key-hover: #e4e4e7;
+      --key-active: #d4d4d8;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html.dark {
+      --bg: #000000;
+      --fg: #f4f4f5;
+      --card: #09090b;
+      --card-fg: #f4f4f5;
+      --border: #27272a;
+      --border-subtle: #18181b;
+      --muted: #18181b;
+      --muted-fg: #a1a1aa;
+      --primary: #f4f4f5;
+      --primary-fg: #09090b;
+      --destructive: #dc2626;
+      --destructive-fg: #ffffff;
+      --overlay: rgba(0, 0, 0, 0.85);
+      --key-bg: #141416;
+      --key-hover: #1f1f23;
+      --key-active: #27272a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    /* 頂部固定導航控制列 */
+    header.control-bar {
+      flex-shrink: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--muted);
+      color: var(--muted-fg);
+      border: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--muted);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--muted-fg);
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      font-family: var(--font-sans);
+    }
+
+    .tab-btn.active {
+      background: var(--card);
+      color: var(--fg);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-toggle {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.15s;
+      font-family: var(--font-sans);
+    }
+
+    .btn-toggle:hover {
+      background: var(--muted);
+    }
+
+    /* 左右雙欄佈局 (完全適配無滾動全螢幕) */
+    main.workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 左側：設計解讀與規範對齊 */
+    .sidebar-panel {
+      width: 440px;
+      border-right: 1px solid var(--border);
+      background: var(--card);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .concept-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+    }
+
+    .concept-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .pill-tag {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+    }
+
+    .concept-desc {
+      font-size: 13px;
+      color: var(--muted-fg);
+      line-height: 1.6;
+    }
+
+    .spec-group {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      overflow: hidden;
+      divide-y: 1px solid var(--border);
+    }
+
+    .spec-row {
+      padding: 10px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spec-row:last-child {
+      border-bottom: none;
+    }
+
+    .spec-key {
+      font-weight: 600;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      shrink-0;
+    }
+
+    .spec-val {
+      color: var(--muted-fg);
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+
+    /* 右側：互動舞台 (支援手機框與獨立卡片模式) */
+    .preview-stage {
+      flex: 1;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* 手機視圖外框 */
+    .mobile-frame {
+      width: 350px;
+      height: 580px;
+      border: 4px solid var(--border);
+      border-radius: 36px;
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s ease;
+    }
+
+    .dynamic-island {
+      width: 80px;
+      height: 18px;
+      background: var(--fg);
+      border-radius: 12px;
+      margin: 8px auto 0 auto;
+      z-index: 50;
+    }
+
+    .mock-underlying-page {
+      position: absolute;
+      inset: 0;
+      padding: 36px 14px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0.28;
+      pointer-events: none;
+      filter: blur(1px);
+    }
+
+    .mock-row {
+      height: 38px;
+      border-radius: 8px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+
+    .mock-backdrop {
+      position: absolute;
+      inset: 0;
+      background: var(--overlay);
+      backdrop-filter: blur(2px);
+      z-index: 10;
+    }
+
+    .keypad-stage-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 10px;
+    }
+
+    /* ========================================================
+       方案 1: 一體化精密卡片 (Unified Precision Modal)
+       ======================================================== */
+    .scheme-1-panel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: popIn 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Header: 左 ✕ 圓形按鈕，中 標題，右 單位切換 */
+    .keypad-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 28px;
+    }
+
+    /* 圓形膠囊 ✕ 關閉按鈕 (1:1 對齊 Dialog 方案 D) */
+    .btn-circle-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      background: var(--muted);
+      color: var(--muted-fg);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-circle-close:hover {
+      background: var(--border);
+      color: var(--fg);
+    }
+
+    .btn-circle-close:active {
+      transform: scale(0.92);
+    }
+
+    .keypad-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      font-family: var(--font-sans);
+    }
+
+    /* 單位切換微型膠囊 */
+    .unit-pill-selector {
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 9999px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .unit-pill-selector:hover {
+      background: var(--border);
+    }
+
+    /* 數值展示屏 (Precision Display Bar) */
+    .display-screen {
+      background: var(--muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      height: 42px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .display-label-sub {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted-fg);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .display-value-box {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .display-value-num {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--fg);
+    }
+
+    .display-value-unit {
+      font-size: 12px;
+      color: var(--muted-fg);
+      font-weight: 500;
+    }
+
+    /* 鍵盤矩陣 (微縮 40px 高度，告別粗笨變形) */
+    .keys-grid-4x4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .key-btn {
+      height: 40px;
+      border-radius: 8px;
+      background: var(--key-bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.05s ease, background 0.1s ease;
+    }
+
+    .key-btn:hover {
+      background: var(--key-hover);
+    }
+
+    .key-btn:active {
+      background: var(--key-active);
+      transform: scale(0.94);
+    }
+
+    .key-btn.op-key {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .key-btn.del-key {
+      color: var(--destructive);
+    }
+
+    .key-btn.clear-key {
+      color: var(--muted-fg);
+      font-weight: 600;
+    }
+
+    .key-btn.submit-key {
+      background: var(--primary);
+      color: var(--primary-fg);
+      border-color: var(--primary);
+    }
+
+    .key-btn.submit-key:hover {
+      opacity: 0.9;
+    }
+
+    .key-btn.submit-key:active {
+      transform: scale(0.94);
+      opacity: 0.85;
+    }
+
+    /* ========================================================
+       方案 2: 極簡懸浮操作條 + 鍵盤 (Integrated Header)
+       ======================================================== */
+    .scheme-2-panel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: popIn 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .scheme-2-integrated-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 4px 6px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .left-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .right-display {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-family: var(--font-mono);
+    }
+
+    /* ========================================================
+       方案 3: 3+1 計算器式排布
+       ======================================================== */
+    .scheme-3-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) 1fr;
+      grid-template-rows: repeat(4, 40px);
+      gap: 6px;
+    }
+
+    .key-tall-submit {
+      grid-row: span 2;
+      height: 100%;
+      background: var(--primary);
+      color: var(--primary-fg);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      transition: transform 0.05s ease, opacity 0.1s ease;
+    }
+
+    .key-tall-submit:hover {
+      opacity: 0.9;
+    }
+
+    .key-tall-submit:active {
+      transform: scale(0.95);
+    }
+
+    /* ========================================================
+       方案 0: 現狀痛點對比 (Before)
+       ======================================================== */
+    .scheme-0-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scheme-0-isolated-close {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .scheme-0-close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scheme-0-spotlight {
+      width: 100%;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .scheme-0-keypad {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .scheme-0-btn {
+      height: 48px;
+      border-radius: 8px;
+      background: var(--key-bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      color: var(--fg);
+    }
+
+    /* 獨立卡片展示模式 (不套手機殼) */
+    .standalone-mode .mobile-frame {
+      border: none;
+      box-shadow: none;
+      height: auto;
+      overflow: visible;
+      background: transparent;
+    }
+
+    .standalone-mode .dynamic-island,
+    .standalone-mode .mock-underlying-page,
+    .standalone-mode .mock-backdrop {
+      display: none;
+    }
+
+    .standalone-mode .keypad-stage-overlay {
+      position: static;
+      padding: 0;
+      width: 350px;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部控制列 -->
+  <header class="control-bar">
+    <div class="brand">
+      <span>Zenfit</span>
+      <span class="brand-badge">Keypad 2.0</span>
+    </div>
+
+    <!-- 方案選擇 Tab -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchScheme('scheme-1')">方案 1 · 一體化精密卡片 (推薦)</button>
+      <button class="tab-btn" onclick="switchScheme('scheme-2')">方案 2 · 懸浮融合讀數島</button>
+      <button class="tab-btn" onclick="switchScheme('scheme-3')">方案 3 · 側邊計算器動作欄</button>
+      <button class="tab-btn" onclick="switchScheme('scheme-0')">現狀痛點對比 (Before)</button>
+    </div>
+
+    <div class="actions">
+      <!-- 視圖切換：手機框 vs 獨立卡片 -->
+      <button class="btn-toggle" onclick="toggleStandalone()" id="viewModeBtn">
+        <span>📱 手機框視圖</span>
+      </button>
+
+      <!-- 主題切換 -->
+      <button class="btn-toggle" onclick="toggleTheme()" title="切換明暗主題">
+        <span id="themeIcon">☀️ 深色</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 左右雙欄主舞台 -->
+  <main class="workspace" id="workspaceContainer">
+
+    <!-- 左側面板：設計規格與痛點剖析 -->
+    <div class="sidebar-panel">
+      <div>
+        <div class="concept-title" id="conceptTitle">方案 1 · 一體化精密卡片 (推薦)</div>
+        <div class="concept-tags" id="conceptTags">
+          <span class="pill-tag">一體化卡片</span>
+          <span class="pill-tag">左側圓形 ✕</span>
+          <span class="pill-tag">40px 精密按鍵</span>
+          <span class="pill-tag">無下大上小變形</span>
+        </div>
+      </div>
+
+      <div class="concept-desc" id="conceptDesc">
+        徹底拔除原版三截分離堆疊。將標頭（左 ✕ 圓形膠囊、中 欄位標題、右 單位切換）、精密數值展示屏與 40px 微縮鍵盤整合在單一高質感 Card 內。比例極度協調，完美對齊 Dialog 方案 D。
+      </div>
+
+      <div class="spec-group">
+        <div class="spec-row">
+          <span class="spec-key">X 關閉按鈕</span>
+          <span class="spec-val">左側 · size-7 圓形膠囊 (對齊 Dialog)</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">結構形態</span>
+          <span class="spec-val">單一卡片統合 (告別三段式拼湊)</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">按鍵高度</span>
+          <span class="spec-val">40px (由粗笨 52px 微縮 23%)</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">總體卡片高度</span>
+          <span class="spec-val">約 296px (垂直空間節省 30%+)</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">卡片寬度</span>
+          <span class="spec-val">350px (與 Dialog 寬度 100% 統一)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側面板：真實預覽舞台 -->
+    <div class="preview-stage">
+
+      <div class="mobile-frame" id="previewFrame">
+        <div class="dynamic-island"></div>
+
+        <!-- 底層模糊假頁面（新增食材 Dialog 內容） -->
+        <div class="mock-underlying-page">
+          <div style="font-size: 13px; font-weight: 700; color: var(--fg); margin-bottom: 4px;">新增單品食材</div>
+          <div class="mock-row"><span>食物名稱</span><span>燕麥片</span></div>
+          <div class="mock-row"><span>分類</span><span>全穀雜糧</span></div>
+          <div class="mock-row" style="background: rgba(255,255,255,0.06); border-color: var(--primary);">
+            <span style="font-weight: 600;">份量</span>
+            <span style="font-family: var(--font-mono); font-weight: 700;">100 g</span>
+          </div>
+          <div class="mock-row"><span>熱量</span><span>389 kcal</span></div>
+          <div class="mock-row"><span>蛋白質</span><span>16.9 g</span></div>
+        </div>
+
+        <!-- 半透明毛玻璃遮罩 -->
+        <div class="mock-backdrop"></div>
+
+        <!-- 浮動數字鍵盤層 -->
+        <div class="keypad-stage-overlay">
+
+          <!-- 方案 1: 一體化精密卡片 (推薦) -->
+          <div id="view-scheme-1" class="scheme-1-panel">
+            <!-- Header: 左側圓形 ✕ 膠囊，中 標題，右 單位切換 -->
+            <div class="keypad-header-row">
+              <button type="button" class="btn-circle-close" onclick="alert('點擊取消：放棄輸入並收起鍵盤')" title="關閉/放棄">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </button>
+
+              <span class="keypad-title">份量</span>
+
+              <div class="unit-pill-selector" onclick="cycleUnit()">
+                <span id="unitDisplay1">g</span>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- 嵌入式精密數值展示屏 -->
+            <div class="display-screen">
+              <span class="display-label-sub">數值輸入</span>
+              <div class="display-value-box">
+                <span class="display-value-num" id="valScreen1">100</span>
+                <span class="display-value-unit" id="unitSuffix1">g</span>
+              </div>
+            </div>
+
+            <!-- 精密緊湊 4x4 鍵盤 (按鍵 40px, 間距 6px) -->
+            <div class="keys-grid-4x4">
+              <button class="key-btn" onclick="pressKey('1')">1</button>
+              <button class="key-btn" onclick="pressKey('2')">2</button>
+              <button class="key-btn" onclick="pressKey('3')">3</button>
+              <button class="key-btn del-key" onclick="pressKey('DEL')" title="退格">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m10 15 5-5m0 5-5-5"/><path d="M20 4H7.5a2 2 0 0 0-1.6.8L1 12l4.9 7.2a2 2 0 0 0 1.6.8H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/>
+                </svg>
+              </button>
+
+              <button class="key-btn" onclick="pressKey('4')">4</button>
+              <button class="key-btn" onclick="pressKey('5')">5</button>
+              <button class="key-btn" onclick="pressKey('6')">6</button>
+              <button class="key-btn op-key" onclick="pressKey('-')">-</button>
+
+              <button class="key-btn" onclick="pressKey('7')">7</button>
+              <button class="key-btn" onclick="pressKey('8')">8</button>
+              <button class="key-btn" onclick="pressKey('9')">9</button>
+              <button class="key-btn op-key" onclick="pressKey('+')">+</button>
+
+              <button class="key-btn" onclick="pressKey('.')">.</button>
+              <button class="key-btn" onclick="pressKey('0')">0</button>
+              <button class="key-btn clear-key" onclick="pressKey('C')">C</button>
+              <button class="key-btn submit-key" onclick="pressKey('SUBMIT')" title="確認並提交">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 方案 2: 懸浮融合讀數島 -->
+          <div id="view-scheme-2" class="scheme-2-panel" style="display: none;">
+            <div class="scheme-2-integrated-bar">
+              <div class="left-controls">
+                <button type="button" class="btn-circle-close" onclick="alert('點擊取消')" title="關閉">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                  </svg>
+                </button>
+                <span class="keypad-title">份量</span>
+              </div>
+
+              <div class="right-display">
+                <span class="display-value-num" style="font-size: 20px;" id="valScreen2">100</span>
+                <span class="unit-pill-selector" style="height: 22px; padding: 0 8px; font-size: 11px;" onclick="cycleUnit()">
+                  <span id="unitDisplay2">g</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="keys-grid-4x4">
+              <button class="key-btn" onclick="pressKey('1')">1</button>
+              <button class="key-btn" onclick="pressKey('2')">2</button>
+              <button class="key-btn" onclick="pressKey('3')">3</button>
+              <button class="key-btn del-key" onclick="pressKey('DEL')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m10 15 5-5m0 5-5-5"/><path d="M20 4H7.5a2 2 0 0 0-1.6.8L1 12l4.9 7.2a2 2 0 0 0 1.6.8H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/>
+                </svg>
+              </button>
+
+              <button class="key-btn" onclick="pressKey('4')">4</button>
+              <button class="key-btn" onclick="pressKey('5')">5</button>
+              <button class="key-btn" onclick="pressKey('6')">6</button>
+              <button class="key-btn op-key" onclick="pressKey('-')">-</button>
+
+              <button class="key-btn" onclick="pressKey('7')">7</button>
+              <button class="key-btn" onclick="pressKey('8')">8</button>
+              <button class="key-btn" onclick="pressKey('9')">9</button>
+              <button class="key-btn op-key" onclick="pressKey('+')">+</button>
+
+              <button class="key-btn" onclick="pressKey('.')">.</button>
+              <button class="key-btn" onclick="pressKey('0')">0</button>
+              <button class="key-btn clear-key" onclick="pressKey('C')">C</button>
+              <button class="key-btn submit-key" onclick="pressKey('SUBMIT')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 方案 3: 側邊計算器動作欄 -->
+          <div id="view-scheme-3" class="scheme-1-panel" style="display: none;">
+            <div class="keypad-header-row">
+              <button type="button" class="btn-circle-close" onclick="alert('點擊取消')" title="關閉">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </button>
+              <span class="keypad-title">份量</span>
+              <div class="unit-pill-selector" onclick="cycleUnit()">
+                <span id="unitDisplay3">g</span>
+              </div>
+            </div>
+
+            <div class="display-screen">
+              <span class="display-label-sub">即時算式</span>
+              <div class="display-value-box">
+                <span class="display-value-num" id="valScreen3">100</span>
+                <span class="display-value-unit" id="unitSuffix3">g</span>
+              </div>
+            </div>
+
+            <div class="scheme-3-grid">
+              <button class="key-btn" onclick="pressKey('1')">1</button>
+              <button class="key-btn" onclick="pressKey('2')">2</button>
+              <button class="key-btn" onclick="pressKey('3')">3</button>
+              <button class="key-btn del-key" onclick="pressKey('DEL')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m10 15 5-5m0 5-5-5"/><path d="M20 4H7.5a2 2 0 0 0-1.6.8L1 12l4.9 7.2a2 2 0 0 0 1.6.8H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/>
+                </svg>
+              </button>
+
+              <button class="key-btn" onclick="pressKey('4')">4</button>
+              <button class="key-btn" onclick="pressKey('5')">5</button>
+              <button class="key-btn" onclick="pressKey('6')">6</button>
+              <button class="key-btn clear-key" onclick="pressKey('C')">C</button>
+
+              <button class="key-btn" onclick="pressKey('7')">7</button>
+              <button class="key-btn" onclick="pressKey('8')">8</button>
+              <button class="key-btn" onclick="pressKey('9')">9</button>
+              <button class="key-tall-submit" onclick="pressKey('SUBMIT')" title="確認">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              </button>
+
+              <button class="key-btn op-key" onclick="pressKey('+')">+</button>
+              <button class="key-btn" onclick="pressKey('0')">0</button>
+              <button class="key-btn" onclick="pressKey('.')">.</button>
+            </div>
+          </div>
+
+          <!-- 方案 0: 現狀痛點對比 (Before) -->
+          <div id="view-scheme-0" class="scheme-0-panel" style="display: none;">
+            <div class="scheme-0-isolated-close">
+              <div class="scheme-0-close-btn" title="原版右上角孤立 X">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="scheme-0-spotlight">
+              <span>份量</span>
+              <div style="padding: 2px 8px; border-radius: 9999px; border: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px;">
+                0 g
+              </div>
+            </div>
+
+            <div class="scheme-0-keypad">
+              <div class="scheme-0-btn">1</div>
+              <div class="scheme-0-btn">2</div>
+              <div class="scheme-0-btn">3</div>
+              <div class="scheme-0-btn" style="color: var(--destructive);">⌫</div>
+              <div class="scheme-0-btn">4</div>
+              <div class="scheme-0-btn">5</div>
+              <div class="scheme-0-btn">6</div>
+              <div class="scheme-0-btn">-</div>
+              <div class="scheme-0-btn">7</div>
+              <div class="scheme-0-btn">8</div>
+              <div class="scheme-0-btn">9</div>
+              <div class="scheme-0-btn">+</div>
+              <div class="scheme-0-btn">.</div>
+              <div class="scheme-0-btn">0</div>
+              <div class="scheme-0-btn">C</div>
+              <div class="scheme-0-btn" style="background: var(--primary); color: var(--primary-fg);">✓</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const schemeData = {
+      'scheme-1': {
+        title: '方案 1 · 一體化精密卡片 (Unified Precision Modal) ⭐ 強烈推薦',
+        desc: '徹底拔除原版三截分離堆疊。將標頭（左 ✕ 圓形膠囊、中 欄位標題、右 單位切換）、精密數值展示屏與 40px 微縮鍵盤整合在單一高質感 Card 內。比例極度協調，完美對齊 Dialog 方案 D。',
+        tags: ['一體化卡片', '左側圓形 ✕', '40px 精密按鍵', '無下大上小變形'],
+        specs: [
+          { k: 'X 關閉按鈕', v: '左側 · size-7 圓形膠囊 (對齊 Dialog)' },
+          { k: '結構形態', v: '單一卡片統合 (告別三段式拼湊)' },
+          { k: '按鍵高度', v: '40px (由粗笨 52px 微縮 23%)' },
+          { k: '總體卡片高度', v: '約 296px (垂直空間節省 30%+)' },
+          { k: '卡片寬度', v: '350px (與 Dialog 寬度 100% 統一)' }
+        ]
+      },
+      'scheme-2': {
+        title: '方案 2 · 懸浮融合讀數島 (Integrated Header)',
+        desc: '取消獨立數值展示屏，將標籤與即時大字號讀數直接融合在頂部 Header 行中，空間壓縮到極致（垂直高度節省 50px+），特別適合需要最大化露出底層表單的行動端場景。',
+        tags: ['極致節省空間', '左側圓形 ✕', '頂欄融合讀數', '無多餘裝飾'],
+        specs: [
+          { k: 'X 關閉按鈕', v: '左側 · size-7 圓形膠囊' },
+          { k: '結構形態', v: '頂欄融合讀數 + 緊湊鍵盤' },
+          { k: '按鍵高度', v: '40px' },
+          { k: '總體卡片高度', v: '約 248px (超薄)' },
+          { k: '卡片寬度', v: '350px' }
+        ]
+      },
+      'scheme-3': {
+        title: '方案 3 · 側邊計算器動作欄 (3+1 Layout)',
+        desc: '採用現代計算器經典 3+1 排布：左側 3 欄為純數字，最右側第 4 欄為運算與退格，確認鍵（✓）採用雙格高強化按鍵，盲操與算式輸入效率極高。',
+        tags: ['經典計算器', '左側圓形 ✕', '雙格高確認鍵', '算式高效率'],
+        specs: [
+          { k: 'X 關閉按鈕', v: '左側 · size-7 圓形膠囊' },
+          { k: '結構形態', v: '3+1 側欄式計算器' },
+          { k: '按鍵高度', v: '40px (確認鍵跨雙格 86px)' },
+          { k: '總體卡片高度', v: '約 296px' },
+          { k: '卡片寬度', v: '350px' }
+        ]
+      },
+      'scheme-0': {
+        title: '現狀痛點對比 (Before - 原始版本)',
+        desc: '【原版問題剖析】：1. 右上角 X 按鈕孤立漂浮，與下方條目割裂；2. 中間條目與底部鍵盤各自為政；3. 鍵盤按鍵高達 52px 且格子巨大，視覺上從下往上劇烈由大變形，顯得非常笨重突兀。',
+        tags: ['三段分離', '右上角孤立 X', '52px 肥大按鍵', '下重上輕突兀'],
+        specs: [
+          { k: 'X 關閉按鈕', v: '右上角孤立小方塊 (與 Dialog 不一致)' },
+          { k: '結構形態', v: '三段式分離堆疊 (鬆散割裂)' },
+          { k: '按鍵高度', v: '52px (格子過大，下盤笨重)' },
+          { k: '總體卡片高度', v: '高達 365px+ (壓迫感重)' },
+          { k: '視覺特徵', v: '從下往上劇烈由大變形' }
+        ]
+      }
+    };
+
+    let activeScheme = 'scheme-1';
+    let currentValue = '100';
+    let currentUnit = 'g';
+    const unitsList = ['g', 'ml', 'oz', 'kcal'];
+    let isStandalone = false;
+
+    function switchScheme(schemeId) {
+      activeScheme = schemeId;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(schemeId));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.getElementById('view-scheme-1').style.display = schemeId === 'scheme-1' ? 'flex' : 'none';
+      document.getElementById('view-scheme-2').style.display = schemeId === 'scheme-2' ? 'flex' : 'none';
+      document.getElementById('view-scheme-3').style.display = schemeId === 'scheme-3' ? 'flex' : 'none';
+      document.getElementById('view-scheme-0').style.display = schemeId === 'scheme-0' ? 'flex' : 'none';
+
+      renderConceptInfo(schemeId);
+    }
+
+    function renderConceptInfo(id) {
+      const data = schemeData[id];
+      document.getElementById('conceptTitle').textContent = data.title;
+      document.getElementById('conceptTags').innerHTML = data.tags.map(t => `<span class="pill-tag">${t}</span>`).join('');
+      document.getElementById('conceptDesc').textContent = data.desc;
+      
+      const specGroup = document.querySelector('.spec-group');
+      if (specGroup && data.specs) {
+        specGroup.innerHTML = data.specs.map(s => `
+          <div class="spec-row">
+            <span class="spec-key">${s.k}</span>
+            <span class="spec-val">${s.v}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    function toggleStandalone() {
+      isStandalone = !isStandalone;
+      const stage = document.getElementById('previewFrame');
+      const btn = document.getElementById('viewModeBtn');
+      if (isStandalone) {
+        document.body.classList.add('standalone-mode');
+        btn.innerHTML = '<span>📐 1:1 卡片直覽</span>';
+      } else {
+        document.body.classList.remove('standalone-mode');
+        btn.innerHTML = '<span>📱 手機框視圖</span>';
+      }
+    }
+
+    function cycleUnit() {
+      const idx = unitsList.indexOf(currentUnit);
+      currentUnit = unitsList[(idx + 1) % unitsList.length];
+      ['unitDisplay1', 'unitDisplay2', 'unitDisplay3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = currentUnit;
+      });
+      ['unitSuffix1', 'unitSuffix3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = currentUnit;
+      });
+    }
+
+    function pressKey(key) {
+      if (key === 'C') {
+        currentValue = '0';
+      } else if (key === 'DEL') {
+        currentValue = currentValue.length > 1 ? currentValue.slice(0, -1) : '0';
+      } else if (key === 'SUBMIT') {
+        alert(`已確認提交：${currentValue} ${currentUnit}`);
+        return;
+      } else {
+        if (currentValue === '0' && key !== '.') {
+          currentValue = key;
+        } else {
+          currentValue += key;
+        }
+      }
+      updateScreens();
+    }
+
+    function updateScreens() {
+      ['valScreen1', 'valScreen2', 'valScreen3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = currentValue;
+      });
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      if (isDark) {
+        html.classList.remove('dark');
+        document.getElementById('themeIcon').textContent = '🌙 淺色';
+      } else {
+        html.classList.add('dark');
+        document.getElementById('themeIcon').textContent = '☀️ 深色';
+      }
+    }
+
+    renderConceptInfo('scheme-1');
+  </script>
+</body>
+</html>

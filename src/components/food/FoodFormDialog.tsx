@@ -5,10 +5,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -23,7 +21,7 @@ import { cn, formatDisplayAmount } from '@/lib/utils';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
 import { convertFoodWeight, convertFoodVolume } from '@/utils/unitMath';
-import { Utensils, X, ChevronRight } from 'lucide-react';
+import { X, ChevronRight, Check } from 'lucide-react';
 
 type KeypadField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
 
@@ -567,26 +565,41 @@ export function FoodFormDialog({
         <DialogContent
           showCloseButton={false}
           overlayClassName="z-[70]"
-          className="z-[70] w-[340px] max-w-[calc(100vw-24px)] sm:w-[360px] sm:max-w-[360px] bg-card border border-border text-card-foreground p-5 sm:p-5 font-mono text-xs select-none shadow-none"
+          className="z-[70] w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] bg-card border border-border text-card-foreground p-4 sm:p-4 font-mono text-xs select-none shadow-none"
         >
+          {/* 彈窗標頭 (方案 D: 頂部雙純圖標 · 左 ✕ 放棄，中 標題，右 ✓ 提交) */}
           <DialogHeader className="p-0 pb-0 shrink-0">
             <div className="flex items-center justify-between w-full h-7">
-              <DialogTitle className="text-foreground text-sm sm:text-base font-semibold tracking-tight font-sans flex items-center gap-2">
-                <Utensils className="size-4 text-foreground shrink-0" />
-                <span>{isEdit ? t('settings.editCustomFood') : t('diet.addFood', '新增單品食材')}</span>
-              </DialogTitle>
+              {/* 左側純圖標：取消 (✕) */}
               <DialogClose
                 render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer"
+                  <button
+                    type="button"
+                    className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
+                    title={t('common.cancel')}
+                    aria-label={t('common.cancel')}
                   />
                 }
               >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
+                <X className="size-3.5 stroke-[2.2]" />
               </DialogClose>
+
+              {/* 中間標題 */}
+              <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2">
+                <span className="truncate">{isEdit ? t('settings.editCustomFood') : t('diet.addFood', '新增單品食材')}</span>
+              </DialogTitle>
+
+              {/* 右側純圖標：提交 (✓) */}
+              <button
+                type="submit"
+                form={formId}
+                disabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
+                className="size-7 rounded-full flex items-center justify-center bg-foreground text-background hover:opacity-90 active:scale-92 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:pointer-events-none"
+                title={isEdit ? t('common.save') : t('common.add')}
+                aria-label={isEdit ? t('common.save') : t('common.add')}
+              >
+                <Check className="size-3.5 stroke-[2.5]" />
+              </button>
             </div>
           </DialogHeader>
 
@@ -829,19 +842,7 @@ export function FoodFormDialog({
             </div>
           </div>
 
-          {/* DialogFooter (Rule: Cancel on left, Add/Save on right) */}
-          <DialogFooter className="flex flex-row items-center justify-between gap-3 pt-1 pb-0 mt-0 [&_button]:h-8 [&_button]:text-xs">
-            <DialogClose render={<Button type="button" variant="outline" className="border-border cursor-pointer h-8 text-xs min-w-[72px] px-4 font-normal" />}>
-              {t('common.cancel')}
-            </DialogClose>
-            <Button
-              type="submit"
-              disabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
-              className="cursor-pointer h-8 text-xs min-w-[72px] px-4 font-medium"
-            >
-              {isEdit ? t('common.save') : t('common.add')}
-            </Button>
-          </DialogFooter>
+          {/* 方案 D 徹底無底欄，表單內容直達底部 */}
         </form>
       </DialogContent>
     </Dialog>

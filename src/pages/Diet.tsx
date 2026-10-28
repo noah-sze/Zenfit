@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, SlidersHorizontal } from 'lucide-react';
 import type { MealType, FoodLog } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
+import { MealBundleCard } from '@/components/food/MealBundleCard';
 import {
   Select,
   SelectContent,
@@ -26,11 +27,44 @@ import {
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
+type GroupedMealEntry =
+  | { type: 'single'; log: FoodLog }
+  | { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] };
+
+function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
+  const result: GroupedMealEntry[] = [];
+  const bundleMap = new Map<string, { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] }>();
+
+  for (const log of logs) {
+    if (log.bundleId) {
+      const existing = bundleMap.get(log.bundleId);
+      if (existing) {
+        existing.logs.push(log);
+      } else {
+        const bundleEntry = {
+          type: 'bundle' as const,
+          bundleId: log.bundleId,
+          bundleName: log.bundleName || (log.notes ? log.notes.replace(/^\[|\]$/g, '') : '食譜組合'),
+          logs: [log],
+        };
+        bundleMap.set(log.bundleId, bundleEntry);
+        result.push(bundleEntry);
+      }
+    } else {
+      result.push({
+        type: 'single',
+        log,
+      });
+    }
+  }
+
+  return result;
+}
 
 export default function Diet() {
   const { t } = useTranslation();
   const { selectedDate, openAddModal } = useAppStore();
-  const { mealGroups, deleteFoodLog, totals } = useFoodLogs(selectedDate);
+  const { mealGroups, deleteFoodLog, deleteFoodLogBundle, totals } = useFoodLogs(selectedDate);
   const { profile, updateProfile } = useUserProfile();
   const { plan, saveDietPlan } = useDietPlan(selectedDate);
   const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
@@ -92,6 +126,17 @@ export default function Diet() {
     });
     if (ok) {
       await deleteFoodLog(item.id);
+    }
+  };
+
+  const handleDeleteBundle = async (bundleId: string) => {
+    const ok = await confirm({
+      title: t('common.delete'),
+      description: t('common.confirmDelete', '確認刪除此分組記錄？'),
+      variant: 'destructive',
+    });
+    if (ok) {
+      await deleteFoodLogBundle(bundleId);
     }
   };
 
@@ -313,48 +358,64 @@ export default function Diet() {
             <CardContent className="p-0">
               {items.length > 0 ? (
                 <div className="divide-y divide-border/40">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-medium text-foreground">
-                          {item.foodName}
-                        </div>
-                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs font-mono text-muted-foreground">
-                          <span>{formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}</span>
-                          <span className="text-border/70">·</span>
-                          <span className="inline-flex items-center gap-1">
-                            <span className="size-2 rounded-full bg-carbs shrink-0" />
-                            <span>C: {item.carbs}g</span>
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <span className="size-2 rounded-full bg-protein shrink-0" />
-                            <span>P: {item.protein}g</span>
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <span className="size-2 rounded-full bg-fat shrink-0" />
-                            <span>F: {item.fat}g</span>
-                          </span>
-                        </div>
-                      </div>
+                  {groupMealLogs(items).map((entry) => {
+                    if (entry.type === 'bundle') {
+                      return (
+                        <MealBundleCard
+                          key={entry.bundleId}
+                          bundleId={entry.bundleId}
+                          bundleName={entry.bundleName}
+                          logs={entry.logs}
+                          onDeleteBundle={handleDeleteBundle}
+                          onDeleteSingle={handleDelete}
+                        />
+                      );
+                    }
 
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-mono text-base font-semibold">
-                          {formatEnergy(item.calories, energyUnit).value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{energyUnit}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item)}
-                          className="p-1.5 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                          aria-label={t('common.delete')}
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
+                    const item = entry.log;
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="text-sm font-medium text-foreground">
+                            {item.foodName}
+                          </div>
+                          <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs font-mono text-muted-foreground">
+                            <span>{formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}</span>
+                            <span className="text-border/70">·</span>
+                            <span className="inline-flex items-center gap-1">
+                              <span className="size-2 rounded-full bg-carbs shrink-0" />
+                              <span>C: {item.carbs}g</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <span className="size-2 rounded-full bg-protein shrink-0" />
+                              <span>P: {item.protein}g</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <span className="size-2 rounded-full bg-fat shrink-0" />
+                              <span>F: {item.fat}g</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-base font-semibold">
+                            {formatEnergy(item.calories, energyUnit).value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{energyUnit}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                            aria-label={t('common.delete')}
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-6 text-center text-xs text-muted-foreground/60">

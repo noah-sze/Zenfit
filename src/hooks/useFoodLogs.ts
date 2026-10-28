@@ -45,6 +45,24 @@ export function useFoodLogs(date: string) {
     return newLog.id;
   };
 
+  const addFoodLogBundle = async (
+    bundleId: string,
+    bundleName: string,
+    items: Array<Omit<FoodLog, 'id' | 'createdAt' | 'updatedAt' | 'bundleId' | 'bundleName'>>
+  ) => {
+    const now = Date.now();
+    const newLogs: FoodLog[] = items.map((item) => ({
+      ...item,
+      id: uuidv4(),
+      bundleId,
+      bundleName,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    await db.food_logs.bulkAdd(newLogs);
+    return newLogs;
+  };
+
   const updateFoodLog = async (id: string, updates: Partial<Omit<FoodLog, 'id' | 'createdAt'>>) => {
     const now = Date.now();
     await db.food_logs.update(id, {
@@ -57,13 +75,19 @@ export function useFoodLogs(date: string) {
     await db.food_logs.delete(id);
   };
 
+  const deleteFoodLogBundle = async (bundleId: string) => {
+    await db.food_logs.where('bundleId').equals(bundleId).delete();
+  };
+
   return {
     logs,
     totals,
     mealGroups,
     isLoading: foodLogs === undefined,
     addFoodLog,
+    addFoodLogBundle,
     updateFoodLog,
     deleteFoodLog,
+    deleteFoodLogBundle,
   };
 }

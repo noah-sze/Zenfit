@@ -34,7 +34,9 @@
       "itemCount": "{{count}} items",
       "currentValue": "Value",
       "select": "Select",
-      "noResults": "No results"
+      "noResults": "No results",
+      "adjust": "Adjust",
+      "confirmDelete": "Delete this?"
     },
     "nav": {
       "dashboard": "Overview",
@@ -114,7 +116,7 @@
       "recipes": "Recipes",
       "addRecipe": "Add",
       "editRecipe": "Edit",
-      "recipeName": "Recipe Name",
+      "recipeName": "Name",
       "recipeNamePlaceholder": "e.g. Scrambled Eggs with Tomatoes",
       "recipeDescription": "Notes (Optional)",
       "recipeIngredients": "Ingredients",
@@ -453,7 +455,8 @@
       "collapse": "Collapse",
       "backspace": "Backspace",
       "calculate": "Calculate",
-      "done": "Done"
+      "done": "Done",
+      "input": "Input"
     }
   }
 }

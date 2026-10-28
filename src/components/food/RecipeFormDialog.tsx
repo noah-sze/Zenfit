@@ -5,10 +5,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
 import type { FoodItem, FoodRecipe, RecipeIngredient } from '@/types';
@@ -25,8 +23,8 @@ import {
   mlToFlOz,
 } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
-import { cn, formatDisplayAmount } from '@/lib/utils';
-import { ChefHat, X, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { formatDisplayAmount } from '@/lib/utils';
+import { X, ChevronRight, Plus, Trash2, Check } from 'lucide-react';
 
 export type RecipeFormData = Omit<
   FoodRecipe,
@@ -46,7 +44,6 @@ interface FormIngredientRow {
   foodName: string;
   quantity: string;
   unit: string;
-  isOptional: boolean;
 }
 
 interface KeypadConfig {
@@ -122,7 +119,6 @@ export function RecipeFormDialog({
           foodName: ing.foodName || (food ? formatFoodDisplayName(food) : ''),
           quantity: displayQty > 0 ? String(displayQty) : '100',
           unit: displayUnit,
-          isOptional: !!ing.isOptional,
         };
       });
 
@@ -150,7 +146,6 @@ export function RecipeFormDialog({
         foodName: item.foodName,
         quantity: normalizedQty,
         unit: item.unit === 'oz' ? 'g' : item.unit === 'fl oz' ? 'ml' : item.unit,
-        isOptional: item.isOptional,
       };
     });
 
@@ -232,7 +227,6 @@ export function RecipeFormDialog({
           foodName: formatFoodDisplayName(food),
           quantity: defaultQty,
           unit: prefUnit,
-          isOptional: false,
         };
         return [...prev, newRow];
       });
@@ -248,15 +242,6 @@ export function RecipeFormDialog({
     setIngredients((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  // 切換食材可選性 (isOptional)
-  const handleToggleOptional = (index: number) => {
-    triggerHaptic('selection');
-    setIngredients((prev) =>
-      prev.map((row, idx) =>
-        idx === index ? { ...row, isOptional: !row.isOptional } : row
-      )
-    );
-  };
 
   // 打開數字鍵盤編輯食材用量
   const handleOpenKeypad = (index: number, anchorEl: HTMLElement) => {
@@ -339,7 +324,6 @@ export function RecipeFormDialog({
           foodName: item.foodName,
           quantity: normalizedQty,
           unit: item.unit === 'oz' ? 'g' : item.unit === 'fl oz' ? 'ml' : item.unit,
-          isOptional: item.isOptional,
         });
       }
     }
@@ -367,28 +351,42 @@ export function RecipeFormDialog({
         <DialogContent
           showCloseButton={false}
           overlayClassName="z-[70]"
-          className="z-[70] w-[340px] max-w-[calc(100vw-24px)] sm:w-[360px] sm:max-w-[360px] bg-card border border-border text-card-foreground p-5 sm:p-5 font-mono text-xs select-none shadow-none flex flex-col max-h-[85vh] overflow-hidden"
+          className="z-[70] w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] bg-card border border-border text-card-foreground p-4 sm:p-4 font-mono text-xs select-none shadow-none flex flex-col max-h-[85vh] overflow-hidden"
           initialFocus={false}
         >
-          {/* 彈窗標頭 (1:1 復刻 FoodFormDialog 標頭) */}
+          {/* 彈窗標頭 (方案 D: 頂部雙純圖標 · 左 ✕ 放棄，中 標題，右 ✓ 提交) */}
           <DialogHeader className="p-0 pb-0 shrink-0">
             <div className="flex items-center justify-between w-full h-7">
-              <DialogTitle className="text-foreground text-sm sm:text-base font-semibold tracking-tight font-sans flex items-center gap-2">
-                <ChefHat className="size-4 text-foreground shrink-0" />
-                <span>{isEdit ? t('diet.editRecipe') : t('diet.addRecipe')}</span>
-              </DialogTitle>
+              {/* 左側純圖標：取消 (✕) */}
               <DialogClose
                 render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer"
+                  <button
+                    type="button"
+                    className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
+                    title={t('common.cancel')}
+                    aria-label={t('common.cancel')}
                   />
                 }
               >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
+                <X className="size-3.5 stroke-[2.2]" />
               </DialogClose>
+
+              {/* 中間標題 */}
+              <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2">
+                <span className="truncate">{isEdit ? t('diet.editRecipe') : t('diet.addRecipe')}</span>
+              </DialogTitle>
+
+              {/* 右側純圖標：提交 (✓) */}
+              <button
+                type="submit"
+                form={formId}
+                disabled={!name.trim() || ingredients.length === 0 || isSubmitting}
+                className="size-7 rounded-full flex items-center justify-center bg-foreground text-background hover:opacity-90 active:scale-92 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:pointer-events-none"
+                title={isEdit ? t('common.save') : t('common.add')}
+                aria-label={isEdit ? t('common.save') : t('common.add')}
+              >
+                <Check className="size-3.5 stroke-[2.5]" />
+              </button>
             </div>
           </DialogHeader>
 
@@ -416,7 +414,7 @@ export function RecipeFormDialog({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t('diet.recipeNamePlaceholder')}
-                      className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-foreground font-medium focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 flex-1 max-w-[200px]"
+                      className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-foreground font-medium focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 w-36"
                     />
                   </div>
 
@@ -430,7 +428,7 @@ export function RecipeFormDialog({
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t('diet.recipeDescription')}
-                      className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-muted-foreground focus:text-foreground focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 flex-1 max-w-[200px]"
+                      className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-muted-foreground focus:text-foreground focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 w-36"
                     />
                   </div>
                 </div>
@@ -552,7 +550,7 @@ export function RecipeFormDialog({
                           <div className="truncate">{item.foodName}</div>
                         </button>
 
-                        {/* 右側：用量膠囊 + 可選按鈕 + 移除按鈕 */}
+                        {/* 右側：用量膠囊 + 移除按鈕 */}
                         <div className="flex items-center gap-1.5 shrink-0">
                           {/* 數量微調按鈕 (點擊喚起懸浮數字鍵盤) */}
                           <button
@@ -567,21 +565,6 @@ export function RecipeFormDialog({
                               {item.unit}
                             </span>
                             <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                          </button>
-
-                          {/* 可選切換按鈕 (簡潔膠囊，取代醜陋的 Checkbox) */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleOptional(index)}
-                            className={cn(
-                              'h-7 px-2 rounded-full border text-[11px] font-mono transition-all cursor-pointer select-none shrink-0',
-                              item.isOptional
-                                ? 'bg-foreground text-background border-foreground font-medium'
-                                : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
-                            )}
-                            title={t('diet.optionalBadge')}
-                          >
-                            {t('diet.optionalBadge')}
                           </button>
 
                           {/* 移除按鈕 */}
@@ -602,27 +585,7 @@ export function RecipeFormDialog({
               </div>
             </div>
 
-            {/* 底部按鈕區 (符合 Rule 4 規範：單行水平並排，取消在左、儲存在右) */}
-            <DialogFooter className="flex flex-row items-center justify-between gap-3 pt-3 shrink-0 border-t border-border/50">
-              <DialogClose
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-border cursor-pointer text-xs font-mono h-8 px-4"
-                  />
-                }
-              >
-                {t('common.cancel')}
-              </DialogClose>
-              <Button
-                type="submit"
-                disabled={!name.trim() || ingredients.length === 0 || isSubmitting}
-                className="cursor-pointer text-xs font-mono h-8 px-5 bg-foreground text-background hover:opacity-90 active:opacity-80"
-              >
-                {isEdit ? t('common.save') : t('common.add')}
-              </Button>
-            </DialogFooter>
+            {/* 方案 D 徹底無底欄，表單內容直達底部 */}
           </form>
         </DialogContent>
       </Dialog>

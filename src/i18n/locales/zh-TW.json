@@ -34,7 +34,9 @@
       "itemCount": "{{count}} 項",
       "currentValue": "當前標定",
       "select": "選擇",
-      "noResults": "無搜尋結果"
+      "noResults": "無搜尋結果",
+      "adjust": "微調",
+      "confirmDelete": "確認刪除？"
     },
     "nav": {
       "dashboard": "總覽",
@@ -114,7 +116,7 @@
       "recipes": "菜餚",
       "addRecipe": "新增",
       "editRecipe": "編輯",
-      "recipeName": "菜餚名稱",
+      "recipeName": "名稱",
       "recipeNamePlaceholder": "例如 家常番茄炒蛋",
       "recipeDescription": "備註 (選填)",
       "recipeIngredients": "構成食材",
@@ -453,7 +455,8 @@
       "collapse": "收起",
       "backspace": "退格",
       "calculate": "計算",
-      "done": "完成"
+      "done": "完成",
+      "input": "數值輸入"
     }
   }
 }

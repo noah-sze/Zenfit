@@ -328,264 +328,264 @@ export function ResponsiveNumericKeypad({
   const displayVal = formatDisplayAmount(internalValue, { preserveEmpty: true })
 
   const btnBaseClass =
-    "h-[52px] sm:h-14 text-lg font-mono font-medium rounded-lg bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none outline-none"
+    "h-10 text-base font-mono font-medium rounded-lg bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.95] select-none cursor-pointer flex items-center justify-center shadow-none outline-none"
 
-  // 鍵盤本體內容 (4x4 數字鍵盤)
-  const KeypadContent = (
-    <div
-      ref={keypadRef}
-      className={cn(
-        "w-full bg-card text-card-foreground border border-border rounded-2xl p-4 select-none shadow-none",
-        className
-      )}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* 4x4 數字鍵盤 */}
-      <div className="grid grid-cols-4 gap-2">
-        {/* Row 1 */}
-        <button
-          type="button"
-          onClick={() => handleKey('1')}
-          className={btnBaseClass}
-        >
-          1
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('2')}
-          className={btnBaseClass}
-        >
-          2
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('3')}
-          className={btnBaseClass}
-        >
-          3
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('DEL')}
-          className="h-[52px] sm:h-14 rounded-lg bg-muted/60 text-destructive hover:bg-destructive/10 hover:text-destructive border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.96] select-none cursor-pointer flex items-center justify-center shadow-none"
-          title={t('keypad.backspace')}
-        >
-          <Delete className="size-5" />
-        </button>
-
-        {/* Row 2 */}
-        <button
-          type="button"
-          onClick={() => handleKey('4')}
-          className={btnBaseClass}
-        >
-          4
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('5')}
-          className={btnBaseClass}
-        >
-          5
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('6')}
-          className={btnBaseClass}
-        >
-          6
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('-')}
-          className={btnBaseClass}
-        >
-          -
-        </button>
-
-        {/* Row 3 */}
-        <button
-          type="button"
-          onClick={() => handleKey('7')}
-          className={btnBaseClass}
-        >
-          7
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('8')}
-          className={btnBaseClass}
-        >
-          8
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('9')}
-          className={btnBaseClass}
-        >
-          9
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('+')}
-          className={btnBaseClass}
-        >
-          +
-        </button>
-
-        {/* Row 4 */}
-        <button
-          type="button"
-          onClick={() => handleKey('.')}
-          disabled={!allowDecimals}
-          className={cn(
-            btnBaseClass,
-            !allowDecimals && "opacity-30 cursor-not-allowed active:scale-100"
-          )}
-        >
-          .
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('0')}
-          className={btnBaseClass}
-        >
-          0
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('C')}
-          className={cn(
-            btnBaseClass,
-            "text-base font-mono font-semibold text-muted-foreground hover:text-foreground"
-          )}
-          title={t('keypad.clear')}
-        >
-          C
-        </button>
-        <button
-          type="button"
-          onClick={() => handleKey('=')}
-          className={cn(
-            "h-[52px] sm:h-14 rounded-lg flex items-center justify-center transition-transform duration-75 active:scale-[0.96] border cursor-pointer shadow-none select-none",
-            isExpression
-              ? "bg-muted/60 text-foreground hover:bg-muted border-border/40 font-bold active:bg-foreground active:text-background active:border-foreground"
-              : "bg-primary text-primary-foreground hover:bg-primary/90 border-primary font-bold active:bg-primary/80"
-          )}
-          title={isExpression ? t('keypad.calculate') : t('keypad.done')}
-        >
-          {isExpression ? (
-            <Equal className="size-5" />
-          ) : (
-            <Check
-              className="size-5 stroke-[2.5]"
-              style={{
-                color: 'var(--primary-foreground)',
-                stroke: 'var(--primary-foreground)',
-              }}
-            />
-          )}
-        </button>
-      </div>
-    </div>
-  )
-
-  // 全端統一渲染：底部吸附鍵盤 + 頂部 Spotlight Context Bar (全端居中最大寬度 350px)
+  // 方案 1: 全端統一渲染一體化精密卡片 (Unified Precision Modal, 寬度 350px 對齊 Dialog)
   return createPortal(
     <div className="fixed inset-0 z-[80] pointer-events-auto flex flex-col justify-end">
-      {/* 半透明遮罩層：點擊安全回滾放棄並收起 */}
+      {/* 半透明毛玻璃遮罩層：點擊安全回滾放棄並收起 */}
       <div
         className="fixed inset-0 bg-overlay backdrop-blur-[2px] cursor-pointer"
         onClick={handleCloseAction}
       />
 
       {/* 懸浮容器 (全屏水平居中，最大寬度 350px，底部懸浮留白) */}
-      <div className="relative z-[81] pointer-events-auto w-full max-w-[350px] mx-auto flex flex-col items-center px-3 pb-[max(1rem,env(safe-area-inset-bottom))] mb-3 sm:mb-6">
-        {/* 頂部獨立關閉按鈕 (精確對齊截圖紅框位置：Spotlight 條目右上方) */}
-        <div className="w-full mb-1.5 flex justify-end">
-          <button
-            type="button"
-            onClick={handleCloseAction}
-            className="size-7 rounded-lg bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:bg-foreground active:text-background transition-all active:scale-95 cursor-pointer shadow-none select-none"
-            title={t('keypad.collapse')}
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+      <div className="relative z-[81] pointer-events-auto w-full max-w-[350px] mx-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))] mb-3 sm:mb-6">
+        <div
+          ref={keypadRef}
+          className={cn(
+            "w-full bg-card text-card-foreground border border-border rounded-[18px] p-3.5 flex flex-col gap-2.5 select-none shadow-none",
+            className
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header 列: 左側圓形 ✕ 膠囊，中間欄位標題 (絕對幾何居中)，右側單位切換 */}
+          <div className="relative flex items-center justify-between min-h-7">
+            {/* 左側圓形 ✕ 膠囊：1:1 對齊 Dialog 方案 D */}
+            <button
+              type="button"
+              onClick={handleCloseAction}
+              className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92 z-10"
+              title={t('keypad.collapse')}
+            >
+              <X className="size-3.5 stroke-[2.2]" />
+            </button>
 
-        {/* 鍵盤正上方上下文高亮條 (Spotlight Context Bar)：100% 呈現正在輸入的欄位與數值 */}
-        <div className="w-full mb-2">
+            {/* 中間欄位標題：絕對水平居中，永遠鎖定在卡片中心線，不受兩側寬度增減影響 */}
+            <div className="absolute inset-x-16 flex items-center justify-center pointer-events-none">
+              <span
+                className={cn(
+                  "text-xs font-semibold tracking-tight whitespace-nowrap text-center truncate pointer-events-auto",
+                  titleClassName || valueClassName || "text-foreground"
+                )}
+              >
+                {title}
+              </span>
+            </div>
+
+            {/* 右側單位切換膠囊 (若無單位則渲染透明佔位保持佈局) */}
+            <div className="shrink-0 flex items-center justify-end min-w-7 z-10 ml-auto">
+              {allowedUnits && allowedUnits.length > 1 ? (
+                <Select
+                  value={currentUnit}
+                  onValueChange={(val) => {
+                    if (val) handleUnitSelect(val)
+                  }}
+                >
+                  <SelectTrigger
+                    size="custom"
+                    hideIcon={true}
+                    className="h-6 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 text-foreground transition-colors cursor-pointer select-none shadow-none active:scale-95"
+                  >
+                    <span>{currentUnit}</span>
+                    <ChevronDown className="size-2.5 text-muted-foreground/60 shrink-0" />
+                  </SelectTrigger>
+                  <SelectContent
+                    align="end"
+                    positionerClassName="z-[95]"
+                    backdropClassName="z-[90]"
+                    className="min-w-20 z-[95] p-1 font-mono text-xs"
+                  >
+                    {allowedUnits.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : currentUnit ? (
+                <div className="h-6 px-2.5 rounded-full border border-border/80 bg-background font-mono text-xs flex items-center text-muted-foreground select-none shadow-none">
+                  {currentUnit}
+                </div>
+              ) : (
+                <div className="size-7" />
+              )}
+            </div>
+          </div>
+
+          {/* 嵌入式精密展示屏 */}
           {renderContextRow ? (
             renderContextRow(displayVal || '0', currentUnit)
           ) : (
-            <div
-              className="h-12 px-3.5 rounded-xl bg-card border border-border flex items-center justify-between text-foreground shadow-none"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-2 shrink-0">
+            <div className="h-10 px-3 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-between">
+              <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider select-none">
+                {t('keypad.input')}
+              </span>
+              <div className="flex items-baseline gap-1 font-mono">
                 <span
                   className={cn(
-                    "text-sm font-bold tracking-tight whitespace-nowrap",
-                    titleClassName || valueClassName || "text-foreground"
+                    "text-xl font-bold tracking-tight text-foreground",
+                    valueClassName
                   )}
                 >
-                  {title}
+                  {displayVal || '0'}
                 </span>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                {allowedUnits && allowedUnits.length > 1 ? (
-                  <Select
-                    value={currentUnit}
-                    onValueChange={(val) => {
-                      if (val) handleUnitSelect(val)
-                    }}
-                  >
-                    <SelectTrigger
-                      size="custom"
-                      hideIcon={true}
-                      className={cn(
-                        "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer select-none shadow-none active:scale-95",
-                        valueClassName || "text-foreground"
-                      )}
-                    >
-                      <span className="font-bold">{displayVal || '0'}</span>
-                      <span className="text-muted-foreground">{currentUnit}</span>
-                      <ChevronDown className="size-3 text-muted-foreground/60 shrink-0" />
-                    </SelectTrigger>
-                    <SelectContent
-                      align="end"
-                      positionerClassName="z-[95]"
-                      backdropClassName="z-[90]"
-                      className="min-w-20 z-[95] p-1 font-mono text-xs"
-                    >
-                      {allowedUnits.map((u) => (
-                        <SelectItem key={u} value={u}>
-                          {u}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div
-                    className={cn(
-                      "h-7 px-3 rounded-full border border-border/80 bg-background font-mono text-xs flex items-center gap-1.5 select-none shadow-none",
-                      valueClassName || "text-foreground"
-                    )}
-                  >
-                    <span className="font-bold">{displayVal || '0'}</span>
-                    <span className="text-muted-foreground">{currentUnit}</span>
-                  </div>
+                {currentUnit && (
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {currentUnit}
+                  </span>
                 )}
               </div>
             </div>
           )}
-        </div>
 
-        {/* 鍵盤本體 */}
-        <div className="w-full">
-          {KeypadContent}
+          {/* 精密緊湊 4x4 鍵盤 (按鍵 40px, 間距 6px) */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {/* Row 1 */}
+            <button
+              type="button"
+              onClick={() => handleKey('1')}
+              className={btnBaseClass}
+            >
+              1
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('2')}
+              className={btnBaseClass}
+            >
+              2
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('3')}
+              className={btnBaseClass}
+            >
+              3
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('DEL')}
+              className="h-10 rounded-lg bg-muted/60 text-destructive hover:bg-destructive/10 hover:text-destructive border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.95] select-none cursor-pointer flex items-center justify-center shadow-none"
+              title={t('keypad.backspace')}
+            >
+              <Delete className="size-4" />
+            </button>
+
+            {/* Row 2 */}
+            <button
+              type="button"
+              onClick={() => handleKey('4')}
+              className={btnBaseClass}
+            >
+              4
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('5')}
+              className={btnBaseClass}
+            >
+              5
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('6')}
+              className={btnBaseClass}
+            >
+              6
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('-')}
+              className={cn(btnBaseClass, "font-semibold")}
+            >
+              -
+            </button>
+
+            {/* Row 3 */}
+            <button
+              type="button"
+              onClick={() => handleKey('7')}
+              className={btnBaseClass}
+            >
+              7
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('8')}
+              className={btnBaseClass}
+            >
+              8
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('9')}
+              className={btnBaseClass}
+            >
+              9
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('+')}
+              className={cn(btnBaseClass, "font-semibold")}
+            >
+              +
+            </button>
+
+            {/* Row 4 */}
+            <button
+              type="button"
+              onClick={() => handleKey('.')}
+              disabled={!allowDecimals}
+              className={cn(
+                btnBaseClass,
+                !allowDecimals && "opacity-30 cursor-not-allowed active:scale-100"
+              )}
+            >
+              .
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('0')}
+              className={btnBaseClass}
+            >
+              0
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('C')}
+              className={cn(
+                btnBaseClass,
+                "text-sm font-mono font-semibold text-muted-foreground hover:text-foreground"
+              )}
+              title={t('keypad.clear')}
+            >
+              C
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKey('=')}
+              className={cn(
+                "h-10 rounded-lg flex items-center justify-center transition-transform duration-75 active:scale-[0.95] border cursor-pointer shadow-none select-none",
+                isExpression
+                  ? "bg-muted/60 text-foreground hover:bg-muted border-border/40 font-bold active:bg-foreground active:text-background active:border-foreground"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90 border-primary font-bold active:bg-primary/80"
+              )}
+              title={isExpression ? t('keypad.calculate') : t('keypad.done')}
+            >
+              {isExpression ? (
+                <Equal className="size-4" />
+              ) : (
+                <Check
+                  className="size-4 stroke-[2.5]"
+                  style={{
+                    color: 'var(--primary-foreground)',
+                    stroke: 'var(--primary-foreground)',
+                  }}
+                />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>,
