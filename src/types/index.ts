@@ -251,6 +251,7 @@ export interface UserBaseInfo {
   birthDate?: string; // 出生年月 ('YYYY-MM' 或 'YYYY-MM-DD')
   heightCm: number; // 身高 (cm)
   weightUnit: 'kg' | 'lbs'; // 預設度量衡單位
+  activityLevel?: number; // 活動係數 (PAL)
   createdAt: number;
   updatedAt: number;
 }

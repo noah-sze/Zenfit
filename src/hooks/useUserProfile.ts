@@ -13,6 +13,7 @@ const DEFAULT_BASE_INFO: UserBaseInfo = {
   birthDate: '1999-01',
   heightCm: 175,
   weightUnit: 'kg',
+  activityLevel: 1.55,
   createdAt: Date.now(),
   updatedAt: Date.now(),
 };
@@ -47,7 +48,7 @@ export function useUserProfile() {
     heightCm: baseInfo?.heightCm || 175,
     currentWeightKg,
     weightUnit: bodyWeightUnit,
-    activityLevel: 1.55,
+    activityLevel: baseInfo?.activityLevel || 1.55,
     dailyCaloriesTarget: 2000,
     proteinGramsTarget: 140,
     carbsGramsTarget: 220,
@@ -66,13 +67,14 @@ export function useUserProfile() {
     const now = Date.now();
     const currentBase = baseInfo || DEFAULT_BASE_INFO;
 
-    // 更新基礎靜態資訊（姓名、性別、出生年月、身高、度量單位）
+    // 更新基礎靜態資訊（姓名、性別、出生年月、身高、度量單位、活動係數）
     const baseUpdates: Partial<UserBaseInfo> = {};
     if (updates.name !== undefined) baseUpdates.name = updates.name;
     if (updates.gender !== undefined) baseUpdates.gender = updates.gender;
     if (updates.birthDate !== undefined) baseUpdates.birthDate = updates.birthDate;
     if (updates.heightCm !== undefined) baseUpdates.heightCm = updates.heightCm;
     if (updates.weightUnit !== undefined) baseUpdates.weightUnit = updates.weightUnit;
+    if (updates.activityLevel !== undefined) baseUpdates.activityLevel = updates.activityLevel;
 
     if (Object.keys(baseUpdates).length > 0) {
       await db.user_base_info.put({
