@@ -6,7 +6,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { MealType, FoodLog } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
@@ -118,6 +118,24 @@ export default function Diet() {
     });
   };
 
+  // 活動係數短標籤（純膠囊顯示）
+  const getActivityShortLabel = (level: number) => {
+    switch (level) {
+      case 1.2:
+        return t('dietPlan.sedentaryShort', '久坐辦公');
+      case 1.375:
+        return t('dietPlan.lightShort', '輕度活動');
+      case 1.55:
+        return t('dietPlan.moderateShort', '中度活動');
+      case 1.725:
+        return t('dietPlan.heavyShort', '高強度活動');
+      case 1.9:
+        return t('dietPlan.athleteShort', '極重度活動');
+      default:
+        return String(level);
+    }
+  };
+
   const handleDelete = async (item: FoodLog) => {
     const ok = await confirm({
       title: t('common.delete'),
@@ -146,23 +164,20 @@ export default function Diet() {
       <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground">
         {/* 上半部：熱量統計 (Hero Metric) */}
         <div className="p-4 sm:p-5 relative space-y-3">
-          {/* 頂部列：左側活動係數、中間熱量統計標籤、右側目標藥丸 */}
-          <div className="flex items-center justify-between">
-            {/* 左側：活動係數快捷切換 */}
-            <div className="flex items-center gap-1 text-xs">
-              <span className="text-2xs uppercase tracking-widest text-muted-foreground font-mono">
-                PAL:
-              </span>
+          {/* 頂部列：左側活動係數純膠囊、中間熱量統計標籤、右側目標純膠囊 */}
+          <div className="relative flex items-center justify-between">
+            {/* 左側：活動係數純膠囊快捷切換 */}
+            <div className="shrink-0 z-10">
               <Select
                 value={String(currentActivity)}
                 onValueChange={(val) => val && handleQuickActivityChange(parseFloat(val))}
               >
                 <SelectTrigger
                   size="custom"
-                  className="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                  className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95"
                 >
-                  <SelectValue className="flex-none font-mono">
-                    {currentActivity}
+                  <SelectValue className="flex-none">
+                    {getActivityShortLabel(currentActivity)}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent align="start">
@@ -175,24 +190,27 @@ export default function Diet() {
               </Select>
             </div>
 
-            {/* 中間：熱量統計標籤 (居中) */}
-            <span className="text-xs sm:text-sm font-normal text-muted-foreground absolute left-1/2 -translate-x-1/2 select-none">
-              {t('diet.calorieStats')}
-            </span>
+            {/* 中間：熱量統計標籤 (幾何絕對居中，與下方熱量巨型數值 1:1 垂直對齊) */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="text-xs sm:text-sm font-normal text-muted-foreground select-none">
+                {t('diet.calorieStats')}
+              </span>
+            </div>
 
-            {/* 右側：目標熱量 Pill 藥丸 (呼應截圖右上角的 14.4k 膠囊，點擊可開啟飲食計劃設定) */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsPlanModalOpen(true);
-                triggerHaptic('light');
-              }}
-              className="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors px-2.5 py-0.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50"
-              title={t('dietPlan.title')}
-            >
-              <span>{t('diet.target')} {formatEnergy(targetCalories, energyUnit).value.toLocaleString()} {energyUnit}</span>
-              <SlidersHorizontal className="size-2.5 text-muted-foreground ml-0.5" />
-            </button>
+            {/* 右側：目標純膠囊 (點擊可開啟飲食計劃設定) */}
+            <div className="shrink-0 z-10">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlanModalOpen(true);
+                  triggerHaptic('light');
+                }}
+                className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer select-none active:scale-95"
+                title={t('dietPlan.title')}
+              >
+                <span>{t('diet.target')}</span>
+              </button>
+            </div>
           </div>
 
           {/* 核心巨型熱量數值 (居中) */}
@@ -215,7 +233,7 @@ export default function Diet() {
             </div>
 
             {/* 客觀進度標尺 */}
-            <div className="h-2 w-full max-w-[220px] mx-auto bg-muted/60 rounded-full overflow-hidden mt-3">
+            <div className="h-2 w-full max-w-[220px] mx-auto bg-track rounded-full overflow-hidden mt-3">
               <div
                 className="h-full bg-foreground transition-all duration-300"
                 style={{
@@ -229,19 +247,17 @@ export default function Diet() {
         {/* 下半部：三大營養素 (2. 碳水、蛋白質、脂肪) */}
         <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
           {/* 1. 碳水化合物 */}
-          <div className="p-3.5 sm:p-4 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-carbs shrink-0" />
-                <span className="text-foreground/90 font-medium">{t('dietPlan.carbsShort')}</span>
-              </div>
-              <span className="text-xs text-muted-foreground font-mono">
-                / {targetMacros.carbsGrams}g
-              </span>
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="text-xs font-medium text-carbs truncate whitespace-nowrap">
+              {t('dietPlan.carbsShort')}
             </div>
-            <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-foreground">
-              {Math.round(totals.carbs)}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground">
+                {Math.round(totals.carbs)}g
+              </span>
+              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+                /{targetMacros.carbsGrams}g
+              </span>
             </div>
             <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -259,19 +275,17 @@ export default function Diet() {
           </div>
 
           {/* 2. 蛋白質 */}
-          <div className="p-3.5 sm:p-4 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-protein shrink-0" />
-                <span className="text-foreground/90 font-medium">{t('dietPlan.proteinShort')}</span>
-              </div>
-              <span className="text-xs text-muted-foreground font-mono">
-                / {targetMacros.proteinGrams}g
-              </span>
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="text-xs font-medium text-protein truncate whitespace-nowrap">
+              {t('dietPlan.proteinShort')}
             </div>
-            <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-foreground">
-              {Math.round(totals.protein)}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground">
+                {Math.round(totals.protein)}g
+              </span>
+              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+                /{targetMacros.proteinGrams}g
+              </span>
             </div>
             <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -289,20 +303,17 @@ export default function Diet() {
           </div>
 
           {/* 3. 脂肪 */}
-          <div className="p-3.5 sm:p-4 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-fat shrink-0" />
-                <span className="text-foreground/90 font-medium">{t('dietPlan.fatShort')}</span>
-              </div>
-              <span className="text-xs text-muted-foreground font-mono">
-                / {targetMacros.fatGrams}g
-              </span>
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="text-xs font-medium text-fat truncate whitespace-nowrap">
+              {t('dietPlan.fatShort')}
             </div>
-
-            <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-foreground">
-              {Math.round(totals.fat)}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5 font-mono">g</span>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground">
+                {Math.round(totals.fat)}g
+              </span>
+              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+                /{targetMacros.fatGrams}g
+              </span>
             </div>
             <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
               <div

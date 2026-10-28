@@ -35,6 +35,7 @@
   --color-overlay: var(--overlay);
   --color-header-bg: var(--header-bg);
   --color-destructive-subtle: var(--destructive-subtle);
+  --color-track: var(--track);
 
   /* 熱量與三大營養素語意色彩 (Calories, Carbs, Protein, Fat) */
   --color-calories: var(--calories);
@@ -123,22 +124,23 @@
     --overlay: rgba(255, 255, 255, 0.8);
     --header-bg: rgba(255, 255, 255, 0.9);
     --destructive-subtle: rgba(255, 0, 0, 0.08);
+    --track: #e4e4e7;
 
     /* 熱量與三大營養素 - 亮色模式 (高對比、WCAG AA 達標且純淨洗練) */
     --calories: #e11d48; /* 玫瑰珊瑚暖紅 - 活力卡路里 */
     --calories-foreground: #ffffff;
-    --calories-subtle: rgba(225, 29, 72, 0.12);
+    --calories-subtle: rgba(225, 29, 72, 0.15);
     --carbs: #d97706; /* 琥珀金 - 穀物能量 */
     --carbs-foreground: #ffffff;
-    --carbs-subtle: rgba(217, 119, 6, 0.12);
+    --carbs-subtle: rgba(217, 119, 6, 0.15);
 
     --protein: #0284c7; /* 冰川青藍 - 肌肉修復與科技客觀感 */
     --protein-foreground: #ffffff;
-    --protein-subtle: rgba(2, 132, 199, 0.12);
+    --protein-subtle: rgba(2, 132, 199, 0.15);
 
     --fat: #7c3aed; /* 洗練紫羅蘭 - 脂質儲備，避開批判性紅色 */
     --fat-foreground: #ffffff;
-    --fat-subtle: rgba(124, 58, 237, 0.12);
+    --fat-subtle: rgba(124, 58, 237, 0.15);
     --radius: 0.5rem;
   }
   .dark {
@@ -164,6 +166,7 @@
     --overlay: rgba(0, 0, 0, 0.8);
     --header-bg: rgba(0, 0, 0, 0.9);
     --destructive-subtle: rgba(255, 69, 58, 0.15);
+    --track: #27272a;
 
     /* 熱量與三大營養素 - 深色模式 (純黑背景下明快清透、無光暈污染) */
     --calories: #f43f5e; /* 玫瑰珊瑚暖紅 - 活力卡路里 */
