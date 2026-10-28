@@ -66,6 +66,11 @@
       "lunch": "Lunch",
       "dinner": "Dinner",
       "snack": "Snack",
+      "macroMicro": {
+        "carbs": "C",
+        "protein": "P",
+        "fat": "F"
+      },
       "calories": "Calories",
       "protein": "Protein",
       "carbs": "Carbs",

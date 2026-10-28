@@ -66,6 +66,11 @@
       "lunch": "午餐",
       "dinner": "晚餐",
       "snack": "加餐",
+      "macroMicro": {
+        "carbs": "碳",
+        "protein": "蛋",
+        "fat": "脂"
+      },
       "calories": "熱量",
       "protein": "蛋白質",
       "carbs": "碳水",

@@ -4,12 +4,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import type { MealType, FoodLog } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
+import { MacroSquares } from '@/components/food/MacroSquares';
 import {
   Select,
   SelectContent,
@@ -30,6 +30,15 @@ import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 type GroupedMealEntry =
   | { type: 'single'; log: FoodLog }
   | { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] };
+
+function getLogHighlights(log: { protein: number; carbs: number; fat: number; calories?: number }) {
+  const totalCal = log.calories || (log.protein * 4 + log.carbs * 4 + log.fat * 9) || 1;
+  return {
+    protein: (log.protein * 4) / totalCal >= 0.35 && log.protein >= 10,
+    carbs: (log.carbs * 4) / totalCal >= 0.5 && log.carbs >= 15,
+    fat: (log.fat * 9) / totalCal >= 0.5 && log.fat >= 8,
+  };
+}
 
 function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
   const result: GroupedMealEntry[] = [];
@@ -337,21 +346,40 @@ export default function Diet() {
         const items = mealGroups[type];
         const groupCalories = items.reduce((acc, curr) => acc + (curr.calories || 0), 0);
         const groupProtein = items.reduce((acc, curr) => acc + (curr.protein || 0), 0);
+        const groupCarbs = items.reduce((acc, curr) => acc + (curr.carbs || 0), 0);
+        const groupFat = items.reduce((acc, curr) => acc + (curr.fat || 0), 0);
 
         return (
-          <Card key={type} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-            <CardHeader className="py-3.5 px-4 flex flex-row items-center justify-between border-b border-border/40">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base font-semibold tracking-tight">
+          <div key={type} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
+            {/* 灰底表頭橫欄 (強層級感，內嵌三大營養素微彙總) */}
+            <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between text-xs font-mono text-muted-foreground shrink-0">
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap min-w-0">
+                <span className="font-semibold text-sm tracking-tight text-foreground">
                   {t(`diet.${type}`)}
-                </CardTitle>
+                </span>
                 <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-                  <span>{formatEnergy(groupCalories, energyUnit).formatted}</span>
-                  <span className="text-border">·</span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-full bg-protein shrink-0" />
-                    <span>{Math.round(groupProtein)}g P</span>
+                  <span className="font-semibold text-foreground">
+                    {formatEnergy(groupCalories, energyUnit).formatted}
                   </span>
+                  {items.length > 0 && (
+                    <>
+                      <span className="text-border">/</span>
+                      <span>
+                        <span className="text-protein font-medium">{t('diet.macroMicro.protein', '蛋')}</span>{' '}
+                        {Math.round(groupProtein)}g
+                      </span>
+                      <span className="text-border">·</span>
+                      <span>
+                        <span className="text-carbs font-medium">{t('diet.macroMicro.carbs', '碳')}</span>{' '}
+                        {Math.round(groupCarbs)}g
+                      </span>
+                      <span className="text-border">·</span>
+                      <span>
+                        <span className="text-fat font-medium">{t('diet.macroMicro.fat', '脂')}</span>{' '}
+                        {Math.round(groupFat)}g
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -359,82 +387,79 @@ export default function Diet() {
                 variant="ghost"
                 size="sm"
                 onClick={() => openAddModal('food')}
-                className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               >
-                <Plus className="size-4 mr-1" />
+                <Plus className="size-3.5 mr-1" />
                 {t('common.add')}
               </Button>
-            </CardHeader>
+            </div>
 
-            <CardContent className="p-0">
-              {items.length > 0 ? (
-                <div className="divide-y divide-border/40">
-                  {groupMealLogs(items).map((entry) => {
-                    if (entry.type === 'bundle') {
-                      return (
-                        <MealBundleCard
-                          key={entry.bundleId}
-                          bundleId={entry.bundleId}
-                          bundleName={entry.bundleName}
-                          logs={entry.logs}
-                          onDeleteBundle={handleDeleteBundle}
-                          onDeleteSingle={handleDelete}
-                        />
-                      );
-                    }
-
-                    const item = entry.log;
+            {/* 食物條目列表 (沿用食物管理頁面 MacroSquares 矩陣) */}
+            {items.length > 0 ? (
+              <div className="divide-y divide-border">
+                {groupMealLogs(items).map((entry) => {
+                  if (entry.type === 'bundle') {
                     return (
-                      <div
-                        key={item.id}
-                        className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="space-y-0.5">
-                          <div className="text-sm font-medium text-foreground">
-                            {item.foodName}
-                          </div>
-                          <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs font-mono text-muted-foreground">
-                            <span>{formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}</span>
-                            <span className="text-border/70">·</span>
-                            <span className="inline-flex items-center gap-1">
-                              <span className="size-2 rounded-full bg-carbs shrink-0" />
-                              <span>C: {item.carbs}g</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <span className="size-2 rounded-full bg-protein shrink-0" />
-                              <span>P: {item.protein}g</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <span className="size-2 rounded-full bg-fat shrink-0" />
-                              <span>F: {item.fat}g</span>
-                            </span>
-                          </div>
-                        </div>
+                      <MealBundleCard
+                        key={entry.bundleId}
+                        bundleId={entry.bundleId}
+                        bundleName={entry.bundleName}
+                        logs={entry.logs}
+                        onDeleteBundle={handleDeleteBundle}
+                        onDeleteSingle={handleDelete}
+                      />
+                    );
+                  }
 
-                        <div className="flex items-center gap-2.5">
-                          <span className="font-mono text-base font-semibold">
-                            {formatEnergy(item.calories, energyUnit).value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{energyUnit}</span>
+                  const item = entry.log;
+                  return (
+                    <div
+                      key={item.id}
+                      className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                    >
+                      {/* 左側：品名與份量熱量副標 */}
+                      <div className="flex-1 min-w-0 pr-3 select-none">
+                        <div className="truncate text-foreground font-medium text-sm">
+                          {item.foodName}
+                        </div>
+                        <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+                          <span>
+                            {formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(item)}
-                            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                            aria-label={t('common.delete')}
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
+                          <span className="text-border">·</span>
+                          <span className="font-medium text-foreground">
+                            {formatEnergy(item.calories, energyUnit).formatted}
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-6 text-center text-xs text-muted-foreground/60">
-                  {t('common.noData')}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+                      {/* 右側：MacroSquares 矩陣 + 微刪除按鈕 */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <MacroSquares
+                          protein={item.protein}
+                          carbs={item.carbs}
+                          fat={item.fat}
+                          highlights={getLogHighlights(item)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          className="size-7 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                          aria-label={t('common.delete')}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs font-mono text-muted-foreground/60">
+                {t('diet.noFoodLogs', '無記錄')}
+              </div>
+            )}
+          </div>
         );
       })}
 
