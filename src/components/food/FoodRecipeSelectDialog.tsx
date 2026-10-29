@@ -33,6 +33,11 @@ export interface FoodRecipeSelectDialogProps {
   /** 選取回調：回傳選中之物件與其領域型別，並自動關閉彈窗 */
   onSelect: (item: FoodItem | FoodRecipe, type: 'food' | 'recipe') => void;
   /**
+   * 選取項目後是否自動關閉彈窗
+   * @default true
+   */
+  autoCloseOnSelect?: boolean;
+  /**
    * 多層彈窗層級（Rule 4 規範）：
    * 當此彈窗自次級彈窗呼出時（如在 RecipeDetails 編輯彈窗中），
    * 透過傳入 zIndex 自適應提升遮罩與本體層級至 z-[70] 或更高
@@ -53,6 +58,7 @@ export function FoodRecipeSelectDialog({
   mode = 'all',
   title,
   onSelect,
+  autoCloseOnSelect = true,
   zIndex = 70,
   allowArchived = false,
   disabledIds,
@@ -71,11 +77,13 @@ export function FoodRecipeSelectDialog({
 
   const zIndexClass = `z-[${zIndex}]`;
 
-  // 點擊即選擇：觸發觸覺反饋、回傳選中物件並關閉彈窗
+  // 點擊即選擇：觸發觸覺反饋、回傳選中物件並依設定決定是否關閉彈窗
   const handleItemClick = (item: FoodItem | FoodRecipe, type: 'food' | 'recipe') => {
     triggerHaptic('selection');
     onSelect(item, type);
-    onOpenChange(false);
+    if (autoCloseOnSelect) {
+      onOpenChange(false);
+    }
   };
 
   return (

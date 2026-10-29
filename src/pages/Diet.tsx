@@ -4,9 +4,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
-import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import type { MealType, FoodLog } from '@/types';
+import type { MealType, FoodLog, FoodItem, FoodRecipe } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
 import { MacroSquares } from '@/components/food/MacroSquares';
@@ -20,6 +19,13 @@ import {
 import { DietPlanModal } from '@/components/diet/DietPlanModal';
 import { EditFoodLogDialog } from '@/components/diet/EditFoodLogDialog';
 import { EditRecipeLogDialog } from '@/components/diet/EditRecipeLogDialog';
+import { MealEnergyPopover } from '@/components/diet/MealEnergyPopover';
+import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
+import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
+import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
+import { calculateIngredientMacros } from '@/utils/recipeMath';
+import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { toast } from '@/components/ui/toast';
 import {
   calculateBMR,
   calculateTDEE,
@@ -30,7 +36,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
-import { cn } from '@/lib/utils';
+import { cn, evaluateAmountExpression } from '@/lib/utils';
 type GroupedMealEntry =
   | { type: 'single'; log: FoodLog }
   | { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] };
@@ -67,9 +73,10 @@ function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
 
 export default function Diet() {
   const { t } = useTranslation();
-  const { selectedDate, openAddModal } = useAppStore();
+  const { selectedDate } = useAppStore();
   const {
     mealGroups,
+    addFoodLog,
     updateFoodLog,
     updateFoodLogBundle,
     deleteFoodLog,
@@ -88,6 +95,13 @@ export default function Diet() {
     bundleName: string;
     logs: FoodLog[];
   } | null>(null);
+
+  // 飲食新增記錄流程專用狀態
+  const [targetMealTypeForAdd, setTargetMealTypeForAdd] = useState<MealType | null>(null);
+  const [isSelectDialogOpen, setIsSelectDialogOpen] = useState(false);
+  const [selectedFoodForAdd, setSelectedFoodForAdd] = useState<FoodItem | null>(null);
+  const [foodQuantityForAdd, setFoodQuantityForAdd] = useState<number>(100);
+  const [selectedRecipeForStaging, setSelectedRecipeForStaging] = useState<FoodRecipe | null>(null);
 
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -205,6 +219,60 @@ export default function Diet() {
 
   const handleDeleteRecipeBundle = async (bundleId: string) => {
     await deleteFoodLogBundle(bundleId);
+  };
+
+  // 開啟新增飲食選擇彈窗
+  const handleOpenAddForMeal = (type: MealType) => {
+    triggerHaptic('light');
+    setTargetMealTypeForAdd(type);
+    setIsSelectDialogOpen(true);
+  };
+
+  // 選擇食材或食譜回調
+  const handleSelectFoodOrRecipe = (
+    item: FoodItem | FoodRecipe,
+    type: 'food' | 'recipe'
+  ) => {
+    if (type === 'food') {
+      const food = item as FoodItem;
+      const initialQty = food.servingSize || (foodWeightUnit === 'oz' ? 1 : 100);
+      setSelectedFoodForAdd(food);
+      setFoodQuantityForAdd(initialQty);
+    } else {
+      const recipe = item as FoodRecipe;
+      setSelectedRecipeForStaging(recipe);
+    }
+  };
+
+  // 確認新增單品食材
+  const handleConfirmAddFood = async (val: number, unit?: string) => {
+    if (!selectedFoodForAdd || !targetMealTypeForAdd) return;
+    const finalQuantity = val > 0 ? val : (selectedFoodForAdd.servingSize || 100);
+    const finalUnit = unit || selectedFoodForAdd.servingUnit || foodWeightUnit;
+    const macros = calculateIngredientMacros(selectedFoodForAdd, finalQuantity);
+
+    await addFoodLog({
+      date: selectedDate,
+      mealType: targetMealTypeForAdd,
+      foodId: selectedFoodForAdd.id,
+      foodName: formatFoodDisplayName(selectedFoodForAdd),
+      quantity: finalQuantity,
+      unit: finalUnit,
+      calories: macros.calories,
+      protein: macros.protein,
+      carbs: macros.carbs,
+      fat: macros.fat,
+    });
+
+    triggerHaptic('success');
+    toast.show(t('common.saved', '已儲存'));
+    setSelectedFoodForAdd(null);
+    setIsSelectDialogOpen(false);
+  };
+
+  // 取消新增單品食材 (保留選擇彈窗開啟，方便返回)
+  const handleCancelAddFood = () => {
+    setSelectedFoodForAdd(null);
   };
 
   return (
@@ -391,47 +459,34 @@ export default function Diet() {
 
         return (
           <div key={type} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-            {/* 灰底表頭橫欄 (強層級感，內嵌三大營養素微彙總) */}
-            <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between text-xs font-mono text-muted-foreground shrink-0">
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap min-w-0">
-                <span className="font-semibold text-sm tracking-tight text-foreground">
+            {/* 灰底表頭橫欄 (單行 40px 高度：左側餐別名稱 + 3C-2 供能微線微箭頭 Popover，右側圓形「+」圖標按鈕) */}
+            <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-semibold text-sm tracking-tight text-foreground shrink-0">
                   {t(`diet.${type}`)}
                 </span>
-                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-                  <span className="font-semibold text-foreground">
-                    {formatEnergy(groupCalories, energyUnit).formatted}
-                  </span>
-                  {items.length > 0 && (
-                    <>
-                      <span className="text-border">/</span>
-                      <span>
-                        <span className="text-carbs font-medium">{t('diet.macroMicro.carbs', '碳')}</span>{' '}
-                        {Math.round(groupCarbs)}g
-                      </span>
-                      <span className="text-border">·</span>
-                      <span>
-                        <span className="text-protein font-medium">{t('diet.macroMicro.protein', '蛋')}</span>{' '}
-                        {Math.round(groupProtein)}g
-                      </span>
-                      <span className="text-border">·</span>
-                      <span>
-                        <span className="text-fat font-medium">{t('diet.macroMicro.fat', '脂')}</span>{' '}
-                        {Math.round(groupFat)}g
-                      </span>
-                    </>
-                  )}
-                </div>
+                {items.length > 0 && groupCalories > 0 && (
+                  <>
+                    <span className="text-border select-none shrink-0">·</span>
+                    <MealEnergyPopover
+                      formattedEnergy={formatEnergy(groupCalories, energyUnit).formatted}
+                      calories={groupCalories}
+                      carbs={groupCarbs}
+                      protein={groupProtein}
+                      fat={groupFat}
+                    />
+                  </>
+                )}
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => openAddModal('food')}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+              <button
+                type="button"
+                onClick={() => handleOpenAddForMeal(type)}
+                className="shrink-0 p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center"
+                aria-label={t('common.add')}
               >
-                <Plus className="size-3.5 mr-1" />
-                {t('common.add')}
-              </Button>
+                <Plus className="size-4" />
+              </button>
             </div>
 
             {/* 食物條目列表 (沿用食物管理頁面 MacroSquares 矩陣) */}
@@ -550,6 +605,77 @@ export default function Diet() {
         onSave={handleSaveRecipeLog}
         onDeleteBundle={handleDeleteRecipeBundle}
       />
+
+      {/* 食物/食譜選擇 Dialog (第一層彈窗 zIndex={60}，選擇後保持開啟以便取消返回) */}
+      <FoodRecipeSelectDialog
+        open={isSelectDialogOpen}
+        onOpenChange={setIsSelectDialogOpen}
+        mode="all"
+        autoCloseOnSelect={false}
+        zIndex={60}
+        onSelect={handleSelectFoodOrRecipe}
+      />
+
+      {/* 選擇食材後的數字輸入鍵盤 Dialog (第二層彈窗 zIndex={80}) */}
+      {selectedFoodForAdd && (
+        <NumericKeypadDialog
+          open={!!selectedFoodForAdd}
+          onOpenChange={(open) => {
+            if (!open) handleCancelAddFood();
+          }}
+          title={formatFoodDisplayName(selectedFoodForAdd)}
+          value={foodQuantityForAdd}
+          unit={selectedFoodForAdd.servingUnit || foodWeightUnit}
+          allowDecimals={true}
+          maxDecimals={2}
+          onLiveChange={(val) => {
+            setFoodQuantityForAdd(val);
+          }}
+          onConfirm={handleConfirmAddFood}
+          onCancel={handleCancelAddFood}
+          renderContextRow={(valStr, currentU) => {
+            let finalValStr = valStr;
+            if (/[+-]/.test(valStr.replace(/^[+-]/, ''))) {
+              finalValStr = evaluateAmountExpression(valStr, false);
+            }
+            const qty = parseFloat(finalValStr) || 0;
+            const macros = calculateIngredientMacros(selectedFoodForAdd, qty);
+            return (
+              <div className="h-10 px-3 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-between">
+                <span className="text-calories font-bold font-mono text-xs">
+                  {formatEnergy(macros.calories, energyUnit).formatted}
+                </span>
+                <div className="flex items-baseline gap-1 font-mono">
+                  <span className="text-xl font-bold tracking-tight text-foreground">
+                    {valStr || '0'}
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {currentU}
+                  </span>
+                </div>
+              </div>
+            );
+          }}
+        />
+      )}
+
+      {/* 選擇食譜後的構成食材與重量調整 Dialog (RecipeStagingDialog，第二層彈窗 zIndex={70}) */}
+      {selectedRecipeForStaging && (
+        <RecipeStagingDialog
+          open={!!selectedRecipeForStaging}
+          onOpenChange={(open) => {
+            if (!open) setSelectedRecipeForStaging(null);
+          }}
+          recipe={selectedRecipeForStaging}
+          mealType={targetMealTypeForAdd || 'breakfast'}
+          date={selectedDate}
+          zIndex={70}
+          onSuccess={() => {
+            setSelectedRecipeForStaging(null);
+            setIsSelectDialogOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 

@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit 餐別標頭行動端防擠壓設計提案庫 · UI/UX Pro Max</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-subtle: #f9fafb;
+      --fg: #000000;
+      --card: #ffffff;
+      --card-fg: #000000;
+      --border: #eaeaea;
+      --border-subtle: #f0f0f0;
+      --border-strong: #d4d4d8;
+      --muted: #f4f4f5;
+      --muted-header: rgba(244, 244, 245, 0.6);
+      --muted-fg: #71717a;
+      --muted-subtle: #a1a1aa;
+      --track: #e4e4e7;
+      --overlay: rgba(255, 255, 255, 0.85);
+
+      /* 三大營養素色彩 (Strict: Carbs, Protein, Fat) */
+      --calories: #e11d48;
+      --carbs: #d97706;
+      --protein: #0284c7;
+      --fat: #7c3aed;
+      --destructive: #ef4444;
+
+      --carbs-subtle: rgba(217, 119, 6, 0.12);
+      --protein-subtle: rgba(2, 132, 199, 0.12);
+      --fat-subtle: rgba(124, 58, 237, 0.12);
+      --calories-subtle: rgba(225, 29, 72, 0.12);
+
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    html.dark {
+      --bg: #000000;
+      --bg-subtle: #09090b;
+      --fg: #ffffff;
+      --card: #000000;
+      --card-fg: #ffffff;
+      --border: #262626;
+      --border-subtle: #1c1c1f;
+      --border-strong: #3f3f46;
+      --muted: #18181b;
+      --muted-header: rgba(24, 24, 27, 0.6);
+      --muted-fg: #a1a1aa;
+      --muted-subtle: #71717a;
+      --track: #27272a;
+      --overlay: rgba(0, 0, 0, 0.88);
+
+      --carbs: #f59e0b;
+      --protein: #38bdf8;
+      --fat: #a855f7;
+      --calories: #fb7185;
+
+      --carbs-subtle: rgba(245, 158, 11, 0.16);
+      --protein-subtle: rgba(56, 189, 248, 0.16);
+      --fat-subtle: rgba(168, 85, 247, 0.16);
+      --calories-subtle: rgba(251, 113, 133, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-subtle);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* 頂部固定控制條 (Toolbar) */
+    .toolbar-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+    }
+
+    .toolbar-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-segmented {
+      display: inline-flex;
+      background: var(--muted);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      gap: 2px;
+    }
+
+    .btn-seg-item {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--muted-fg);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-seg-item.active {
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-theme-toggle {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-theme-toggle:hover {
+      background: var(--muted);
+    }
+
+    /* 說明區塊 */
+    .intro-section {
+      max-width: 1200px;
+      margin: 24px auto 16px;
+      padding: 0 20px;
+    }
+
+    .intro-banner {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .intro-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .intro-desc {
+      font-size: 13px;
+      color: var(--muted-fg);
+      line-height: 1.6;
+    }
+
+    .problem-alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--destructive);
+      line-height: 1.5;
+    }
+
+    /* 主網格容器 */
+    .showcase-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 24px;
+    }
+
+    .device-stage {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .device-stage.featured {
+      border-color: var(--fg);
+      position: relative;
+    }
+
+    .featured-tag {
+      position: absolute;
+      top: -10px;
+      right: 18px;
+      background: var(--fg);
+      color: var(--bg);
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+    }
+
+    .stage-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stage-code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted-fg);
+    }
+
+    .stage-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    .stage-meta {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted-fg);
+      background: var(--muted);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* 模擬手機畫框 (Frame) */
+    .mobile-frame-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 12px 0;
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    .mobile-frame {
+      width: 360px; /* 預設 360px 模擬最小螢幕 */
+      background: var(--bg);
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+    }
+
+    /* 餐別卡片結構 (統一復刻 Zenfit 樣式) */
+    .meal-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: none;
+    }
+
+    /* 通用按鈕 */
+    .btn-add-ghost {
+      height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-family: var(--font-sans);
+      color: var(--muted-fg);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .btn-add-ghost:hover {
+      background: var(--muted);
+      color: var(--fg);
+    }
+
+    .btn-add-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--muted);
+      color: var(--muted-fg);
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-add-circle:hover {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+
+    /* 食物條目（展示上下文） */
+    .food-mock-item {
+      min-height: 56px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .food-mock-left {
+      min-width: 0;
+      flex: 1;
+      padding-right: 12px;
+    }
+
+    .food-mock-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .food-mock-sub {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted-fg);
+      margin-top: 2px;
+    }
+
+    /* MacroSquares 矩陣 */
+    .macro-squares-mini {
+      display: flex;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .macro-square {
+      width: 32px;
+      height: 34px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.1;
+    }
+
+    .macro-square.c { border-color: rgba(217, 119, 6, 0.4); background: var(--carbs-subtle); color: var(--carbs); font-weight: 700; }
+    .macro-square.p { border-color: rgba(2, 132, 199, 0.4); background: var(--protein-subtle); color: var(--protein); font-weight: 700; }
+    .macro-square.f { border-color: rgba(124, 58, 237, 0.4); background: var(--fat-subtle); color: var(--fat); font-weight: 700; }
+
+    /* ========================================================
+       方案 0：當前原版 (Current Problematic Implementation)
+       ======================================================== */
+    .current-header {
+      min-height: 40px;
+      padding: 0 14px;
+      background: var(--muted-header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--muted-fg);
+      overflow: hidden;
+    }
+
+    .current-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap; /* 這就是導致第二張截圖折行重疊的元兇 */
+      min-width: 0;
+    }
+
+    /* ========================================================
+       方案 1：【雙層階層儀表板】(Dual-Row Split - Recommended)
+       ======================================================== */
+    .header-v1 {
+      background: var(--muted-header);
+      display: flex;
+      flex-direction: column;
+      padding: 8px 14px 10px;
+      gap: 6px;
+    }
+
+    .header-v1-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .header-v1-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .meal-name-lg {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      font-family: var(--font-sans);
+    }
+
+    .meal-cal-hero {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    .header-v1-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted-fg);
+    }
+
+    .header-v1-macros {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .ratio-bar-mini {
+      height: 4px;
+      flex: 1;
+      max-width: 110px;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      background: var(--track);
+    }
+
+    .ratio-bar-c { background: var(--carbs); height: 100%; }
+    .ratio-bar-p { background: var(--protein); height: 100%; }
+    .ratio-bar-f { background: var(--fat); height: 100%; }
+
+    /* ========================================================
+       方案 2：【極限單行 + 圓鈕加號 + 簡約彩字】(Ultra-Compact Single Row)
+       ======================================================== */
+    .header-v2 {
+      height: 40px;
+      padding: 0 12px;
+      background: var(--muted-header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .header-v2-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex-shrink: 1;
+    }
+
+    .header-v2-macros {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: -0.02em;
+    }
+
+    /* ========================================================
+       方案 3：【客觀測量儀 · 供能比微標尺膠囊】(Inline Ratio Capsule)
+       ======================================================== */
+    .header-v3 {
+      height: 42px;
+      padding: 0 12px;
+      background: var(--muted-header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .header-v3-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-v3-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .ratio-capsule {
+      height: 14px;
+      width: 48px;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      background: var(--track);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ========================================================
+       方案 4：【微型 MacroSquares 矩陣標頭】(Header MacroSquares)
+       ======================================================== */
+    .header-v4 {
+      height: 44px;
+      padding: 0 12px;
+      background: var(--muted-header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .header-v4-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .header-v4-macros {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .header-v4-pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* 分析卡片 */
+    .eval-card {
+      background: var(--bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .eval-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .eval-label {
+      font-weight: 600;
+      color: var(--fg);
+      min-width: 60px;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+
+    .eval-text {
+      color: var(--muted-fg);
+      flex: 1;
+    }
+
+    .tag-pro {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .tag-con {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #f59e0b;
+      font-weight: 600;
+    }
+
+    .rating-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--fg);
+      color: var(--bg);
+      align-self: flex-start;
+    }
+
+    /* 響應式佈局 */
+    @media (max-width: 768px) {
+      .showcase-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部控制條 -->
+  <header class="toolbar-sticky">
+    <div class="toolbar-content">
+      <div class="brand-title">
+        <span>Zenfit</span>
+        <span class="brand-badge">UI/UX Design Studio</span>
+        <span style="font-size: 13px; font-weight: 500; color: var(--muted-fg);">餐別標頭 (Meal Header) 行動端防擠壓改版提案</span>
+      </div>
+
+      <div class="controls-group">
+        <!-- 螢幕寬度切換器 -->
+        <div class="btn-segmented" title="切換行動端模擬寬度">
+          <button type="button" class="btn-seg-item active" onclick="setFrameWidth(360, this)">360px (SE/Mini)</button>
+          <button type="button" class="btn-seg-item" onclick="setFrameWidth(393, this)">393px (iPhone 15)</button>
+          <button type="button" class="btn-seg-item" onclick="setFrameWidth(430, this)">430px (Pro Max)</button>
+          <button type="button" class="btn-seg-item" onclick="setFrameWidth(520, this)">520px (Desktop)</button>
+        </div>
+
+        <!-- 數據量級切換 -->
+        <div class="btn-segmented" title="切換數據情境">
+          <button type="button" class="btn-seg-item active" onclick="setScenario('high', this)">大份量 (1,719 kcal)</button>
+          <button type="button" class="btn-seg-item" onclick="setScenario('med', this)">中份量 (580 kcal)</button>
+        </div>
+
+        <!-- 深淺色切換 -->
+        <button type="button" class="btn-theme-toggle" onclick="toggleTheme()" title="切換深色/淺色模式" aria-label="Toggle Theme">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 說明與問題診斷 -->
+  <section class="intro-section">
+    <div class="intro-banner">
+      <div class="intro-title">
+        <span>行動端寬度防擠壓契約診斷</span>
+      </div>
+      <div class="intro-desc">
+        在窄屏手機（360px ~ 393px）上，卡片可用內部寬度僅約 <strong>310px ~ 340px</strong>。原版將「早餐」、「1,719 kcal」、「/」、「碳 234g」、「·」、「蛋 108g」、「·」、「脂 39g」與「+ 新增」按鈕強行塞在同一行並開啟 <code>flex-wrap</code>，文字總寬達 330px+，必然觸發換行；但容器高度鎖死 <code>h-10 (40px)</code>，造成文字截斷、重疊與嚴重錯位。
+      </div>
+      <div class="problem-alert">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:1px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div>
+          <strong>核心矛盾</strong>：單行水平空間不足以容納 8 個文本區塊與按鈕。必須透過<strong>「維度分離 (Two-Row Hierarchy)」</strong>或<strong>「信息純粹化 (Ultra-Compact Macro Tags)」</strong>徹底消除擠壓。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 方案展示區 -->
+  <main class="showcase-container">
+
+    <!-- 方案 0：原版重現 (Bug Benchmark) -->
+    <div class="device-stage">
+      <div class="stage-header">
+        <div class="stage-title-wrap">
+          <span class="stage-code">BASELINE</span>
+          <span class="stage-title">原版實現 (現狀重現)</span>
+        </div>
+        <span class="stage-meta" style="color: var(--destructive); background: rgba(239, 68, 68, 0.1);">有擠壓 Bug</span>
+      </div>
+
+      <div class="mobile-frame-wrapper">
+        <div class="mobile-frame">
+          <div class="meal-card">
+            <!-- 當前原版代碼 -->
+            <div class="current-header">
+              <div class="current-header-left">
+                <span style="font-weight:700; font-size:14px; color:var(--fg); font-family:var(--font-sans);">早餐</span>
+                <div style="display:flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:11px;">
+                  <span class="val-cal" style="font-weight:700; color:var(--fg);">1,719 kcal</span>
+                  <span style="color:var(--border-strong);">/</span>
+                  <span><span style="color:var(--carbs); font-weight:600;">碳</span> <span class="val-c">234</span>g</span>
+                  <span style="color:var(--border-strong);">·</span>
+                  <span><span style="color:var(--protein); font-weight:600;">蛋</span> <span class="val-p">108</span>g</span>
+                  <span style="color:var(--border-strong);">·</span>
+                  <span><span style="color:var(--fat); font-weight:600;">脂</span> <span class="val-f">39</span>g</span>
+                </div>
+              </div>
+              <button type="button" class="btn-add-ghost">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>新增</span>
+              </button>
+            </div>
+            <!-- Mock Items -->
+            <div class="food-mock-item">
+              <div class="food-mock-left">
+                <div class="food-mock-title">Protein Mix</div>
+                <div class="food-mock-sub">400g · 717 kcal</div>
+              </div>
+              <div class="macro-squares-mini">
+                <div class="macro-square c"><span>C</span><span>98g</span></div>
+                <div class="macro-square p"><span>P</span><span>45g</span></div>
+                <div class="macro-square f"><span>F</span><span>16g</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="eval-card">
+        <div class="eval-row">
+          <span class="eval-label">缺陷診斷</span>
+          <span class="eval-text">在 360px 寬度下，字串被強迫折行；且因為外部固定 `h-10`，導致文字重疊錯亂、無法閱讀。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 1：【雙層階層儀表板】(Dual-Row Hierarchy with Ratio Bar) -->
+    <div class="device-stage featured">
+      <div class="featured-tag">★ 強烈推薦 · 最佳體驗</div>
+      <div class="stage-header">
+        <div class="stage-title-wrap">
+          <span class="stage-code">OPTION 1</span>
+          <span class="stage-title">雙層階層儀表板 (Dual-Row Split)</span>
+        </div>
+        <span class="rating-badge">99/100</span>
+      </div>
+
+      <div class="mobile-frame-wrapper">
+        <div class="mobile-frame">
+          <div class="meal-card">
+            <!-- 方案 1 表頭 -->
+            <div class="header-v1">
+              <!-- 第一行：主體（餐別大字 + 熱量醒目標示 + 典雅新增按鈕） -->
+              <div class="header-v1-top">
+                <div class="header-v1-title-group">
+                  <span class="meal-name-lg">早餐</span>
+                  <span class="meal-cal-hero val-cal">1,719 kcal</span>
+                </div>
+                <button type="button" class="btn-add-ghost" style="height:24px; padding:0 8px; background:var(--muted); border-radius:999px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span style="font-size:11px; font-weight:600;">新增</span>
+                </button>
+              </div>
+
+              <!-- 第二行：次級營養素（供能比微標尺 + C/P/F 純粹等寬標籤） -->
+              <div class="header-v1-bottom">
+                <!-- 供能比彩條 (固定順序 C -> P -> F) -->
+                <div class="ratio-bar-mini" title="三大營養素供能比">
+                  <div class="ratio-bar-c" style="width: 55%;"></div>
+                  <div class="ratio-bar-p" style="width: 25%;"></div>
+                  <div class="ratio-bar-f" style="width: 20%;"></div>
+                </div>
+
+                <!-- C/P/F 數據等寬對齊 (嚴格遵照 C -> P -> F 順序) -->
+                <div class="header-v1-macros">
+                  <span><span style="color:var(--carbs); font-weight:600;">碳</span> <span class="val-c">234</span>g</span>
+                  <span style="color:var(--border-strong);">·</span>
+                  <span><span style="color:var(--protein); font-weight:600;">蛋</span> <span class="val-p">108</span>g</span>
+                  <span style="color:var(--border-strong);">·</span>
+                  <span><span style="color:var(--fat); font-weight:600;">脂</span> <span class="val-f">39</span>g</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mock Items -->
+            <div class="food-mock-item">
+              <div class="food-mock-left">
+                <div class="food-mock-title">Protein Mix</div>
+                <div class="food-mock-sub">400g · 717 kcal</div>
+              </div>
+              <div class="macro-squares-mini">
+                <div class="macro-square c"><span>C</span><span>98g</span></div>
+                <div class="macro-square p"><span>P</span><span>45g</span></div>
+                <div class="macro-square f"><span>F</span><span>16g</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="eval-card">
+        <div class="eval-row">
+          <span class="eval-label">佈局亮點</span>
+          <span class="eval-text">
+            <span class="tag-pro">✔ 零擠壓風險</span>：將「餐別+熱量」與「三大營養素」解耦為雙層，即使數值達到萬卡、百克也絕不換行折斷。<br>
+            <span class="tag-pro">✔ 視覺層次分明</span>：符合專業健康儀表板（如 Apple Health / Linear）經典規格，內嵌微型供能比彩條增添精緻度。<br>
+            <span class="tag-pro">✔ 點擊熱區充足</span>：新增按鈕獨立於右上方，避免手指誤觸。
+          </span>
+        </div>
+        <div class="eval-row">
+          <span class="eval-label">適用場景</span>
+          <span class="eval-text">全尺寸完美適配（320px ~ 4K），是長期最穩健、工程質量最高的核心方案。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 2：【極限單行 + 圓形純圖標按鈕 + 緊湊彩字】(Ultra-Compact Single Row) -->
+    <div class="device-stage">
+      <div class="stage-header">
+        <div class="stage-title-wrap">
+          <span class="stage-code">OPTION 2</span>
+          <span class="stage-title">極限單行緊湊彩字 (Ultra-Compact)</span>
+        </div>
+        <span class="rating-badge">92/100</span>
+      </div>
+
+      <div class="mobile-frame-wrapper">
+        <div class="mobile-frame">
+          <div class="meal-card">
+            <!-- 方案 2 表頭 (維持單行 40px，精簡按鈕為圓形加號，精簡宏量素為 C/P/F 純彩字) -->
+            <div class="header-v2">
+              <div class="header-v2-left">
+                <span style="font-weight:700; font-size:13px; color:var(--fg); font-family:var(--font-sans);">早餐</span>
+                <span class="val-cal" style="font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--fg);">1,719 kcal</span>
+                <span style="color:var(--border-strong);">/</span>
+                <div class="header-v2-macros">
+                  <span style="color:var(--carbs); font-weight:600;"><span class="val-c">234</span>C</span>
+                  <span style="color:var(--protein); font-weight:600;"><span class="val-p">108</span>P</span>
+                  <span style="color:var(--fat); font-weight:600;"><span class="val-f">39</span>F</span>
+                </div>
+              </div>
+
+              <!-- 右側純圖標圓形加號按鈕 (寬度僅 26px，節省 34px) -->
+              <button type="button" class="btn-add-circle" title="新增飲食記錄" aria-label="新增">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+
+            <!-- Mock Items -->
+            <div class="food-mock-item">
+              <div class="food-mock-left">
+                <div class="food-mock-title">Protein Mix</div>
+                <div class="food-mock-sub">400g · 717 kcal</div>
+              </div>
+              <div class="macro-squares-mini">
+                <div class="macro-square c"><span>C</span><span>98g</span></div>
+                <div class="macro-square p"><span>P</span><span>45g</span></div>
+                <div class="macro-square f"><span>F</span><span>16g</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="eval-card">
+        <div class="eval-row">
+          <span class="eval-label">佈局亮點</span>
+          <span class="eval-text">
+            <span class="tag-pro">✔ 維持單行 40px 高度</span>：縱向零留白膨脹。<br>
+            <span class="tag-pro">✔ 純粹等寬標籤</span>：將「碳 234g」精煉為客觀等寬字元「234C」，省去冗餘漢字與間隔符號。<br>
+            <span class="tag-pro">✔ 極簡圓鈕加號</span>：將按鈕寬度由 60px 壓縮至 26px，為數據爭取最大展示空間。
+          </span>
+        </div>
+        <div class="eval-row">
+          <span class="eval-label">極限邊界</span>
+          <span class="eval-text">在 360px 最小螢幕下安全通過，但若熱量達 5 位數時水平邊距會較為緊繃。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 3：【客觀測量儀 · 供能比微標尺膠囊】(Inline Ratio Gauge + Hero Calories) -->
+    <div class="device-stage">
+      <div class="stage-header">
+        <div class="stage-title-wrap">
+          <span class="stage-code">OPTION 3</span>
+          <span class="stage-title">微型供能比膠囊 (Ratio Capsule)</span>
+        </div>
+        <span class="rating-badge">94/100</span>
+      </div>
+
+      <div class="mobile-frame-wrapper">
+        <div class="mobile-frame">
+          <div class="meal-card">
+            <!-- 方案 3 表頭 -->
+            <div class="header-v3">
+              <div class="header-v3-left">
+                <span style="font-weight:700; font-size:13px; color:var(--fg); font-family:var(--font-sans);">早餐</span>
+                <span class="val-cal" style="font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--fg);">1,719 kcal</span>
+              </div>
+
+              <!-- 中間供能比膠囊與比例數值 -->
+              <div class="header-v3-center">
+                <div class="ratio-capsule">
+                  <div class="ratio-bar-c" style="width: 55%;"></div>
+                  <div class="ratio-bar-p" style="width: 25%;"></div>
+                  <div class="ratio-bar-f" style="width: 20%;"></div>
+                </div>
+                <div style="font-family:var(--font-mono); font-size:11px; display:flex; gap:3px;">
+                  <span style="color:var(--carbs); font-weight:600;"><span class="val-c">234</span></span>
+                  <span style="color:var(--border-strong);">·</span>
+                  <span style="color:var(--protein); font-weight:600;"><span class="val-p">108</span></span>
+                  <span style="color:var(--border-strong);">·</span>
+                  <span style="color:var(--fat); font-weight:600;"><span class="val-f">39</span></span>
+                </div>
+              </div>
+
+              <!-- 右側新增按鈕 -->
+              <button type="button" class="btn-add-circle" title="新增飲食記錄">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+
+            <!-- Mock Items -->
+            <div class="food-mock-item">
+              <div class="food-mock-left">
+                <div class="food-mock-title">Protein Mix</div>
+                <div class="food-mock-sub">400g · 717 kcal</div>
+              </div>
+              <div class="macro-squares-mini">
+                <div class="macro-square c"><span>C</span><span>98g</span></div>
+                <div class="macro-square p"><span>P</span><span>45g</span></div>
+                <div class="macro-square f"><span>F</span><span>16g</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="eval-card">
+        <div class="eval-row">
+          <span class="eval-label">佈局亮點</span>
+          <span class="eval-text">
+            <span class="tag-pro">✔ 純視覺化供能結構</span>：微型膠囊標尺直接映射 C/P/F 佔比，高質感客觀測量儀風格。<br>
+            <span class="tag-pro">✔ 零多餘文字</span>：純數字並列，大幅精簡寬度佔用。
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 4：【微型 MacroSquares 矩陣標頭】(Header MacroSquares) -->
+    <div class="device-stage">
+      <div class="stage-header">
+        <div class="stage-title-wrap">
+          <span class="stage-code">OPTION 4</span>
+          <span class="stage-title">微型數據矩陣標頭 (Macro Pills)</span>
+        </div>
+        <span class="rating-badge">90/100</span>
+      </div>
+
+      <div class="mobile-frame-wrapper">
+        <div class="mobile-frame">
+          <div class="meal-card">
+            <!-- 方案 4 表頭 -->
+            <div class="header-v4">
+              <div class="header-v4-left">
+                <div style="display:flex; align-items:baseline; gap:6px;">
+                  <span style="font-weight:700; font-size:13px; color:var(--fg); font-family:var(--font-sans);">早餐</span>
+                  <span class="val-cal" style="font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--fg);">1,719 kcal</span>
+                </div>
+              </div>
+
+              <!-- 右側微型膠囊組合 + 加號按鈕 -->
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div class="header-v4-macros">
+                  <div class="header-v4-pill" style="background:var(--carbs-subtle); color:var(--carbs);">
+                    <span>C</span><span class="val-c">234</span>
+                  </div>
+                  <div class="header-v4-pill" style="background:var(--protein-subtle); color:var(--protein);">
+                    <span>P</span><span class="val-p">108</span>
+                  </div>
+                  <div class="header-v4-pill" style="background:var(--fat-subtle); color:var(--fat);">
+                    <span>F</span><span class="val-f">39</span>
+                  </div>
+                </div>
+
+                <button type="button" class="btn-add-circle" title="新增飲食記錄">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mock Items -->
+            <div class="food-mock-item">
+              <div class="food-mock-left">
+                <div class="food-mock-title">Protein Mix</div>
+                <div class="food-mock-sub">400g · 717 kcal</div>
+              </div>
+              <div class="macro-squares-mini">
+                <div class="macro-square c"><span>C</span><span>98g</span></div>
+                <div class="macro-square p"><span>P</span><span>45g</span></div>
+                <div class="macro-square f"><span>F</span><span>16g</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="eval-card">
+        <div class="eval-row">
+          <span class="eval-label">佈局亮點</span>
+          <span class="eval-text">
+            <span class="tag-pro">✔ 全域視覺語言 100% 呼應</span>：與下方 MacroSquares 矩陣標籤色彩一致。<br>
+            <span class="tag-pro">✔ 結構分明</span>：左側名稱與熱量，右側三色膠囊與動作。
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // 切換深色 / 淺色模式
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        html.classList.add('light');
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+      }
+    }
+
+    // 動態調整模擬手機寬度
+    function setFrameWidth(width, btn) {
+      document.querySelectorAll('.btn-segmented .btn-seg-item').forEach(b => {
+        if (b.onclick.toString().includes('setFrameWidth')) {
+          b.classList.remove('active');
+        }
+      });
+      btn.classList.add('active');
+
+      document.querySelectorAll('.mobile-frame').forEach(frame => {
+        frame.style.width = width + 'px';
+      });
+    }
+
+    // 切換數據量級場景
+    const scenarios = {
+      high: {
+        cal: '1,719 kcal',
+        c: 234,
+        p: 108,
+        f: 39,
+        ratioC: 55,
+        ratioP: 25,
+        ratioF: 20
+      },
+      med: {
+        cal: '580 kcal',
+        c: 65,
+        p: 42,
+        f: 17,
+        ratioC: 45,
+        ratioP: 30,
+        ratioF: 25
+      }
+    };
+
+    function setScenario(type, btn) {
+      document.querySelectorAll('.btn-segmented .btn-seg-item').forEach(b => {
+        if (b.onclick.toString().includes('setScenario')) {
+          b.classList.remove('active');
+        }
+      });
+      btn.classList.add('active');
+
+      const s = scenarios[type];
+      document.querySelectorAll('.val-cal').forEach(el => el.textContent = s.cal);
+      document.querySelectorAll('.val-c').forEach(el => el.textContent = s.c);
+      document.querySelectorAll('.val-p').forEach(el => el.textContent = s.p);
+      document.querySelectorAll('.val-f').forEach(el => el.textContent = s.f);
+
+      document.querySelectorAll('.ratio-bar-c').forEach(el => el.style.width = s.ratioC + '%');
+      document.querySelectorAll('.ratio-bar-p').forEach(el => el.style.width = s.ratioP + '%');
+      document.querySelectorAll('.ratio-bar-f').forEach(el => el.style.width = s.ratioF + '%');
+    }
+  </script>
+</body>
+</html>
