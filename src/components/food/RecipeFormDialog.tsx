@@ -2,10 +2,7 @@ import { useState, useEffect, useMemo, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
+  PrecisionDialogContent,
 } from '@/components/ui/dialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
@@ -24,7 +21,7 @@ import {
 } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { formatDisplayAmount } from '@/lib/utils';
-import { X, ChevronRight, Plus, Trash2, Check } from 'lucide-react';
+import { ChevronRight, Plus, Trash2 } from 'lucide-react';
 
 export type RecipeFormData = Omit<
   FoodRecipe,
@@ -348,47 +345,16 @@ export function RecipeFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent
-          showCloseButton={false}
+        <PrecisionDialogContent
+          title={isEdit ? t('diet.editRecipe') : t('diet.addRecipe')}
+          form={formId}
+          submitDisabled={!name.trim() || ingredients.length === 0 || isSubmitting}
+          submitAriaLabel={isEdit ? t('common.save') : t('common.add')}
+          cancelAriaLabel={t('common.cancel')}
           overlayClassName="z-[70]"
-          className="z-[70] w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] bg-card border border-border text-card-foreground p-4 sm:p-4 font-mono text-xs select-none shadow-none flex flex-col max-h-[85vh] overflow-hidden"
+          className="z-[70] flex flex-col max-h-[85vh] overflow-hidden"
           initialFocus={false}
         >
-          {/* 彈窗標頭 (方案 D: 頂部雙純圖標 · 左 ✕ 放棄，中 標題，右 ✓ 提交) */}
-          <DialogHeader className="p-0 pb-0 shrink-0">
-            <div className="flex items-center justify-between w-full h-7">
-              {/* 左側純圖標：取消 (✕) */}
-              <DialogClose
-                render={
-                  <button
-                    type="button"
-                    className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
-                    title={t('common.cancel')}
-                    aria-label={t('common.cancel')}
-                  />
-                }
-              >
-                <X className="size-3.5 stroke-[2.2]" />
-              </DialogClose>
-
-              {/* 中間標題 */}
-              <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2">
-                <span className="truncate">{isEdit ? t('diet.editRecipe') : t('diet.addRecipe')}</span>
-              </DialogTitle>
-
-              {/* 右側純圖標：提交 (✓) */}
-              <button
-                type="submit"
-                form={formId}
-                disabled={!name.trim() || ingredients.length === 0 || isSubmitting}
-                className="size-7 rounded-full flex items-center justify-center bg-foreground text-background hover:opacity-90 active:scale-92 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:pointer-events-none"
-                title={isEdit ? t('common.save') : t('common.add')}
-                aria-label={isEdit ? t('common.save') : t('common.add')}
-              >
-                <Check className="size-3.5 stroke-[2.5]" />
-              </button>
-            </div>
-          </DialogHeader>
 
           {/* 表單主體：包含單一聯合滾動容器與固定於底部的按鈕列 */}
           <form
@@ -468,17 +434,6 @@ export function RecipeFormDialog({
                     </div>
                   </div>
 
-                  {/* 蛋白質 */}
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
-                    <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
-                      {t('diet.protein')}
-                    </span>
-                    <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
-                      <span>{totals.protein}</span>
-                      <span className="text-[9px] font-normal opacity-75">g</span>
-                    </div>
-                  </div>
-
                   {/* 碳水 */}
                   <div className="px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
@@ -486,6 +441,17 @@ export function RecipeFormDialog({
                     </span>
                     <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{totals.carbs}</span>
+                      <span className="text-[9px] font-normal opacity-75">g</span>
+                    </div>
+                  </div>
+
+                  {/* 蛋白質 */}
+                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                    <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
+                      {t('diet.protein')}
+                    </span>
+                    <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                      <span>{totals.protein}</span>
                       <span className="text-[9px] font-normal opacity-75">g</span>
                     </div>
                   </div>
@@ -587,7 +553,7 @@ export function RecipeFormDialog({
 
             {/* 方案 D 徹底無底欄，表單內容直達底部 */}
           </form>
-        </DialogContent>
+        </PrecisionDialogContent>
       </Dialog>
 
       {/* 次級懸浮鍵盤 (透過 KeypadConfig 觸發，層級高於主彈窗) */}

@@ -464,19 +464,6 @@ export function AddQuickModal() {
                 <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border/50">
                   <div>
                     <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <span className="size-1.5 rounded-full bg-protein shrink-0" />
-                      <span>{t('diet.protein')} (g)</span>
-                    </label>
-                    <Input
-                      type="number"
-                      value={protein}
-                      onChange={(e) => setProtein(e.target.value)}
-                      placeholder="0"
-                      className="h-9 text-sm font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
                       <span className="size-1.5 rounded-full bg-carbs shrink-0" />
                       <span>{t('diet.carbs')} (g)</span>
                     </label>
@@ -484,6 +471,19 @@ export function AddQuickModal() {
                       type="number"
                       value={carbs}
                       onChange={(e) => setCarbs(e.target.value)}
+                      placeholder="0"
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 mb-1">
+                      <span className="size-1.5 rounded-full bg-protein shrink-0" />
+                      <span>{t('diet.protein')} (g)</span>
+                    </label>
+                    <Input
+                      type="number"
+                      value={protein}
+                      onChange={(e) => setProtein(e.target.value)}
                       placeholder="0"
                       className="h-9 text-sm font-mono"
                     />
@@ -594,8 +594,8 @@ export function AddQuickModal() {
                         </span>
                       </div>
                       <div className="text-[11px] font-mono text-muted-foreground flex gap-3 pt-0.5">
-                        <span>P: {currentRecipeTotals.protein} g</span>
                         <span>C: {currentRecipeTotals.carbs} g</span>
+                        <span>P: {currentRecipeTotals.protein} g</span>
                         <span>F: {currentRecipeTotals.fat} g</span>
                       </div>
                     </div>

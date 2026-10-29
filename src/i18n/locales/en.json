@@ -147,6 +147,9 @@
       "viewFoodDetail": "View Details",
       "noRecipeLogs": "No logs",
       "foodHasRecipes": "Referenced by recipes",
+      "deleteRecord": "Delete Record",
+      "deleteBundleRecord": "Delete Bundle",
+      "clickToEnter": "Tap to Enter",
       "foodCategory": {
         "title": "Category",
         "all": "All",

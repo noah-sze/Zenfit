@@ -13,34 +13,35 @@ export interface NutritionEvaluationInput {
 export interface NutritionEvaluationResult {
   labels: NutritionTag[];
   highlights: {
-    protein: boolean;
     carbs: boolean;
+    protein: boolean;
     fat: boolean;
     calories: boolean;
   };
   macroPercentages: {
-    proteinPct: number;
     carbsPct: number;
+    proteinPct: number;
     fatPct: number;
   };
 }
 
 /**
  * 計算三大營養素供能比百分比 (Macro Percentages by calories)
+ * 固定順序：碳水、蛋白質、脂肪 (C, P, F)
  */
-export function calculateMacroPercentages(protein: number, carbs: number, fat: number) {
-  const pCal = Math.max(0, protein) * 4;
+export function calculateMacroPercentages(carbs: number, protein: number, fat: number) {
   const cCal = Math.max(0, carbs) * 4;
+  const pCal = Math.max(0, protein) * 4;
   const fCal = Math.max(0, fat) * 9;
-  const total = pCal + cCal + fCal;
+  const total = cCal + pCal + fCal;
 
   if (total === 0) {
-    return { proteinPct: 0, carbsPct: 0, fatPct: 0 };
+    return { carbsPct: 0, proteinPct: 0, fatPct: 0 };
   }
 
   return {
-    proteinPct: Math.round((pCal / total) * 100),
     carbsPct: Math.round((cCal / total) * 100),
+    proteinPct: Math.round((pCal / total) * 100),
     fatPct: Math.round((fCal / total) * 100),
   };
 }
@@ -50,15 +51,15 @@ export function calculateMacroPercentages(protein: number, carbs: number, fat: n
  */
 export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): NutritionEvaluationResult {
   const calories = Math.max(0, food.calories || 0);
-  const protein = Math.max(0, food.protein || 0);
   const carbs = Math.max(0, food.carbs || 0);
+  const protein = Math.max(0, food.protein || 0);
   const fat = Math.max(0, food.fat || 0);
 
-  const { proteinPct, carbsPct, fatPct } = calculateMacroPercentages(protein, carbs, fat);
+  const { carbsPct, proteinPct, fatPct } = calculateMacroPercentages(carbs, protein, fat);
 
   const highlights = {
-    protein: false,
     carbs: false,
+    protein: false,
     fat: false,
     calories: false,
   };
@@ -68,8 +69,8 @@ export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): Nu
   const factor = 100 / servingAmount;
 
   const calPer100 = calories * factor;
-  const pPer100 = protein * factor;
   const cPer100 = carbs * factor;
+  const pPer100 = protein * factor;
   const fPer100 = fat * factor;
 
   // 調味品截斷防護：調味品分類或微量調味品（<=10g 且 <=30 kcal）不強掛標籤，留白維持清爽
@@ -77,7 +78,7 @@ export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): Nu
     return {
       labels: [],
       highlights,
-      macroPercentages: { proteinPct, carbsPct, fatPct },
+      macroPercentages: { carbsPct, proteinPct, fatPct },
     };
   }
 
@@ -89,7 +90,19 @@ export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): Nu
   // 物理低熱量基準：固體 <= 40 kcal/100g，液體 <= 20 kcal/100ml
   const isLowCal = isLiquid ? calPer100 <= 20 : calPer100 <= 40;
 
-  // ① 蛋白質 P 判定 (防範極低熱量下 P:E 分母趨近於零的奇異點誤判)
+  // ① 碳水化合物 C 判定 (兼顧絕對重量與供能比，避免低卡蔬果誤判)
+  const isCQualified =
+    food.category !== 'oil' &&
+    (isLiquid
+      ? cPer100 >= 10 && carbsPct >= 40
+      : cPer100 >= 18 && carbsPct >= 35);
+
+  if (isCQualified) {
+    labels.push('carb-source');
+    highlights.carbs = true;
+  }
+
+  // ② 蛋白質 P 判定 (防範極低熱量下 P:E 分母趨近於零的奇異點誤判)
   let isPQualified = false;
   if (food.category !== 'oil') {
     if (isLiquid) {
@@ -113,18 +126,6 @@ export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): Nu
   if (isPQualified) {
     labels.push('high-protein');
     highlights.protein = true;
-  }
-
-  // ② 碳水化合物 C 判定 (兼顧絕對重量與供能比，避免低卡蔬果誤判)
-  const isCQualified =
-    food.category !== 'oil' &&
-    (isLiquid
-      ? cPer100 >= 10 && carbsPct >= 40
-      : cPer100 >= 18 && carbsPct >= 35);
-
-  if (isCQualified) {
-    labels.push('carb-source');
-    highlights.carbs = true;
   }
 
   // ③ 脂肪 F 判定

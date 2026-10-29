@@ -5,7 +5,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+import { XIcon, CheckIcon } from "lucide-react"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -41,31 +41,44 @@ function DialogOverlay({
   )
 }
 
-function DialogContent({
-  className,
-  overlayClassName,
-  wrapperClassName,
-  children,
-  showCloseButton = true,
-  container,
-  fullscreen = false,
-  commandDeck = false,
-  initialFocus,
-  ...props
-}: DialogPrimitive.Popup.Props & {
+const dialogSizeClasses = {
+  default: "max-w-[calc(100%-2rem)] max-h-[min(88vh,calc(100%-2rem))] max-h-[min(88dvh,calc(100%-2rem))] p-5 sm:p-6 text-sm sm:max-w-[400px]",
+  compact: "w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] p-4 sm:p-4 font-mono text-xs select-none shadow-none",
+  standard: "w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] p-4 sm:p-4 font-mono text-xs select-none shadow-none",
+}
+
+export interface DialogContentProps extends DialogPrimitive.Popup.Props {
+  /** 彈窗標準規格尺寸 (預設 'default'；表單與管理彈窗強烈建議採用 'standard' 確保恆定 300px 寬度與 16px 緊湊 Padding) */
+  size?: 'default' | 'compact' | 'standard'
   showCloseButton?: boolean
   overlayClassName?: string
   wrapperClassName?: string
   container?: HTMLElement | null
   fullscreen?: boolean
   commandDeck?: boolean
-}) {
+}
+
+function DialogContent({
+  className,
+  overlayClassName,
+  wrapperClassName,
+  children,
+  showCloseButton,
+  size = 'default',
+  container,
+  fullscreen = false,
+  commandDeck = false,
+  initialFocus,
+  ...props
+}: DialogContentProps) {
   const contentRef = React.useRef<HTMLDivElement>(null)
 
   const extractZIndex = (str?: unknown) =>
     typeof str === 'string' ? str.match(/(?:^|\s)(z-(?:\[\d+\]|\d+))(?:\s|$)/)?.[1] : undefined
 
   const extractedZIndex = extractZIndex(className) || extractZIndex(overlayClassName)
+  const isPrecision = size === 'compact' || size === 'standard'
+  const shouldShowCloseButton = showCloseButton ?? !isPrecision
 
   return (
     <DialogPortal container={container ?? (typeof document !== 'undefined' ? document.body : undefined)}>
@@ -107,7 +120,8 @@ function DialogContent({
             initialFocus={initialFocus ?? false}
             data-slot="dialog-content"
             className={cn(
-              "pointer-events-auto relative flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[min(88vh,calc(100%-2rem))] max-h-[min(88dvh,calc(100%-2rem))] overflow-hidden overscroll-contain rounded-lg bg-card p-5 sm:p-6 text-sm text-card-foreground border border-border shadow-none outline-none sm:max-w-[400px]",
+              "pointer-events-auto relative flex flex-col w-full overflow-hidden overscroll-contain rounded-lg bg-card text-card-foreground border border-border shadow-none outline-none",
+              dialogSizeClasses[size] || dialogSizeClasses.default,
               "[&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:flex-1 [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:min-h-0 [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:overflow-y-auto [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:overflow-x-hidden [&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(form)]:overscroll-contain",
               "[&>form]:flex [&>form]:flex-col [&>form]:flex-1 [&>form]:min-h-0 [&>form]:overflow-hidden",
               "[&>form>*:not([data-slot=dialog-footer])]:flex-1 [&>form>*:not([data-slot=dialog-footer])]:min-h-0 [&>form>*:not([data-slot=dialog-footer])]:overflow-y-auto [&>form>*:not([data-slot=dialog-footer])]:overflow-x-hidden [&>form>*:not([data-slot=dialog-footer])]:overscroll-contain",
@@ -116,7 +130,7 @@ function DialogContent({
             {...props}
           >
             {children}
-            {showCloseButton && (
+            {shouldShowCloseButton && (
               <DialogPrimitive.Close
                 data-slot="dialog-close"
                 render={
@@ -135,6 +149,144 @@ function DialogContent({
         </div>
       )}
     </DialogPortal>
+  )
+}
+
+export interface DialogPrecisionHeaderProps {
+  title: React.ReactNode
+  onClose?: () => void
+  onSubmit?: () => void
+  submitDisabled?: boolean
+  submitAriaLabel?: string
+  cancelAriaLabel?: string
+  rightAction?: React.ReactNode
+  className?: string
+  form?: string
+}
+
+/**
+ * Zenfit 標準精密彈窗標頭 (Precision Header Variant D)
+ * - 左側：純圖標取消圓鈕 (✕)
+ * - 中間：客觀純品名/標題 (截斷保護)
+ * - 右側：純圖標提交圓鈕 (✓) 或自訂按鈕（支援 onClick 或 form submit）
+ */
+function DialogPrecisionHeader({
+  title,
+  onClose,
+  onSubmit,
+  submitDisabled = false,
+  submitAriaLabel = 'Save',
+  cancelAriaLabel = 'Cancel',
+  rightAction,
+  className,
+  form,
+}: DialogPrecisionHeaderProps) {
+  return (
+    <DialogHeader className={cn("p-0 pb-0 shrink-0", className)}>
+      <div className="flex items-center justify-between w-full h-7">
+        {/* 左側純圖標：取消 (✕) */}
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
+            title={cancelAriaLabel}
+            aria-label={cancelAriaLabel}
+          >
+            <XIcon className="size-3.5 stroke-[2.2]" />
+          </button>
+        ) : (
+          <DialogClose
+            render={
+              <button
+                type="button"
+                className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
+                title={cancelAriaLabel}
+                aria-label={cancelAriaLabel}
+              />
+            }
+          >
+            <XIcon className="size-3.5 stroke-[2.2]" />
+          </DialogClose>
+        )}
+
+        {/* 中間純標題 */}
+        <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2">
+          <span className="truncate">{title}</span>
+        </DialogTitle>
+
+        {/* 右側純圖標：提交 (✓) 或自訂插槽 */}
+        {rightAction ? (
+          rightAction
+        ) : (form || onSubmit) ? (
+          <button
+            type={form ? "submit" : "button"}
+            form={form}
+            onClick={form ? undefined : onSubmit}
+            disabled={submitDisabled}
+            className="size-7 rounded-full flex items-center justify-center bg-foreground text-background hover:opacity-90 active:scale-92 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:pointer-events-none"
+            title={submitAriaLabel}
+            aria-label={submitAriaLabel}
+          >
+            <CheckIcon className="size-3.5 stroke-[2.5]" />
+          </button>
+        ) : (
+          <div className="size-7 shrink-0" />
+        )}
+      </div>
+    </DialogHeader>
+  )
+}
+
+export interface PrecisionDialogContentProps extends Omit<DialogContentProps, 'size' | 'title'> {
+  title?: React.ReactNode
+  onClose?: () => void
+  onSubmit?: () => void
+  submitDisabled?: boolean
+  submitAriaLabel?: string
+  cancelAriaLabel?: string
+  rightAction?: React.ReactNode
+  form?: string
+}
+
+/**
+ * Zenfit 標準精密彈窗容器 (Precision Dialog Content)
+ * 唯一真理源：鎖死 300px 寬度、16px 緊湊邊距（p-4 sm:p-4 防洩漏）、font-mono、0 陰影
+ * 若提供 title，自動內建標準 Precision Header (Variant D)
+ */
+function PrecisionDialogContent({
+  title,
+  onClose,
+  onSubmit,
+  submitDisabled,
+  submitAriaLabel,
+  cancelAriaLabel,
+  rightAction,
+  form,
+  children,
+  className,
+  ...props
+}: PrecisionDialogContentProps) {
+  return (
+    <DialogContent
+      size="standard"
+      className={className}
+      {...props}
+    >
+      {title !== undefined && (
+        <DialogPrecisionHeader
+          title={title}
+          onClose={onClose}
+          onSubmit={onSubmit}
+          submitDisabled={submitDisabled}
+          submitAriaLabel={submitAriaLabel}
+          cancelAriaLabel={cancelAriaLabel}
+          rightAction={rightAction}
+          form={form}
+        />
+      )}
+      {children}
+    </DialogContent>
   )
 }
 
@@ -215,4 +367,6 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  DialogPrecisionHeader,
+  PrecisionDialogContent,
 }

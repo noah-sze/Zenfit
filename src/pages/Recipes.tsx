@@ -316,7 +316,7 @@ export default function Recipes() {
                           </span>
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
-                          {formatEnergy(macros.calories, energyUnit).formatted} · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
+                          {formatEnergy(macros.calories, energyUnit).formatted} · {macros.carbs}g C · {macros.protein}g P · {macros.fat}g F
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 transition-transform group-hover:translate-x-0.5" />
@@ -545,8 +545,8 @@ export default function Recipes() {
                   </span>
                 </div>
                 <div className="text-[11px] font-mono text-muted-foreground flex gap-3 pt-0.5">
-                  <span>P: {previewRecipeMacros.protein} g</span>
                   <span>C: {previewRecipeMacros.carbs} g</span>
+                  <span>P: {previewRecipeMacros.protein} g</span>
                   <span>F: {previewRecipeMacros.fat} g</span>
                 </div>
               </div>

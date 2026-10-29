@@ -79,6 +79,50 @@ export function useFoodLogs(date: string) {
     await db.food_logs.where('bundleId').equals(bundleId).delete();
   };
 
+  const updateFoodLogBundle = async (
+    bundleId: string,
+    items: Array<{
+      id?: string;
+      foodId?: string;
+      foodName: string;
+      quantity: number;
+      unit: string;
+      calories: number;
+      carbs: number;
+      protein: number;
+      fat: number;
+    }>
+  ) => {
+    const existingLogs = await db.food_logs.where('bundleId').equals(bundleId).toArray();
+    if (existingLogs.length === 0) return;
+    const baseInfo = existingLogs[0];
+    const now = Date.now();
+
+    await db.transaction('rw', db.food_logs, async () => {
+      await db.food_logs.where('bundleId').equals(bundleId).delete();
+
+      const newLogs: FoodLog[] = items.map((item) => ({
+        id: item.id || uuidv4(),
+        date: baseInfo.date,
+        mealType: baseInfo.mealType,
+        bundleId,
+        bundleName: baseInfo.bundleName,
+        foodId: item.foodId,
+        foodName: item.foodName,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        carbs: item.carbs,
+        protein: item.protein,
+        fat: item.fat,
+        createdAt: baseInfo.createdAt,
+        updatedAt: now,
+      }));
+
+      await db.food_logs.bulkAdd(newLogs);
+    });
+  };
+
   return {
     logs,
     totals,
@@ -87,6 +131,7 @@ export function useFoodLogs(date: string) {
     addFoodLog,
     addFoodLogBundle,
     updateFoodLog,
+    updateFoodLogBundle,
     deleteFoodLog,
     deleteFoodLogBundle,
   };

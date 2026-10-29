@@ -2,10 +2,7 @@ import { useState, useEffect, useMemo, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
+  PrecisionDialogContent,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -21,7 +18,7 @@ import { cn, formatDisplayAmount } from '@/lib/utils';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
 import { convertFoodWeight, convertFoodVolume } from '@/utils/unitMath';
-import { X, ChevronRight, Check } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 type KeypadField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
 
@@ -562,46 +559,15 @@ export function FoodFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent
-          showCloseButton={false}
+        <PrecisionDialogContent
+          title={isEdit ? t('settings.editCustomFood') : t('diet.addFood', '新增單品食材')}
+          form={formId}
+          submitDisabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
+          submitAriaLabel={isEdit ? t('common.save') : t('common.add')}
+          cancelAriaLabel={t('common.cancel')}
           overlayClassName="z-[70]"
-          className="z-[70] w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] bg-card border border-border text-card-foreground p-4 sm:p-4 font-mono text-xs select-none shadow-none"
+          className="z-[70]"
         >
-          {/* 彈窗標頭 (方案 D: 頂部雙純圖標 · 左 ✕ 放棄，中 標題，右 ✓ 提交) */}
-          <DialogHeader className="p-0 pb-0 shrink-0">
-            <div className="flex items-center justify-between w-full h-7">
-              {/* 左側純圖標：取消 (✕) */}
-              <DialogClose
-                render={
-                  <button
-                    type="button"
-                    className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
-                    title={t('common.cancel')}
-                    aria-label={t('common.cancel')}
-                  />
-                }
-              >
-                <X className="size-3.5 stroke-[2.2]" />
-              </DialogClose>
-
-              {/* 中間標題 */}
-              <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2">
-                <span className="truncate">{isEdit ? t('settings.editCustomFood') : t('diet.addFood', '新增單品食材')}</span>
-              </DialogTitle>
-
-              {/* 右側純圖標：提交 (✓) */}
-              <button
-                type="submit"
-                form={formId}
-                disabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
-                className="size-7 rounded-full flex items-center justify-center bg-foreground text-background hover:opacity-90 active:scale-92 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:pointer-events-none"
-                title={isEdit ? t('common.save') : t('common.add')}
-                aria-label={isEdit ? t('common.save') : t('common.add')}
-              >
-                <Check className="size-3.5 stroke-[2.5]" />
-              </button>
-            </div>
-          </DialogHeader>
 
           <form id={formId} onSubmit={handleSubmit} className="space-y-3.5 pt-3.5 pb-0">
           {/* 表格段落 1: 基本資訊 (Vercel Usage List) */}
@@ -789,23 +755,6 @@ export function FoodFormDialog({
                 </button>
               </div>
 
-              {/* 蛋白質 */}
-              <div className="h-10 px-4 flex items-center justify-between">
-                <span className="text-protein text-xs font-medium">{t('diet.protein')}</span>
-                <button
-                  type="button"
-                  onClick={(e) => openKeypad('protein', e.currentTarget)}
-                  className={cn(
-                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
-                    protein ? "text-protein" : "text-muted-foreground"
-                  )}
-                >
-                  {renderAmountValue(protein, "text-protein")}
-                  <span className="text-xs text-muted-foreground">g</span>
-                  <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                </button>
-              </div>
-
               {/* 碳水化合物 */}
               <div className="h-10 px-4 flex items-center justify-between">
                 <span className="text-carbs text-xs font-medium">{t('diet.carbs')}</span>
@@ -818,6 +767,23 @@ export function FoodFormDialog({
                   )}
                 >
                   {renderAmountValue(carbs, "text-carbs")}
+                  <span className="text-xs text-muted-foreground">g</span>
+                  <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                </button>
+              </div>
+
+              {/* 蛋白質 */}
+              <div className="h-10 px-4 flex items-center justify-between">
+                <span className="text-protein text-xs font-medium">{t('diet.protein')}</span>
+                <button
+                  type="button"
+                  onClick={(e) => openKeypad('protein', e.currentTarget)}
+                  className={cn(
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    protein ? "text-protein" : "text-muted-foreground"
+                  )}
+                >
+                  {renderAmountValue(protein, "text-protein")}
                   <span className="text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
@@ -844,7 +810,7 @@ export function FoodFormDialog({
 
           {/* 方案 D 徹底無底欄，表單內容直達底部 */}
         </form>
-      </DialogContent>
+      </PrecisionDialogContent>
     </Dialog>
 
     {/* 響應式精密數字鍵盤輸入器：桌面端懸浮 Popover / 手機端底部吸附鍵盤 */}

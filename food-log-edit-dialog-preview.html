@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit 飲食記錄與菜餚編輯管理 Dialog · 深度方案庫</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-subtle: #f9fafb;
+      --fg: #000000;
+      --card: #ffffff;
+      --card-fg: #000000;
+      --border: #eaeaea;
+      --border-subtle: #f0f0f0;
+      --border-strong: #d4d4d8;
+      --muted: #f4f4f5;
+      --muted-header: #fafafa;
+      --muted-fg: #71717a;
+      --muted-subtle: #a1a1aa;
+      --track: #e4e4e7;
+      --overlay: rgba(255, 255, 255, 0.85);
+
+      /* 三大營養素與熱量語意色彩 (Strict Order: Calories, Carbs, Protein, Fat) */
+      --calories: #e11d48;
+      --carbs: #d97706;
+      --protein: #0284c7;
+      --fat: #7c3aed;
+      --destructive: #ef4444;
+      --destructive-fg: #ffffff;
+
+      --carbs-subtle: rgba(217, 119, 6, 0.12);
+      --protein-subtle: rgba(2, 132, 199, 0.12);
+      --fat-subtle: rgba(124, 58, 237, 0.12);
+      --calories-subtle: rgba(225, 29, 72, 0.12);
+
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    html.dark {
+      --bg: #000000;
+      --bg-subtle: #09090b;
+      --fg: #ffffff;
+      --card: #000000;
+      --card-fg: #ffffff;
+      --border: #262626;
+      --border-subtle: #1c1c1f;
+      --border-strong: #3f3f46;
+      --muted: #18181b;
+      --muted-header: #121214;
+      --muted-fg: #a1a1aa;
+      --muted-subtle: #71717a;
+      --track: #27272a;
+      --overlay: rgba(0, 0, 0, 0.88);
+
+      --calories: #f43f5e;
+      --carbs: #f59e0b;
+      --protein: #38bdf8;
+      --fat: #a78bfa;
+      --destructive: #dc2626;
+      --destructive-fg: #ffffff;
+
+      --carbs-subtle: rgba(245, 158, 11, 0.18);
+      --protein-subtle: rgba(56, 189, 248, 0.18);
+      --fat-subtle: rgba(167, 139, 250, 0.18);
+      --calories-subtle: rgba(244, 63, 94, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      padding: 24px 20px 140px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* 頂部導航控制區 */
+    .control-header-wrap {
+      max-width: 1360px;
+      margin: 0 auto 32px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted-fg);
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--muted);
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-destructive {
+      background: var(--destructive);
+      color: var(--destructive-fg);
+      border-color: var(--destructive);
+      font-weight: 600;
+    }
+
+    .btn-destructive:hover {
+      opacity: 0.92;
+    }
+
+    /* 分類導航與大分類切換 */
+    .category-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .category-title-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-fg);
+      margin-right: 4px;
+    }
+
+    .tab-btn {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted-fg);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .tab-btn:hover {
+      color: var(--fg);
+      border-color: var(--border-strong);
+    }
+
+    .tab-btn.active {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+      font-weight: 600;
+    }
+
+    /* 分區橫條 */
+    .section-divider {
+      max-width: 1360px;
+      margin: 40px auto 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-divider h2 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .section-divider .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-divider .count-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+    }
+
+    /* 響應式佈局看板 */
+    .showcase-grid {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+
+    .dialog-preview-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-subtle);
+      padding: 18px;
+      position: relative;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      color: var(--muted-fg);
+      margin-bottom: 12px;
+    }
+
+    .card-badge span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--carbs);
+    }
+
+    /* 彈窗模擬容器 (Simulated Modal Window) */
+    .modal-frame {
+      width: 100%;
+      max-width: 350px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: none;
+      position: relative;
+      user-select: none;
+    }
+
+    /* 方案 D 頂部整合標頭 (✕ / 標題 / ✓) */
+    .modal-header-icon-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 40px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--muted);
+      border: none;
+      color: var(--muted-fg);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      color: var(--fg);
+      background: var(--border);
+    }
+
+    .icon-btn.primary {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .modal-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      text-align: center;
+      flex: 1;
+      padding: 0 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 標準 Dialog 標頭 */
+    .modal-header-standard {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* 4 欄即時 HUD Banner (熱量 + 碳水 + 蛋白質 + 脂肪) */
+    .hud-banner {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 10px 12px;
+      background: var(--card);
+      overflow: hidden;
+      text-align: center;
+      padding: 7px 0;
+    }
+
+    .hud-col {
+      padding: 0 3px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hud-col:last-child {
+      border-right: none;
+    }
+
+    .hud-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .hud-val {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .hud-unit {
+      font-size: 9px;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+
+    /* 語意化顏色類別 */
+    .text-calories { color: var(--calories); }
+    .text-carbs { color: var(--carbs); }
+    .text-protein { color: var(--protein); }
+    .text-fat { color: var(--fat); }
+
+    /* 供能比比例條 (Ratio Bar: C -> P -> F) */
+    .ratio-bar {
+      height: 4px;
+      width: calc(100% - 24px);
+      margin: 0 12px 10px;
+      border-radius: 9999px;
+      display: flex;
+      overflow: hidden;
+      background: var(--track);
+    }
+
+    .ratio-c { background: var(--carbs); }
+    .ratio-p { background: var(--protein); }
+    .ratio-f { background: var(--fat); }
+
+    /* Usage List 表格列 (divide-y) */
+    .usage-list {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      overflow: hidden;
+      margin: 10px 12px;
+    }
+
+    .usage-row {
+      min-height: 38px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .usage-row:last-child {
+      border-bottom: none;
+    }
+
+    .row-label {
+      color: var(--muted-fg);
+      font-size: 12px;
+    }
+
+    .row-value {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 步進調重器 (Stepper) */
+    .stepper-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 2px 4px;
+    }
+
+    .stepper-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      background: var(--card);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.1s ease;
+    }
+
+    .stepper-btn:active {
+      transform: scale(0.92);
+      background: var(--border);
+    }
+
+    .stepper-input {
+      width: 44px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--fg);
+      outline: none;
+    }
+
+    .unit-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted-fg);
+      padding-right: 4px;
+    }
+
+    /* 快捷膠囊 (Quick Pills) */
+    .preset-pills-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 8px 12px 10px;
+      flex-wrap: wrap;
+    }
+
+    .preset-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted-fg);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .preset-pill:hover {
+      background: var(--muted);
+      color: var(--fg);
+    }
+
+    .preset-pill:active {
+      transform: scale(0.94);
+    }
+
+    .preset-pill.active {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+      font-weight: 600;
+    }
+
+    /* MacroSquares 矩陣 (C, P, F) */
+    .macro-squares-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      text-align: center;
+      margin: 8px 12px;
+    }
+
+    .macro-square {
+      flex: 1;
+      padding: 4px 2px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .macro-square-code {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .macro-square-val {
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    .macro-square.c {
+      border-color: var(--carbs);
+      background: var(--carbs-subtle);
+      color: var(--carbs);
+    }
+    .macro-square.p {
+      border-color: var(--protein);
+      background: var(--protein-subtle);
+      color: var(--protein);
+    }
+    .macro-square.f {
+      border-color: var(--fat);
+      background: var(--fat-subtle);
+      color: var(--fat);
+    }
+
+    /* 底部操作欄 */
+    .modal-bottom-wrap {
+      padding: 4px 12px 12px;
+    }
+
+    .modal-footer-dual {
+      padding: 8px 12px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      background: var(--muted-header);
+    }
+
+    /* 說明清單 */
+    .design-notes {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 11px;
+      color: var(--muted-fg);
+      line-height: 1.5;
+    }
+
+    .design-notes strong {
+      color: var(--fg);
+    }
+
+    /* 內嵌式小鍵盤九宮格 (Pro Keypad Grid) */
+    .mini-keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin: 8px 12px;
+    }
+
+    .mini-keypad-key {
+      height: 30px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mini-keypad-key:active {
+      background: var(--muted);
+      transform: scale(0.96);
+    }
+
+    /* 方案 5 物理滑塊刻度尺樣式 */
+    .ticker-slider-container {
+      padding: 12px 14px 6px;
+    }
+
+    .ticker-range-input {
+      width: 100%;
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--track);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .ticker-range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--fg);
+      border: 2px solid var(--card);
+      box-shadow: 0 0 0 1px var(--border-strong);
+      cursor: grab;
+      transition: transform 0.1s ease;
+    }
+
+    .ticker-range-input::-webkit-slider-thumb:active {
+      transform: scale(1.15);
+      cursor: grabbing;
+    }
+
+    .ticker-marks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted-fg);
+    }
+
+    /* 方案 6 雙向目標反推輸入框 */
+    .dual-target-box {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 8px 12px;
+      background: var(--card);
+      overflow: hidden;
+      divide-y: 1px solid var(--border);
+    }
+
+    .dual-target-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .target-input-field {
+      width: 64px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: right;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      background: var(--bg-subtle);
+      color: var(--fg);
+      outline: none;
+    }
+
+    .target-input-field:focus {
+      border-color: var(--fg);
+      background: var(--card);
+    }
+
+    /* 方案 7 記憶標籤組 */
+    .memory-pills-wrap {
+      display: flex;
+      gap: 6px;
+      margin: 8px 12px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .memory-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .memory-pill:hover {
+      background: var(--muted);
+      border-color: var(--border-strong);
+    }
+
+    .memory-pill .pill-tag {
+      font-size: 9px;
+      color: var(--muted-fg);
+    }
+
+    /* 方案 8 餐別快速切換膠囊組 */
+    .meal-segmented-bar {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin: 8px 12px 10px;
+      overflow: hidden;
+      background: var(--muted);
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .meal-seg-item {
+      flex: 1;
+      height: 26px;
+      font-size: 11px;
+      font-weight: 500;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted-fg);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .meal-seg-item.active {
+      background: var(--card);
+      color: var(--fg);
+      font-weight: 700;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* Zenfit 專案常用的標準數字輸入框膠囊 (Quantity Capsule Button) */
+    .qty-capsule-btn {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    .qty-capsule-btn:hover {
+      background: var(--muted);
+      border-color: var(--border-strong);
+    }
+
+    .qty-capsule-btn:active {
+      transform: scale(0.95);
+    }
+
+    .qty-capsule-val {
+      font-weight: 700;
+      color: var(--fg);
+      letter-spacing: -0.01em;
+    }
+
+    .qty-capsule-unit {
+      font-size: 11px;
+      color: var(--muted-fg);
+      font-weight: 500;
+    }
+
+    .qty-capsule-arrow {
+      font-size: 11px;
+      color: var(--muted-subtle);
+      margin-left: 1px;
+      transition: transform 0.15s ease;
+    }
+
+    .qty-capsule-btn:hover .qty-capsule-arrow {
+      color: var(--fg);
+      transform: translateX(1px);
+    }
+
+    /* 全域獨立數字撥號鍵盤浮層 (與 ResponsiveNumericKeypad 100% 一致) */
+    .keypad-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .keypad-dialog-card {
+      width: 290px;
+      max-width: calc(100vw - 32px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: none;
+      user-select: none;
+    }
+
+    .keypad-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .keypad-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--fg);
+      letter-spacing: -0.01em;
+    }
+
+    .keypad-sub {
+      font-size: 11px;
+      color: var(--muted-fg);
+      font-family: var(--font-mono);
+    }
+
+    .keypad-display {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .keypad-display-val {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--fg);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .keypad-display-unit {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted-fg);
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .keypad-key {
+      height: 44px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--fg);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
+      outline: none;
+    }
+
+    .keypad-key:hover {
+      background: var(--muted);
+      border-color: var(--border-strong);
+    }
+
+    .keypad-key:active {
+      transform: scale(0.95);
+      background: var(--border);
+    }
+
+    .keypad-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部控制與說明 -->
+  <div class="control-header-wrap">
+    <div class="header-top">
+      <div>
+        <h1>飲食記錄與菜餚編輯管理 Dialog · 深度方案庫</h1>
+        <p class="subtitle">為「單品食物」（8 種交互維度）與「菜餚食譜」（4 種維度）提供高對比、極簡扁平的完整設計系統</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn" onclick="toggleTheme()">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-text">切換深色模式</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 分類過濾切換 -->
+    <div class="category-filter-bar">
+      <span class="category-title-badge">方案視圖：</span>
+      <button class="tab-btn active" onclick="switchView('single')">【單品食物編輯】專區 (8 種深度方案 · 重點)</button>
+      <button class="tab-btn" onclick="switchView('recipe')">【菜餚食譜編輯】專區 (4 種方案)</button>
+      <button class="tab-btn" onclick="switchView('all')">全方案矩陣 (12 個方案一覽)</button>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 第一大分區：【單品食物編輯 (Single Food Log)】8 種深度方案                 -->
+  <!-- ========================================================================= -->
+  <div class="section-divider" id="sec-single-divider">
+    <h2>分區一：單品食物記錄編輯 (Single Food Log)</h2>
+    <div class="line"></div>
+    <span class="count-pill">8 個深度方案</span>
+  </div>
+
+  <div class="showcase-grid" id="grid-single">
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 1：Hero Stepper 雙向微調型 (推薦)                    -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-1">
+      <div class="card-badge" style="color: var(--carbs);">
+        <span class="dot" style="background: var(--carbs);"></span>
+        <span>單品 方案 1 · 方案 D 頂部圖標 + Hero Stepper (強烈推薦 ⭐)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div style="padding: 16px 14px 12px; text-align: center;">
+          <div style="font-size: 10px; text-transform: uppercase; font-family: var(--font-mono); color: var(--muted-fg); letter-spacing: 0.08em; margin-bottom: 8px;">
+            食用份量 (可輸入或點擊微調)
+          </div>
+
+          <div style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" class="btn" style="width: 30px; height: 30px; border-radius: 50%; padding: 0;" onclick="adjustSingleVal('s1', -10)">−10</button>
+            <button type="button" class="btn" style="width: 26px; height: 26px; border-radius: 50%; padding: 0;" onclick="adjustSingleVal('s1', -1)">−</button>
+
+            <div style="display: flex; align-items: baseline; gap: 2px; padding: 0 4px;">
+              <input type="text" id="s1-input" value="100" oninput="handleSingleLiveCalc('s1')" style="width: 68px; font-family: var(--font-mono); font-size: 24px; font-weight: 700; text-align: center; border: none; background: transparent; color: var(--fg); outline: none; border-bottom: 1.5px solid var(--border-strong);">
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--muted-fg);">g</span>
+            </div>
+
+            <button type="button" class="btn" style="width: 26px; height: 26px; border-radius: 50%; padding: 0;" onclick="adjustSingleVal('s1', 1)">+</button>
+            <button type="button" class="btn" style="width: 30px; height: 30px; border-radius: 50%; padding: 0;" onclick="adjustSingleVal('s1', 10)">+10</button>
+          </div>
+        </div>
+
+        <div class="hud-banner">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s1-cal">389</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s1-c">66.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s1-p">16.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s1-f">6.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除此單品食物記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：核心大字號等寬輸入 + 兩翼 ±1g 與 ±10g 微調，頂部 ✕/✓，底實色紅底防誤觸刪除。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 2：Vercel Usage List 表格表單型                      -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-2">
+      <div class="card-badge">
+        <span class="dot" style="background: var(--muted-fg);"></span>
+        <span>單品 方案 2 · Vercel Usage List 表格型 (經典分行)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-standard">
+          <div>
+            <div style="font-size: 13px; font-weight: 700;">編輯單品記錄</div>
+            <div style="font-size: 11px; color: var(--muted-fg);">大燕麥片 · 早餐</div>
+          </div>
+          <button type="button" class="icon-btn" title="關閉">✕</button>
+        </div>
+
+        <div class="usage-list">
+          <div class="usage-row">
+            <span class="row-label">餐別</span>
+            <div class="row-value">
+              <span style="padding: 1px 6px; border-radius: 4px; background: var(--muted); border: 1px solid var(--border); font-size: 11px;">早餐</span>
+            </div>
+          </div>
+
+          <div class="usage-row">
+            <span class="row-label">食用份量</span>
+            <div class="row-value">
+              <div class="stepper-wrap">
+                <button type="button" class="stepper-btn" onclick="adjustSingleVal('s2', -10)">−</button>
+                <input type="text" id="s2-input" class="stepper-input" value="100" oninput="handleSingleLiveCalc('s2')">
+                <span class="unit-tag">g</span>
+                <button type="button" class="stepper-btn" onclick="adjustSingleVal('s2', 10)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="usage-row">
+            <span class="row-label text-calories" style="font-weight: 600;">折算熱量</span>
+            <div class="row-value text-calories" style="font-weight: 700;">
+              <span id="s2-cal">389</span>
+              <span style="font-size: 10px; opacity: 0.8;">kcal</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 欄獨立 MacroSquares (C, P, F 恆定順序) -->
+        <div class="macro-squares-box">
+          <div class="macro-square c">
+            <div class="macro-square-code">C 碳水</div>
+            <div class="macro-square-val"><span id="s2-c">66</span>g</div>
+          </div>
+          <div class="macro-square p">
+            <div class="macro-square-code">P 蛋白質</div>
+            <div class="macro-square-val"><span id="s2-p">16.9</span>g</div>
+          </div>
+          <div class="macro-square f">
+            <div class="macro-square-code">F 脂肪</div>
+            <div class="macro-square-val"><span id="s2-f">6.9</span>g</div>
+          </div>
+        </div>
+
+        <div class="modal-footer-dual">
+          <button type="button" class="btn btn-destructive" style="padding: 4px 8px; font-size: 11px;" onclick="alert('已刪除此記錄')">
+            刪除記錄
+          </button>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn" style="padding: 4px 10px;">取消</button>
+            <button type="button" class="btn btn-primary" style="padding: 4px 12px;">儲存</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：1:1 承襲 Zenfit 目前 Settings 與 CategoryDetails 的 List 結構，配備獨立 3 欄 MacroSquares。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 3：常用數字膠囊喚起鍵盤輸入型 (選定標準 ⭐)          -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-3">
+      <div class="card-badge" style="color: var(--calories);">
+        <span class="dot" style="background: var(--calories);"></span>
+        <span>單品 方案 3 · 常用數字膠囊喚起鍵盤型 (標準架構 ⭐)</span>
+      </div>
+
+      <div class="modal-frame">
+        <!-- 頂部圖標標頭欄 (標題純化，刪除早餐綴詞) -->
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <!-- 4 欄即時 HUD Banner (計算預估看板，放於頂部下方，固定 C -> P -> F 順序) -->
+        <div class="hud-banner">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s3-cal">1011</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s3-c">171.6</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s3-p">43.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s3-f">17.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <!-- 供能比標尺 (Ratio Bar) -->
+        <div class="ratio-bar" title="供能比標尺">
+          <div class="ratio-c" id="s3-bar-c" style="width: 68%;"></div>
+          <div class="ratio-p" id="s3-bar-p" style="width: 17%;"></div>
+          <div class="ratio-f" id="s3-bar-f" style="width: 15%;"></div>
+        </div>
+
+        <!-- 食用份量卡片 (標準 Usage List 行，右側包裹常用的數字輸入框膠囊) -->
+        <div style="padding: 0 12px 10px;">
+          <div class="usage-list" style="margin: 0;">
+            <div class="usage-row">
+              <span class="row-label" style="font-weight: 600;">食用份量</span>
+              <div class="row-value">
+                <button type="button" class="qty-capsule-btn" onclick="openS3KeypadModal()" title="點擊輸入重量">
+                  <span class="qty-capsule-val" id="s3-val-disp">260</span>
+                  <span class="qty-capsule-unit">g</span>
+                  <span class="qty-capsule-arrow">›</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部破壞性按鈕 -->
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除此記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點（標準架構）</strong>：標題純化（無餐別贅詞），頂部 4 欄 HUD Banner（C/P/F 順序）與 Ratio Bar，表格行右側配備 Zenfit 常用的標準數字膠囊 <code>260 g ›</code>，點擊直接進入全功能數字鍵盤浮層，版面規整緊湊。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 4：內嵌直覺數字微盤型 (Pro Keypad Grid)             -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-4">
+      <div class="card-badge" style="color: var(--protein);">
+        <span class="dot" style="background: var(--protein);"></span>
+        <span>單品 方案 4 · 內嵌數字微盤型 (Pro Grid · 零鍵盤抖動)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div style="padding: 10px 12px 6px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 11px; color: var(--muted-fg);">食用份量</span>
+          <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--fg);">
+            <span id="s4-val-disp">100</span><span style="font-size: 12px; color: var(--muted-fg); margin-left: 2px;">g</span>
+          </div>
+        </div>
+
+        <div class="hud-banner" style="margin-top: 2px; margin-bottom: 8px;">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s4-cal">389</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s4-c">66.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s4-p">16.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s4-f">6.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="mini-keypad-grid">
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('1')">1</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('2')">2</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('3')">3</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('4')">4</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('5')">5</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('6')">6</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('7')">7</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('8')">8</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('9')">9</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('C')" style="color: var(--destructive);">C</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('0')">0</button>
+          <button type="button" class="mini-keypad-key" onclick="pressMiniKey('BS')">⌫</button>
+        </div>
+
+        <div class="modal-bottom-wrap" style="padding-top: 4px;">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 32px; font-size: 11px; border-radius: var(--radius);" onclick="alert('已刪除此記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：在彈窗內直接內嵌微型九宮格數字盤，徹底杜絕手機鍵盤彈起引發的畫面跳動或遮擋。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 5：物理滑塊刻度條型 (Ticker Scale · 電子秤沉浸感)      -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-5">
+      <div class="card-badge" style="color: var(--fat);">
+        <span class="dot" style="background: var(--fat);"></span>
+        <span>單品 方案 5 · 物理微刻度滑塊型 (Ticker Slider · 電子秤沉浸感)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <!-- 焦點大數字 -->
+        <div style="padding: 14px 14px 4px; text-align: center;">
+          <div style="font-size: 10px; font-family: var(--font-mono); color: var(--muted-fg); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">
+            滑動直覺微調
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 28px; font-weight: 700;">
+            <span id="s5-val-disp">100</span><span style="font-size: 13px; color: var(--muted-fg); margin-left: 2px;">g</span>
+          </div>
+        </div>
+
+        <!-- 物理刻度尺滑桿 -->
+        <div class="ticker-slider-container">
+          <input type="range" min="10" max="300" step="5" value="100" class="ticker-range-input" id="s5-slider" oninput="handleSliderChange(this.value)">
+          <div class="ticker-marks">
+            <span>10g</span>
+            <span>100g</span>
+            <span>200g</span>
+            <span>300g</span>
+          </div>
+        </div>
+
+        <!-- 4 欄 HUD Banner -->
+        <div class="hud-banner" style="margin-top: 6px;">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s5-cal">389</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s5-c">66.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s5-p">16.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s5-f">6.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除此記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：配備順滑的實體刻度滑桿，左右拖曳即可連續微調，在大範圍快速增減重量時體驗極佳。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 6：雙向目標反推折算型 (Target Reverse Calculator)   -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-6">
+      <div class="card-badge" style="color: var(--protein);">
+        <span class="dot" style="background: var(--protein);"></span>
+        <span>單品 方案 6 · 目標熱量/蛋白質反推型 (Target Reverse · 備賽控卡)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <!-- 雙向綁定輸入區 -->
+        <div class="dual-target-box">
+          <div class="dual-target-row">
+            <span style="font-weight: 500;">食物重量 (克數)</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="text" id="s6-weight" class="target-input-field" value="100" oninput="reverseCalcFromWeight()">
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--muted-fg);">g</span>
+            </div>
+          </div>
+
+          <div class="dual-target-row">
+            <span class="text-calories" style="font-weight: 600;">鎖定目標熱量 ⚡</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="text" id="s6-cal-target" class="target-input-field text-calories" value="389" oninput="reverseCalcFromCalories()">
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--muted-fg);">kcal</span>
+            </div>
+          </div>
+
+          <div class="dual-target-row">
+            <span class="text-protein" style="font-weight: 600;">鎖定蛋白質 ⚡</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="text" id="s6-protein-target" class="target-input-field text-protein" value="16.9" oninput="reverseCalcFromProtein()">
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--muted-fg);">g</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 欄 HUD Banner (反饋碳水與脂肪) -->
+        <div class="hud-banner" style="margin-top: 4px;">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s6-disp-cal">389</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s6-disp-c">66.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s6-disp-p">16.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s6-disp-f">6.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除此記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點（備賽神器）</strong>：雙向反推！可直接輸入想攝取的目標熱量（如 200 kcal）或目標蛋白質，自動精確反推所需食物克數。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 7：歷史常用情境記憶型 (History Memory Presets)        -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-7">
+      <div class="card-badge" style="color: var(--carbs);">
+        <span class="dot" style="background: var(--carbs);"></span>
+        <span>單品 方案 7 · 歷史常用情境記憶型 (Memory Presets · 一鍵帶入)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div style="padding: 12px 14px 4px; text-align: center;">
+          <div style="font-family: var(--font-mono); font-size: 26px; font-weight: 700;">
+            <span id="s7-disp-val">100</span><span style="font-size: 13px; color: var(--muted-fg); margin-left: 2px;">g</span>
+          </div>
+        </div>
+
+        <!-- 歷史常吃份量標籤 -->
+        <div style="padding: 0 12px;">
+          <div style="font-size: 10px; font-family: var(--font-mono); color: var(--muted-fg); margin-bottom: 4px;">
+            歷史常用份量 (單擊回填)
+          </div>
+          <div class="memory-pills-wrap">
+            <button type="button" class="memory-pill" onclick="applyMemoryVal(40, '練前加餐')">
+              <span>40g</span><span class="pill-tag">練前</span>
+            </button>
+            <button type="button" class="memory-pill" onclick="applyMemoryVal(60, '平日早餐')">
+              <span>60g</span><span class="pill-tag">平日</span>
+            </button>
+            <button type="button" class="memory-pill" onclick="applyMemoryVal(100, '大份高碳')">
+              <span>100g</span><span class="pill-tag">高碳日</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 欄 HUD Banner -->
+        <div class="hud-banner" style="margin-top: 6px;">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s7-cal">389</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s7-c">66.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s7-p">16.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s7-f">6.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除此記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：自動記憶該食材過去常吃的情境與克數（如練前 40g、高碳日 100g），單擊直接回填。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 單品 方案 8：餐別分段切換與調重型 (Meal Switch & Weight Edit)  -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-single-8">
+      <div class="card-badge" style="color: var(--muted-fg);">
+        <span class="dot" style="background: var(--muted-fg);"></span>
+        <span>單品 方案 8 · 餐別快速轉移型 (Meal Switch & Edit)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>大燕麥片</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 快速移動</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <!-- 餐別分段快速切換列 -->
+        <div class="meal-segmented-bar">
+          <button type="button" class="meal-seg-item active" onclick="switchMealSeg(this, '早餐')">早餐</button>
+          <button type="button" class="meal-seg-item" onclick="switchMealSeg(this, '午餐')">午餐</button>
+          <button type="button" class="meal-seg-item" onclick="switchMealSeg(this, '晚餐')">晚餐</button>
+          <button type="button" class="meal-seg-item" onclick="switchMealSeg(this, '加餐')">加餐</button>
+        </div>
+
+        <!-- 份量輸入器 -->
+        <div style="padding: 6px 14px 10px; text-align: center;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+            <button type="button" class="btn" style="width: 28px; height: 28px; border-radius: 50%; padding: 0;" onclick="adjustSingleVal('s8', -10)">−</button>
+            <div style="display: flex; align-items: baseline; gap: 2px;">
+              <input type="text" id="s8-input" value="100" oninput="handleSingleLiveCalc('s8')" style="width: 60px; font-family: var(--font-mono); font-size: 22px; font-weight: 700; text-align: center; border: none; background: transparent; color: var(--fg); outline: none; border-bottom: 1.5px solid var(--border-strong);">
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--muted-fg);">g</span>
+            </div>
+            <button type="button" class="btn" style="width: 28px; height: 28px; border-radius: 50%; padding: 0;" onclick="adjustSingleVal('s8', 10)">+</button>
+          </div>
+        </div>
+
+        <!-- 4 欄 HUD Banner -->
+        <div class="hud-banner">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="s8-cal">389</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="s8-c">66.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="s8-p">16.9</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="s8-f">6.9</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除此記錄')">
+            刪除此記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：在微調重量的同時，支援將食物一鍵重新分配轉移至「早餐/午餐/晚餐/加餐」，解決記錯餐別的痛點。
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 第二大分區：【菜餚食譜編輯 (Recipe / Bundle Log)】4 種方案                 -->
+  <!-- ========================================================================= -->
+  <div class="section-divider" id="sec-recipe-divider">
+    <h2>分區二：菜餚食譜記錄編輯 (Recipe / Bundle Log)</h2>
+    <div class="line"></div>
+    <span class="count-pill">4 個方案</span>
+  </div>
+
+  <div class="showcase-grid" id="grid-recipe">
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 菜餚 方案 1：理想 UX (用量膠囊喚起 Keypad + 增刪食材 · 推薦)    -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-recipe-1">
+      <div class="card-badge" style="color: var(--protein);">
+        <span class="dot" style="background: var(--protein);"></span>
+        <span>菜餚 方案 1 · 理想狀態 UX (膠囊喚起鍵盤 + 增刪食材 · 推薦 ⭐)</span>
+      </div>
+
+      <div class="modal-frame" id="r1-modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>優格燕麥蛋白碗</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div class="hud-banner">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="r1-total-cal">362</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="r1-total-c">37.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="r1-total-p">36.5</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="r1-total-f">6.2</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="ratio-bar" title="供能比標尺">
+          <div class="ratio-c" id="r1-bar-c" style="width: 41%;"></div>
+          <div class="ratio-p" id="r1-bar-p" style="width: 43%;"></div>
+          <div class="ratio-f" id="r1-bar-f" style="width: 16%;"></div>
+        </div>
+
+        <div class="ingredients-section" style="padding: 0 12px 10px;">
+          <div class="ingredients-header" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <div style="font-size: 11px; font-weight: 600; color: var(--muted-fg);">構成食材（<span id="r1-count">3</span>）</div>
+            <button type="button" class="btn" style="height: 22px; padding: 0 8px; font-size: 10px; border-radius: 9999px;" onclick="r1AddIngredient()">
+              + 新增食材
+            </button>
+          </div>
+
+          <div class="usage-list" id="r1-ing-list" style="margin: 0;">
+            <!-- 動態渲染 -->
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除整組菜餚記錄')">
+            刪除整組菜餚記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點（與截圖 100% 一致）</strong>：左品名、右 50g> 膠囊微調與 🗑 按鈕，點擊彈出數字微調鍵盤，支援「+ 新增食材」動態擴充。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 菜餚 方案 2：菜餚總重量等比縮放 + 食材聯動展開型              -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-recipe-2">
+      <div class="card-badge" style="color: var(--carbs);">
+        <span class="dot" style="background: var(--carbs);"></span>
+        <span>菜餚 方案 2 · 總重等比縮放 + 構成食材聯動 (Ratio Scaler)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>優格燕麥蛋白碗</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div style="padding: 12px 12px 8px; text-align: center; background: var(--bg-subtle); border-bottom: 1px solid var(--border);">
+          <div style="font-size: 10px; font-family: var(--font-mono); color: var(--muted-fg); margin-bottom: 4px;">
+            菜餚食用總重 (全食材等比折算)
+          </div>
+          <div style="display: inline-flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn" style="width: 28px; height: 28px; border-radius: 50%; padding: 0;" onclick="scaleRecipe2(-20)">−20</button>
+            <div style="display: flex; align-items: baseline; gap: 2px;">
+              <span id="r2-total-weight-disp" style="font-family: var(--font-mono); font-size: 22px; font-weight: 700;">180</span>
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--muted-fg);">g</span>
+            </div>
+            <button type="button" class="btn" style="width: 28px; height: 28px; border-radius: 50%; padding: 0;" onclick="scaleRecipe2(20)">+20</button>
+          </div>
+        </div>
+
+        <div class="hud-banner" style="margin-top: 8px;">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="r2-cal">362</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="r2-c">37.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="r2-p">36.5</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="r2-f">6.2</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="usage-list" style="margin-top: 0;">
+          <div class="usage-row">
+            <span class="row-label">大燕麥片</span>
+            <span class="row-value" id="r2-ing-oats">50g</span>
+          </div>
+          <div class="usage-row">
+            <span class="row-label">無糖希臘優格</span>
+            <span class="row-value" id="r2-ing-yogurt">100g</span>
+          </div>
+          <div class="usage-row">
+            <span class="row-label">乳清蛋白粉</span>
+            <span class="row-value" id="r2-ing-whey">30g</span>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除整組菜餚記錄')">
+            刪除整組菜餚記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：針對吃半份、或總重 250g 的使用者，只需調總重量，底層食材自動等比縮放，最省時省力。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 菜餚 方案 3：行內步進器清單型 (零次級彈窗 · 單手直覺)            -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-recipe-3">
+      <div class="card-badge" style="color: var(--calories);">
+        <span class="dot" style="background: var(--calories);"></span>
+        <span>菜餚 方案 3 · 行內步進器清單型 (Inline Steppers · 零二次彈窗)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>優格燕麥蛋白碗</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div class="hud-banner">
+          <div class="hud-col">
+            <span class="hud-label text-calories">熱量</span>
+            <div class="hud-val text-calories"><span id="r3-total-cal">362</span><span class="hud-unit">kcal</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-carbs">C 碳水</span>
+            <div class="hud-val text-carbs"><span id="r3-total-c">37.0</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-protein">P 蛋白</span>
+            <div class="hud-val text-protein"><span id="r3-total-p">36.5</span><span class="hud-unit">g</span></div>
+          </div>
+          <div class="hud-col">
+            <span class="hud-label text-fat">F 脂肪</span>
+            <div class="hud-val text-fat"><span id="r3-total-f">6.2</span><span class="hud-unit">g</span></div>
+          </div>
+        </div>
+
+        <div class="usage-list" style="margin-top: 0;">
+          <div class="usage-row">
+            <span class="row-label" style="font-weight: 600;">大燕麥片</span>
+            <div class="row-value">
+              <div class="stepper-wrap" style="padding: 1px 3px;">
+                <button type="button" class="stepper-btn" style="width: 20px; height: 20px;" onclick="stepInlineR3('oats', -5)">−</button>
+                <span id="r3-val-oats" style="width: 32px; text-align: center;">50</span>
+                <span class="unit-tag" style="font-size: 10px;">g</span>
+                <button type="button" class="stepper-btn" style="width: 20px; height: 20px;" onclick="stepInlineR3('oats', 5)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="usage-row">
+            <span class="row-label" style="font-weight: 600;">無糖希臘優格</span>
+            <div class="row-value">
+              <div class="stepper-wrap" style="padding: 1px 3px;">
+                <button type="button" class="stepper-btn" style="width: 20px; height: 20px;" onclick="stepInlineR3('yogurt', -10)">−</button>
+                <span id="r3-val-yogurt" style="width: 32px; text-align: center;">100</span>
+                <span class="unit-tag" style="font-size: 10px;">g</span>
+                <button type="button" class="stepper-btn" style="width: 20px; height: 20px;" onclick="stepInlineR3('yogurt', 10)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="usage-row">
+            <span class="row-label" style="font-weight: 600;">乳清蛋白粉</span>
+            <div class="row-value">
+              <div class="stepper-wrap" style="padding: 1px 3px;">
+                <button type="button" class="stepper-btn" style="width: 20px; height: 20px;" onclick="stepInlineR3('whey', -5)">−</button>
+                <span id="r3-val-whey" style="width: 32px; text-align: center;">30</span>
+                <span class="unit-tag" style="font-size: 10px;">g</span>
+                <button type="button" class="stepper-btn" style="width: 20px; height: 20px;" onclick="stepInlineR3('whey', 5)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除整組菜餚記錄')">
+            刪除整組菜餚記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：在每一行食材右側直接內嵌微型 `[−] 50g [+]`，點擊即時微調，完全無需喚起二級輸入鍵盤。
+      </div>
+    </div>
+
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- 菜餚 方案 4：雙頁分面型 (總覽等比縮放 / 食材細緻微調)           -->
+    <!-- ------------------------------------------------------------- -->
+    <div class="dialog-preview-card" id="card-recipe-4">
+      <div class="card-badge" style="color: var(--muted-fg);">
+        <span class="dot" style="background: var(--muted-fg);"></span>
+        <span>菜餚 方案 4 · 雙頁分面型 (Tabbed: 總覽縮放 / 食材微調)</span>
+      </div>
+
+      <div class="modal-frame">
+        <div class="modal-header-icon-bar">
+          <button type="button" class="icon-btn" title="取消">✕</button>
+          <div class="modal-title">
+            <span>優格燕麥蛋白碗</span>
+            <span style="font-size: 10px; font-family: var(--font-mono); opacity: 0.6; margin-left: 4px;">· 早餐</span>
+          </div>
+          <button type="button" class="icon-btn primary" title="儲存">✓</button>
+        </div>
+
+        <div style="display: flex; border-bottom: 1px solid var(--border); background: var(--bg-subtle);">
+          <button type="button" id="r4-tab-1" class="tab-btn active" style="flex: 1; border-radius: 0; border: none; border-bottom: 2px solid var(--fg); padding: 7px; font-size: 11px;" onclick="switchR4Tab('overview')">
+            總覽縮放
+          </button>
+          <button type="button" id="r4-tab-2" class="tab-btn" style="flex: 1; border-radius: 0; border: none; padding: 7px; font-size: 11px;" onclick="switchR4Tab('ingredients')">
+            構成食材 (3)
+          </button>
+        </div>
+
+        <div id="r4-view-overview" style="display: block;">
+          <div class="hud-banner" style="margin-top: 10px;">
+            <div class="hud-col">
+              <span class="hud-label text-calories">熱量</span>
+              <div class="hud-val text-calories">362<span class="hud-unit">kcal</span></div>
+            </div>
+            <div class="hud-col">
+              <span class="hud-label text-carbs">C 碳水</span>
+              <div class="hud-val text-carbs">37.0<span class="hud-unit">g</span></div>
+            </div>
+            <div class="hud-col">
+              <span class="hud-label text-protein">P 蛋白</span>
+              <div class="hud-val text-protein">36.5<span class="hud-unit">g</span></div>
+            </div>
+            <div class="hud-col">
+              <span class="hud-label text-fat">F 脂肪</span>
+              <div class="hud-val text-fat">6.2<span class="hud-unit">g</span></div>
+            </div>
+          </div>
+
+          <div style="padding: 12px 14px; text-align: center;">
+            <div style="font-size: 11px; color: var(--muted-fg); margin-bottom: 6px;">按食用份量比例縮放</div>
+            <div class="preset-pills-row" style="margin-bottom: 6px;">
+              <button type="button" class="preset-pill">0.5×</button>
+              <button type="button" class="preset-pill active">1.0×</button>
+              <button type="button" class="preset-pill">1.5×</button>
+              <button type="button" class="preset-pill">2.0×</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="r4-view-ingredients" style="display: none; padding: 10px 12px;">
+          <div class="usage-list" style="margin: 0;">
+            <div class="usage-row">
+              <span class="row-label">大燕麥片</span>
+              <span class="row-value">50 g ›</span>
+            </div>
+            <div class="usage-row">
+              <span class="row-label">無糖希臘優格</span>
+              <span class="row-value">100 g ›</span>
+            </div>
+            <div class="usage-row">
+              <span class="row-label">乳清蛋白粉</span>
+              <span class="row-value">30 g ›</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-bottom-wrap">
+          <button type="button" class="btn btn-destructive" style="width: 100%; height: 34px; font-size: 12px; border-radius: var(--radius);" onclick="alert('已刪除整組菜餚記錄')">
+            刪除整組菜餚記錄
+          </button>
+        </div>
+      </div>
+
+      <div class="design-notes">
+        <strong>特點</strong>：在彈窗內部以純本地狀態切換「總覽倍率」與「食材細項」，版面乾淨俐落。
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 深淺色模式切換
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-text').textContent = isDark ? '切換淺色模式' : '切換深色模式';
+    }
+
+    // 視圖大分類切換
+    function switchView(view) {
+      document.querySelectorAll('.category-filter-bar .tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const secSingleDivider = document.getElementById('sec-single-divider');
+      const gridSingle = document.getElementById('grid-single');
+      const secRecipeDivider = document.getElementById('sec-recipe-divider');
+      const gridRecipe = document.getElementById('grid-recipe');
+
+      if (view === 'all') {
+        secSingleDivider.style.display = 'flex';
+        gridSingle.style.display = 'grid';
+        secRecipeDivider.style.display = 'flex';
+        gridRecipe.style.display = 'grid';
+      } else if (view === 'single') {
+        secSingleDivider.style.display = 'flex';
+        gridSingle.style.display = 'grid';
+        secRecipeDivider.style.display = 'none';
+        gridRecipe.style.display = 'none';
+      } else if (view === 'recipe') {
+        secSingleDivider.style.display = 'none';
+        gridSingle.style.display = 'none';
+        secRecipeDivider.style.display = 'flex';
+        gridRecipe.style.display = 'grid';
+      }
+    }
+
+    // 基準食物數據
+    const oatsBase = { cal: 389, c: 66.0, p: 16.9, f: 6.9 };
+
+    // 單品通用計算
+    function adjustSingleVal(prefix, delta) {
+      const input = document.getElementById(`${prefix}-input`);
+      let val = Math.max(1, (parseFloat(input.value) || 0) + delta);
+      input.value = val;
+      handleSingleLiveCalc(prefix);
+    }
+
+    function handleSingleLiveCalc(prefix) {
+      const input = document.getElementById(`${prefix}-input`);
+      const weight = Math.max(0, parseFloat(input.value) || 0);
+      const ratio = weight / 100;
+
+      document.getElementById(`${prefix}-cal`).textContent = Math.round(oatsBase.cal * ratio);
+      document.getElementById(`${prefix}-c`).textContent = (oatsBase.c * ratio).toFixed(1);
+      document.getElementById(`${prefix}-p`).textContent = (oatsBase.p * ratio).toFixed(1);
+      document.getElementById(`${prefix}-f`).textContent = (oatsBase.f * ratio).toFixed(1);
+    }
+
+    // 方案 3 與 菜餚方案 1: 標準數字鍵盤 (NumericKeypad) 交互
+    let s3Weight = 260;
+    let keypadTarget = null; // { type: 'single' | 'recipe', index?: number }
+    let keypadValStr = '260';
+
+    function openS3KeypadModal() {
+      keypadTarget = { type: 'single' };
+      keypadValStr = String(s3Weight);
+      document.getElementById('global-keypad-title').textContent = '大燕麥片';
+      document.getElementById('global-keypad-sub').textContent = '食用份量 (克重)';
+      document.getElementById('global-keypad-unit').textContent = 'g';
+      updateKeypadDisplay();
+      document.getElementById('global-keypad-overlay').style.display = 'flex';
+    }
+
+    function openR1KeypadModal(index) {
+      const item = r1List[index];
+      if (!item) return;
+      keypadTarget = { type: 'recipe', index };
+      keypadValStr = String(item.qty);
+      document.getElementById('global-keypad-title').textContent = item.name;
+      document.getElementById('global-keypad-sub').textContent = '構成食材用量';
+      document.getElementById('global-keypad-unit').textContent = item.unit;
+      updateKeypadDisplay();
+      document.getElementById('global-keypad-overlay').style.display = 'flex';
+    }
+
+    function closeKeypadModal() {
+      document.getElementById('global-keypad-overlay').style.display = 'none';
+      keypadTarget = null;
+    }
+
+    function pressKeypadKey(key) {
+      if (key === 'C') {
+        keypadValStr = '0';
+      } else if (key === 'BS') {
+        keypadValStr = keypadValStr.length > 1 ? keypadValStr.slice(0, -1) : '0';
+      } else if (key === '.') {
+        if (!keypadValStr.includes('.')) {
+          keypadValStr += '.';
+        }
+      } else {
+        keypadValStr = keypadValStr === '0' ? key : keypadValStr + key;
+      }
+      updateKeypadDisplay();
+    }
+
+    function updateKeypadDisplay() {
+      document.getElementById('global-keypad-val').textContent = keypadValStr || '0';
+    }
+
+    function confirmKeypadModal() {
+      const finalVal = Math.max(1, parseFloat(keypadValStr) || 1);
+      if (keypadTarget && keypadTarget.type === 'single') {
+        s3Weight = finalVal;
+        updateS3();
+      } else if (keypadTarget && keypadTarget.type === 'recipe') {
+        const item = r1List[keypadTarget.index];
+        if (item) {
+          item.qty = finalVal;
+          renderR1();
+          calcR1Totals();
+        }
+      }
+      closeKeypadModal();
+    }
+
+    function updateS3() {
+      document.getElementById('s3-val-disp').textContent = s3Weight;
+      const ratio = s3Weight / 100;
+      document.getElementById('s3-cal').textContent = Math.round(oatsBase.cal * ratio);
+      document.getElementById('s3-c').textContent = (oatsBase.c * ratio).toFixed(1);
+      document.getElementById('s3-p').textContent = (oatsBase.p * ratio).toFixed(1);
+      document.getElementById('s3-f').textContent = (oatsBase.f * ratio).toFixed(1);
+    }
+
+    // 方案 4: 內嵌微鍵盤
+    let s4Str = '100';
+    function pressMiniKey(key) {
+      if (key === 'C') {
+        s4Str = '0';
+      } else if (key === 'BS') {
+        s4Str = s4Str.length > 1 ? s4Str.slice(0, -1) : '0';
+      } else {
+        s4Str = s4Str === '0' ? key : s4Str + key;
+      }
+      const num = parseInt(s4Str, 10) || 0;
+      document.getElementById('s4-val-disp').textContent = num;
+      const ratio = num / 100;
+      document.getElementById('s4-cal').textContent = Math.round(oatsBase.cal * ratio);
+      document.getElementById('s4-c').textContent = (oatsBase.c * ratio).toFixed(1);
+      document.getElementById('s4-p').textContent = (oatsBase.p * ratio).toFixed(1);
+      document.getElementById('s4-f').textContent = (oatsBase.f * ratio).toFixed(1);
+    }
+
+    // 方案 5: 物理微刻度滑塊
+    function handleSliderChange(val) {
+      const weight = parseFloat(val) || 0;
+      document.getElementById('s5-val-disp').textContent = weight;
+      const ratio = weight / 100;
+      document.getElementById('s5-cal').textContent = Math.round(oatsBase.cal * ratio);
+      document.getElementById('s5-c').textContent = (oatsBase.c * ratio).toFixed(1);
+      document.getElementById('s5-p').textContent = (oatsBase.p * ratio).toFixed(1);
+      document.getElementById('s5-f').textContent = (oatsBase.f * ratio).toFixed(1);
+    }
+
+    // 方案 6: 目標反推
+    function reverseCalcFromWeight() {
+      const w = Math.max(0, parseFloat(document.getElementById('s6-weight').value) || 0);
+      const ratio = w / 100;
+      const cal = Math.round(oatsBase.cal * ratio);
+      const p = (oatsBase.p * ratio).toFixed(1);
+      const c = (oatsBase.c * ratio).toFixed(1);
+      const f = (oatsBase.f * ratio).toFixed(1);
+
+      document.getElementById('s6-cal-target').value = cal;
+      document.getElementById('s6-protein-target').value = p;
+
+      document.getElementById('s6-disp-cal').textContent = cal;
+      document.getElementById('s6-disp-c').textContent = c;
+      document.getElementById('s6-disp-p').textContent = p;
+      document.getElementById('s6-disp-f').textContent = f;
+    }
+
+    function reverseCalcFromCalories() {
+      const targetCal = Math.max(0, parseFloat(document.getElementById('s6-cal-target').value) || 0);
+      const ratio = targetCal / oatsBase.cal;
+      const w = Math.round(100 * ratio);
+      const p = (oatsBase.p * ratio).toFixed(1);
+      const c = (oatsBase.c * ratio).toFixed(1);
+      const f = (oatsBase.f * ratio).toFixed(1);
+
+      document.getElementById('s6-weight').value = w;
+      document.getElementById('s6-protein-target').value = p;
+
+      document.getElementById('s6-disp-cal').textContent = Math.round(targetCal);
+      document.getElementById('s6-disp-c').textContent = c;
+      document.getElementById('s6-disp-p').textContent = p;
+      document.getElementById('s6-disp-f').textContent = f;
+    }
+
+    function reverseCalcFromProtein() {
+      const targetP = Math.max(0, parseFloat(document.getElementById('s6-protein-target').value) || 0);
+      const ratio = targetP / oatsBase.p;
+      const w = Math.round(100 * ratio);
+      const cal = Math.round(oatsBase.cal * ratio);
+      const c = (oatsBase.c * ratio).toFixed(1);
+      const f = (oatsBase.f * ratio).toFixed(1);
+
+      document.getElementById('s6-weight').value = w;
+      document.getElementById('s6-cal-target').value = cal;
+
+      document.getElementById('s6-disp-cal').textContent = cal;
+      document.getElementById('s6-disp-c').textContent = c;
+      document.getElementById('s6-disp-p').textContent = targetP.toFixed(1);
+      document.getElementById('s6-disp-f').textContent = f;
+    }
+
+    // 方案 7: 記憶份量回填
+    function applyMemoryVal(weight, desc) {
+      document.getElementById('s7-disp-val').textContent = weight;
+      const ratio = weight / 100;
+      document.getElementById('s7-cal').textContent = Math.round(oatsBase.cal * ratio);
+      document.getElementById('s7-c').textContent = (oatsBase.c * ratio).toFixed(1);
+      document.getElementById('s7-p').textContent = (oatsBase.p * ratio).toFixed(1);
+      document.getElementById('s7-f').textContent = (oatsBase.f * ratio).toFixed(1);
+    }
+
+    // 方案 8: 餐別分段切換
+    function switchMealSeg(el, meal) {
+      document.querySelectorAll('.meal-seg-item').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // 菜餚方案 1 渲染
+    let r1List = [
+      { id: 'r1-1', name: '大燕麥片', qty: 50, unit: 'g' },
+      { id: 'r1-2', name: '無糖希臘優格', qty: 100, unit: 'g' },
+      { id: 'r1-3', name: '乳清蛋白粉', qty: 30, unit: 'g' },
+    ];
+
+    function renderR1() {
+      const container = document.getElementById('r1-ing-list');
+      document.getElementById('r1-count').textContent = r1List.length;
+      let html = '';
+      r1List.forEach((item, index) => {
+        html += `
+          <div class="usage-row">
+            <span class="row-label" style="font-weight: 600;">${item.name}</span>
+            <div class="row-value">
+              <button type="button" class="qty-capsule-btn" onclick="openR1KeypadModal(${index})" title="點擊輸入重量">
+                <span class="qty-capsule-val">${item.qty}</span>
+                <span class="qty-capsule-unit">${item.unit}</span>
+                <span class="qty-capsule-arrow">›</span>
+              </button>
+              <button type="button" class="icon-btn" style="width: 24px; height: 24px;" onclick="r1Delete(${index})" title="刪除食材">🗑</button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function calcR1Totals() {
+      let cal = 0, c = 0, p = 0, f = 0;
+      r1List.forEach(item => {
+        const ratio = (item.qty || 0) / 100;
+        if (item.name.includes('燕麥')) {
+          cal += 389 * ratio; c += 66 * ratio; p += 16.9 * ratio; f += 6.9 * ratio;
+        } else if (item.name.includes('優格')) {
+          cal += 59 * ratio; c += 3.6 * ratio; p += 10 * ratio; f += 0.4 * ratio;
+        } else if (item.name.includes('蛋白粉')) {
+          cal += 370 * ratio; c += 4.5 * ratio; p += 75 * ratio; f += 4.5 * ratio;
+        } else {
+          cal += 486 * ratio; c += 42 * ratio; p += 16 * ratio; f += 30 * ratio;
+        }
+      });
+      document.getElementById('r1-total-cal').textContent = Math.round(cal);
+      document.getElementById('r1-total-c').textContent = c.toFixed(1);
+      document.getElementById('r1-total-p').textContent = p.toFixed(1);
+      document.getElementById('r1-total-f').textContent = f.toFixed(1);
+    }
+
+    function r1Delete(idx) {
+      r1List.splice(idx, 1);
+      renderR1();
+      calcR1Totals();
+    }
+
+    function r1AddIngredient() {
+      r1List.push({ id: `r1-${Date.now()}`, name: '奇亞籽', qty: 15, unit: 'g' });
+      renderR1();
+      calcR1Totals();
+    }
+
+    // 菜餚方案 2 縮放
+    let r2TotalWeight = 180;
+    function scaleRecipe2(delta) {
+      r2TotalWeight = Math.max(30, r2TotalWeight + delta);
+      document.getElementById('r2-total-weight-disp').textContent = r2TotalWeight;
+      const scale = r2TotalWeight / 180;
+      document.getElementById('r2-ing-oats').textContent = `${Math.round(50 * scale)}g`;
+      document.getElementById('r2-ing-yogurt').textContent = `${Math.round(100 * scale)}g`;
+      document.getElementById('r2-ing-whey').textContent = `${Math.round(30 * scale)}g`;
+      document.getElementById('r2-cal').textContent = Math.round(362 * scale);
+      document.getElementById('r2-c').textContent = (37.0 * scale).toFixed(1);
+      document.getElementById('r2-p').textContent = (36.5 * scale).toFixed(1);
+      document.getElementById('r2-f').textContent = (6.2 * scale).toFixed(1);
+    }
+
+    // 菜餚方案 3 步進
+    const r3Qtys = { oats: 50, yogurt: 100, whey: 30 };
+    function stepInlineR3(key, delta) {
+      r3Qtys[key] = Math.max(1, r3Qtys[key] + delta);
+      document.getElementById(`r3-val-${key}`).textContent = r3Qtys[key];
+    }
+
+    // 菜餚方案 4 切換
+    function switchR4Tab(tab) {
+      const tab1 = document.getElementById('r4-tab-1');
+      const tab2 = document.getElementById('r4-tab-2');
+      const v1 = document.getElementById('r4-view-overview');
+      const v2 = document.getElementById('r4-view-ingredients');
+      if (tab === 'overview') {
+        tab1.classList.add('active');
+        tab1.style.borderBottom = '2px solid var(--fg)';
+        tab2.classList.remove('active');
+        tab2.style.borderBottom = 'none';
+        v1.style.display = 'block';
+        v2.style.display = 'none';
+      } else {
+        tab2.classList.add('active');
+        tab2.style.borderBottom = '2px solid var(--fg)';
+        tab1.classList.remove('active');
+        tab1.style.borderBottom = 'none';
+        v1.style.display = 'none';
+        v2.style.display = 'block';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderR1();
+      updateS3();
+    });
+  </script>
+
+  <!-- 全域獨立數字撥號鍵盤浮層 (模擬 NumericKeypadDialog，平鋪於 body 根層級) -->
+  <div class="keypad-modal-overlay" id="global-keypad-overlay" style="display: none;" onclick="if(event.target===this)closeKeypadModal()">
+    <div class="keypad-dialog-card">
+      <div class="keypad-header">
+        <span class="keypad-title" id="global-keypad-title">大燕麥片</span>
+        <span class="keypad-sub" id="global-keypad-sub">食用份量</span>
+      </div>
+
+      <div class="keypad-display">
+        <span class="keypad-display-val" id="global-keypad-val">260</span>
+        <span class="keypad-display-unit" id="global-keypad-unit">g</span>
+      </div>
+
+      <div class="keypad-grid">
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('1')">1</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('2')">2</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('3')">3</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('4')">4</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('5')">5</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('6')">6</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('7')">7</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('8')">8</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('9')">9</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('C')" style="color: var(--destructive);">C</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('0')">0</button>
+        <button type="button" class="keypad-key" onclick="pressKeypadKey('BS')">⌫</button>
+      </div>
+
+      <div class="keypad-footer">
+        <button type="button" class="btn" style="flex: 1; height: 34px;" onclick="closeKeypadModal()">取消</button>
+        <button type="button" class="btn btn-primary" style="flex: 1; height: 34px;" onclick="confirmKeypadModal()">確定</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
