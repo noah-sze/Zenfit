@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
-import { X, Check, Plus, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Dialog, PrecisionDialogContent } from '@/components/ui/dialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
 import { useFoods } from '@/hooks/useFoods';
@@ -11,9 +11,9 @@ import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { formatEnergy } from '@/utils/unitMath';
+import { cn, formatDisplayAmount } from '@/lib/utils';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import { cn } from '@/lib/utils';
 import type { FoodRecipe, FoodItem, MealType } from '@/types';
 
 export interface StagedIngredient {
@@ -22,7 +22,7 @@ export interface StagedIngredient {
   foodName: string;
   quantity: number;
   unit: string;
-  selected: boolean;
+  baseFood?: FoodItem | null;
 }
 
 export interface RecipeStagingDialogProps {
@@ -32,6 +32,8 @@ export interface RecipeStagingDialogProps {
   mealType: MealType;
   date: string; // YYYY-MM-DD
   onSuccess?: () => void;
+  /** 多層彈窗層級 @default 70 */
+  zIndex?: number;
 }
 
 export function RecipeStagingDialog({
@@ -41,6 +43,7 @@ export function RecipeStagingDialog({
   mealType,
   date,
   onSuccess,
+  zIndex = 70,
 }: RecipeStagingDialogProps) {
   const { t } = useTranslation();
   const { allFoods } = useFoods();
@@ -48,19 +51,22 @@ export function RecipeStagingDialog({
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   // 本次記錄暫存的食材列表 (活體，可增刪、可改重量)
-  const [stagedItems, setStagedItems] = useState<StagedIngredient[]>([]);
+  const [ingredients, setIngredients] = useState<StagedIngredient[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 數字鍵盤配置狀態
   const [keypadConfig, setKeypadConfig] = useState<{
     index: number;
-    foodName: string;
+    title: string;
     value: number;
     unit: string;
-    anchorEl: HTMLElement | null;
+    anchorEl?: HTMLElement | null;
   } | null>(null);
+  const initialKeypadValueRef = useRef<number>(0);
 
-  // 追加食材選擇器開關
+  // 追加或替換食材選擇器開關
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
 
   // 構建 foodMap 供純函數計算引用
   const foodMap = useMemo(() => {
@@ -78,96 +84,83 @@ export function RecipeStagingDialog({
         foodName: ing.foodName,
         quantity: ing.quantity,
         unit: ing.unit || 'g',
-        selected: true,
+        baseFood: foodMap.get(ing.foodId) || null,
       }));
-      setStagedItems(initialStaged);
+      setIngredients(initialStaged);
     } else if (!open) {
-      setStagedItems([]);
+      setIngredients([]);
       setKeypadConfig(null);
       setIsPickerOpen(false);
+      setReplacingIndex(null);
     }
-  }, [open, recipe]);
+  }, [open, recipe, foodMap]);
 
-  // 即時計算當前所有勾選食材的總營養素
-  const stagedTotals = useMemo(() => {
+  // 單項食材即時營養素計算
+  const getIngredientMacros = useCallback(
+    (item: StagedIngredient) => {
+      const targetFood = item.baseFood || foodMap.get(item.foodId);
+      return calculateIngredientMacros(targetFood, item.quantity);
+    },
+    [foodMap]
+  );
+
+  // 即時計算當前所有食材的總營養素
+  const totals = useMemo(() => {
     let calories = 0;
-    let protein = 0;
     let carbs = 0;
+    let protein = 0;
     let fat = 0;
 
-    stagedItems.forEach((item) => {
-      if (!item.selected) return;
-      const targetFood = foodMap.get(item.foodId);
-      const macros = calculateIngredientMacros(targetFood, item.quantity);
-      calories += macros.calories;
-      protein += macros.protein;
-      carbs += macros.carbs;
-      fat += macros.fat;
+    ingredients.forEach((item) => {
+      const m = getIngredientMacros(item);
+      calories += m.calories;
+      carbs += m.carbs;
+      protein += m.protein;
+      fat += m.fat;
     });
 
     return {
       calories: Math.round(calories),
-      protein: Math.round(protein * 10) / 10,
       carbs: Math.round(carbs * 10) / 10,
+      protein: Math.round(protein * 10) / 10,
       fat: Math.round(fat * 10) / 10,
     };
-  }, [stagedItems, foodMap]);
+  }, [ingredients, getIngredientMacros]);
 
-  // 切換某食材的勾選狀態
-  const handleToggleSelect = (index: number) => {
-    triggerHaptic('light');
-    setStagedItems((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, selected: !item.selected } : item))
-    );
-  };
+  // 供能比計算 (C, P, F)
+  const energyRatios = useMemo(() => {
+    const cCal = totals.carbs * 4;
+    const pCal = totals.protein * 4;
+    const fCal = totals.fat * 9;
+    const sum = cCal + pCal + fCal;
+    if (sum === 0) return { carbs: 33.3, protein: 33.3, fat: 33.4 };
+    return {
+      carbs: Math.round((cCal / sum) * 1000) / 10,
+      protein: Math.round((pCal / sum) * 1000) / 10,
+      fat: Math.round((fCal / sum) * 1000) / 10,
+    };
+  }, [totals]);
 
   // 移除某項暫存食材
-  const handleRemoveStagedItem = (index: number) => {
+  const handleRemoveIngredient = (index: number) => {
     triggerHaptic('light');
-    setStagedItems((prev) => prev.filter((_, idx) => idx !== index));
+    setIngredients((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  // 點擊重量呼出方案 1 數字鍵盤
-  const handleOpenKeypad = (index: number, e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    const item = stagedItems[index];
-    if (!item) return;
-
-    setKeypadConfig({
-      index,
-      foodName: item.foodName,
-      value: item.quantity,
-      unit: item.unit,
-      anchorEl: e.currentTarget,
-    });
+  // 呼出食材選擇器以替換食材
+  const handleOpenReplaceIngredient = (index: number) => {
+    setReplacingIndex(index);
+    setIsPickerOpen(true);
   };
 
-  // 數字鍵盤實時鏡像聯動
-  const handleKeypadLiveChange = (val: number) => {
-    if (!keypadConfig) return;
-    const { index } = keypadConfig;
-    setStagedItems((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, quantity: val } : item))
-    );
+  // 呼出食材選擇器以新增食材
+  const handleOpenAddIngredient = () => {
+    setReplacingIndex(null);
+    setIsPickerOpen(true);
   };
 
-  // 數字鍵盤確認
-  const handleKeypadConfirm = (val: number, unit: string) => {
-    if (!keypadConfig) return;
-    const { index } = keypadConfig;
-    setStagedItems((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, quantity: val, unit } : item))
-    );
-    setKeypadConfig(null);
-  };
-
-  // 數字鍵盤取消
-  const handleKeypadCancel = () => {
-    setKeypadConfig(null);
-  };
-
-  // 追加食材選擇回調
-  const handleSelectAdditionalFood = (foodOrRecipe: FoodItem | FoodRecipe) => {
+  // 選擇食材回調（支援新增或替換）
+  const handleSelectFood = (foodOrRecipe: FoodItem | FoodRecipe) => {
     const food = foodOrRecipe as FoodItem;
     const isLiquid =
       (food.servingUnit || 'g').toLowerCase().includes('ml') ||
@@ -176,224 +169,285 @@ export function RecipeStagingDialog({
     const prefUnit = isLiquid ? foodVolumeUnit : foodWeightUnit;
     const defaultQty = isLiquid ? (prefUnit === 'fl oz' ? 8 : 250) : (prefUnit === 'oz' ? 3.5 : 100);
 
-    const newItem: StagedIngredient = {
-      id: `${food.id}-${uuidv4()}`,
-      foodId: food.id,
-      foodName: formatFoodDisplayName(food),
-      quantity: defaultQty,
-      unit: prefUnit,
-      selected: true,
-    };
+    if (replacingIndex !== null) {
+      setIngredients((prev) =>
+        prev.map((item, idx) =>
+          idx === replacingIndex
+            ? {
+                ...item,
+                foodId: food.id,
+                foodName: formatFoodDisplayName(food),
+                baseFood: food,
+              }
+            : item
+        )
+      );
+      setReplacingIndex(null);
+    } else {
+      const newItem: StagedIngredient = {
+        id: `${food.id}-${uuidv4()}`,
+        foodId: food.id,
+        foodName: formatFoodDisplayName(food),
+        quantity: defaultQty,
+        unit: prefUnit,
+        baseFood: food,
+      };
+      setIngredients((prev) => [...prev, newItem]);
+    }
 
-    setStagedItems((prev) => [...prev, newItem]);
     triggerHaptic('selection');
+    setIsPickerOpen(false);
+  };
+
+  // 點擊重量膠囊呼出懸浮數字鍵盤
+  const handleOpenKeypad = (index: number, anchorEl: HTMLElement) => {
+    const item = ingredients[index];
+    if (!item) return;
+
+    initialKeypadValueRef.current = item.quantity;
+    setKeypadConfig({
+      index,
+      title: item.foodName,
+      value: item.quantity,
+      unit: item.unit,
+      anchorEl,
+    });
+  };
+
+  // 鍵盤實時聯動
+  const handleKeypadLiveChange = useCallback((val: number) => {
+    setKeypadConfig((curr) => {
+      if (!curr) return null;
+      const targetIndex = curr.index;
+      setIngredients((prev) =>
+        prev.map((ing, i) => (i === targetIndex ? { ...ing, quantity: val } : ing))
+      );
+      return curr;
+    });
+  }, []);
+
+  // 鍵盤確認
+  const handleKeypadConfirm = (val: number, unit?: string) => {
+    if (!keypadConfig) return;
+    const { index } = keypadConfig;
+    setIngredients((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, quantity: val, unit: unit || item.unit } : item
+      )
+    );
+    setKeypadConfig(null);
+  };
+
+  // 鍵盤取消
+  const handleKeypadCancel = () => {
+    if (!keypadConfig) return;
+    const { index } = keypadConfig;
+    const fallbackVal = initialKeypadValueRef.current;
+    setIngredients((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, quantity: fallbackVal } : item))
+    );
+    setKeypadConfig(null);
+  };
+
+  // 主彈窗開關保護
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && (keypadConfig || isPickerOpen)) {
+      return;
+    }
+    onOpenChange(nextOpen);
   };
 
   // 提交記錄至日記 (批量產生同一個 bundleId)
   const handleConfirmLog = async () => {
-    if (!recipe) return;
+    if (!recipe || isSubmitting || ingredients.length === 0) return;
 
-    const selectedItems = stagedItems.filter((i) => i.selected && i.quantity > 0);
-    if (selectedItems.length === 0) {
-      toast.show(t('diet.noIngredients'));
-      return;
+    setIsSubmitting(true);
+    try {
+      const bundleId = uuidv4();
+      const bundleName = recipe.name;
+
+      const logItems = ingredients.map((item) => {
+        const macros = getIngredientMacros(item);
+        return {
+          date,
+          mealType,
+          foodId: item.foodId,
+          foodName: item.foodName,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: macros.calories,
+          protein: macros.protein,
+          carbs: macros.carbs,
+          fat: macros.fat,
+          notes: `[${bundleName}]`,
+        };
+      });
+
+      await addFoodLogBundle(bundleId, bundleName, logItems);
+      triggerHaptic('success');
+      toast.show(t('common.saved', '已儲存'));
+      onOpenChange(false);
+      onSuccess?.();
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const bundleId = uuidv4();
-    const bundleName = recipe.name;
-
-    const logItems = selectedItems.map((item) => {
-      const targetFood = foodMap.get(item.foodId);
-      const macros = calculateIngredientMacros(targetFood, item.quantity);
-
-      return {
-        date,
-        mealType,
-        foodId: item.foodId,
-        foodName: item.foodName,
-        quantity: item.quantity,
-        unit: item.unit,
-        calories: macros.calories,
-        protein: macros.protein,
-        carbs: macros.carbs,
-        fat: macros.fat,
-        notes: `[${bundleName}]`,
-      };
-    });
-
-    await addFoodLogBundle(bundleId, bundleName, logItems);
-    triggerHaptic('success');
-    toast.show(t('common.saved'));
-    onOpenChange(false);
-    onSuccess?.();
   };
 
   if (!recipe) return null;
 
-  const disabledFoodIds = stagedItems.map((i) => i.foodId);
+  const disabledFoodIds = ingredients.map((i) => i.foodId);
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-          className="w-[350px] max-w-[calc(100vw-24px)] sm:w-[350px] sm:max-w-[350px] p-0 gap-0 overflow-hidden bg-card text-card-foreground border border-border rounded-xl shadow-none"
-          showCloseButton={false}
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+        <PrecisionDialogContent
+          title={recipe.name}
+          onSubmit={handleConfirmLog}
+          submitDisabled={isSubmitting || ingredients.length === 0}
+          submitAriaLabel={t('common.save', '儲存')}
+          cancelAriaLabel={t('common.cancel', '取消')}
+          overlayClassName={`z-[${zIndex}]`}
+          className={cn(`z-[${zIndex}]`, "flex flex-col max-h-[85vh] overflow-hidden")}
+          initialFocus={false}
         >
-          {/* 方案 D 頂部整合導航 Header (左側圓形 ✕ 膠囊，中間純文字標題，右側打勾確認) */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border select-none">
-            {/* 左側圓形 ✕ 膠囊 */}
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-border transition-all cursor-pointer shrink-0 active:scale-92"
-              title={t('common.cancel')}
-              aria-label={t('common.cancel')}
-            >
-              <X className="size-3.5 stroke-[2.2]" />
-            </button>
+          {/* 表單主體 (聯合滾動區域) */}
+          <div className="flex-1 min-h-0 flex flex-col space-y-3 pt-3.5 overflow-hidden">
+            {/* 4 欄即時 HUD Banner 與供能比標尺組合 */}
+            <div className="space-y-1.5 shrink-0">
+              <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-4 divide-x divide-border select-none py-2 text-center shrink-0">
+                {/* 熱量 */}
+                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <span className="text-[10px] font-medium text-calories uppercase tracking-wider truncate">
+                    {t('diet.calories')}
+                  </span>
+                  <div className="font-mono text-xs font-bold text-calories mt-0.5 truncate flex items-baseline gap-0.5">
+                    <span>{formatEnergy(totals.calories, energyUnit).value}</span>
+                    <span className="text-[9px] font-normal opacity-75">{formatEnergy(totals.calories, energyUnit).unit}</span>
+                  </div>
+                </div>
 
-            {/* 中間純文字標題 (絕對居中防擠壓) */}
-            <div className="absolute inset-x-12 flex items-center justify-center pointer-events-none">
-              <DialogTitle className="text-sm font-semibold tracking-tight text-foreground truncate max-w-[180px] text-center">
-                {recipe.name}
-              </DialogTitle>
-            </div>
+                {/* 碳水化合物 */}
+                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
+                    {t('diet.carbs')}
+                  </span>
+                  <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                    <span>{totals.carbs}</span>
+                    <span className="text-[9px] font-normal opacity-75">g</span>
+                  </div>
+                </div>
 
-            {/* 右側純圖標打勾確認按鈕 */}
-            <button
-              type="button"
-              onClick={handleConfirmLog}
-              className="size-7 rounded-full flex items-center justify-center bg-primary text-primary-foreground hover:opacity-90 active:scale-92 transition-all cursor-pointer shrink-0 ml-auto z-10"
-              title={t('common.save')}
-              aria-label={t('common.save')}
-            >
-              <Check className="size-3.5 stroke-[2.4]" />
-            </button>
-          </div>
+                {/* 蛋白質 */}
+                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
+                    {t('diet.protein')}
+                  </span>
+                  <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                    <span>{totals.protein}</span>
+                    <span className="text-[9px] font-normal opacity-75">g</span>
+                  </div>
+                </div>
 
-          {/* 頂部即時營養素結算卡 (Hero Macro Bar) */}
-          <div className="px-3.5 py-3 bg-muted/30 border-b border-border flex items-center justify-between select-none">
-            <div className="flex items-baseline gap-1 font-mono">
-              <span className="text-xl font-bold tracking-tight text-foreground">
-                {formatEnergy(stagedTotals.calories, energyUnit).value.toLocaleString()}
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                {energyUnit}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-carbs shrink-0" />
-                <span>{stagedTotals.carbs}g</span>
-              </span>
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-protein shrink-0" />
-                <span>{stagedTotals.protein}g</span>
-              </span>
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-fat shrink-0" />
-                <span>{stagedTotals.fat}g</span>
-              </span>
-            </div>
-          </div>
-
-          {/* 活體食材檢查清單 (Usage List, divide-y) */}
-          <div className="max-h-[340px] overflow-y-auto divide-y divide-border/40 px-3.5">
-            {stagedItems.length === 0 ? (
-              <div className="py-8 text-center text-xs text-muted-foreground">
-                {t('diet.noIngredients')}
+                {/* 脂肪 */}
+                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
+                    {t('diet.fat')}
+                  </span>
+                  <div className="font-mono text-xs font-bold text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                    <span>{totals.fat}</span>
+                    <span className="text-[9px] font-normal opacity-75">g</span>
+                  </div>
+                </div>
               </div>
-            ) : (
-              stagedItems.map((item, index) => {
-                const isSelected = item.selected;
 
-                return (
+              {/* 供能比標尺 (Ratio Bar: 嚴格固定 C -> P -> F 順序) */}
+              <div className="h-1 w-full rounded-full overflow-hidden flex bg-track shrink-0" title="供能比標尺">
+                <div className="bg-carbs transition-all duration-150" style={{ width: `${energyRatios.carbs}%` }} />
+                <div className="bg-protein transition-all duration-150" style={{ width: `${energyRatios.protein}%` }} />
+                <div className="bg-fat transition-all duration-150" style={{ width: `${energyRatios.fat}%` }} />
+              </div>
+            </div>
+
+            {/* 構成食材段落 */}
+            <div className="space-y-1.5 flex-1 min-h-0 flex flex-col">
+              <div className="flex items-center justify-between px-0 shrink-0">
+                <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  {t('diet.recipeIngredients', '構成食材')} ({ingredients.length})
+                </div>
+
+                {/* 微型膠囊按鈕：新增食材 */}
+                <button
+                  type="button"
+                  onClick={handleOpenAddIngredient}
+                  className="h-6 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-[11px] flex items-center gap-1 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
+                >
+                  <Plus className="size-3 text-muted-foreground" />
+                  <span>{t('diet.addIngredient', '新增食材')}</span>
+                </button>
+              </div>
+
+              {/* 食材清單滾動容器 */}
+              <div className="border border-border rounded-lg overflow-y-auto bg-card divide-y divide-border text-sm flex-1 min-h-0">
+                {ingredients.map((item, index) => (
                   <div
                     key={item.id}
-                    className={cn(
-                      "py-2.5 flex items-center justify-between gap-2 transition-opacity",
-                      !isSelected && "opacity-40"
-                    )}
+                    className="min-h-12 py-2 px-3 sm:px-4 flex items-center justify-between gap-2 bg-card shrink-0"
                   >
-                    {/* 左側 Checkbox + 食材名 */}
-                    <div
-                      className="flex items-center gap-2.5 min-w-0 cursor-pointer select-none flex-1"
-                      onClick={() => handleToggleSelect(index)}
+                    {/* 左側：食材品名 (點擊可替換食材) */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenReplaceIngredient(index)}
+                      className="text-left min-w-0 flex-1 truncate text-xs font-medium text-foreground hover:opacity-75 transition-opacity cursor-pointer outline-none"
+                      title={item.foodName}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleToggleSelect(index)}
-                        className="size-4 rounded border-border accent-foreground cursor-pointer shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span
-                        className={cn(
-                          "text-xs font-medium truncate text-foreground",
-                          !isSelected && "line-through text-muted-foreground"
-                        )}
-                      >
-                        {item.foodName}
-                      </span>
-                    </div>
+                      <div className="truncate">{item.foodName}</div>
+                    </button>
 
-                    {/* 右側重量按鈕膠囊 (點擊呼出方案 1 數字鍵盤) + 刪除 */}
+                    {/* 右側：常用數字輸入框膠囊 + 移除按鈕 */}
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
-                        onClick={(e) => handleOpenKeypad(index, e)}
-                        className={cn(
-                          "h-6 px-2 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95",
-                          !isSelected && "pointer-events-none"
-                        )}
-                        title={t('keypad.input')}
+                        onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
+                        className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                       >
-                        <span className="font-semibold text-foreground">
-                          {item.quantity}
+                        <span className="font-bold text-foreground">
+                          {formatDisplayAmount(String(item.quantity)) || '0'}
                         </span>
-                        <span className="text-muted-foreground text-[10px]">
+                        <span className="text-muted-foreground text-[11px]">
                           {item.unit}
                         </span>
+                        <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveStagedItem(index)}
-                        className="size-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted transition-colors cursor-pointer shrink-0"
-                        title={t('common.delete')}
-                      >
-                        <Trash2 className="size-3" />
-                      </button>
+                      {/* 移除按鈕 (超過 1 項時允許移除) */}
+                      {ingredients.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveIngredient(index)}
+                          className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer shrink-0"
+                          title={t('common.delete')}
+                          aria-label={t('common.delete')}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
-                );
-              })
-            )}
+                ))}
+              </div>
+            </div>
           </div>
-
-          {/* 底部追加食材快捷按鈕 */}
-          <div className="p-3 border-t border-border bg-card">
-            <button
-              type="button"
-              onClick={() => setIsPickerOpen(true)}
-              className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border hover:border-foreground/40 hover:bg-muted/40 text-xs font-medium text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-            >
-              <Plus className="size-3.5" />
-              <span>{t('common.add')}</span>
-            </button>
-          </div>
-        </DialogContent>
+        </PrecisionDialogContent>
       </Dialog>
 
-      {/* 次級方案 1 精密數字鍵盤 (平鋪兄弟節點聲明，層級 zIndex 80+) */}
+      {/* 次級懸浮鍵盤 (平級兄弟節點聲明，層級 zIndex={80} 高於主彈窗) */}
       {keypadConfig && (
         <NumericKeypadDialog
           open={!!keypadConfig}
           onOpenChange={(kOpen) => {
             if (!kOpen) handleKeypadCancel();
           }}
-          title={keypadConfig.foodName}
+          title={keypadConfig.title}
           value={keypadConfig.value}
           unit={keypadConfig.unit}
           allowDecimals={true}
@@ -405,15 +459,22 @@ export function RecipeStagingDialog({
         />
       )}
 
-      {/* 次級追加食材選擇器 (平鋪兄弟節點聲明，層級 zIndex 80) */}
-      <FoodRecipeSelectDialog
-        open={isPickerOpen}
-        onOpenChange={setIsPickerOpen}
-        mode="foods"
-        zIndex={80}
-        disabledIds={disabledFoodIds}
-        onSelect={handleSelectAdditionalFood}
-      />
+      {/* 次級食物選擇彈窗 (平級兄弟節點，用於追加或替換食材) */}
+      {isPickerOpen && (
+        <FoodRecipeSelectDialog
+          open={isPickerOpen}
+          onOpenChange={setIsPickerOpen}
+          mode="foods"
+          title={
+            replacingIndex !== null
+              ? t('diet.replaceIngredient', '替換食材')
+              : t('diet.addIngredient', '新增食材')
+          }
+          onSelect={handleSelectFood}
+          zIndex={80}
+          disabledIds={replacingIndex !== null ? [] : disabledFoodIds}
+        />
+      )}
     </>
   );
 }

@@ -6,6 +6,7 @@ import {
   PrecisionDialogContent,
 } from '@/components/ui/dialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
+import { HoldToDeleteButton } from '@/components/ui/HoldToDeleteButton';
 import { db } from '@/services/db/db';
 import type { FoodLog, FoodItem } from '@/types';
 import { formatDisplayAmount } from '@/lib/utils';
@@ -264,15 +265,13 @@ export function EditFoodLogDialog({
               </div>
             </div>
 
-            {/* 底部破壞性高危按鈕 (實色紅底 + 純白文字) */}
-            <button
-              type="button"
-              onClick={handleDelete}
+            {/* 底部破壞性按鈕 (長按 1s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
+            <HoldToDeleteButton
+              onConfirm={handleDelete}
               disabled={isSubmitting}
-              className="w-full h-9 rounded-md bg-destructive text-destructive-foreground hover:opacity-90 active:scale-[0.98] transition-all font-mono text-xs font-semibold cursor-pointer select-none flex items-center justify-center disabled:opacity-30"
-            >
-              {t('diet.deleteRecord', '刪除記錄')}
-            </button>
+              durationMs={1000}
+              text={t('common.delete', '刪除')}
+            />
           </div>
         </PrecisionDialogContent>
       </Dialog>
