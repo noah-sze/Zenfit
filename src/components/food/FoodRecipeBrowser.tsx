@@ -572,8 +572,8 @@ export function FoodRecipeBrowser({
                     </DropdownMenuItem>
                     {(
                       [
-                        { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
                         { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
+                        { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
                         { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
                         { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
                         { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
@@ -794,8 +794,8 @@ export function FoodRecipeBrowser({
                     </DropdownMenuItem>
                     {(
                       [
-                        { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
                         { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
+                        { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
                         { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
                         { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
                         { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },

@@ -124,9 +124,9 @@ export const RecipeListItem = React.memo(function RecipeListItem({
               <span
                 className={cn(
                   isLowCalorie &&
-                    'text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                    'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
                   isHighCalorie &&
-                    'text-rose-500 font-semibold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                    'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
                 )}
               >
                 {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
@@ -141,9 +141,9 @@ export const RecipeListItem = React.memo(function RecipeListItem({
               <span
                 className={cn(
                   isLowCalorie &&
-                    'text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                    'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
                   isHighCalorie &&
-                    'text-rose-500 font-semibold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                    'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
                 )}
               >
                 {formatEnergy(macros.calories, energyUnit).formatted}

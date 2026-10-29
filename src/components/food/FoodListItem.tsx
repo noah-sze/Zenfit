@@ -97,9 +97,9 @@ export const FoodListItem = React.memo(function FoodListItem({
           <span
             className={cn(
               isLowCalorie &&
-                'text-emerald-500 font-semibold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
               isHighCalorie &&
-                'text-rose-500 font-semibold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
             )}
           >
             {displayCal.formatted}

@@ -435,15 +435,15 @@ export default function RecipeDetails() {
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
-            <span className="text-muted-foreground">{t('diet.protein')}</span>
-            <span className="font-mono text-foreground font-medium">
-              {scaledRecipeTotals?.protein ?? standardTotals.protein} g ({macroRatio.p}%)
-            </span>
-          </div>
-          <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.carbs')}</span>
             <span className="font-mono text-foreground font-medium">
               {scaledRecipeTotals?.carbs ?? standardTotals.carbs} g ({macroRatio.c}%)
+            </span>
+          </div>
+          <div className="h-10 px-4 flex items-center justify-between">
+            <span className="text-muted-foreground">{t('diet.protein')}</span>
+            <span className="font-mono text-foreground font-medium">
+              {scaledRecipeTotals?.protein ?? standardTotals.protein} g ({macroRatio.p}%)
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
@@ -489,7 +489,7 @@ export default function RecipeDetails() {
                     )}
                   </div>
                   <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
-                    {formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit).formatted} · {macros.protein}g P · {macros.carbs}g C · {macros.fat}g F
+                    {formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit).formatted} · {macros.carbs}g C · {macros.protein}g P · {macros.fat}g F
                   </div>
                 </div>
 

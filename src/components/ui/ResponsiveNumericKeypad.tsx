@@ -98,17 +98,36 @@ export function ResponsiveNumericKeypad({
   const { t } = useTranslation()
 
   // 內部輸入狀態 (字串形式，便於處理小數點與算式)
-  const [internalValue, setInternalValue] = React.useState<string>('')
+  const [internalValue, setInternalValue] = React.useState<string>(() => {
+    const initNum = typeof value === 'number' ? value : parseFloat(String(value)) || 0
+    return initNum > 0 ? String(initNum) : ''
+  })
   const [currentUnit, setCurrentUnit] = React.useState<string>(unit)
   const keypadRef = React.useRef<HTMLDivElement>(null)
 
-  // 當彈窗打開或數值/單位改變時，同步初始狀態
+  // 記錄前一次 open 狀態，只在「鍵盤由關閉轉為打開」時重新同步初始狀態
+  const prevOpenRef = React.useRef(open)
+  // 保存最新的 onLiveChange 回調引用，切斷 useEffect 依賴鏈避免無效死循環
+  const onLiveChangeRef = React.useRef(onLiveChange)
   React.useEffect(() => {
-    if (open) {
+    onLiveChangeRef.current = onLiveChange
+  })
+
+  // 記錄上一次向外派發的數值與單位，避免向父級發送重複更新
+  const prevDispatchedRef = React.useRef<string | null>(null)
+
+  // 當彈窗由關閉轉為打開時，同步初始狀態
+  React.useEffect(() => {
+    if (open && !prevOpenRef.current) {
       const initNum = typeof value === 'number' ? value : parseFloat(String(value)) || 0
-      setInternalValue(initNum > 0 ? String(initNum) : '')
+      const initStr = initNum > 0 ? String(initNum) : ''
+      setInternalValue(initStr)
       setCurrentUnit(unit)
+      prevDispatchedRef.current = `${initNum}_${unit}`
+    } else if (!open) {
+      prevDispatchedRef.current = null
     }
+    prevOpenRef.current = open
   }, [open, value, unit])
 
   // 打開時自動將錨定元素 (列表行) 平滑滾動至視窗最佳可視區域
@@ -126,7 +145,7 @@ export function ResponsiveNumericKeypad({
     }
   }, [open, anchorEl])
 
-  // 即時數值雙向鏡像同步：敲擊數字時即時更新原位列表行
+  // 即時數值雙向鏡像同步：敲擊數字且數值實質改變時即時更新原位列表行
   React.useEffect(() => {
     if (!open) return
     let finalStr = internalValue
@@ -134,8 +153,16 @@ export function ResponsiveNumericKeypad({
       finalStr = evaluateAmountExpression(internalValue, allowNegative)
     }
     const num = parseFloat(finalStr) || 0
-    onLiveChange?.(num, currentUnit)
-  }, [internalValue, currentUnit, open, onLiveChange, allowNegative])
+    const dispatchKey = `${num}_${currentUnit}`
+
+    // 只有在實質產生數值變化時才派發通知，杜絕重繪乒乓循環
+    if (prevDispatchedRef.current === dispatchKey) {
+      return
+    }
+
+    prevDispatchedRef.current = dispatchKey
+    onLiveChangeRef.current?.(num, currentUnit)
+  }, [internalValue, currentUnit, open, allowNegative])
 
   const isExpression = React.useMemo(() => {
     return /[+-]/.test(internalValue.replace(/^[+-]/, ''))

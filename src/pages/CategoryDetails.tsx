@@ -336,15 +336,15 @@ export default function CategoryDetails() {
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
-            <span className="text-protein font-medium">{t('diet.protein')}</span>
-            <span className="font-mono text-foreground font-medium">
-              {scaledNutrition?.protein ?? food.protein} g
-            </span>
-          </div>
-          <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-carbs font-medium">{t('diet.carbs')}</span>
             <span className="font-mono text-foreground font-medium">
               {scaledNutrition?.carbs ?? food.carbs} g
+            </span>
+          </div>
+          <div className="h-10 px-4 flex items-center justify-between">
+            <span className="text-protein font-medium">{t('diet.protein')}</span>
+            <span className="font-mono text-foreground font-medium">
+              {scaledNutrition?.protein ?? food.protein} g
             </span>
           </div>
           <div className="h-10 px-4 flex items-center justify-between">
@@ -406,7 +406,7 @@ export default function CategoryDetails() {
                           {formatEnergy(log.calories, energyUnit).formatted}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground/70">
-                          P: {log.protein}g · C: {log.carbs}g · F: {log.fat}g
+                          C: {log.carbs}g · P: {log.protein}g · F: {log.fat}g
                         </div>
                       </div>
                     </div>

@@ -3,21 +3,21 @@ import { calculateMacroPercentages, evaluateNutritionalHighlight } from './nutri
 
 describe('calculateMacroPercentages', () => {
   it('should correctly calculate macro percentages', () => {
-    // 25g P (100 kcal), 50g C (200 kcal), 10g F (90 kcal), Total = 390 kcal
-    const res = calculateMacroPercentages(25, 50, 10);
-    expect(res.proteinPct).toBe(26); // 100/390 = 25.6% -> 26%
+    // 50g C (200 kcal), 25g P (100 kcal), 10g F (90 kcal), Total = 390 kcal
+    const res = calculateMacroPercentages(50, 25, 10);
     expect(res.carbsPct).toBe(51);   // 200/390 = 51.2% -> 51%
+    expect(res.proteinPct).toBe(26); // 100/390 = 25.6% -> 26%
     expect(res.fatPct).toBe(23);     // 90/390 = 23.0% -> 23%
   });
 
   it('should return 0 when all macros are zero', () => {
     const res = calculateMacroPercentages(0, 0, 0);
-    expect(res).toEqual({ proteinPct: 0, carbsPct: 0, fatPct: 0 });
+    expect(res).toEqual({ carbsPct: 0, proteinPct: 0, fatPct: 0 });
   });
 
   it('should handle negative values safely', () => {
-    const res = calculateMacroPercentages(-10, -5, -2);
-    expect(res).toEqual({ proteinPct: 0, carbsPct: 0, fatPct: 0 });
+    const res = calculateMacroPercentages(-5, -10, -2);
+    expect(res).toEqual({ carbsPct: 0, proteinPct: 0, fatPct: 0 });
   });
 });
 

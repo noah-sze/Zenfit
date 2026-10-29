@@ -86,6 +86,22 @@ trigger: always_on
   - **狀態提示規範**：錯誤與警告應優先透過元件本身的視覺狀態切換（如輸入框文字變紅 `text-destructive`、邊框變色、確認按鈕動態禁用 `disabled`）或透過全域 Toast 提示呈現。
 - **破壞性動作按鈕規範 (Destructive Buttons)**：
   - 二次確認與破壞性高危操作的 `destructive` 按鈕統一採用「實色紅底 + 純白文字（`bg-destructive text-destructive-foreground hover:opacity-90 active:opacity-80`）」，嚴禁使用淡底弱化樣式。
+- **標準精密彈窗規範 (Standard Precision Modal Architecture & Zero-Drift Contract)**：
+  - **底層唯一真理源 (`<PrecisionDialogContent>` / `size="standard"`)**：所有食材、食譜、飲食記錄、測量微調等表單與管理 Dialog，必須一律使用 `@/components/ui/dialog` 導出的 `<PrecisionDialogContent>`（或 `DialogContent size="standard"`），禁止在業務層複製貼上長串重複的幾何類名。底層自動封裝並強制落實防呆約束：
+    1. **寬度唯一真理源**：`w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px]`。
+    2. **內邊距防洩漏真理源**：全端恆定 `16px`（底層固定綁定 `p-4 sm:p-4`，徹底杜絕桌面端因未帶 `sm:` 斷點而洩漏預設 `sm:p-6` 變成 24px 大邊距）。
+    3. **字體與邊框**：`font-mono text-xs select-none shadow-none bg-card border border-border`。
+    4. **關閉按鈕防呆**：底層自動隱藏預設的右上方懸浮關閉鈕，改由標頭圓鈕專職負責。
+  - **標準標頭唯一真理源 (`DialogPrecisionHeader` / `PrecisionDialogContent`)**：
+    - 凡採用頂部雙純圖標欄（Variant D）之彈窗，統一由 `<PrecisionDialogContent title="..." onSubmit={...} onClose={...} form={formId} />` 宣告或引用 `<DialogPrecisionHeader />` 渲染，絕對嚴禁在各業務層複製貼上 30 餘行重複的標頭 JSX。
+    - 佈局標準：左側取消圖標圓鈕 (✕)、中間客觀純名詞（去餐別綴詞、中英數空格）、右側提交圖標圓鈕 (✓，支援 `onSubmit` 點擊或 `form` 外部表單觸發）。容器高度恆定為 `h-7`。
+  - **內部區塊縱向律動契約**：
+    - 主體頂部留白：一律採用 `pt-3.5`。
+    - 垂直區塊間距：一律採用 `space-y-3`（表單內部欄位可使用 `space-y-3.5`）。
+    - 緊密微型組件成組（如 4 欄 HUD Banner 與供能比標尺）：以 `space-y-1.5` 成組。
+    - Usage List 行高：每列食材項目嚴格與新增/編輯食譜 Dialog 統一為 `min-h-12 py-2 px-3 sm:px-4`（48px），右側配置標準圓角數字膠囊 `[ 100 g › ]`，保證充足點擊熱區與舒適留白。
+  - **底部破壞性高危按鈕規範**：
+    - 統一採用「實色紅底 + 純白文字（`w-full h-9 rounded-md bg-destructive text-destructive-foreground font-mono text-xs font-semibold`）」，緊隨主容器 `space-y-3` 節奏，嚴禁在外層包裹多餘 `pt-1` 破壞間距均勻度。
 - **頁面內部視圖切換與瀏覽器導航歷史規範 (Page Tab State & History Stack Standards)**：
   - **視圖狀態純本地化 (Tabs as Pure Local State)**：頁面內部的同級視圖、分頁或過濾切換（例如管理清單的「使用中 / 已歸檔」Tab），預設必須使用元件內部純本地狀態（`useState<'active' | 'archived'>`）進行管理，嚴禁濫用 URL Query 參數（如 `?tab=archived`）。
   - **純淨 URL 契約 (Clean Path Contract)**：管理清單與子頁面 URL 必須維持恆定的乾淨純路徑（例如 `/settings/foods`），切換內部 Tab 時不得污染瀏覽器網址列。
@@ -112,6 +128,9 @@ trigger: always_on
 17. **不得在食物名稱或計量單位中使用模糊非客觀量詞**：嚴禁在食物名稱或單位中混入「1 勺」、「1 匙」、「1 碗」、「中顆」等主觀模糊詞，一律回歸克數 (`g`) 與毫升 (`ml`)。
 18. **不得將頁面內部 Tab 綁定至污染瀏覽器歷史的 Query 參數**：嚴禁在管理列表切換「使用中 / 已歸檔」等頁面內部視圖時產生 `?tab=archived` 等查詢參數，導致使用者點擊瀏覽器返回時無法直接回到上一層頁面。
 19. **不得在全局介面中使用冗長、客套、囉唆或重複上下文的贅贅文案**：全域嚴禁使用帶所屬對象綴詞的冗長詞彙（如嚴禁「已歸檔食物」、「新增菜餚」、「自定義動作列表」）；嚴禁在提示與按鈕中出現「請…」、「您可以…」、「成功完成…」等客套廢話；全局文案必須一律提煉為純粹的狀態詞（如「已歸檔」）、原子動作動詞（如「新增」）與客觀名詞。
+20. **不得任意顛倒三大營養素（三大元素）順序**：全應用程式（包含輸入框、清單方塊矩陣、標籤選單、表頭統計、預覽看板與副標文本等所有介面呈現）嚴格固定三大元素順序為「碳水化合物、蛋白質、脂肪（Carbs, Protein, Fat / C, P, F）」，嚴禁任何顛倒為 P/C/F、P/F/C 或混亂無序的排版。
+21. **不得在標準數據彈窗上私自手寫覆蓋幾何尺寸與邊距類名**：嚴禁私寫 `sm:max-w-md`、`p-6`、`w-full` 等破壞 300px 與 16px 緊湊規格的類名，所有資料與管理彈窗必須透過 `<PrecisionDialogContent>` 或 `size="standard"` 自動繼承單一真理源。
+22. **不得在標準精密彈窗中手寫重複的標頭 JSX**：一律透過 `<PrecisionDialogContent>` 的 `title/onSubmit/onClose/form` props 或 `<DialogPrecisionHeader>` 統一輸出，杜絕在各業務頁面複製貼上 30 餘行標頭 JSX。
 
 ## 6. 食物數據與原子計量規範 (Food Data & Atomic Metric Standards)
 - **原型食材原子化真理源 (Atomic Ingredients as Ground Truth)**：
@@ -126,3 +145,13 @@ trigger: always_on
 - **唯一計量真理源：克數與毫升 (Strict Gram/ml Metric Hierarchy)**：
   - **絕對嚴禁在食物名稱或單位中使用模糊器具與非客觀量詞**（例如嚴禁「1 勺」、「1 匙」、「1 碗」、「1 份」、「中顆」、「掌心大」）。
   - 固體食物一律以「克 (`g`)」、液體一律以「毫升 (`ml`)」為唯一底層物理計量真理源，引導使用者始終以電子秤物理測量，維護客觀測量儀之精確標準。
+
+## 7. 三大營養素（三大元素）全局統一排序規範 (Strict Macro Nutrients Ordering Standards)
+- **固定唯一真理源順序：碳水、蛋白質、脂肪 (Carbs, Protein, Fat / C, P, F)**：
+  - 全應用程式中所有涉及三大營養素（三大元素）的視覺元件、表單輸入、統計看板、標籤選單與文字排版，**嚴格統一固定為「碳水化合物 -> 蛋白質 -> 脂肪」的恆定順序**，英文字母代號嚴格遵循「**C -> P -> F**」。
+- **全域貫徹覆蓋範疇 (Global Scope & Zero Exceptions)**：
+  1. **方塊矩陣與微型膠囊 (`MacroSquares`)**：由左至右固定為「`C` (碳水) -> `P` (蛋白質) -> `F` (脂肪)」，嚴禁將蛋白質放於碳水之前。
+  2. **表單與數值輸入框 (`FoodFormDialog`, `AddQuickModal` 等)**：輸入列與網格由上至下、由左至右一律遵循「熱量 -> 碳水化合物 -> 蛋白質 -> 脂肪」。
+  3. **橫向看板與 HUD Banner (`RecipeFormDialog`, `DietPlanModal` 等)**：巨量素網格、供能比標尺 (Ratio Bar) 與 3 欄並列卡片，嚴格依「碳水 -> 蛋白質 -> 脂肪」排列。
+  4. **文字副標與微彙總 (List Subtitle & Table Headers)**：凡以行內文字呈現三大元素時（如「`C: 28g · P: 10g · F: 2g`」或「`碳 28g · 蛋 10g · 脂 2g`」），嚴格維持 C/P/F 順序。
+  5. **特徵過濾與下拉選單 (Filter Dropdowns & Tags)**：下拉選單選項嚴格依「碳水主食 (`carb-source`) -> 高蛋白 (`high-protein`) -> 脂質來源 (`fat-source`) -> 低熱量 -> 高熱量」順序排列。

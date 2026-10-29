@@ -147,6 +147,9 @@
       "viewFoodDetail": "查看详情",
       "noRecipeLogs": "无记录",
       "foodHasRecipes": "已被菜肴引用",
+      "deleteRecord": "删除记录",
+      "deleteBundleRecord": "删除整组记录",
+      "clickToEnter": "点击输入数值",
       "foodCategory": {
         "title": "分类",
         "all": "全部",

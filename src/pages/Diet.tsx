@@ -5,7 +5,7 @@ import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { MealType, FoodLog } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DietPlanModal } from '@/components/diet/DietPlanModal';
+import { EditFoodLogDialog } from '@/components/diet/EditFoodLogDialog';
+import { EditRecipeLogDialog } from '@/components/diet/EditRecipeLogDialog';
 import {
   calculateBMR,
   calculateTDEE,
@@ -27,18 +29,11 @@ import {
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
+import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
+import { cn } from '@/lib/utils';
 type GroupedMealEntry =
   | { type: 'single'; log: FoodLog }
   | { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] };
-
-function getLogHighlights(log: { protein: number; carbs: number; fat: number; calories?: number }) {
-  const totalCal = log.calories || (log.protein * 4 + log.carbs * 4 + log.fat * 9) || 1;
-  return {
-    protein: (log.protein * 4) / totalCal >= 0.35 && log.protein >= 10,
-    carbs: (log.carbs * 4) / totalCal >= 0.5 && log.carbs >= 15,
-    fat: (log.fat * 9) / totalCal >= 0.5 && log.fat >= 8,
-  };
-}
 
 function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
   const result: GroupedMealEntry[] = [];
@@ -73,13 +68,26 @@ function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
 export default function Diet() {
   const { t } = useTranslation();
   const { selectedDate, openAddModal } = useAppStore();
-  const { mealGroups, deleteFoodLog, deleteFoodLogBundle, totals } = useFoodLogs(selectedDate);
+  const {
+    mealGroups,
+    updateFoodLog,
+    updateFoodLogBundle,
+    deleteFoodLog,
+    deleteFoodLogBundle,
+    totals,
+  } = useFoodLogs(selectedDate);
   const { profile, updateProfile } = useUserProfile();
   const { plan, saveDietPlan } = useDietPlan(selectedDate);
   const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
   const confirm = useConfirm();
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [editingFoodLog, setEditingFoodLog] = useState<FoodLog | null>(null);
+  const [editingBundle, setEditingBundle] = useState<{
+    bundleId: string;
+    bundleName: string;
+    logs: FoodLog[];
+  } | null>(null);
 
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -165,6 +173,38 @@ export default function Diet() {
     if (ok) {
       await deleteFoodLogBundle(bundleId);
     }
+  };
+
+  const handleSaveFoodLog = async (
+    id: string,
+    updates: { quantity: number; calories: number; carbs: number; protein: number; fat: number }
+  ) => {
+    await updateFoodLog(id, updates);
+  };
+
+  const handleDeleteFoodLog = async (id: string) => {
+    await deleteFoodLog(id);
+  };
+
+  const handleSaveRecipeLog = async (
+    bundleId: string,
+    items: Array<{
+      id?: string;
+      foodId?: string;
+      foodName: string;
+      quantity: number;
+      unit: string;
+      calories: number;
+      carbs: number;
+      protein: number;
+      fat: number;
+    }>
+  ) => {
+    await updateFoodLogBundle(bundleId, items);
+  };
+
+  const handleDeleteRecipeBundle = async (bundleId: string) => {
+    await deleteFoodLogBundle(bundleId);
   };
 
   return (
@@ -365,13 +405,13 @@ export default function Diet() {
                     <>
                       <span className="text-border">/</span>
                       <span>
-                        <span className="text-protein font-medium">{t('diet.macroMicro.protein', '蛋')}</span>{' '}
-                        {Math.round(groupProtein)}g
+                        <span className="text-carbs font-medium">{t('diet.macroMicro.carbs', '碳')}</span>{' '}
+                        {Math.round(groupCarbs)}g
                       </span>
                       <span className="text-border">·</span>
                       <span>
-                        <span className="text-carbs font-medium">{t('diet.macroMicro.carbs', '碳')}</span>{' '}
-                        {Math.round(groupCarbs)}g
+                        <span className="text-protein font-medium">{t('diet.macroMicro.protein', '蛋')}</span>{' '}
+                        {Math.round(groupProtein)}g
                       </span>
                       <span className="text-border">·</span>
                       <span>
@@ -407,15 +447,33 @@ export default function Diet() {
                         logs={entry.logs}
                         onDeleteBundle={handleDeleteBundle}
                         onDeleteSingle={handleDelete}
+                        onEditBundle={(bundleId, bundleName, logs) => {
+                          setEditingBundle({ bundleId, bundleName, logs });
+                        }}
                       />
                     );
                   }
 
                   const item = entry.log;
+                  const evalRes = evaluateNutritionalHighlight({
+                    calories: item.calories,
+                    protein: item.protein,
+                    carbs: item.carbs,
+                    fat: item.fat,
+                    servingSize: item.quantity,
+                    servingUnit: item.unit || 'g',
+                  });
+                  const isLowCalorie = evalRes.labels.includes('low-calorie');
+                  const isHighCalorie = evalRes.labels.includes('high-calorie');
+
                   return (
                     <div
                       key={item.id}
-                      className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setEditingFoodLog(item);
+                      }}
+                      className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
                     >
                       {/* 左側：品名與份量熱量副標 */}
                       <div className="flex-1 min-w-0 pr-3 select-none">
@@ -427,28 +485,27 @@ export default function Diet() {
                             {formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}
                           </span>
                           <span className="text-border">·</span>
-                          <span className="font-medium text-foreground">
+                          <span
+                            className={cn(
+                              isLowCalorie &&
+                                'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                              isHighCalorie &&
+                                'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                            )}
+                          >
                             {formatEnergy(item.calories, energyUnit).formatted}
                           </span>
                         </div>
                       </div>
 
-                      {/* 右側：MacroSquares 矩陣 + 微刪除按鈕 */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      {/* 右側：MacroSquares 矩陣 */}
+                      <div className="flex items-center shrink-0">
                         <MacroSquares
                           protein={item.protein}
                           carbs={item.carbs}
                           fat={item.fat}
-                          highlights={getLogHighlights(item)}
+                          highlights={evalRes.highlights}
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item)}
-                          className="size-7 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                          aria-label={t('common.delete')}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
                       </div>
                     </div>
                   );
@@ -472,6 +529,26 @@ export default function Diet() {
         onSavePlan={saveDietPlan}
         profile={profile}
         onSave={updateProfile}
+      />
+
+      {/* 單品食物記錄編輯管理 Dialog (方案 3) */}
+      <EditFoodLogDialog
+        open={!!editingFoodLog}
+        onOpenChange={(open) => !open && setEditingFoodLog(null)}
+        log={editingFoodLog}
+        onSave={handleSaveFoodLog}
+        onDelete={handleDeleteFoodLog}
+      />
+
+      {/* 菜餚組合記錄編輯管理 Dialog (菜餚方案 1) */}
+      <EditRecipeLogDialog
+        open={!!editingBundle}
+        onOpenChange={(open) => !open && setEditingBundle(null)}
+        bundleId={editingBundle?.bundleId || null}
+        bundleName={editingBundle?.bundleName || ''}
+        logs={editingBundle?.logs || []}
+        onSave={handleSaveRecipeLog}
+        onDeleteBundle={handleDeleteRecipeBundle}
       />
     </div>
   );
