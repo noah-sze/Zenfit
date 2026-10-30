@@ -44,14 +44,20 @@
   --color-carbs: var(--carbs);
   --color-carbs-foreground: var(--carbs-foreground);
   --color-carbs-subtle: var(--carbs-subtle);
+  --color-carbs-subtle-border: var(--carbs-subtle-border);
+  --color-carbs-subtle-bg: var(--carbs-subtle-bg);
 
   --color-protein: var(--protein);
   --color-protein-foreground: var(--protein-foreground);
   --color-protein-subtle: var(--protein-subtle);
+  --color-protein-subtle-border: var(--protein-subtle-border);
+  --color-protein-subtle-bg: var(--protein-subtle-bg);
 
   --color-fat: var(--fat);
   --color-fat-foreground: var(--fat-foreground);
   --color-fat-subtle: var(--fat-subtle);
+  --color-fat-subtle-border: var(--fat-subtle-border);
+  --color-fat-subtle-bg: var(--fat-subtle-bg);
 
   /* 圓角體系：除 full 與 none 外全面統一為 rounded-lg (var(--radius)) */
   --radius-xs: var(--radius);
@@ -133,14 +139,20 @@
     --carbs: #d97706; /* 琥珀金 - 穀物能量 */
     --carbs-foreground: #ffffff;
     --carbs-subtle: rgba(217, 119, 6, 0.15);
+    --carbs-subtle-border: rgba(217, 119, 6, 0.18);
+    --carbs-subtle-bg: rgba(217, 119, 6, 0.02);
 
     --protein: #0284c7; /* 冰川青藍 - 肌肉修復與科技客觀感 */
     --protein-foreground: #ffffff;
     --protein-subtle: rgba(2, 132, 199, 0.15);
+    --protein-subtle-border: rgba(2, 132, 199, 0.18);
+    --protein-subtle-bg: rgba(2, 132, 199, 0.02);
 
     --fat: #7c3aed; /* 洗練紫羅蘭 - 脂質儲備，避開批判性紅色 */
     --fat-foreground: #ffffff;
     --fat-subtle: rgba(124, 58, 237, 0.15);
+    --fat-subtle-border: rgba(124, 58, 237, 0.18);
+    --fat-subtle-bg: rgba(124, 58, 237, 0.02);
     --radius: 0.5rem;
   }
   .dark {
@@ -175,14 +187,20 @@
     --carbs: #f59e0b;
     --carbs-foreground: #000000;
     --carbs-subtle: rgba(245, 158, 11, 0.18);
+    --carbs-subtle-border: rgba(245, 158, 11, 0.20);
+    --carbs-subtle-bg: rgba(245, 158, 11, 0.03);
 
     --protein: #38bdf8;
     --protein-foreground: #000000;
     --protein-subtle: rgba(56, 189, 248, 0.18);
+    --protein-subtle-border: rgba(56, 189, 248, 0.20);
+    --protein-subtle-bg: rgba(56, 189, 248, 0.03);
 
     --fat: #a78bfa;
     --fat-foreground: #000000;
     --fat-subtle: rgba(167, 139, 250, 0.18);
+    --fat-subtle-border: rgba(167, 139, 250, 0.20);
+    --fat-subtle-bg: rgba(167, 139, 250, 0.03);
   }
 }
 

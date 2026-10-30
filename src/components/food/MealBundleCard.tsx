@@ -108,13 +108,14 @@ export function MealBundleCard({
           </div>
         </div>
 
-        {/* 右側：總 MacroSquares (包含與食譜管理頁面一致的亮燈) */}
+        {/* 右側：總 MacroSquares (首頁套餐卡片採用方案 A 柔和微光) */}
         <div className="flex items-center shrink-0">
           <MacroSquares
             protein={Math.round(bundleTotals.protein)}
             carbs={Math.round(bundleTotals.carbs)}
             fat={Math.round(bundleTotals.fat)}
             highlights={evalRes.highlights}
+            variant="subtle"
           />
         </div>
       </div>
@@ -151,9 +152,9 @@ export function MealBundleCard({
                     <span
                       className={cn(
                         isItemLowCal &&
-                          'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                          'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.2 rounded bg-emerald-500/5',
                         isItemHighCal &&
-                          'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                          'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.2 rounded bg-rose-500/5'
                       )}
                     >
                       {formatEnergy(item.calories, energyUnit).formatted}
@@ -167,6 +168,7 @@ export function MealBundleCard({
                     carbs={item.carbs}
                     fat={item.fat}
                     highlights={itemEval.highlights}
+                    variant="subtle"
                     className="scale-[0.9] origin-right"
                   />
                 </div>

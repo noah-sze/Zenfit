@@ -13,6 +13,7 @@ export interface MacroSquaresProps {
   carbs: number;
   fat: number;
   highlights?: MacroHighlights;
+  variant?: 'default' | 'subtle';
   className?: string;
 }
 
@@ -24,15 +25,18 @@ export interface MacroSquaresProps {
  * - 等寬字體 font-mono
  * - 智能點亮 (amber-500 / sky-500 / purple-500)
  * - 支援超長數值 AutoMarquee 平滑往返跑馬燈防溢出
+ * - 支援 variant: default (食材管理頁面高飽和) 與 subtle (首頁微光減噪)
  */
 export function MacroSquares({
   protein,
   carbs,
   fat,
   highlights,
+  variant = 'default',
   className,
 }: MacroSquaresProps) {
   const { t } = useTranslation();
+  const isSubtle = variant === 'subtle';
 
   return (
     <div className={cn("shrink-0 flex items-center gap-2 font-mono text-center", className)}>
@@ -41,14 +45,20 @@ export function MacroSquares({
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
           highlights?.carbs
-            ? "border-carbs bg-carbs-subtle text-foreground shadow-none"
+            ? isSubtle
+              ? "border-carbs-subtle-border bg-carbs-subtle-bg text-foreground shadow-none"
+              : "border-carbs bg-carbs-subtle text-foreground shadow-none"
             : "border-border bg-muted/30 text-foreground"
         )}
       >
         <div
           className={cn(
             "text-[9px] uppercase tracking-wider",
-            highlights?.carbs ? "text-carbs font-bold" : "text-muted-foreground"
+            highlights?.carbs
+              ? isSubtle
+                ? "text-carbs/75 font-medium"
+                : "text-carbs font-bold"
+              : "text-muted-foreground"
           )}
         >
           {t('diet.macroMicro.carbs', '碳')}
@@ -63,14 +73,20 @@ export function MacroSquares({
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
           highlights?.protein
-            ? "border-protein bg-protein-subtle text-foreground shadow-none"
+            ? isSubtle
+              ? "border-protein-subtle-border bg-protein-subtle-bg text-foreground shadow-none"
+              : "border-protein bg-protein-subtle text-foreground shadow-none"
             : "border-border bg-muted/30 text-foreground"
         )}
       >
         <div
           className={cn(
             "text-[9px] uppercase tracking-wider",
-            highlights?.protein ? "text-protein font-bold" : "text-muted-foreground"
+            highlights?.protein
+              ? isSubtle
+                ? "text-protein/75 font-medium"
+                : "text-protein font-bold"
+              : "text-muted-foreground"
           )}
         >
           {t('diet.macroMicro.protein', '蛋')}
@@ -85,14 +101,20 @@ export function MacroSquares({
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
           highlights?.fat
-            ? "border-fat bg-fat-subtle text-foreground shadow-none"
+            ? isSubtle
+              ? "border-fat-subtle-border bg-fat-subtle-bg text-foreground shadow-none"
+              : "border-fat bg-fat-subtle text-foreground shadow-none"
             : "border-border bg-muted/30 text-foreground"
         )}
       >
         <div
           className={cn(
             "text-[9px] uppercase tracking-wider",
-            highlights?.fat ? "text-fat font-bold" : "text-muted-foreground"
+            highlights?.fat
+              ? isSubtle
+                ? "text-fat/75 font-medium"
+                : "text-fat font-bold"
+              : "text-muted-foreground"
           )}
         >
           {t('diet.macroMicro.fat', '脂')}
