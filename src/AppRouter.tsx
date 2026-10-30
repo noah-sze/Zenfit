@@ -14,9 +14,7 @@ import RecipeDetails from './pages/RecipeDetails';
 import CategoryDetails from './pages/CategoryDetails';
 import Exercises from './pages/Exercises';
 import ExerciseDetails from './pages/ExerciseDetails';
-import Routines from './pages/Routines';
 import RoutineDetails from './pages/RoutineDetails';
-import Equipments from './pages/Equipments';
 
 const router = createBrowserRouter([
   {
@@ -84,12 +82,16 @@ const router = createBrowserRouter([
         element: <ExerciseDetails />,
       },
       {
+        path: 'settings/workouts',
+        element: <Navigate to="/settings/exercises" replace />,
+      },
+      {
         path: 'settings/routines',
-        element: <Routines />,
+        element: <Navigate to="/settings/exercises" replace />,
       },
       {
         path: 'settings/routines/archived',
-        element: <Navigate to="/settings/routines" replace />,
+        element: <Navigate to="/settings/exercises" replace />,
       },
       {
         path: 'settings/routines/:id',
@@ -97,11 +99,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/equipments',
-        element: <Equipments />,
+        element: <Navigate to="/settings/exercises" replace />,
       },
       {
         path: 'settings/equipments/archived',
-        element: <Navigate to="/settings/equipments" replace />,
+        element: <Navigate to="/settings/exercises" replace />,
       },
       {
         path: 'settings/categories',
