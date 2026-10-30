@@ -489,7 +489,7 @@ export default function RecipeDetails() {
                     )}
                   </div>
                   <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
-                    {formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit).formatted} · {macros.carbs}g C · {macros.protein}g P · {macros.fat}g F
+                    {formatFoodServing(ing.quantity, ing.unit, foodWeightUnit, foodVolumeUnit).formatted} · {macros.carbs}g {t('diet.macroMicro.carbs', '碳')} · {macros.protein}g {t('diet.macroMicro.protein', '蛋')} · {macros.fat}g {t('diet.macroMicro.fat', '脂')}
                   </div>
                 </div>
 

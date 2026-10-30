@@ -594,9 +594,9 @@ export function AddQuickModal() {
                         </span>
                       </div>
                       <div className="text-[11px] font-mono text-muted-foreground flex gap-3 pt-0.5">
-                        <span>C: {currentRecipeTotals.carbs} g</span>
-                        <span>P: {currentRecipeTotals.protein} g</span>
-                        <span>F: {currentRecipeTotals.fat} g</span>
+                        <span>{t('diet.macroMicro.carbs', '碳')}: {currentRecipeTotals.carbs} g</span>
+                        <span>{t('diet.macroMicro.protein', '蛋')}: {currentRecipeTotals.protein} g</span>
+                        <span>{t('diet.macroMicro.fat', '脂')}: {currentRecipeTotals.fat} g</span>
                       </div>
                     </div>
                   </div>

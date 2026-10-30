@@ -406,7 +406,7 @@ export default function CategoryDetails() {
                           {formatEnergy(log.calories, energyUnit).formatted}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground/70">
-                          C: {log.carbs}g · P: {log.protein}g · F: {log.fat}g
+                          {t('diet.macroMicro.carbs', '碳')}: {log.carbs}g · {t('diet.macroMicro.protein', '蛋')}: {log.protein}g · {t('diet.macroMicro.fat', '脂')}: {log.fat}g
                         </div>
                       </div>
                     </div>
