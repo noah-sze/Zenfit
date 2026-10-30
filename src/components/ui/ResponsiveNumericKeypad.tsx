@@ -334,21 +334,42 @@ export function ResponsiveNumericKeypad({
     onOpenChange(false)
   }
 
-  // 鍵盤物理快捷鍵監聽 (Enter / Escape)
+  // 鍵盤物理快捷鍵監聽 (Enter / Escape / 數字鍵 0-9 / Backspace / Delete / C / 運算符)
   React.useEffect(() => {
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 避免與外部輸入框衝突
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && !keypadRef.current?.contains(target)) {
+        return
+      }
+
       if (e.key === 'Enter') {
         e.preventDefault()
         handleConfirmAction()
       } else if (e.key === 'Escape') {
         e.preventDefault()
         handleCloseAction()
+      } else if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault()
+        handleKey(e.key)
+      } else if (e.key === 'Backspace') {
+        e.preventDefault()
+        handleKey('DEL')
+      } else if (e.key === 'Delete' || e.key === 'c' || e.key === 'C') {
+        e.preventDefault()
+        handleKey('C')
+      } else if (e.key === '+' || e.key === '-') {
+        e.preventDefault()
+        handleKey(e.key)
+      } else if (e.key === '.' && allowDecimals) {
+        e.preventDefault()
+        handleKey('.')
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, internalValue, isExpression, currentUnit])
+  }, [open, internalValue, isExpression, currentUnit, allowDecimals])
 
   if (!open || typeof document === 'undefined') return null
 

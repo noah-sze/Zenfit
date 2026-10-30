@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { AutoMarquee } from '@/components/ui/AutoMarquee';
 
@@ -16,9 +17,9 @@ export interface MacroSquaresProps {
 }
 
 /**
- * 領域共用模式：C / P / F 三列等寬營養素方塊矩陣
+ * 領域共用模式：三大元素（碳 / 蛋 / 脂）三列等寬營養素方塊矩陣
  * 嚴格遵循 Design System 規範：
- * - 固定順序：碳水 (C)、蛋白質 (P)、脂肪 (F)
+ * - 固定順序：碳水化合物 (碳)、蛋白質 (蛋)、脂肪 (脂)
  * - 等寬 w-11 (44px)
  * - 等寬字體 font-mono
  * - 智能點亮 (amber-500 / sky-500 / purple-500)
@@ -31,9 +32,11 @@ export function MacroSquares({
   highlights,
   className,
 }: MacroSquaresProps) {
+  const { t } = useTranslation();
+
   return (
     <div className={cn("shrink-0 flex items-center gap-2 font-mono text-center", className)}>
-      {/* C 碳水方塊 */}
+      {/* 碳水化合物方塊 */}
       <div
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
@@ -48,14 +51,14 @@ export function MacroSquares({
             highlights?.carbs ? "text-carbs font-bold" : "text-muted-foreground"
           )}
         >
-          C
+          {t('diet.macroMicro.carbs', '碳')}
         </div>
         <AutoMarquee align="center" className="text-xs font-semibold tabular-nums">
           <span>{carbs}g</span>
         </AutoMarquee>
       </div>
 
-      {/* P 蛋白質方塊 */}
+      {/* 蛋白質方塊 */}
       <div
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
@@ -70,14 +73,14 @@ export function MacroSquares({
             highlights?.protein ? "text-protein font-bold" : "text-muted-foreground"
           )}
         >
-          P
+          {t('diet.macroMicro.protein', '蛋')}
         </div>
         <AutoMarquee align="center" className="text-xs font-semibold tabular-nums">
           <span>{protein}g</span>
         </AutoMarquee>
       </div>
 
-      {/* F 脂肪方塊 */}
+      {/* 脂肪方塊 */}
       <div
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
@@ -92,7 +95,7 @@ export function MacroSquares({
             highlights?.fat ? "text-fat font-bold" : "text-muted-foreground"
           )}
         >
-          F
+          {t('diet.macroMicro.fat', '脂')}
         </div>
         <AutoMarquee align="center" className="text-xs font-semibold tabular-nums">
           <span>{fat}g</span>

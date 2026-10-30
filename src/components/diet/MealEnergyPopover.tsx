@@ -88,7 +88,7 @@ export function MealEnergyPopover({
           {/* 碳水化合物 (C) */}
           <div className="flex items-center justify-between text-xs py-0.5">
             <span className="text-carbs font-medium">
-              {t('diet.dietPlan.carbs', '碳水化合物')}
+              {t('dietPlan.carbs', '碳水化合物')}
             </span>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">{Math.round(carbs)}g</span>
@@ -101,7 +101,7 @@ export function MealEnergyPopover({
           {/* 蛋白質 (P) */}
           <div className="flex items-center justify-between text-xs py-0.5">
             <span className="text-protein font-medium">
-              {t('diet.dietPlan.protein', '蛋白質')}
+              {t('dietPlan.protein', '蛋白質')}
             </span>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">{Math.round(protein)}g</span>
@@ -114,7 +114,7 @@ export function MealEnergyPopover({
           {/* 脂肪 (F) */}
           <div className="flex items-center justify-between text-xs py-0.5">
             <span className="text-fat font-medium">
-              {t('diet.dietPlan.fat', '脂肪')}
+              {t('dietPlan.fat', '脂肪')}
             </span>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">{Math.round(fat)}g</span>
@@ -143,9 +143,9 @@ export function MealEnergyPopover({
 
         {/* 供能比例圖例標籤 */}
         <div className="flex items-center justify-between text-[10px] font-mono mt-1 px-0.5">
-          <span className="text-carbs font-medium">C {cPercent}%</span>
-          <span className="text-protein font-medium">P {pPercent}%</span>
-          <span className="text-fat font-medium">F {fPercent}%</span>
+          <span className="text-carbs font-medium">{t('diet.macroMicro.carbs', '碳')} {cPercent}%</span>
+          <span className="text-protein font-medium">{t('diet.macroMicro.protein', '蛋')} {pPercent}%</span>
+          <span className="text-fat font-medium">{t('diet.macroMicro.fat', '脂')} {fPercent}%</span>
         </div>
       </PopoverContent>
     </Popover>

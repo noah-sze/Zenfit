@@ -246,7 +246,7 @@ export const DEFAULT_RECIPES: Omit<FoodRecipe, 'createdAt' | 'updatedAt'>[] = [
   {
     id: 'recipe_oat_bowl',
     name: '高蛋白燕麥優格碗',
-    description: '無油純淨碳水與蛋白質組合，飽腹感極佳',
+    description: '無油純淨碳水化合物與蛋白質組合，飽腹感極佳',
     ingredients: [
       { foodId: 'food_rolled_oats', foodName: '大燕麥片', quantity: 50, unit: 'g', isOptional: false },
       { foodId: 'food_greek_yogurt', foodName: '無糖希臘優格', quantity: 100, unit: 'g', isOptional: false },

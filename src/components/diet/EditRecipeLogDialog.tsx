@@ -361,7 +361,7 @@ export function EditRecipeLogDialog({
                 {/* 碳水化合物 */}
                 <div className="px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
-                    {t('diet.carbs')}
+                    {t('diet.macroMicro.carbs', '碳')}
                   </span>
                   <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{Math.round(totals.carbs * 10) / 10}</span>
@@ -372,7 +372,7 @@ export function EditRecipeLogDialog({
                 {/* 蛋白質 */}
                 <div className="px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
-                    {t('diet.protein')}
+                    {t('diet.macroMicro.protein', '蛋')}
                   </span>
                   <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{Math.round(totals.protein * 10) / 10}</span>
@@ -383,7 +383,7 @@ export function EditRecipeLogDialog({
                 {/* 脂肪 */}
                 <div className="px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
-                    {t('diet.fat')}
+                    {t('diet.macroMicro.fat', '脂')}
                   </span>
                   <div className="font-mono text-xs font-bold text-fat mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{Math.round(totals.fat * 10) / 10}</span>

@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit 供能比 Dialog 深度重構 · 數字鍵盤與配比總和全新設計 · UI/UX Pro Max</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-subtle: #f9fafb;
+      --fg: #000000;
+      --card: #ffffff;
+      --card-fg: #000000;
+      --border: #eaeaea;
+      --border-subtle: #f0f0f0;
+      --border-strong: #d4d4d8;
+      --muted: #fafafa;
+      --muted-header: rgba(250, 250, 250, 0.7);
+      --muted-fg: #666666;
+      --muted-subtle: #a1a1aa;
+      --track: #e4e4e7;
+      --overlay: rgba(255, 255, 255, 0.85);
+
+      /* 三大營養素色彩 (Strict Order: Carbs, Protein, Fat) */
+      --calories: #e11d48;
+      --carbs: #d97706;
+      --protein: #0284c7;
+      --fat: #7c3aed;
+      --destructive: #ff0000;
+
+      --carbs-subtle: rgba(217, 119, 6, 0.12);
+      --protein-subtle: rgba(2, 132, 199, 0.12);
+      --fat-subtle: rgba(124, 58, 237, 0.12);
+
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft JhengHei", sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    html.dark {
+      --bg: #000000;
+      --bg-subtle: #09090b;
+      --fg: #ffffff;
+      --card: #000000;
+      --card-fg: #ffffff;
+      --border: #262626;
+      --border-subtle: #18181b;
+      --border-strong: #3f3f46;
+      --muted: #0a0a0a;
+      --muted-header: rgba(10, 10, 10, 0.7);
+      --muted-fg: #a0a0a0;
+      --muted-subtle: #71717a;
+      --track: #27272a;
+      --overlay: rgba(0, 0, 0, 0.88);
+
+      --calories: #f43f5e;
+      --carbs: #f59e0b;
+      --protein: #38bdf8;
+      --fat: #a78bfa;
+      --destructive: #ff453a;
+
+      --carbs-subtle: rgba(245, 158, 11, 0.16);
+      --protein-subtle: rgba(56, 189, 248, 0.16);
+      --fat-subtle: rgba(167, 139, 250, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-subtle);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* 頂部固定導航控制列 */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+    }
+
+    .top-bar-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-toggle {
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-toggle:hover {
+      background: var(--border);
+    }
+
+    /* 容器 */
+    .container {
+      max-width: 1400px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+    }
+
+    /* 導言說明 Banner */
+    .hero-banner {
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .hero-text p {
+      font-size: 12px;
+      color: var(--muted-fg);
+      line-height: 1.5;
+    }
+
+    .standards-tags {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .std-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+    }
+
+    /* 方案網格佈局 */
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+
+    .variant-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .variant-card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--muted);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .variant-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .variant-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .variant-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-primary {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .badge-secondary {
+      background: var(--muted-fg);
+      color: var(--bg);
+    }
+
+    .variant-name {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .variant-desc {
+      font-size: 11px;
+      color: var(--muted-fg);
+      line-height: 1.4;
+    }
+
+    /* 彈窗舞台背景 */
+    .dialog-stage {
+      padding: 36px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      background: var(--bg-subtle);
+      min-height: 380px;
+    }
+
+    .dialog-stage.app-mock-bg {
+      background-image: 
+        radial-gradient(circle at 50% 20%, rgba(217, 119, 6, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(2, 132, 199, 0.05) 0%, transparent 40%);
+      position: relative;
+    }
+
+    .app-mock-backdrop {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0.25;
+      pointer-events: none;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      filter: blur(2px);
+    }
+
+    .mock-row {
+      height: 48px;
+      background: var(--muted);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* ==========================================================================
+       ZENFIT 精密供能比彈窗核心 (Standard Precision Modal Architecture)
+       鎖死 300px 寬度、16px 邊距、純扁平 0 陰影
+       ========================================================================== */
+    .precision-modal {
+      width: 300px;
+      max-width: calc(100vw - 24px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px; /* 恆定 16px p-4 sm:p-4 */
+      font-family: var(--font-mono);
+      font-size: 11.2px; /* text-xs */
+      user-select: none;
+      box-shadow: none; /* 嚴禁陰影 Flat Design */
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* space-y-3 */
+    }
+
+    /* 標頭 Variant D (DialogPrecisionHeader) */
+    .precision-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 28px; /* h-7 */
+      flex-shrink: 0;
+    }
+
+    .icon-btn-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .icon-btn-circle:active {
+      transform: scale(0.92);
+    }
+
+    .btn-cancel {
+      background: var(--muted);
+      color: var(--muted-fg);
+    }
+    .btn-cancel:hover {
+      background: var(--border);
+      color: var(--fg);
+    }
+
+    .btn-submit {
+      background: var(--fg);
+      color: var(--bg);
+    }
+    .btn-submit:hover {
+      opacity: 0.9;
+    }
+    .btn-submit:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .precision-title {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+      text-align: center;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 8px;
+    }
+
+    /* Usage Table (單行：比例) */
+    .usage-table {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .usage-row {
+      min-height: 42px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      transition: background 0.1s;
+    }
+
+    .usage-label {
+      color: var(--fg);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    /* 客觀 Select 下拉控件 */
+    .select-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11.2px;
+      color: var(--muted-fg);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .select-pill:hover {
+      color: var(--fg);
+    }
+
+    /* 供能比卡片模組 */
+    .macro-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .macro-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 頂部彩色能量標尺 (嚴格固定順序：碳 ➔ 蛋 ➔ 脂) */
+    .macro-ratio-bar {
+      height: 4px;
+      width: 100%;
+      display: flex;
+      background: var(--track);
+      overflow: hidden;
+    }
+
+    .bar-carbs {
+      background: var(--carbs);
+      transition: width 0.25s ease;
+    }
+    .bar-protein {
+      background: var(--protein);
+      transition: width 0.25s ease;
+    }
+    .bar-fat {
+      background: var(--fat);
+      transition: width 0.25s ease;
+    }
+
+    /* 3 欄並列矩陣 (Strict Order: 碳 ➔ 蛋 ➔ 脂) */
+    .macro-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      divide-x: 1px solid var(--border);
+    }
+
+    .macro-col {
+      padding: 12px 6px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      position: relative;
+      transition: background 0.15s;
+    }
+    .macro-col:last-child {
+      border-right: none;
+    }
+
+    /* 文本直接上色，無小圓點 (碳水化合物 text-carbs / 蛋白質 text-protein / 脂肪 text-fat) */
+    .macro-tag-text {
+      font-size: 11px;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .tag-carbs {
+      color: var(--carbs);
+    }
+    .tag-protein {
+      color: var(--protein);
+    }
+    .tag-fat {
+      color: var(--fat);
+    }
+
+    /* 正常情況：純文字靜態展示 (不可點擊、無游標、防誤觸) */
+    .val-display-static {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 1.5px;
+      height: 26px;
+    }
+
+    .val-static-num {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--fg);
+      letter-spacing: -0.02em;
+    }
+
+    .val-static-unit {
+      font-size: 10.5px;
+      color: var(--muted-fg);
+      font-family: var(--font-mono);
+    }
+
+    /* 自定義情況：標準數字輸入膠囊 (對齊 EditFoodLogDialog / Zenfit APP 規範) */
+    .custom-number-capsule {
+      height: 26px;
+      padding: 0 7px;
+      border-radius: 9999px;
+      border: 1px solid var(--border-strong);
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+      outline: none;
+      user-select: none;
+    }
+    .custom-number-capsule:hover {
+      background: var(--muted);
+      border-color: var(--fg);
+    }
+    .custom-number-capsule:active {
+      transform: scale(0.95);
+    }
+
+    .capsule-num {
+      font-weight: 700;
+      color: var(--fg);
+    }
+    .capsule-pct-unit {
+      color: var(--muted-fg);
+      font-size: 10px;
+    }
+
+    .macro-stats-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .macro-sub-gram {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--muted-fg);
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       全新「配比總和」設計方案庫 (3 款前沿高對比方案)
+       ========================================================================== */
+
+    /* 方案 A：【精密儀表狀態膠囊款】(🌟 推薦首選) */
+    .total-design-a {
+      min-height: 36px;
+      padding: 6px 12px;
+      background: var(--muted);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .total-label-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted-fg);
+    }
+
+    .total-status-pill {
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 9999px;
+      font-size: 10.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .pill-balanced {
+      background: var(--card);
+      border-color: var(--border);
+      color: var(--fg);
+    }
+
+    .pill-deficit {
+      background: rgba(217, 119, 6, 0.1);
+      border-color: rgba(217, 119, 6, 0.25);
+      color: var(--carbs);
+    }
+
+    .pill-excess {
+      background: rgba(255, 69, 58, 0.1);
+      border-color: rgba(255, 69, 58, 0.25);
+      color: var(--destructive);
+    }
+
+    .btn-auto-balance {
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--fg);
+      color: var(--bg);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: opacity 0.15s;
+    }
+    .btn-auto-balance:hover {
+      opacity: 0.85;
+    }
+    .btn-auto-balance:active {
+      transform: scale(0.95);
+    }
+
+    /* 方案 B：【動態能量平衡條與微標尺款】 */
+    .total-design-b {
+      padding: 8px 12px;
+      background: var(--muted);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-mono);
+    }
+
+    .total-row-b-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+
+    .balance-meter-track {
+      height: 3px;
+      width: 100%;
+      border-radius: 999px;
+      background: var(--track);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .balance-meter-fill {
+      height: 100%;
+      background: var(--fg);
+      transition: width 0.2s ease;
+    }
+    .balance-meter-fill.overflow {
+      background: var(--destructive);
+    }
+
+    /* 方案 C：【極簡單行微標籤一體款】 */
+    .total-design-c {
+      min-height: 34px;
+      padding: 0 12px;
+      background: var(--muted);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .total-badge-interactive {
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 4px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-weight: 600;
+      font-size: 10.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .total-badge-interactive:hover {
+      border-color: var(--fg);
+    }
+
+    /* ==========================================================================
+       ZENFIT 標準高保真數字鍵盤浮層 (Responsive Numeric Keypad Overlay)
+       ========================================================================== */
+    .keypad-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: var(--overlay);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .keypad-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .keypad-sheet {
+      width: 100%;
+      max-width: 380px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 16px 16px 0 0;
+      padding: 12px 16px 24px;
+      box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.2);
+      transform: translateY(100%);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .keypad-backdrop.open .keypad-sheet {
+      transform: translateY(0);
+    }
+
+    /* 鍵盤標頭 */
+    .keypad-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 28px;
+    }
+
+    .keypad-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .keypad-unit-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      color: var(--muted-fg);
+      font-weight: 600;
+    }
+
+    /* 鍵盤巨型數值即時顯示欄 (Spotlight Display) */
+    .keypad-display {
+      height: 48px;
+      border-radius: 8px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+    }
+
+    .keypad-big-num {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--fg);
+      letter-spacing: -0.03em;
+    }
+
+    .keypad-big-unit {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--muted-fg);
+    }
+
+    /* 鍵盤按鍵網格 (3 欄 x 4 列) */
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .key-btn {
+      height: 46px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s;
+      user-select: none;
+    }
+    .key-btn:hover {
+      background: var(--muted);
+    }
+    .key-btn:active {
+      transform: scale(0.95);
+      background: var(--border);
+    }
+
+    .key-btn.action-clear {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted-fg);
+    }
+
+    .key-btn.action-confirm {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .key-btn.action-confirm:hover {
+      opacity: 0.9;
+    }
+
+    /* SVG 圖標輔助 */
+    .icon-svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Toast */
+    #action-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--fg);
+      color: var(--bg);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #action-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導航控制列 -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand-group">
+        <span class="brand-title">Zenfit 供能比設置</span>
+        <span class="brand-badge">數字鍵盤與總和欄全新設計 · UI/UX Pro Max</span>
+      </div>
+
+      <div class="toolbar-actions">
+        <!-- 主題切換 -->
+        <button type="button" class="btn-toggle" id="theme-toggle">
+          <svg class="icon-svg" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <span id="theme-text">切換為淺色</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 導言說明 Banner -->
+    <div class="hero-banner">
+      <div class="hero-text">
+        <h1>數字輸入膠囊（點擊呼出數字鍵盤）+「配比總和」全新重構</h1>
+        <p>
+          1. <strong>自定義模式數字膠囊化</strong>：對齊 <code>EditFoodLogDialog</code> 標準，選中「自定義」時數字轉為 <code>[ 44 % › ]</code> 膠囊，點擊即時呼出專屬 <code>NumericKeypadDialog</code>，以 <code>%</code> 為唯一單位。<br>
+          2. <strong>預設模式防誤觸鎖定</strong>：選中「均衡 / 高蛋白 / 低碳」時為純靜態文字，無法點擊觸發鍵盤。<br>
+          3. <strong>全新設計「配比總和」欄位</strong>：提供三款前沿設計提案（推薦<strong>提案 A：精密儀表狀態膠囊款</strong>，具備實時校準指示與一鍵智慧補平）。
+        </p>
+      </div>
+      <div class="standards-tags">
+        <span class="std-tag">點擊膠囊開啟數字鍵盤</span>
+        <span class="std-tag">% 作為單位</span>
+        <span class="std-tag">配比總和 3 款全新提案</span>
+        <span class="std-tag">嚴格 300px 寬度</span>
+      </div>
+    </div>
+
+    <!-- 方案展示網格 -->
+    <div class="variants-grid">
+
+      <!-- =====================================================================
+           主視圖：【提案 A · 精密儀表狀態膠囊款 (🌟 推薦首選)】
+           ===================================================================== -->
+      <div class="variant-card">
+        <div class="variant-card-header">
+          <div class="variant-title-wrap">
+            <div class="variant-badge-row">
+              <span class="variant-badge badge-primary">推薦首選</span>
+              <span class="variant-badge">提案 A 配比總和</span>
+            </div>
+            <span class="variant-name">精密儀表狀態膠囊款 + 數字鍵盤聯動</span>
+            <span class="variant-desc">
+              「自定義」下點擊數值膠囊 <code>[ 44 % › ]</code> 呼出數字鍵盤；配比總和採<strong>儀表狀態膠囊</strong>，未滿 100% 時即時提示差額並附帶一鍵補平。
+            </span>
+          </div>
+        </div>
+
+        <div class="dialog-stage app-mock-bg">
+          <div class="app-mock-backdrop">
+            <div class="mock-row" style="width: 70%;"></div>
+            <div class="mock-row" style="width: 100%;"></div>
+            <div class="mock-row" style="width: 85%;"></div>
+          </div>
+
+          <!-- 精密彈窗實體 (鎖死 300px 寬度) -->
+          <div class="precision-modal">
+            <!-- 標頭 Variant D (左 ✕、中純客觀「供能比」、右 ✓) -->
+            <div class="precision-header">
+              <button type="button" class="icon-btn-circle btn-cancel" title="取消" onclick="triggerToast('已取消')">
+                <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+              <div class="precision-title">供能比</div>
+              <button type="button" class="icon-btn-circle btn-submit" id="save-btn-a" title="儲存" onclick="triggerToast('供能比已儲存')">
+                <svg class="icon-svg" viewBox="0 0 24 24" style="stroke-width: 2.8;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </button>
+            </div>
+
+            <!-- 單行 Usage Table: 比例 -->
+            <div class="usage-table">
+              <div class="usage-row">
+                <span class="usage-label">比例</span>
+                <button type="button" class="select-pill" onclick="cycleTemplateA()" title="點擊切換比例選項">
+                  <span id="tpl-label-a">自定義</span>
+                  <svg class="icon-svg" style="width: 11px; height: 11px;" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 供能比卡片模組 -->
+            <div class="macro-section">
+              <div class="macro-card">
+                <!-- 能量標尺 (碳 ➔ 蛋 ➔ 脂) -->
+                <div class="macro-ratio-bar">
+                  <div class="bar-carbs" id="bar-c-a" style="width: 44%;"></div>
+                  <div class="bar-protein" id="bar-p-a" style="width: 28%;"></div>
+                  <div class="bar-fat" id="bar-f-a" style="width: 28%;"></div>
+                </div>
+
+                <!-- 3 欄並列：碳水化合物 ➔ 蛋白質 ➔ 脂肪 -->
+                <div class="macro-grid-3">
+                  <!-- 碳水化合物 -->
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-carbs">碳水化合物</span>
+                    <div id="col-c-a">
+                      <!-- 自定義時渲染為數字膠囊，點擊打開鍵盤 -->
+                      <button type="button" class="custom-number-capsule" onclick="openKeypad('c', '碳水化合物')">
+                        <span class="capsule-num" id="val-c-a">44</span>
+                        <span class="capsule-pct-unit">%</span>
+                        <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    </div>
+                    <div class="macro-stats-wrap">
+                      <span class="macro-sub-gram" id="gram-c-a">220 g</span>
+                    </div>
+                  </div>
+
+                  <!-- 蛋白質 -->
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-protein">蛋白質</span>
+                    <div id="col-p-a">
+                      <button type="button" class="custom-number-capsule" onclick="openKeypad('p', '蛋白質')">
+                        <span class="capsule-num" id="val-p-a">28</span>
+                        <span class="capsule-pct-unit">%</span>
+                        <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    </div>
+                    <div class="macro-stats-wrap">
+                      <span class="macro-sub-gram" id="gram-p-a">140 g</span>
+                    </div>
+                  </div>
+
+                  <!-- 脂肪 -->
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-fat">脂肪</span>
+                    <div id="col-f-a">
+                      <button type="button" class="custom-number-capsule" onclick="openKeypad('f', '脂肪')">
+                        <span class="capsule-num" id="val-f-a">28</span>
+                        <span class="capsule-pct-unit">%</span>
+                        <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    </div>
+                    <div class="macro-stats-wrap">
+                      <span class="macro-sub-gram" id="gram-f-a">62 g</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 🌟 全新提案 A：「配比總和」精密儀表狀態膠囊欄 (無 ✅ 圖標) -->
+                <div class="total-design-a" id="total-bar-a">
+                  <div class="total-label-wrap">
+                    <span>配比總和</span>
+                  </div>
+
+                  <div id="total-status-content-a" style="display: flex; align-items: center; gap: 6px;">
+                    <!-- 滿 100% 純文字提示 (無 ✅) -->
+                    <span style="font-weight: 600; color: var(--fg);">100 %</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- =====================================================================
+           提案 B：【動態能量平衡條與微標尺款】
+           ===================================================================== -->
+      <div class="variant-card">
+        <div class="variant-card-header">
+          <div class="variant-title-wrap">
+            <div class="variant-badge-row">
+              <span class="variant-badge badge-secondary">提案 B</span>
+              <span class="variant-badge">微標尺整合</span>
+            </div>
+            <span class="variant-name">動態能量平衡條與差額指示</span>
+            <span class="variant-desc">
+              在總和欄下方內嵌微型進度指示條（100% 恰好填滿，未滿時顯現殘留軌道），右側清晰顯示客觀差額。
+            </span>
+          </div>
+        </div>
+
+        <div class="dialog-stage app-mock-bg">
+          <div class="app-mock-backdrop">
+            <div class="mock-row" style="width: 70%;"></div>
+            <div class="mock-row" style="width: 100%;"></div>
+            <div class="mock-row" style="width: 85%;"></div>
+          </div>
+
+          <!-- 精密彈窗實體 -->
+          <div class="precision-modal">
+            <div class="precision-header">
+              <button type="button" class="icon-btn-circle btn-cancel" title="取消">
+                <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+              <div class="precision-title">供能比</div>
+              <button type="button" class="icon-btn-circle btn-submit" title="儲存">
+                <svg class="icon-svg" viewBox="0 0 24 24" style="stroke-width: 2.8;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </button>
+            </div>
+
+            <div class="usage-table">
+              <div class="usage-row">
+                <span class="usage-label">比例</span>
+                <span class="select-pill" style="color: var(--fg); font-weight: 600;">
+                  <span>自定義</span>
+                  <svg class="icon-svg" style="width: 11px; height: 11px;" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </span>
+              </div>
+            </div>
+
+            <div class="macro-section">
+              <div class="macro-card">
+                <div class="macro-ratio-bar">
+                  <div class="bar-carbs" style="width: 40%;"></div>
+                  <div class="bar-protein" style="width: 30%;"></div>
+                  <div class="bar-fat" style="width: 20%;"></div>
+                </div>
+
+                <div class="macro-grid-3">
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-carbs">碳水化合物</span>
+                    <button type="button" class="custom-number-capsule" onclick="openKeypad('c', '碳水化合物')">
+                      <span class="capsule-num">40</span>
+                      <span class="capsule-pct-unit">%</span>
+                      <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <div class="macro-stats-wrap"><span class="macro-sub-gram">200 g</span></div>
+                  </div>
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-protein">蛋白質</span>
+                    <button type="button" class="custom-number-capsule" onclick="openKeypad('p', '蛋白質')">
+                      <span class="capsule-num">30</span>
+                      <span class="capsule-pct-unit">%</span>
+                      <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <div class="macro-stats-wrap"><span class="macro-sub-gram">150 g</span></div>
+                  </div>
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-fat">脂肪</span>
+                    <button type="button" class="custom-number-capsule" onclick="openKeypad('f', '脂肪')">
+                      <span class="capsule-num">20</span>
+                      <span class="capsule-pct-unit">%</span>
+                      <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <div class="macro-stats-wrap"><span class="macro-sub-gram">44 g</span></div>
+                  </div>
+                </div>
+
+                <!-- 🌟 全新提案 B：「配比總和」動態能量平衡條款 -->
+                <div class="total-design-b">
+                  <div class="total-row-b-header">
+                    <span style="color: var(--muted-fg);">配比總和</span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-weight: 700; color: var(--carbs);">90 %</span>
+                      <span style="font-size: 10px; color: var(--muted-fg);">(剩餘 10%)</span>
+                      <button type="button" class="btn-auto-balance" onclick="triggerToast('已補平')">補平</button>
+                    </div>
+                  </div>
+                  <!-- 平衡軌道 (90% 視覺比例) -->
+                  <div class="balance-meter-track">
+                    <div class="balance-meter-fill" style="width: 90%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- =====================================================================
+           提案 C：【極簡單行微標籤一體款 (Ultra-Minimalist)】
+           ===================================================================== -->
+      <div class="variant-card">
+        <div class="variant-card-header">
+          <div class="variant-title-wrap">
+            <div class="variant-badge-row">
+              <span class="variant-badge badge-secondary">提案 C</span>
+              <span class="variant-badge">極限克制</span>
+            </div>
+            <span class="variant-name">極簡單行微標籤一體款</span>
+            <span class="variant-desc">
+              單行極致精簡，右側將「數值、差額與補平」收斂成單一顆可點擊交互的微型標籤。
+            </span>
+          </div>
+        </div>
+
+        <div class="dialog-stage app-mock-bg">
+          <div class="app-mock-backdrop">
+            <div class="mock-row" style="width: 70%;"></div>
+            <div class="mock-row" style="width: 100%;"></div>
+            <div class="mock-row" style="width: 85%;"></div>
+          </div>
+
+          <!-- 精密彈窗實體 -->
+          <div class="precision-modal">
+            <div class="precision-header">
+              <button type="button" class="icon-btn-circle btn-cancel" title="取消">
+                <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+              <div class="precision-title">供能比</div>
+              <button type="button" class="icon-btn-circle btn-submit" title="儲存">
+                <svg class="icon-svg" viewBox="0 0 24 24" style="stroke-width: 2.8;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </button>
+            </div>
+
+            <!-- 預設模板狀態 (均衡 40:30:30 · 正常純靜態數字) -->
+            <div class="usage-table">
+              <div class="usage-row">
+                <span class="usage-label">比例</span>
+                <span class="select-pill">
+                  <span>均衡 (40:30:30)</span>
+                  <svg class="icon-svg" style="width: 11px; height: 11px;" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </span>
+              </div>
+            </div>
+
+            <div class="macro-section">
+              <div class="macro-card">
+                <div class="macro-ratio-bar">
+                  <div class="bar-carbs" style="width: 40%;"></div>
+                  <div class="bar-protein" style="width: 30%;"></div>
+                  <div class="bar-fat" style="width: 30%;"></div>
+                </div>
+
+                <div class="macro-grid-3">
+                  <!-- 預設模式：純文字不可點擊 -->
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-carbs">碳水化合物</span>
+                    <div class="val-display-static">
+                      <span class="val-static-num">40</span>
+                      <span class="val-static-unit">%</span>
+                    </div>
+                    <div class="macro-stats-wrap"><span class="macro-sub-gram">200 g</span></div>
+                  </div>
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-protein">蛋白質</span>
+                    <div class="val-display-static">
+                      <span class="val-static-num">30</span>
+                      <span class="val-static-unit">%</span>
+                    </div>
+                    <div class="macro-stats-wrap"><span class="macro-sub-gram">150 g</span></div>
+                  </div>
+                  <div class="macro-col">
+                    <span class="macro-tag-text tag-fat">脂肪</span>
+                    <div class="val-display-static">
+                      <span class="val-static-num">30</span>
+                      <span class="val-static-unit">%</span>
+                    </div>
+                    <div class="macro-stats-wrap"><span class="macro-sub-gram">67 g</span></div>
+                  </div>
+                </div>
+
+                <!-- 🌟 全新提案 C：「配比總和」單行可交互微標籤 -->
+                <div class="total-design-c">
+                  <span style="color: var(--muted-fg);">配比總和</span>
+                  <button type="button" class="total-badge-interactive" title="點擊檢視狀態">
+                    <span>100 % · 已配平</span>
+                    <svg class="icon-svg" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 驗收核對說明表 -->
+    <div class="audit-section" style="margin-top: 32px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;">
+      <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>本次全新設計核心改善對照</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--muted-fg); font-family: var(--font-mono); font-size: 11px;">
+            <th style="padding: 8px 12px; width: 180px;">重構模組</th>
+            <th style="padding: 8px 12px;">原先實現</th>
+            <th style="padding: 8px 12px;">最新重構方案</th>
+            <th style="padding: 8px 12px; width: 140px;">規範價值</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--border-subtle);">
+            <td style="padding: 10px 12px;"><strong>自定義數字輸入框</strong></td>
+            <td style="padding: 10px 12px; color: var(--muted-fg);">原生 input 文本框，會觸發手機原生系統大鍵盤</td>
+            <td style="padding: 10px 12px;">升級為 <code>[ 44 % › ]</code> 標準<strong>數字輸入膠囊</strong>，點擊呼出 <code>NumericKeypadDialog</code>，以 <code>%</code> 為單位。</td>
+            <td style="padding: 10px 12px; color: #10b981; font-weight: 600; font-family: var(--font-mono);">對齊全局鍵盤標準</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-subtle);">
+            <td style="padding: 10px 12px;"><strong>配比總和欄位</strong></td>
+            <td style="padding: 10px 12px; color: var(--muted-fg);">單調的底層灰色文字行，差額提示粗糙</td>
+            <td style="padding: 10px 12px;">重構為<strong>精密儀表狀態膠囊欄（提案 A）</strong>，100% 時呈現高對比配平徽章，未滿時展示差額並附帶一鍵補平膠囊按鈕。</td>
+            <td style="padding: 10px 12px; color: #10b981; font-weight: 600; font-family: var(--font-mono);">高對比精密測量儀</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 12px;"><strong>預設模式防護</strong></td>
+            <td style="padding: 10px 12px; color: var(--muted-fg);">任何狀態皆可點擊聚焦</td>
+            <td style="padding: 10px 12px;">在「均衡 / 高蛋白 / 低碳」模式下為<strong>純文字靜態展示</strong>，徹底防誤觸；切換到「自定義」時即時動態無縫升級為膠囊。</td>
+            <td style="padding: 10px 12px; color: #10b981; font-weight: 600; font-family: var(--font-mono);">防呆防誤觸</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       標準高保真數字鍵盤浮層 (點擊膠囊即時彈出)
+       ========================================================================= -->
+  <div class="keypad-backdrop" id="keypad-overlay" onclick="closeKeypadOnBackdrop(event)">
+    <div class="keypad-sheet" onclick="event.stopPropagation()">
+      <!-- 標頭 -->
+      <div class="keypad-header">
+        <button type="button" class="icon-btn-circle btn-cancel" onclick="closeKeypad()">
+          <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <div class="keypad-title">
+          <span id="keypad-target-label" style="font-weight: 700;">碳水化合物</span>
+          <span class="keypad-unit-badge">供能比配比</span>
+        </div>
+
+        <div class="icon-btn-circle" style="opacity: 0; pointer-events: none;"></div>
+      </div>
+
+      <!-- 巨型數值即時顯示欄 -->
+      <div class="keypad-display">
+        <span class="keypad-big-num" id="keypad-display-val">44</span>
+        <span class="keypad-big-unit">%</span>
+      </div>
+
+      <!-- 數字鍵盤九宮格 (3 x 4) -->
+      <div class="keypad-grid">
+        <button type="button" class="key-btn" onclick="pressKey('1')">1</button>
+        <button type="button" class="key-btn" onclick="pressKey('2')">2</button>
+        <button type="button" class="key-btn" onclick="pressKey('3')">3</button>
+        <button type="button" class="key-btn" onclick="pressKey('4')">4</button>
+        <button type="button" class="key-btn" onclick="pressKey('5')">5</button>
+        <button type="button" class="key-btn" onclick="pressKey('6')">6</button>
+        <button type="button" class="key-btn" onclick="pressKey('7')">7</button>
+        <button type="button" class="key-btn" onclick="pressKey('8')">8</button>
+        <button type="button" class="key-btn" onclick="pressKey('9')">9</button>
+        <button type="button" class="key-btn action-clear" onclick="pressKey('clear')">C</button>
+        <button type="button" class="key-btn" onclick="pressKey('0')">0</button>
+        <button type="button" class="key-btn" onclick="pressKey('backspace')">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+        </button>
+      </div>
+
+      <!-- 底部確認按鈕 -->
+      <button type="button" class="key-btn action-confirm" style="height: 44px; width: 100%; border-radius: 8px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px;" onclick="confirmKeypad()">
+        <svg class="icon-svg" style="stroke-width: 2.8;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>確認</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="action-toast">
+    <svg class="icon-svg" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-msg">已儲存</span>
+  </div>
+
+  <script>
+    // 方案 A 狀態
+    const stateA = {
+      template: 'custom', // 'balance' | 'highProtein' | 'lowCarb' | 'custom'
+      split: { c: 44, p: 28, f: 28 },
+      bgCalories: 2000
+    };
+
+    const templatesA = [
+      { id: 'custom', label: '自定義', isCustom: true, c: 44, p: 28, f: 28 },
+      { id: 'balance', label: '均衡 (40:30:30)', isCustom: false, c: 40, p: 30, f: 30 },
+      { id: 'highProtein', label: '高蛋白 (40:35:25)', isCustom: false, c: 40, p: 35, f: 25 },
+      { id: 'lowCarb', label: '低碳 (25:40:35)', isCustom: false, c: 25, p: 40, f: 35 }
+    ];
+
+    let tplIdxA = 0;
+
+    // 渲染方案 A
+    function renderA() {
+      const cur = templatesA[tplIdxA];
+      const { c, p, f } = stateA.split;
+      const total = c + p + f;
+      const isValid = total === 100;
+
+      // 標籤
+      document.getElementById('tpl-label-a').textContent = cur.label;
+
+      // 標尺
+      const scale = total > 100 ? 100 / total : 1;
+      document.getElementById('bar-c-a').style.width = `${Math.min(100, Math.round(c * scale))}%`;
+      document.getElementById('bar-p-a').style.width = `${Math.min(100 - Math.round(c * scale), Math.round(p * scale))}%`;
+      document.getElementById('bar-f-a').style.width = `${Math.max(0, 100 - Math.round(c * scale) - Math.round(p * scale))}%`;
+
+      // 克數
+      document.getElementById('gram-c-a').textContent = `${Math.round((stateA.bgCalories * c / 100) / 4)} g`;
+      document.getElementById('gram-p-a').textContent = `${Math.round((stateA.bgCalories * p / 100) / 4)} g`;
+      document.getElementById('gram-f-a').textContent = `${Math.round((stateA.bgCalories * f / 100) / 9)} g`;
+
+      // 數值欄位渲染 (自定義：數字膠囊；非自定義：純文字)
+      const colC = document.getElementById('col-c-a');
+      const colP = document.getElementById('col-p-a');
+      const colF = document.getElementById('col-f-a');
+
+      if (cur.isCustom) {
+        colC.innerHTML = `
+          <button type="button" class="custom-number-capsule" onclick="openKeypad('c', '碳水化合物')">
+            <span class="capsule-num">${c}</span>
+            <span class="capsule-pct-unit">%</span>
+            <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        `;
+        colP.innerHTML = `
+          <button type="button" class="custom-number-capsule" onclick="openKeypad('p', '蛋白質')">
+            <span class="capsule-num">${p}</span>
+            <span class="capsule-pct-unit">%</span>
+            <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        `;
+        colF.innerHTML = `
+          <button type="button" class="custom-number-capsule" onclick="openKeypad('f', '脂肪')">
+            <span class="capsule-num">${f}</span>
+            <span class="capsule-pct-unit">%</span>
+            <svg class="icon-svg" style="width: 10px; height: 10px; opacity: 0.5;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        `;
+      } else {
+        colC.innerHTML = `<div class="val-display-static"><span class="val-static-num">${c}</span><span class="val-static-unit">%</span></div>`;
+        colP.innerHTML = `<div class="val-display-static"><span class="val-static-num">${p}</span><span class="val-static-unit">%</span></div>`;
+        colF.innerHTML = `<div class="val-display-static"><span class="val-static-num">${f}</span><span class="val-static-unit">%</span></div>`;
+      }
+
+      // 🌟 全新「配比總和」提案 A 內容更新 (無 ✅ 圖標，超過或少於 100% 為紅色膠囊)
+      const statusContent = document.getElementById('total-status-content-a');
+      const saveBtn = document.getElementById('save-btn-a');
+
+      if (isValid) {
+        statusContent.innerHTML = `
+          <span style="font-weight: 600; color: var(--fg);">100 %</span>
+        `;
+        saveBtn.disabled = false;
+      } else {
+        statusContent.innerHTML = `
+          <div class="total-status-pill pill-excess">
+            <span>${total} %</span>
+          </div>
+        `;
+        saveBtn.disabled = true;
+      }
+    }
+
+    // 輪播切換模板
+    window.cycleTemplateA = function() {
+      tplIdxA = (tplIdxA + 1) % templatesA.length;
+      const tpl = templatesA[tplIdxA];
+      stateA.split = { c: tpl.c, p: tpl.p, f: tpl.f };
+      renderA();
+      triggerToast(`已切換為：${tpl.label}`);
+    };
+
+    // 一鍵補平
+    window.autoBalanceA = function(diff) {
+      stateA.split.c += diff;
+      renderA();
+      triggerToast(`已自動將剩餘 ${diff}% 補入碳水化合物`);
+    };
+
+    // =========================================================================
+    // 數字鍵盤系統 (Responsive Numeric Keypad)
+    // =========================================================================
+    let activeKeypadMacro = 'c'; // 'c' | 'p' | 'f'
+    let keypadBuffer = '44';
+
+    window.openKeypad = function(macroKey, label) {
+      activeKeypadMacro = macroKey;
+      keypadBuffer = String(stateA.split[macroKey]);
+      document.getElementById('keypad-target-label').textContent = label;
+      document.getElementById('keypad-display-val').textContent = keypadBuffer;
+      document.getElementById('keypad-overlay').classList.add('open');
+    };
+
+    window.closeKeypad = function() {
+      document.getElementById('keypad-overlay').classList.remove('open');
+    };
+
+    window.closeKeypadOnBackdrop = function(e) {
+      if (e.target.id === 'keypad-overlay') {
+        closeKeypad();
+      }
+    };
+
+    window.pressKey = function(key) {
+      if (key === 'clear') {
+        keypadBuffer = '0';
+      } else if (key === 'backspace') {
+        keypadBuffer = keypadBuffer.length > 1 ? keypadBuffer.slice(0, -1) : '0';
+      } else {
+        if (keypadBuffer === '0') {
+          keypadBuffer = key;
+        } else if (keypadBuffer.length < 3) {
+          keypadBuffer += key;
+        }
+      }
+
+      // 限縮 0 ~ 100
+      let num = parseInt(keypadBuffer, 10) || 0;
+      if (num > 100) num = 100;
+      keypadBuffer = String(num);
+
+      document.getElementById('keypad-display-val').textContent = keypadBuffer;
+
+      // 即時雙向鏡像 (Live Sync)
+      stateA.split[activeKeypadMacro] = num;
+      renderA();
+    };
+
+    window.confirmKeypad = function() {
+      const num = parseInt(keypadBuffer, 10) || 0;
+      stateA.split[activeKeypadMacro] = num;
+      renderA();
+      closeKeypad();
+      triggerToast(`已設定為 ${num}%`);
+    };
+
+    // 主題切換
+    const themeBtn = document.getElementById('theme-toggle');
+    const themeText = document.getElementById('theme-text');
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      themeText.textContent = isDark ? '切換為淺色' : '切換為深色';
+    });
+
+    // Toast
+    let toastTimer = null;
+    window.triggerToast = function(msg) {
+      const toast = document.getElementById('action-toast');
+      const text = document.getElementById('toast-msg');
+      text.textContent = msg;
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1800);
+    };
+
+    // 初始化渲染
+    renderA();
+  </script>
+</body>
+</html>

@@ -233,14 +233,14 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
           onClick={onClose}
           className="w-full py-2.5 rounded-lg text-xs font-medium border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-center"
         >
-          {t("monthPicker.cancel", "取消")}
+          {t("common.cancel", "取消")}
         </button>
         <button
           type="button"
           onClick={handleConfirm}
           className="w-full py-2.5 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity cursor-pointer text-center font-mono"
         >
-          {t("monthPicker.confirm", "確認選擇")}
+          {t("common.confirm", "確認")}
         </button>
       </div>
     </div>
