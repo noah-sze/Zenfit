@@ -90,29 +90,22 @@ export function AppLayout() {
     if (location.pathname.startsWith('/settings/exercises/')) {
       return t('workout.exerciseDetails');
     }
-    if (location.pathname === '/settings/exercises') {
-      return t('settings.exercises');
-    }
-    if (location.pathname === '/settings/routines/archived') {
-      return t('workout.archivedRoutines');
+    if (
+      location.pathname === '/settings/exercises' ||
+      location.pathname === '/settings/routines' ||
+      location.pathname === '/settings/equipments' ||
+      location.pathname === '/settings/workouts'
+    ) {
+      return t('settings.workoutSection');
     }
     if (location.pathname.startsWith('/settings/routines/')) {
       return t('workout.routineDetails');
-    }
-    if (location.pathname === '/settings/routines') {
-      return t('settings.routines');
-    }
-    if (location.pathname === '/settings/equipments/archived') {
-      return t('workout.archivedEquipments');
-    }
-    if (location.pathname === '/settings/equipments') {
-      return t('settings.equipments');
     }
     if (
       location.pathname === '/settings/foods' ||
       location.pathname === '/settings/categories'
     ) {
-      return t('diet.foodItems');
+      return t('settings.dietSection');
     }
     return t('settings.title');
   };
