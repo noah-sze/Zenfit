@@ -90,12 +90,7 @@ export function MealEnergyPopover({
             <span className="text-carbs font-medium">
               {t('dietPlan.carbs', '碳水化合物')}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">{Math.round(carbs)}g</span>
-              <span className="text-[10px] text-muted-foreground w-7 text-right">
-                {cPercent}%
-              </span>
-            </div>
+            <span className="font-semibold text-foreground">{Math.round(carbs)}g</span>
           </div>
 
           {/* 蛋白質 (P) */}
@@ -103,12 +98,7 @@ export function MealEnergyPopover({
             <span className="text-protein font-medium">
               {t('dietPlan.protein', '蛋白質')}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">{Math.round(protein)}g</span>
-              <span className="text-[10px] text-muted-foreground w-7 text-right">
-                {pPercent}%
-              </span>
-            </div>
+            <span className="font-semibold text-foreground">{Math.round(protein)}g</span>
           </div>
 
           {/* 脂肪 (F) */}
@@ -116,12 +106,7 @@ export function MealEnergyPopover({
             <span className="text-fat font-medium">
               {t('dietPlan.fat', '脂肪')}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">{Math.round(fat)}g</span>
-              <span className="text-[10px] text-muted-foreground w-7 text-right">
-                {fPercent}%
-              </span>
-            </div>
+            <span className="font-semibold text-foreground">{Math.round(fat)}g</span>
           </div>
         </div>
 

@@ -543,9 +543,9 @@ export default function Diet() {
                           <span
                             className={cn(
                               isLowCalorie &&
-                                'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                                'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.2 rounded bg-emerald-500/5',
                               isHighCalorie &&
-                                'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                                'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.2 rounded bg-rose-500/5'
                             )}
                           >
                             {formatEnergy(item.calories, energyUnit).formatted}
@@ -553,13 +553,14 @@ export default function Diet() {
                         </div>
                       </div>
 
-                      {/* 右側：MacroSquares 矩陣 */}
+                      {/* 右側：MacroSquares 矩陣 (首頁採用方案 A 柔和微光) */}
                       <div className="flex items-center shrink-0">
                         <MacroSquares
                           protein={item.protein}
                           carbs={item.carbs}
                           fat={item.fat}
                           highlights={evalRes.highlights}
+                          variant="subtle"
                         />
                       </div>
                     </div>
