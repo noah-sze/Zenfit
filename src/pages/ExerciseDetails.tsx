@@ -41,6 +41,7 @@ import type { EquipmentType, DetailedMuscle } from '@/types';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { convertBodyWeight } from '@/utils/unitMath';
+import { BodyHighlighter } from '@/components/workout/BodyHighlighter';
 
 export default function ExerciseDetails() {
   const { id } = useParams<{ id: string }>();
@@ -285,7 +286,18 @@ export default function ExerciseDetails() {
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2 font-mono">
           {t('workout.targetMuscles')}
         </div>
-        <div className="border border-border rounded-lg bg-card p-3 space-y-2">
+        <div className="border border-border rounded-lg bg-card p-4 space-y-4">
+          {/* 人體解剖肌肉熱力圖 */}
+          <div className="flex justify-center py-2 bg-muted/10 rounded-md border border-border/50">
+            <BodyHighlighter
+              muscles={exercise.targetMuscles}
+              view="both"
+              size="md"
+              showLabels
+              showOutline
+            />
+          </div>
+
           {muscleEntries.length === 0 ? (
             <div className="text-xs font-mono text-muted-foreground text-center py-2">
               未指定刺激肌群
