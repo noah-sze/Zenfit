@@ -39,7 +39,8 @@
       "adjust": "微调",
       "confirmDelete": "确认删除？",
       "confirmDeleteItem": "确认删除“{{name}}”？",
-      "confirmArchiveItem": "确认归档“{{name}}”？"
+      "confirmArchiveItem": "确认归档“{{name}}”？",
+      "confirmRestoreItem": "确认恢复“{{name}}”？"
     },
     "nav": {
       "dashboard": "总览",
@@ -150,6 +151,7 @@
       "viewFoodDetail": "查看详情",
       "noRecipeLogs": "无记录",
       "foodHasRecipes": "已被菜肴引用",
+      "foodHasUsageCannotDelete": "已有饮食记录或已被菜肴引用，无法删除",
       "deleteRecord": "删除记录",
       "deleteBundleRecord": "删除整组记录",
       "clickToEnter": "点击输入数值",
