@@ -170,7 +170,7 @@ export default function Diet() {
   const handleDelete = async (item: FoodLog) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${item.foodName}?`,
+      description: t('common.confirmDeleteItem', { name: item.foodName }),
       variant: 'destructive',
     });
     if (ok) {
@@ -543,9 +543,9 @@ export default function Diet() {
                           <span
                             className={cn(
                               isLowCalorie &&
-                                'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.2 rounded bg-emerald-500/5',
+                                'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
                               isHighCalorie &&
-                                'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.2 rounded bg-rose-500/5'
+                                'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
                             )}
                           >
                             {formatEnergy(item.calories, energyUnit).formatted}

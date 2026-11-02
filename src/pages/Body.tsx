@@ -147,7 +147,7 @@ export default function Body() {
   const handleDeleteHistory = async (rec: BodyMetric) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${rec.date} ${t('body.title')}?`,
+      description: t('common.confirmDeleteItem', { name: `${rec.date} ${t('body.title')}` }),
       variant: 'destructive',
     });
     if (ok) {

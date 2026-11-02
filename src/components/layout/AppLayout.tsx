@@ -7,7 +7,6 @@ import { triggerHaptic } from '@/lib/haptics';
 import {
   LayoutDashboard,
   Utensils,
-  Plus,
   Dumbbell,
   Activity,
   ChevronLeft,
@@ -28,7 +27,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
 
-  const { selectedDate, setSelectedDate, openAddModal } = useAppStore();
+  const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const currentDateObj = parseISO(selectedDate);
@@ -56,7 +55,6 @@ export function AppLayout() {
   const navItems = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { path: '/diet', label: t('nav.diet'), icon: Utensils },
-    { path: '/add', label: t('nav.add'), icon: Plus, isAdd: true },
     { path: '/workout', label: t('nav.workout'), icon: Dumbbell },
     { path: '/body', label: t('nav.body'), icon: Activity },
   ];
@@ -231,23 +229,6 @@ export function AppLayout() {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-
-              if (item.isAdd) {
-                return (
-                  <button
-                    key={item.path}
-                    type="button"
-                    onClick={() => {
-                      openAddModal();
-                      triggerHaptic('selection');
-                    }}
-                    className="flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-foreground outline-none cursor-pointer transition-colors"
-                    aria-label={item.label}
-                  >
-                    <Icon className="size-6" strokeWidth={1.5} />
-                  </button>
-                );
-              }
 
               return (
                 <button

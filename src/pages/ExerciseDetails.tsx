@@ -9,39 +9,31 @@ import {
   Trash2,
   Layers,
   ChevronRight,
-  Plus,
-  X,
 } from 'lucide-react';
 import { db } from '@/services/db/db';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
 import { calculateE1RM } from '@/utils/workoutMath';
+import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import type { EquipmentType, DetailedMuscle } from '@/types';
-import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
+import type { DetailedMuscle, MuscleRole } from '@/types';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { convertBodyWeight } from '@/utils/unitMath';
 import { BodyHighlighter } from '@/components/workout/BodyHighlighter';
+import {
+  getMuscleRoleBadgeClasses,
+  getMuscleRoleLabel,
+  normalizeMuscleRole,
+} from '@/utils/muscleIntensity';
+import { cn } from '@/lib/utils';
+import {
+  ExerciseFormDialog,
+  type ExerciseFormData,
+} from '@/components/workout/ExerciseFormDialog';
 
 export default function ExerciseDetails() {
   const { id } = useParams<{ id: string }>();
@@ -52,7 +44,7 @@ export default function ExerciseDetails() {
 
   const { allExercises, updateExercise, archiveExercise, unarchiveExercise, deleteExercise } = useExercises();
   const { allRoutines } = useRoutines();
-  const { activeEquipments, addCustomEquipment, getEquipmentDisplayName } = useEquipments();
+  const { getEquipmentDisplayName } = useEquipments();
 
   const exercise = useMemo(() => {
     return allExercises.find((e) => e.id === id);
@@ -121,70 +113,46 @@ export default function ExerciseDetails() {
     };
   }, [workoutLogs, exercise, id]);
 
+  // 當前選中的肌群 (地圖點擊反饋與雙向聯動)
+  const [selectedMuscle, setSelectedMuscle] = useState<DetailedMuscle | null>(null);
+
+  const handleMuscleClick = (muscle: DetailedMuscle) => {
+    triggerHaptic('selection');
+    setSelectedMuscle((prev) => (prev === muscle ? null : muscle));
+  };
+
+  // 目標細分肌群機能學分組 (必須嚴格位於所有條件 return 之前，遵守 React Rules of Hooks)
+  const muscleEntries = useMemo(() => {
+    if (!exercise?.targetMuscles) return [];
+    return Object.entries(exercise.targetMuscles) as [DetailedMuscle, MuscleRole | number][];
+  }, [exercise]);
+
+  const primaryEntries = useMemo(
+    () => muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) === 'primary'),
+    [muscleEntries]
+  );
+
+  const supportEntries = useMemo(
+    () => muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) !== 'primary'),
+    [muscleEntries]
+  );
+
   // 編輯動作彈窗狀態
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editEquipment, setEditEquipment] = useState<EquipmentType>('barbell');
-  const [editNotes, setEditNotes] = useState('');
-  const [editMuscles, setEditMuscles] = useState<{ muscle: DetailedMuscle; intensity: number }[]>([]);
-
-  // 新增自定義器械平級彈窗
-  const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
-  const [customEquipmentName, setCustomEquipmentName] = useState('');
 
   const handleOpenEdit = () => {
     if (!exercise) return;
-    setEditName(exercise.name);
-    setEditEquipment(exercise.equipment);
-    setEditNotes(exercise.notes || '');
-
-    const muscles = Object.entries(exercise.targetMuscles || {}).map(([m, intensity]) => ({
-      muscle: m as DetailedMuscle,
-      intensity: intensity as number,
-    }));
-    setEditMuscles(muscles.length > 0 ? muscles : [{ muscle: 'mid_lower_chest', intensity: 100 }]);
     setIsEditOpen(true);
   };
 
-  const handleAddEditMuscle = () => {
-    const existing = new Set(editMuscles.map((m) => m.muscle));
-    const allDetailed = MAJOR_MUSCLE_GROUPS.flatMap((g) => g.detailedMuscles);
-    const available = allDetailed.find((m) => !existing.has(m)) || 'mid_lower_chest';
-    setEditMuscles([...editMuscles, { muscle: available, intensity: 50 }]);
-  };
-
-  const handleRemoveEditMuscle = (idx: number) => {
-    setEditMuscles(editMuscles.filter((_, i) => i !== idx));
-  };
-
-  const handleUpdateEditMuscle = (idx: number, muscle: DetailedMuscle) => {
-    const next = [...editMuscles];
-    next[idx].muscle = muscle;
-    setEditMuscles(next);
-  };
-
-  const handleUpdateEditIntensity = (idx: number, val: string) => {
-    const parsed = parseInt(val, 10);
-    const intensity = isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
-    const next = [...editMuscles];
-    next[idx].intensity = intensity;
-    setEditMuscles(next);
-  };
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!exercise || !editName.trim()) return;
-
-    const targetMuscles: Partial<Record<DetailedMuscle, number>> = {};
-    for (const item of editMuscles) {
-      targetMuscles[item.muscle] = item.intensity;
-    }
+  const handleEditSubmit = async (formData: ExerciseFormData) => {
+    if (!exercise) return;
 
     await updateExercise(exercise.id, {
-      name: editName.trim(),
-      equipment: editEquipment,
-      targetMuscles,
-      notes: editNotes.trim() || undefined,
+      name: formData.name,
+      equipment: formData.equipment,
+      targetMuscles: formData.targetMuscles,
+      notes: formData.notes,
     });
 
     triggerHaptic('success');
@@ -201,7 +169,7 @@ export default function ExerciseDetails() {
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: `${t('common.confirm')} ${t('common.archive')} ${exercise.name}?`,
+        description: t('common.confirmArchiveItem', { name: exercise.name }),
       });
       if (ok) {
         await archiveExercise(exercise.id);
@@ -216,7 +184,7 @@ export default function ExerciseDetails() {
     if (!exercise) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${t('common.delete')} ${exercise.name}?`,
+      description: t('common.confirmDeleteItem', { name: exercise.name }),
       variant: 'destructive',
     });
     if (ok) {
@@ -248,8 +216,6 @@ export default function ExerciseDetails() {
     );
   }
 
-  const muscleEntries = Object.entries(exercise.targetMuscles || {}) as [DetailedMuscle, number][];
-
   return (
     <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
       {/* 動作頂部標題卡片 */}
@@ -260,7 +226,7 @@ export default function ExerciseDetails() {
               {exercise.name}
             </h1>
             <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-              <span>{getEquipmentDisplayName(exercise.equipment, t)}</span>
+              <EquipmentBadge name={getEquipmentDisplayName(exercise.equipment, t)} />
             </div>
           </div>
           <Button
@@ -281,42 +247,111 @@ export default function ExerciseDetails() {
         )}
       </div>
 
-      {/* 目標細分肌群刺激區域卡片 */}
+      {/* 目標細分肌群機能學分析畫布 (打破盒中盒，一體化舒展) */}
       <div>
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2 font-mono">
           {t('workout.targetMuscles')}
         </div>
-        <div className="border border-border rounded-lg bg-card p-4 space-y-4">
-          {/* 人體解剖肌肉熱力圖 */}
-          <div className="flex justify-center py-2 bg-muted/10 rounded-md border border-border/50">
+        <div className="border border-border rounded-lg bg-card p-4 space-y-5">
+          {/* 一體化人體解剖地圖 (無盒中盒多餘灰底邊框，直接舒展於主卡片內) */}
+          <div className="flex justify-center py-1">
             <BodyHighlighter
               muscles={exercise.targetMuscles}
+              selectedMuscle={selectedMuscle}
+              onMuscleClick={handleMuscleClick}
+              onClearSelection={() => setSelectedMuscle(null)}
               view="both"
               size="md"
+              interactive
               showLabels
               showOutline
             />
           </div>
 
+          {/* 精密機能學量表 (Functional Hierarchy) */}
           {muscleEntries.length === 0 ? (
             <div className="text-xs font-mono text-muted-foreground text-center py-2">
-              未指定刺激肌群
+              {t('workout.noTargetMuscles', '無肌群')}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {muscleEntries.map(([m, intensity]) => (
-                <div
-                  key={m}
-                  className="p-2 rounded border border-border bg-muted/20 flex items-center justify-between"
-                >
-                  <span className="text-xs font-medium text-foreground">
-                    {getMuscleLabel(m)}
-                  </span>
-                  <span className="text-xs font-mono font-bold text-foreground">
-                    {intensity}
-                  </span>
+            <div className="space-y-3.5 pt-2 border-t border-border/60">
+              {/* 1. 核心發力層 (Hero / Prime Mover) */}
+              {primaryEntries.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">
+                    {t('workout.primaryMover', '主要發力')}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {primaryEntries.map(([m, rawRole]) => {
+                      const role = normalizeMuscleRole(rawRole);
+                      const badgeStyle = getMuscleRoleBadgeClasses(role);
+                      const roleLabel = getMuscleRoleLabel(role, t);
+                      const isSelected = selectedMuscle === m;
+
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => handleMuscleClick(m)}
+                          className={cn(
+                            'w-full p-3 rounded-lg border font-mono transition-all flex items-center justify-between text-left cursor-pointer group shadow-none',
+                            badgeStyle.container,
+                            isSelected && 'ring-1 ring-foreground'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="size-2 rounded-full bg-[var(--muscle-intensity-high-text)] opacity-90" />
+                            <span className="text-sm font-semibold tracking-tight text-foreground">
+                              {getMuscleLabel(m)}
+                            </span>
+                          </div>
+                          <span className="text-xs font-mono px-2 py-0.5 rounded border border-[var(--muscle-intensity-high-border)] bg-card text-[var(--muscle-intensity-high-text)] shrink-0 font-medium">
+                            {roleLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              ))}
+              )}
+
+              {/* 2. 協同與穩定層 (Synergists & Stabilizers - 通透機能學膠囊群) */}
+              {supportEntries.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">
+                    {t('workout.synergistsAndStabilizers', '協同與穩定')}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {supportEntries.map(([m, rawRole]) => {
+                      const role = normalizeMuscleRole(rawRole);
+                      const badgeStyle = getMuscleRoleBadgeClasses(role);
+                      const roleLabel = getMuscleRoleLabel(role, t);
+                      const isSelected = selectedMuscle === m;
+
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => handleMuscleClick(m)}
+                          className={cn(
+                            'inline-flex items-center gap-2 px-3 py-1.5 rounded-md border font-mono text-xs transition-all text-left cursor-pointer shadow-none',
+                            badgeStyle.container,
+                            isSelected && 'ring-1 ring-foreground'
+                          )}
+                        >
+                          <span className="font-medium whitespace-nowrap">
+                            {getMuscleLabel(m)}
+                          </span>
+                          <span className="opacity-40 text-[10px]">·</span>
+                          <span className="text-[11px] opacity-90 whitespace-nowrap">
+                            {roleLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -325,7 +360,7 @@ export default function ExerciseDetails() {
       {/* 客觀指標三並列卡片 (Grid Cards, 無陰影, 等寬數字) */}
       <div>
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2 font-mono">
-          客觀指標 (Lifetime Metrics)
+          {t('workout.objectiveMetrics', '客觀指標')}
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="border border-border rounded-lg p-3 bg-card text-center space-y-1">
@@ -354,7 +389,7 @@ export default function ExerciseDetails() {
             </div>
             <div className="text-lg font-mono font-bold text-foreground">
               {stats.totalCompletedSets}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5">組</span>
+              <span className="text-xs font-normal text-muted-foreground ml-0.5">{t('workout.set', '組')}</span>
             </div>
           </div>
         </div>
@@ -384,7 +419,7 @@ export default function ExerciseDetails() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground group-hover:text-foreground">
-                  <span>{routine.exercises.length} 個動作</span>
+                  <span>{t('workout.exerciseCount', { count: routine.exercises.length })}</span>
                   <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
                 </div>
               </Link>
@@ -423,208 +458,13 @@ export default function ExerciseDetails() {
         </Button>
       </div>
 
-      {/* 編輯動作彈窗 (Instant Pop, 左取消右確認) */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-md w-full bg-card p-6 border border-border space-y-4">
-          <DialogHeader>
-            <DialogTitle className="text-base font-medium tracking-tight">
-              {t('workout.editExercise')}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('workout.exerciseName')}
-              </Label>
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="font-mono text-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t('workout.equipment')}
-                </Label>
-                <button
-                  type="button"
-                  onClick={() => setIsAddEquipmentOpen(true)}
-                  className="text-xs font-mono text-muted-foreground hover:text-foreground underline underline-offset-2 cursor-pointer"
-                >
-                  ＋ 自定義器械
-                </button>
-              </div>
-              <Select
-                value={editEquipment}
-                onValueChange={(v) => setEditEquipment(v as EquipmentType)}
-              >
-                <SelectTrigger className="w-full font-mono text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {activeEquipments.map((eq) => (
-                    <SelectItem key={eq.id} value={eq.id}>
-                      {getEquipmentDisplayName(eq.id, t)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 pt-1 border-t border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground block">
-                    {t('workout.targetMuscles')}
-                  </Label>
-                  <span className="text-[11px] text-muted-foreground/80 font-mono">
-                    {t('workout.targetMusclesDesc')}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddEditMuscle}
-                  className="h-7 text-xs font-mono px-2 cursor-pointer"
-                >
-                  <Plus className="size-3 mr-1" />
-                  {t('workout.addMuscleStimulus')}
-                </Button>
-              </div>
-
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {editMuscles.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-muted/20 p-2 rounded border border-border">
-                    <div className="flex-1">
-                      <Select
-                        value={item.muscle}
-                        onValueChange={(v) => handleUpdateEditMuscle(idx, v as DetailedMuscle)}
-                      >
-                        <SelectTrigger className="h-8 text-xs font-mono">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60">
-                          {MAJOR_MUSCLE_GROUPS.map((group) => (
-                            <div key={group.id} className="py-1">
-                              <div className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                                {t(`workout.${group.id}`)}
-                              </div>
-                              {group.detailedMuscles.map((muscle) => (
-                                <SelectItem key={muscle} value={muscle}>
-                                  {getMuscleLabel(muscle)}
-                                </SelectItem>
-                              ))}
-                            </div>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="w-20 flex items-center gap-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={item.intensity}
-                        onChange={(e) => handleUpdateEditIntensity(idx, e.target.value)}
-                        className="h-8 text-xs font-mono text-center px-1"
-                      />
-                      <span className="text-xs font-mono text-muted-foreground">%</span>
-                    </div>
-
-                    {editMuscles.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveEditMuscle(idx)}
-                        className="size-7 flex items-center justify-center text-muted-foreground hover:text-destructive cursor-pointer"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <DialogFooter className="flex flex-row items-center justify-between pt-3 border-t border-border sm:justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditOpen(false)}
-                className="cursor-pointer"
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" size="sm" className="bg-foreground text-background cursor-pointer">
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 新增自定義器械平級彈窗 (Flat Sibling Dialog) */}
-      <Dialog open={isAddEquipmentOpen} onOpenChange={setIsAddEquipmentOpen}>
-        <DialogContent className="max-w-sm w-full bg-card p-5 border border-border space-y-4">
-          <DialogHeader>
-            <DialogTitle className="text-base font-medium tracking-tight">
-              新增自定義器械
-            </DialogTitle>
-          </DialogHeader>
-
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!customEquipmentName.trim()) return;
-              const res = await addCustomEquipment(customEquipmentName.trim());
-              if (res.success && res.equipment) {
-                setEditEquipment(res.equipment.id);
-                setIsAddEquipmentOpen(false);
-                setCustomEquipmentName('');
-                triggerHaptic('success');
-                toast.show(t('common.saved'));
-              }
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                器械名稱
-              </Label>
-              <Input
-                value={customEquipmentName}
-                onChange={(e) => setCustomEquipmentName(e.target.value)}
-                placeholder="例如: 安全深蹲槓 SSB"
-                className="font-mono text-sm"
-              />
-            </div>
-
-            <DialogFooter className="flex flex-row items-center justify-between pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAddEquipmentOpen(false)}
-                className="cursor-pointer"
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                className="bg-foreground text-background hover:opacity-90 cursor-pointer"
-              >
-                {t('common.confirm')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* 編輯動作彈窗 (複用標準 ExerciseFormDialog) */}
+      <ExerciseFormDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        initialData={exercise}
+        onSubmit={handleEditSubmit}
+      />
     </div>
   );
 }

@@ -61,7 +61,7 @@ export default function CategoryDetails() {
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: `${t('common.confirm')} ${t('common.archive')} ${formatFoodDisplayName(food)}?`,
+        description: t('common.confirmArchiveItem', { name: formatFoodDisplayName(food) }),
       });
       if (ok) {
         await archiveFood(food.id);
@@ -76,7 +76,7 @@ export default function CategoryDetails() {
     if (!food) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${t('common.delete')} ${formatFoodDisplayName(food)}?`,
+      description: t('common.confirmDeleteItem', { name: formatFoodDisplayName(food) }),
       variant: 'destructive',
     });
     if (ok) {

@@ -59,7 +59,7 @@ export default function Categories() {
   const handleDeleteRecipe = async (recipe: FoodRecipe) => {
     const isOk = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${recipe.name}?`,
+      description: t('common.confirmDeleteItem', { name: recipe.name }),
       variant: 'destructive',
     });
     if (!isOk) return;
@@ -92,7 +92,7 @@ export default function Categories() {
   const handleDeleteFood = async (food: FoodItem) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${food.name}?`,
+      description: t('common.confirmDeleteItem', { name: food.name }),
       variant: 'destructive',
     });
     if (!ok) return;

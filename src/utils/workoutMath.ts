@@ -1,4 +1,5 @@
 import type { WorkoutRoutine, Exercise, DetailedMuscle, WorkoutSet } from '@/types';
+import { muscleRoleToNumericWeight } from '@/utils/muscleIntensity';
 
 /**
  * 預估 1RM 力量極限 (Brzycki Formula)
@@ -79,7 +80,10 @@ export function getRoutineFactSummary(
     if (ex && ex.targetMuscles) {
       for (const [mKey, intensity] of Object.entries(ex.targetMuscles)) {
         const muscle = mKey as DetailedMuscle;
-        const val = typeof intensity === 'number' && !isNaN(intensity) ? intensity : 0;
+        const val =
+          typeof intensity === 'number' && !isNaN(intensity)
+            ? Math.min(100, Math.max(0, intensity))
+            : muscleRoleToNumericWeight(intensity);
         const existing = muscleIntensityMap.get(muscle) || 0;
         if (val > existing) {
           muscleIntensityMap.set(muscle, val);
