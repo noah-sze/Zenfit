@@ -241,7 +241,7 @@ export default function RecipeDetails() {
     if (!recipe) return;
     const isOk = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${recipe.name}?`,
+      description: t('common.confirmDeleteItem', { name: recipe.name }),
       variant: 'destructive',
     });
     if (!isOk) return;
@@ -483,7 +483,7 @@ export default function RecipeDetails() {
                       {ing.foodName}
                     </span>
                     {ing.isOptional && (
-                      <span className="text-[10px] font-mono border border-dashed border-border px-1.5 py-0.2 rounded text-muted-foreground shrink-0">
+                      <span className="text-[10px] font-mono border border-dashed border-border px-1.5 py-0.5 rounded text-muted-foreground shrink-0">
                         {t('diet.optionalBadge')}
                       </span>
                     )}

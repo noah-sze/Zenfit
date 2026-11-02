@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, ChevronDown, ChevronRight, X, RotateCcw, Trash2, Edit2, Archive } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, X, RotateCcw, Trash2, Edit2, Archive, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,8 @@ import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import type { Exercise, WorkoutRoutine, Equipment, DetailedMuscle } from '@/types';
+import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
+import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 
 export type WorkoutTab = 'exercises' | 'routines' | 'equipments';
 
@@ -214,11 +216,6 @@ export function WorkoutManagementBrowser({
         return nameA.localeCompare(nameB);
       });
   }, [equipmentBaseList, equipmentSearchQuery, getEquipmentDisplayName, t]);
-
-  const getMuscleLabel = (muscle: DetailedMuscle) => {
-    const key = `workout.muscle${muscle.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
-    return t(key);
-  };
 
   return (
     <div className={cn('space-y-3 font-mono flex flex-col', className)}>
@@ -585,26 +582,12 @@ export function WorkoutManagementBrowser({
                             {exercise.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground flex-wrap">
-                          <span>{getEquipmentDisplayName(exercise.equipment, t)}</span>
+                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground flex-nowrap min-w-0 overflow-hidden">
+                          <EquipmentBadge name={getEquipmentDisplayName(exercise.equipment, t)} />
                           {muscleEntries.length > 0 && (
                             <>
-                              <span className="opacity-40">·</span>
-                              <div className="flex items-center gap-1 flex-wrap">
-                                {muscleEntries.slice(0, 3).map(([m, intensity]) => (
-                                  <span
-                                    key={m}
-                                    className="px-1.5 py-0.2 bg-muted/60 text-[10px] rounded text-foreground/80"
-                                  >
-                                    {getMuscleLabel(m)} {intensity}
-                                  </span>
-                                ))}
-                                {muscleEntries.length > 3 && (
-                                  <span className="text-[10px] opacity-60">
-                                    +{muscleEntries.length - 3}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="opacity-40 shrink-0">·</span>
+                              <AdaptiveMuscleBadgeGroup entries={muscleEntries} className="min-w-0 flex-1" />
                             </>
                           )}
                         </div>
@@ -767,28 +750,17 @@ export function WorkoutManagementBrowser({
                             {routine.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground flex-wrap">
-                          <span>{t('workout.exerciseCount', { count: summary.exerciseCount })}</span>
-                          <span className="opacity-40">·</span>
-                          <span>{summary.totalPlannedSets} {t('workout.set', '組')}</span>
+                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground flex-nowrap min-w-0 overflow-hidden">
+                          <span className="shrink-0">{t('workout.exerciseCount', { count: summary.exerciseCount })}</span>
+                          <span className="opacity-40 shrink-0">·</span>
+                          <span className="shrink-0">{summary.totalPlannedSets} {t('workout.set', '組')}</span>
                           {summary.coveredMuscles.length > 0 && (
                             <>
-                              <span className="opacity-40">·</span>
-                              <div className="flex items-center gap-1 flex-wrap">
-                                {summary.coveredMuscles.slice(0, 3).map((item) => (
-                                  <span
-                                    key={item.muscle}
-                                    className="px-1.5 py-0.2 bg-muted/60 text-[10px] rounded text-foreground/80"
-                                  >
-                                    {getMuscleLabel(item.muscle)}
-                                  </span>
-                                ))}
-                                {summary.coveredMuscles.length > 3 && (
-                                  <span className="text-[10px] opacity-60">
-                                    +{summary.coveredMuscles.length - 3}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="opacity-40 shrink-0">·</span>
+                              <AdaptiveMuscleBadgeGroup
+                                entries={summary.coveredMuscles.map((item) => [item.muscle, item.maxIntensity])}
+                                className="min-w-0 flex-1"
+                              />
                             </>
                           )}
                         </div>
@@ -957,88 +929,79 @@ export function WorkoutManagementBrowser({
                         </div>
                       </div>
 
-                      {showEquipmentArchived ? (
-                        <div className="flex items-center gap-1 shrink-0">
-                          {onUnarchiveEquipment && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUnarchiveEquipment(eq);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                              title={t('common.restore')}
-                              aria-label={t('common.restore')}
-                            >
-                              <RotateCcw className="size-3.5" />
-                            </Button>
-                          )}
-                          {usage === 0 && onDeleteEquipment && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteEquipment(eq);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 shrink-0">
-                          {onEditEquipment && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditEquipment(eq);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                              title={t('common.edit')}
-                              aria-label={t('common.edit')}
-                            >
-                              <Edit2 className="size-3.5" />
-                            </Button>
-                          )}
-                          {onArchiveEquipment && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onArchiveEquipment(eq);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                              title={t('common.archive')}
-                              aria-label={t('common.archive')}
-                            >
-                              <Archive className="size-3.5" />
-                            </Button>
-                          )}
-                          {usage === 0 && onDeleteEquipment && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteEquipment(eq);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      {/* 右側操作：二級選單 */}
+                      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                                aria-label={t('common.more', '更多')}
+                              >
+                                <MoreVertical className="size-4" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="w-[140px] font-mono text-xs">
+                            {showEquipmentArchived ? (
+                              <>
+                                {onUnarchiveEquipment && (
+                                  <DropdownMenuItem
+                                    onClick={() => onUnarchiveEquipment(eq)}
+                                    className="cursor-pointer"
+                                  >
+                                    <RotateCcw className="size-3.5 mr-2" />
+                                    <span>{t('common.restore')}</span>
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {onEditEquipment && (
+                                  <DropdownMenuItem
+                                    onClick={() => onEditEquipment(eq)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Edit2 className="size-3.5 mr-2" />
+                                    <span>{t('common.edit')}</span>
+                                  </DropdownMenuItem>
+                                )}
+                                {onArchiveEquipment && (
+                                  <DropdownMenuItem
+                                    onClick={() => onArchiveEquipment(eq)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Archive className="size-3.5 mr-2" />
+                                    <span>{t('common.archive')}</span>
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
+
+                            {onDeleteEquipment && (
+                              <DropdownMenuItem
+                                variant={usage > 0 ? 'default' : 'destructive'}
+                                disabled={usage > 0}
+                                onClick={() => {
+                                  if (usage === 0) {
+                                    onDeleteEquipment(eq);
+                                  }
+                                }}
+                                className={cn(
+                                  'cursor-pointer',
+                                  usage > 0 && 'opacity-40 cursor-not-allowed hover:bg-transparent text-muted-foreground'
+                                )}
+                                title={usage > 0 ? t('workout.equipmentHasExercises', '已被動作引用') : undefined}
+                              >
+                                <Trash2 className="size-3.5 mr-2" />
+                                <span>{t('common.delete')}</span>
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   );
                 })

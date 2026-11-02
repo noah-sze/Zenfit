@@ -54,6 +54,7 @@ export default function Exercises() {
     archiveEquipment,
     unarchiveEquipment,
     deleteEquipment,
+    getEquipmentDisplayName,
   } = useEquipments();
 
   // 彈窗狀態
@@ -100,7 +101,7 @@ export default function Exercises() {
   const handleDeleteExercise = async (exercise: Exercise) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${exercise.name}?`,
+      description: t('common.confirmDeleteItem', { name: exercise.name }),
       variant: 'destructive',
     });
     if (!ok) return;
@@ -147,7 +148,7 @@ export default function Exercises() {
   const handleDeleteRoutine = async (routine: WorkoutRoutine) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${routine.name}?`,
+      description: t('common.confirmDeleteItem', { name: routine.name }),
       variant: 'destructive',
     });
     if (!ok) return;
@@ -190,9 +191,10 @@ export default function Exercises() {
   };
 
   const handleArchiveEquipment = async (equipment: Equipment) => {
+    const displayName = getEquipmentDisplayName(equipment.id, t) || equipment.name;
     const ok = await confirm({
       title: t('common.archive'),
-      description: `${t('common.confirm')} ${equipment.name}?`,
+      description: t('common.confirmArchiveItem', { name: displayName }),
     });
     if (!ok) return;
 
@@ -216,9 +218,10 @@ export default function Exercises() {
   };
 
   const handleDeleteEquipment = async (equipment: Equipment) => {
+    const displayName = getEquipmentDisplayName(equipment.id, t) || equipment.name;
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${equipment.name}?`,
+      description: t('common.confirmDeleteItem', { name: displayName }),
       variant: 'destructive',
     });
     if (!ok) return;

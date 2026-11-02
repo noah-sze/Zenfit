@@ -155,12 +155,20 @@ export interface Equipment {
   updatedAt: number;
 }
 
+/**
+ * 經典 3 級運動機能學肌群角色 (Three-Tier Muscle Role Model)
+ * - primary: 主動肌 (Agonist / Prime Mover)
+ * - secondary: 協同肌 (Synergist / Secondary Mover)
+ * - stabilizer: 穩定肌 (Stabilizer / Fixator)
+ */
+export type MuscleRole = 'primary' | 'secondary' | 'stabilizer';
+
 export interface Exercise {
   id: string;
   name: string;
   category?: ExerciseCategory; // 淘汰/選填：向後相容
   equipment: EquipmentType;
-  targetMuscles: Partial<Record<DetailedMuscle, number>>;
+  targetMuscles: Partial<Record<DetailedMuscle, MuscleRole | number>>;
   notes?: string;
   isCustom: boolean;
   isArchived?: boolean;

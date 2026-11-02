@@ -4,8 +4,6 @@ import {
   Dialog,
   PrecisionDialogContent,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import type { Equipment } from '@/types';
 
@@ -58,19 +56,28 @@ export function EquipmentFormDialog({
         title={isEdit ? t('common.edit') : t('common.add')}
         form={formId}
         onClose={() => onOpenChange(false)}
+        overlayClassName="z-[80]"
+        className="z-[80]"
+        submitDisabled={!name.trim()}
       >
-        <form id={formId} onSubmit={handleSubmit} className="pt-3.5 space-y-3">
+        <form id={formId} onSubmit={handleSubmit} className="pt-3.5 space-y-3.5">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              {t('workout.equipmentName', '器械名稱')}
-            </Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('workout.equipmentPlaceholder', '例如：滑輪下拉機、腿屈伸機')}
-              className="font-mono text-xs h-9 bg-card border-border"
-              maxLength={40}
-            />
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground px-0 font-semibold">
+              {t('workout.basicInfo')}
+            </div>
+            <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm font-sans">
+              <div className="h-10 px-4 flex items-center justify-between gap-2 bg-card">
+                <span className="text-muted-foreground text-xs shrink-0">{t('workout.equipmentName', '器械名稱')}</span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t('workout.equipmentPlaceholder', '例如：滑輪機')}
+                  className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-foreground font-medium focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 flex-1 max-w-[170px]"
+                  maxLength={40}
+                />
+              </div>
+            </div>
           </div>
         </form>
       </PrecisionDialogContent>

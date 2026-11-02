@@ -98,9 +98,9 @@ export function MealBundleCard({
             <span
               className={cn(
                 isLowCalorie &&
-                  'text-emerald-500 px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20',
+                  'text-emerald-500 px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20',
                 isHighCalorie &&
-                  'text-rose-500 px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20'
+                  'text-rose-500 px-1 py-0.5 rounded bg-rose-500/10 border border-rose-500/20'
               )}
             >
               {formatEnergy(bundleTotals.calories, energyUnit).formatted}
@@ -152,9 +152,9 @@ export function MealBundleCard({
                     <span
                       className={cn(
                         isItemLowCal &&
-                          'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.2 rounded bg-emerald-500/5',
+                          'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
                         isItemHighCal &&
-                          'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.2 rounded bg-rose-500/5'
+                          'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
                       )}
                     >
                       {formatEnergy(item.calories, energyUnit).formatted}

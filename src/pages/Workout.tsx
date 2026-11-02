@@ -66,7 +66,7 @@ export default function Workout() {
   const handleDeleteWorkout = async (id: string, title: string) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${title}?`,
+      description: t('common.confirmDeleteItem', { name: title }),
       variant: 'destructive',
     });
     if (ok) {

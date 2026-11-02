@@ -39,17 +39,28 @@ describe('系統預設數據完整性與原子計量規範測試', () => {
     expect(soyMilk?.servingUnit).toBe('ml');
   });
 
-  it('所有默認動作之刺激肌群強度應介於 0 至 100 之間', () => {
+  it('所有默認動作之刺激肌群應符合經典 3 級 MuscleRole 標準', () => {
     for (const ex of DEFAULT_EXERCISES) {
       expect(ex.name.trim()).toBeTruthy();
       expect(['free_weight', 'machine', 'bodyweight', 'cardio']).toContain(ex.category);
 
       const muscleEntries = Object.entries(ex.targetMuscles || {});
       expect(muscleEntries.length).toBeGreaterThan(0);
-      for (const [, intensity] of muscleEntries) {
-        expect(intensity).toBeGreaterThanOrEqual(0);
-        expect(intensity).toBeLessThanOrEqual(100);
+      for (const [, roleOrIntensity] of muscleEntries) {
+        if (typeof roleOrIntensity === 'string') {
+          expect(['primary', 'secondary', 'stabilizer']).toContain(roleOrIntensity);
+        } else {
+          expect(roleOrIntensity).toBeGreaterThanOrEqual(0);
+          expect(roleOrIntensity).toBeLessThanOrEqual(100);
+        }
       }
+    }
+  });
+
+  it('所有默認動作名稱應符合方案 B 極簡純粹標準，不得包含英文括號對照', () => {
+    for (const ex of DEFAULT_EXERCISES) {
+      expect(ex.name.trim()).toBeTruthy();
+      expect(ex.name).not.toMatch(/\([A-Za-z0-9\s\-_/]+\)/);
     }
   });
 

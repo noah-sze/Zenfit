@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useExercises } from '@/hooks/useExercises';
+import { useEquipments } from '@/hooks/useEquipments';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useAppStore } from '@/store/useAppStore';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
@@ -37,6 +38,8 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import type { RoutineExerciseItem, DetailedMuscle } from '@/types';
+import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
+import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
 
 export default function RoutineDetails() {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +50,7 @@ export default function RoutineDetails() {
 
   const { allRoutines, exerciseMap, updateRoutine, archiveRoutine, unarchiveRoutine, deleteRoutine } = useRoutines();
   const { activeExercises } = useExercises();
+  const { getEquipmentDisplayName } = useEquipments();
   const { addWorkout } = useWorkoutLogs(selectedDate);
 
   const routine = useMemo(() => {
@@ -122,7 +126,7 @@ export default function RoutineDetails() {
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: `${t('common.confirm')} ${t('common.archive')} ${routine.name}?`,
+        description: t('common.confirmArchiveItem', { name: routine.name }),
       });
       if (ok) {
         await archiveRoutine(routine.id);
@@ -137,7 +141,7 @@ export default function RoutineDetails() {
     if (!routine) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: `${t('common.confirm')} ${t('common.delete')} ${routine.name}?`,
+      description: t('common.confirmDeleteItem', { name: routine.name }),
       variant: 'destructive',
     });
     if (ok) {
@@ -173,7 +177,7 @@ export default function RoutineDetails() {
 
       return {
         exerciseId: item.exerciseId,
-        exerciseName: ex ? ex.name : '未知動作',
+        exerciseName: ex ? ex.name : t('workout.unknownExercise'),
         category: ex ? ex.category : 'free_weight',
         sets,
         notes: item.notes,
@@ -300,31 +304,23 @@ export default function RoutineDetails() {
                       #{idx + 1}
                     </span>
                     <span className="text-sm font-medium text-foreground truncate">
-                      {ex ? ex.name : '未知動作'}
+                      {ex ? ex.name : t('workout.unknownExercise')}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground flex-wrap">
-                    <span className="font-bold text-foreground">
-                      {item.defaultSets} 組
+                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground min-w-0">
+                    <span className="font-bold text-foreground shrink-0">
+                      {item.defaultSets} {t('workout.set', '組')}
                     </span>
                     {ex && (
                       <>
-                        <span>·</span>
-                        <span>{ex.category}</span>
-                        <span>·</span>
-                        <span>{ex.equipment}</span>
+                        <span className="shrink-0 opacity-50">·</span>
+                        <EquipmentBadge name={getEquipmentDisplayName(ex.equipment, t)} />
                       </>
                     )}
                     {muscles.length > 0 && (
                       <>
-                        <span>·</span>
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {muscles.slice(0, 2).map(([m, val]) => (
-                            <span key={m} className="px-1 py-0.2 bg-muted/50 rounded text-[10px]">
-                              {getMuscleLabel(m)} {val}
-                            </span>
-                          ))}
-                        </div>
+                        <span className="shrink-0 opacity-50">·</span>
+                        <AdaptiveMuscleBadgeGroup entries={muscles} className="min-w-0 flex-1" />
                       </>
                     )}
                   </div>

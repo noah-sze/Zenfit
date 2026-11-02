@@ -7,6 +7,7 @@ import type {
   Exercise,
   WorkoutRoutine,
   WorkoutLog,
+  WorkoutExerciseGroup,
   BodyMetric,
   UserProfile,
   UserBaseInfo,
@@ -255,6 +256,69 @@ export class ZenfitDatabase extends Dexie {
       diet_plans: 'id, date, updatedAt',
     }).upgrade(async (_tx) => {
       // 升級版本 8：為 food_logs 新增 bundleId 索引以支援食材動態分組 (Meal Bundle)，平滑向下相容既有數據
+    });
+
+    this.version(9).stores({
+      foods: 'id, name, category, updatedAt',
+      recipes: 'id, name, isCustom, isArchived, updatedAt',
+      food_logs: 'id, date, mealType, foodId, bundleId, createdAt, updatedAt, [date+mealType]',
+      exercises: 'id, name, category, equipment, updatedAt',
+      routines: 'id, name, isCustom, isArchived, updatedAt',
+      equipments: 'id, name, isCustom, isArchived, updatedAt',
+      workout_logs: 'id, date, title, createdAt, updatedAt',
+      body_metrics: 'id, date, updatedAt',
+      user_profile: 'id, updatedAt',
+      user_base_info: 'id, updatedAt',
+      diet_plans: 'id, date, updatedAt',
+    }).upgrade(async (tx) => {
+      // 升級版本 9：清理既有動作庫與歷史訓練日誌中的括號英文名稱，落實極簡純粹命名標準 (方案 B)
+      const cleanExerciseName = (rawName: string): string => {
+        const matched = rawName.match(/^(.+?)\s*\([A-Za-z0-9\s\-_/]+\)$/);
+        return matched ? matched[1].trim() : rawName.trim();
+      };
+
+      // 1. 遷移既有 exercises 資料表
+      const exercisesTable = tx.table('exercises');
+      const allExercises = await exercisesTable.toArray();
+      const nameUpdateMap = new Map<string, string>();
+
+      for (const ex of allExercises) {
+        const cleanedName = cleanExerciseName(ex.name);
+        if (cleanedName !== ex.name) {
+          nameUpdateMap.set(ex.name, cleanedName);
+          await exercisesTable.update(ex.id, {
+            name: cleanedName,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+
+      // 2. 遷移既有 workout_logs 裡的 exerciseName，確保歷史記錄關聯與統計無縫平滑
+      const workoutLogsTable = tx.table('workout_logs');
+      const allWorkoutLogs = await workoutLogsTable.toArray();
+
+      for (const log of allWorkoutLogs) {
+        let hasChanges = false;
+        const updatedExercises = log.exercises?.map((group: WorkoutExerciseGroup) => {
+          const directMatch = nameUpdateMap.get(group.exerciseName);
+          const cleaned = directMatch || cleanExerciseName(group.exerciseName || '');
+          if (cleaned !== group.exerciseName) {
+            hasChanges = true;
+            return {
+              ...group,
+              exerciseName: cleaned,
+            };
+          }
+          return group;
+        });
+
+        if (hasChanges) {
+          await workoutLogsTable.update(log.id, {
+            exercises: updatedExercises,
+            updatedAt: Date.now(),
+          });
+        }
+      }
     });
   }
 
