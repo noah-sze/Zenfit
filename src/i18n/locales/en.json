@@ -39,7 +39,8 @@
       "adjust": "Adjust",
       "confirmDelete": "Delete this?",
       "confirmDeleteItem": "Delete \"{{name}}\"?",
-      "confirmArchiveItem": "Archive \"{{name}}\"?"
+      "confirmArchiveItem": "Archive \"{{name}}\"?",
+      "confirmRestoreItem": "Restore \"{{name}}\"?"
     },
     "nav": {
       "dashboard": "Overview",
@@ -150,6 +151,7 @@
       "viewFoodDetail": "View Details",
       "noRecipeLogs": "No logs",
       "foodHasRecipes": "Referenced by recipes",
+      "foodHasUsageCannotDelete": "Referenced by logs or recipes, cannot delete",
       "deleteRecord": "Delete Record",
       "deleteBundleRecord": "Delete Bundle",
       "clickToEnter": "Tap to Enter",
