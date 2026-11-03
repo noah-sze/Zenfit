@@ -7,39 +7,24 @@ import {
   RefreshCcw,
   Trash2,
   ChevronRight,
-  Plus,
-  X,
   Play,
 } from 'lucide-react';
 import { useRoutines } from '@/hooks/useRoutines';
-import { useExercises } from '@/hooks/useExercises';
 import { useEquipments } from '@/hooks/useEquipments';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useAppStore } from '@/store/useAppStore';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import type { RoutineExerciseItem, DetailedMuscle } from '@/types';
+import type { DetailedMuscle } from '@/types';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
+import {
+  RoutineFormDialog,
+  type RoutineFormData,
+} from '@/components/workout/RoutineFormDialog';
 
 export default function RoutineDetails() {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +34,6 @@ export default function RoutineDetails() {
   const { selectedDate } = useAppStore();
 
   const { allRoutines, exerciseMap, updateRoutine, archiveRoutine, unarchiveRoutine, deleteRoutine } = useRoutines();
-  const { activeExercises } = useExercises();
   const { getEquipmentDisplayName } = useEquipments();
   const { addWorkout } = useWorkoutLogs(selectedDate);
 
@@ -63,55 +47,14 @@ export default function RoutineDetails() {
 
   // 編輯組合彈窗狀態
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editNotes, setEditNotes] = useState('');
-  const [editItems, setEditItems] = useState<RoutineExerciseItem[]>([]);
-
   const handleOpenEdit = () => {
     if (!routine) return;
-    setEditName(routine.name);
-    setEditNotes(routine.notes || '');
-    setEditItems([...routine.exercises]);
     setIsEditOpen(true);
   };
 
-  const handleAddItem = () => {
-    if (activeExercises.length === 0) return;
-    setEditItems([...editItems, { exerciseId: activeExercises[0].id, defaultSets: 3 }]);
-  };
-
-  const handleRemoveItem = (idx: number) => {
-    setEditItems(editItems.filter((_, i) => i !== idx));
-  };
-
-  const handleUpdateItemExercise = (idx: number, exerciseId: string) => {
-    const next = [...editItems];
-    next[idx].exerciseId = exerciseId;
-    setEditItems(next);
-  };
-
-  const handleUpdateItemSets = (idx: number, setsStr: string) => {
-    const val = parseInt(setsStr, 10);
-    const defaultSets = isNaN(val) ? 1 : Math.max(1, Math.min(20, val));
-    const next = [...editItems];
-    next[idx].defaultSets = defaultSets;
-    setEditItems(next);
-  };
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!routine || !editName.trim()) return;
-    if (editItems.length === 0) {
-      toast.show(t('workout.atLeastOneExercise'));
-      return;
-    }
-
-    await updateRoutine(routine.id, {
-      name: editName.trim(),
-      notes: editNotes.trim() || undefined,
-      exercises: editItems,
-    });
-
+  const handleEditSubmit = async (data: RoutineFormData) => {
+    if (!routine) return;
+    await updateRoutine(routine.id, data);
     triggerHaptic('success');
     toast.show(t('common.saved'));
     setIsEditOpen(false);
@@ -362,117 +305,13 @@ export default function RoutineDetails() {
         </Button>
       </div>
 
-      {/* 編輯組合彈窗 (Instant Pop, 左取消右確認) */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-md w-full bg-card p-6 border border-border space-y-4">
-          <DialogHeader>
-            <DialogTitle className="text-base font-medium tracking-tight">
-              {t('workout.editRoutine')}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('workout.routineName')}
-              </Label>
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="font-mono text-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                {t('common.notes')}
-              </Label>
-              <Input
-                value={editNotes}
-                onChange={(e) => setEditNotes(e.target.value)}
-                className="font-mono text-sm"
-              />
-            </div>
-
-            <div className="space-y-2 pt-1 border-t border-border">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  動作構成清單 ({editItems.length})
-                </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddItem}
-                  className="h-7 text-xs font-mono px-2 cursor-pointer"
-                >
-                  <Plus className="size-3 mr-1" />
-                  {t('workout.addExercise')}
-                </Button>
-              </div>
-
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {editItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-muted/20 p-2 rounded border border-border">
-                    <div className="flex-1">
-                      <Select
-                        value={item.exerciseId}
-                        onValueChange={(v) => v && handleUpdateItemExercise(idx, v)}
-                      >
-                        <SelectTrigger className="h-8 text-xs font-mono">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60">
-                          {activeExercises.map((ex) => (
-                            <SelectItem key={ex.id} value={ex.id}>
-                              {ex.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="w-20 flex items-center gap-1">
-                      <Input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={item.defaultSets}
-                        onChange={(e) => handleUpdateItemSets(idx, e.target.value)}
-                        className="h-8 text-xs font-mono text-center px-1"
-                      />
-                      <span className="text-xs font-mono text-muted-foreground">組</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(idx)}
-                      className="size-7 flex items-center justify-center text-muted-foreground hover:text-destructive cursor-pointer"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <DialogFooter className="flex flex-row items-center justify-between pt-3 border-t border-border sm:justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditOpen(false)}
-                className="cursor-pointer"
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" size="sm" className="bg-foreground text-background cursor-pointer">
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* 編輯組合彈窗 (單一真理源 RoutineFormDialog) */}
+      <RoutineFormDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        initialData={routine}
+        onSubmit={handleEditSubmit}
+      />
     </div>
   );
 }

@@ -66,6 +66,7 @@ export default function Exercises() {
   // Header Portal 錨點
   const [headerActionEl, setHeaderActionEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     setHeaderActionEl(document.getElementById('subpage-header-action'));
   }, []);
 

@@ -335,10 +335,21 @@
       "archivedEquipments": "Archived",
       "noArchivedEquipments": "No archived items",
       "atLeastOneExercise": "At least one exercise",
+      "routineNamePlaceholder": "e.g. Push Day A",
+      "searchExercisePlaceholder": "Search exercise name or notes...",
+      "routineExerciseList": "Exercises",
       "exerciseHasLogs": "Has workout logs",
       "exerciseHasRoutines": "Referenced by routines",
       "equipmentHasExercises": "Referenced by exercises",
-      "selectRoutine": "Select Routine"
+      "selectRoutine": "Select Routine",
+      "muscleRecoveryStatus": "Muscle Recovery Status",
+      "musclesRecovering": "muscles recovering",
+      "allMusclesReady": "All muscles ready",
+      "hoursElapsedAgo": "{{count}}h ago",
+      "recoveryPercent": "Recovery",
+      "neverTrained": "No recent stimulus · Ready",
+      "completedSets": "Completed Sets",
+      "noWorkoutLogs": "No workout logs"
     },
     "equipment": {
       "all": "All",
