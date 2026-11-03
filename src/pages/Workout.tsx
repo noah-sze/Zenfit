@@ -1,421 +1,666 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
+import { useBodyRecovery } from '@/hooks/useBodyRecovery';
 import { useExercises } from '@/hooks/useExercises';
-import { useRoutines } from '@/hooks/useRoutines';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Check, Trash2, Timer, Dumbbell, Layers } from 'lucide-react';
+import { useEquipments } from '@/hooks/useEquipments';
+import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { v4 as uuidv4 } from 'uuid';
-import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { kgToLbs, lbsToKg } from '@/utils/unitMath';
+import { v4 as uuidv4 } from 'uuid';
+import { Plus, Trash2, ChevronRight, Layers, Dumbbell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
+import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
+import { ExerciseSelectDialog } from '@/components/workout/ExerciseSelectDialog';
+import { RoutineSelectDialog } from '@/components/workout/RoutineSelectDialog';
+import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
+import type { WorkoutLog, WorkoutSet, WorkoutRoutine, Exercise } from '@/types';
+
+interface KeypadConfig {
+  workoutId: string;
+  exerciseIndex: number;
+  setIndex: number;
+  field: 'weight' | 'reps';
+  title: string;
+  value: number;
+  unit: string;
+  allowDecimals: boolean;
+  anchorEl?: HTMLElement | null;
+}
 
 export default function Workout() {
   const { t } = useTranslation();
-  const { selectedDate, openAddModal } = useAppStore();
+  const { selectedDate } = useAppStore();
   const { bodyWeightUnit } = useUnitPreferences();
-  const {
-    workouts,
-    addWorkout,
-    deleteWorkout,
-    toggleSetCompleted,
-    addSetToExercise,
-    updateSetValues,
-    updateWorkout,
-  } = useWorkoutLogs(selectedDate);
-  const { exercises } = useExercises();
-  const { activeRoutines, exerciseMap } = useRoutines();
   const confirm = useConfirm();
 
-  // 休息計時器狀態
-  const [restTimerSec, setRestTimerSec] = useState<number | null>(null);
-  const [isResting, setIsResting] = useState(false);
+  const { workouts, addWorkout, updateWorkout, deleteWorkout } = useWorkoutLogs(selectedDate);
+  const { recoverySummary } = useBodyRecovery(selectedDate);
+  const { allExercises } = useExercises();
+  const { getEquipmentDisplayName } = useEquipments();
 
-  // 新增動作對話框
-  const [targetWorkoutId, setTargetWorkoutId] = useState<string | null>(null);
-  const [isAddExerciseModalOpen, setIsAddExerciseModalOpen] = useState(false);
+  // 動作快取 Map
+  const exerciseMap = useMemo(() => {
+    const map = new Map<string, Exercise>();
+    allExercises.forEach((ex) => map.set(ex.id, ex));
+    return map;
+  }, [allExercises]);
 
-  // 套用訓練組合對話框
-  const [isApplyRoutineOpen, setIsApplyRoutineOpen] = useState(false);
+  // 彈窗狀態
+  const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
+  const [activeWorkoutIdForAdd, setActiveWorkoutIdForAdd] = useState<string | null>(null);
+  const [isRoutinePickerOpen, setIsRoutinePickerOpen] = useState(false);
 
-  useEffect(() => {
-    let interval: any = null;
-    if (isResting && restTimerSec !== null && restTimerSec > 0) {
-      interval = setInterval(() => {
-        setRestTimerSec((prev) => (prev !== null && prev > 1 ? prev - 1 : 0));
-      }, 1000);
-    } else if (restTimerSec === 0) {
-      setIsResting(false);
-      triggerHaptic('success');
+  // 數字鍵盤狀態
+  const [keypadConfig, setKeypadConfig] = useState<KeypadConfig | null>(null);
+
+  // 當日客觀統計匯總 (動作數、組數、容量)
+  const stats = useMemo(() => {
+    let exerciseCount = 0;
+    let setCount = 0;
+    let totalVolumeKg = 0;
+
+    for (const w of workouts) {
+      exerciseCount += (w.exercises || []).length;
+      for (const ex of w.exercises || []) {
+        for (const s of ex.sets || []) {
+          setCount += 1;
+          const weight = s.weight || 0;
+          const reps = s.reps || 0;
+          totalVolumeKg += weight * reps;
+        }
+      }
     }
-    return () => clearInterval(interval);
-  }, [isResting, restTimerSec]);
 
-  const startRestTimer = (seconds: number) => {
-    setRestTimerSec(seconds);
-    setIsResting(true);
-    triggerHaptic('selection');
-  };
+    const displayVolume =
+      bodyWeightUnit === 'lbs' ? kgToLbs(totalVolumeKg, 0) : totalVolumeKg;
 
-  const handleDeleteWorkout = async (id: string, title: string) => {
-    const ok = await confirm({
-      title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: title }),
-      variant: 'destructive',
-    });
-    if (ok) {
-      await deleteWorkout(id);
-    }
-  };
+    return {
+      exerciseCount,
+      setCount,
+      totalVolume: displayVolume,
+    };
+  }, [workouts, bodyWeightUnit]);
 
-  const handleSelectAddExercise = async (exerciseId: string) => {
-    if (!targetWorkoutId) return;
-    const workout = workouts.find((w) => w.id === targetWorkoutId);
-    if (!workout) return;
-
-    const ex = exercises.find((e) => e.id === exerciseId);
-    if (!ex) return;
-
-    const newExerciseGroup = {
-      exerciseId: ex.id,
-      exerciseName: ex.name,
-      category: ex.category,
-      sets: [
-        {
-          id: Math.random().toString(),
-          setNumber: 1,
+  // ==========================================
+  // 套用訓練組合
+  // ==========================================
+  const handleSelectRoutine = async (routine: WorkoutRoutine) => {
+    try {
+      const exerciseGroups = routine.exercises.map((item) => {
+        const ex = exerciseMap.get(item.exerciseId);
+        const count = item.defaultSets || 3;
+        const sets: WorkoutSet[] = Array.from({ length: count }, (_, i) => ({
+          id: uuidv4(),
+          setNumber: i + 1,
           weight: 20,
           reps: 10,
-          isCompleted: false,
-        },
-      ],
-    };
+          isCompleted: true,
+        }));
 
-    await updateWorkout(targetWorkoutId, {
-      exercises: [...workout.exercises, newExerciseGroup],
-    });
+        return {
+          exerciseId: item.exerciseId,
+          exerciseName: ex ? ex.name : t('workout.unknownExercise'),
+          category: ex ? ex.category : 'free_weight',
+          sets,
+          notes: item.notes,
+        };
+      });
 
-    setIsAddExerciseModalOpen(false);
-    triggerHaptic('success');
+      await addWorkout({
+        date: selectedDate,
+        title: routine.name,
+        exercises: exerciseGroups,
+        notes: routine.notes,
+      });
+
+      triggerHaptic('success');
+      toast.show(t('workout.routineApplied'));
+    } catch {
+      toast.show(t('common.error'));
+    }
   };
 
-  const handleApplyRoutineDirect = async (routineId: string) => {
-    const routine = activeRoutines.find((r) => r.id === routineId);
-    if (!routine) return;
+  // ==========================================
+  // 新增空白訓練或為指定訓練新增動作
+  // ==========================================
+  const handleOpenAddExercise = (workoutId?: string) => {
+    triggerHaptic('selection');
+    if (workoutId) {
+      setActiveWorkoutIdForAdd(workoutId);
+    } else {
+      setActiveWorkoutIdForAdd(null);
+    }
+    setIsExercisePickerOpen(true);
+  };
 
-    const exerciseGroups = routine.exercises.map((item) => {
-      const ex = exerciseMap.get(item.exerciseId);
-      const setsCount = item.defaultSets || 3;
-      const sets = Array.from({ length: setsCount }, (_, i) => ({
-        id: uuidv4(),
-        setNumber: i + 1,
-        weight: 20,
-        reps: 10,
-        isCompleted: false,
-      }));
+  const handleSelectExercise = async (exercise: Exercise) => {
+    try {
+      let targetId = activeWorkoutIdForAdd;
 
-      return {
-        exerciseId: item.exerciseId,
-        exerciseName: ex ? ex.name : '未知動作',
-        category: ex ? ex.category : 'free_weight',
-        sets,
-        notes: item.notes,
+      // 若未指定目標訓練，建立一筆新訓練
+      if (!targetId) {
+        targetId = await addWorkout({
+          date: selectedDate,
+          title: t('workout.title', '訓練'),
+          exercises: [],
+        });
+      }
+
+      const targetWorkout = workouts.find((w) => w.id === targetId);
+      const currentExercises = targetWorkout ? [...targetWorkout.exercises] : [];
+
+      const newGroup = {
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        category: exercise.category,
+        sets: [
+          { id: uuidv4(), setNumber: 1, weight: 20, reps: 10, isCompleted: true },
+          { id: uuidv4(), setNumber: 2, weight: 20, reps: 10, isCompleted: true },
+          { id: uuidv4(), setNumber: 3, weight: 20, reps: 10, isCompleted: true },
+        ],
       };
-    });
 
-    await addWorkout({
-      date: selectedDate,
-      title: routine.name,
-      exercises: exerciseGroups,
-      notes: routine.notes ? `[${routine.name}] ${routine.notes}` : `[${routine.name}]`,
-    });
+      await updateWorkout(targetId, {
+        exercises: [...currentExercises, newGroup],
+      });
 
-    setIsApplyRoutineOpen(false);
-    triggerHaptic('success');
-    toast.show(t('workout.routineApplied'));
+      triggerHaptic('success');
+      setIsExercisePickerOpen(false);
+    } catch {
+      toast.show(t('common.error'));
+    }
+  };
+
+  // ==========================================
+  // 增加一組 / 刪除組數
+  // ==========================================
+  const handleAddSet = async (workout: WorkoutLog, exerciseIndex: number) => {
+    const exGroup = workout.exercises[exerciseIndex];
+    if (!exGroup) return;
+
+    const prevSet = exGroup.sets[exGroup.sets.length - 1];
+    const newSet: WorkoutSet = {
+      id: uuidv4(),
+      setNumber: exGroup.sets.length + 1,
+      weight: prevSet ? prevSet.weight : 20,
+      reps: prevSet ? prevSet.reps : 10,
+      isCompleted: true,
+    };
+
+    const nextExercises = [...workout.exercises];
+    nextExercises[exerciseIndex] = {
+      ...exGroup,
+      sets: [...exGroup.sets, newSet],
+    };
+
+    triggerHaptic('selection');
+    await updateWorkout(workout.id, { exercises: nextExercises });
+  };
+
+  const handleDeleteSet = async (
+    workout: WorkoutLog,
+    exerciseIndex: number,
+    setIndex: number
+  ) => {
+    const exGroup = workout.exercises[exerciseIndex];
+    if (!exGroup) return;
+
+    // 若該動作只剩 1 組，刪除整個動作
+    if (exGroup.sets.length <= 1) {
+      await handleDeleteExercise(workout, exerciseIndex);
+      return;
+    }
+
+    const nextSets = exGroup.sets
+      .filter((_, i) => i !== setIndex)
+      .map((s, idx) => ({ ...s, setNumber: idx + 1 }));
+
+    const nextExercises = [...workout.exercises];
+    nextExercises[exerciseIndex] = {
+      ...exGroup,
+      sets: nextSets,
+    };
+
+    triggerHaptic('warning');
+    await updateWorkout(workout.id, { exercises: nextExercises });
+  };
+
+  const handleDeleteExercise = async (workout: WorkoutLog, exerciseIndex: number) => {
+    const nextExercises = workout.exercises.filter((_, i) => i !== exerciseIndex);
+    triggerHaptic('warning');
+    await updateWorkout(workout.id, { exercises: nextExercises });
+  };
+
+  const handleDeleteWorkout = async (workout: WorkoutLog) => {
+    const ok = await confirm({
+      title: t('common.delete'),
+      description: t('common.confirmDeleteItem', { name: workout.title }),
+      variant: 'destructive',
+    });
+    if (!ok) return;
+
+    triggerHaptic('warning');
+    await deleteWorkout(workout.id);
+    toast.show(t('common.deleted'));
+  };
+
+  // ==========================================
+  // 數字微調鍵盤互動
+  // ==========================================
+  const handleOpenKeypad = (
+    workoutId: string,
+    exerciseIndex: number,
+    setIndex: number,
+    field: 'weight' | 'reps',
+    currentVal: number,
+    exName: string,
+    anchorEl?: HTMLElement
+  ) => {
+    triggerHaptic('light');
+    const displayVal =
+      field === 'weight' && bodyWeightUnit === 'lbs'
+        ? kgToLbs(currentVal, 1)
+        : currentVal;
+
+    setKeypadConfig({
+      workoutId,
+      exerciseIndex,
+      setIndex,
+      field,
+      title: `${exName} · ${t('workout.set')} ${setIndex + 1}`,
+      value: displayVal,
+      unit: field === 'weight' ? bodyWeightUnit : t('common.times', '次'),
+      allowDecimals: field === 'weight',
+      anchorEl,
+    });
+  };
+
+  const handleKeypadConfirm = async (val: number) => {
+    if (!keypadConfig) return;
+    const { workoutId, exerciseIndex, setIndex, field } = keypadConfig;
+
+    const targetWorkout = workouts.find((w) => w.id === workoutId);
+    if (!targetWorkout) return;
+
+    const targetEx = targetWorkout.exercises[exerciseIndex];
+    if (!targetEx) return;
+
+    const targetSet = targetEx.sets[setIndex];
+    if (!targetSet) return;
+
+    let finalValue = val;
+    if (field === 'weight' && bodyWeightUnit === 'lbs') {
+      finalValue = lbsToKg(val, 2);
+    }
+
+    const nextSets = [...targetEx.sets];
+    nextSets[setIndex] = {
+      ...targetSet,
+      [field]: finalValue,
+    };
+
+    const nextExercises = [...targetWorkout.exercises];
+    nextExercises[exerciseIndex] = {
+      ...targetEx,
+      sets: nextSets,
+    };
+
+    await updateWorkout(workoutId, { exercises: nextExercises });
+    setKeypadConfig(null);
   };
 
   return (
-    <div className="space-y-4">
-      {/* 頂部極簡休息計時器膠囊 */}
-      {isResting && (
-        <div className="p-3 bg-foreground text-background rounded-lg flex items-center justify-between shadow-sm animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <Timer className="size-4 sm:size-5 animate-spin text-background" />
-            <span className="text-xs font-mono font-medium">
-              {t('workout.restTimer')}: {restTimerSec}s
-            </span>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsResting(false)}
-            className="h-7 text-xs px-2.5 bg-background/20 text-background hover:bg-background/30 border-0 cursor-pointer"
-          >
-            {t('common.close')}
-          </Button>
-        </div>
-      )}
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
+      {/* 頂部客觀看板：人體肌群恢復熱圖 + 3 欄客觀指標 (全面對標飲食頁面的熱量大卡片) */}
+      <WorkoutRecoveryDashboard
+        recoverySummary={recoverySummary}
+        exerciseCount={stats.exerciseCount}
+        setCount={stats.setCount}
+        totalVolume={stats.totalVolume}
+        weightUnit={bodyWeightUnit}
+      />
 
-      {/* 快速開始新訓練按鈕 */}
+      {/* 頂部快捷操作列 (對齊飲食頁面極簡風格) */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm sm:text-base font-semibold tracking-tight">{t('workout.title')}</h2>
-        <div className="flex items-center gap-1.5">
-          {activeRoutines.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsApplyRoutineOpen(true)}
-              className="text-xs h-9 px-2.5 cursor-pointer rounded-lg border-border"
-            >
-              <Layers className="size-3.5 mr-1" />
-              {t('workout.routines')}
-            </Button>
-          )}
+        <h2 className="text-sm sm:text-base font-semibold tracking-tight font-mono">
+          {t('workout.recentLogs', '訓練記錄')}
+        </h2>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              triggerHaptic('selection');
+              setIsRoutinePickerOpen(true);
+            }}
+            className="text-xs h-8 px-2.5 rounded-full border-border font-mono cursor-pointer"
+          >
+            <Layers className="size-3.5 mr-1 text-muted-foreground" />
+            <span>{t('workout.applyRoutine', '套用組合')}</span>
+          </Button>
+
           <Button
             size="sm"
-            onClick={() => openAddModal('workout')}
-            className="text-xs h-9 px-3 cursor-pointer rounded-lg bg-foreground text-background"
+            onClick={() => handleOpenAddExercise()}
+            className="text-xs h-8 px-3 rounded-full bg-foreground text-background font-mono cursor-pointer active:scale-95 transition-all"
           >
-            <Plus className="size-4 mr-1" />
-            {t('workout.newWorkout')}
+            <Plus className="size-3.5 mr-1" />
+            <span>{t('workout.addExercise', '新增動作')}</span>
           </Button>
         </div>
       </div>
 
+      {/* 訓練記錄列表：對標四大餐別卡片 (40px 灰底表頭 + 48px 標準 Usage List) */}
       {workouts.length > 0 ? (
-        workouts.map((workout) => (
-          <Card key={workout.id} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-            <CardHeader className="py-3.5 px-4 flex flex-row items-center justify-between border-b border-border/40">
-              <div>
-                <CardTitle className="text-base font-semibold tracking-tight">
-                  {workout.title}
-                </CardTitle>
-                <span className="text-xs font-mono text-muted-foreground">
-                  {workout.exercises.length} 動作
-                </span>
+        workouts.map((workout) => {
+          const workoutSetsCount = workout.exercises.reduce(
+            (sum, ex) => sum + ex.sets.length,
+            0
+          );
+          const workoutVolumeKg = workout.exercises.reduce(
+            (sum, ex) =>
+              sum +
+              ex.sets.reduce((sSum, s) => sSum + (s.weight || 0) * (s.reps || 0), 0),
+            0
+          );
+          const displayWorkoutVolume =
+            bodyWeightUnit === 'lbs'
+              ? kgToLbs(workoutVolumeKg, 0)
+              : workoutVolumeKg;
+
+          return (
+            <div
+              key={workout.id}
+              className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden"
+            >
+              {/* 灰底表頭橫欄 (單行 40px 高度：對標飲食頁面灰底表頭) */}
+              <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-semibold text-sm tracking-tight text-foreground truncate">
+                    {workout.title}
+                  </span>
+                  <span className="text-border select-none shrink-0">·</span>
+                  <span className="truncate">
+                    {workout.exercises.length} {t('common.items', '項')}
+                  </span>
+                  <span className="text-border select-none shrink-0">·</span>
+                  <span>
+                    {workoutSetsCount} {t('workout.set', '組')}
+                  </span>
+                  {displayWorkoutVolume > 0 && (
+                    <>
+                      <span className="text-border select-none shrink-0">·</span>
+                      <span className="font-medium text-foreground">
+                        {Math.round(displayWorkoutVolume).toLocaleString()} {bodyWeightUnit}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddExercise(workout.id)}
+                    className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                    title={t('workout.addExercise', '新增動作')}
+                    aria-label={t('workout.addExercise', '新增動作')}
+                  >
+                    <Plus className="size-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteWorkout(workout)}
+                    className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                    title={t('common.delete', '刪除')}
+                    aria-label={t('common.delete', '刪除')}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setTargetWorkoutId(workout.id);
-                    setIsAddExerciseModalOpen(true);
-                  }}
-                  className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <Plus className="size-4 mr-1" />
-                  {t('workout.addExercise')}
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteWorkout(workout.id, workout.title)}
-                  className="p-1.5 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                  aria-label={t('common.delete')}
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            </CardHeader>
-
-            <CardContent className="p-4 space-y-4">
-              {workout.exercises.map((exGroup, exIdx) => (
-                <div key={exGroup.exerciseId + exIdx} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
-                      {exGroup.exerciseName}
-                    </span>
-                    <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => startRestTimer(60)}
-                        className="text-xs font-mono px-2 py-0.5 border border-border rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
-                      >
-                        60s
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => startRestTimer(90)}
-                        className="text-xs font-mono px-2 py-0.5 border border-border rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
-                      >
-                        90s
-                      </button>
-                    </div>
+              {/* 動作構成清單 (Usage List) */}
+              <div className="divide-y divide-border">
+                {workout.exercises.length === 0 ? (
+                  <div className="py-8 text-center text-xs font-mono text-muted-foreground">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddExercise(workout.id)}
+                      className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <Plus className="size-3.5" />
+                      <span>{t('workout.addExercise', '新增動作')}</span>
+                    </button>
                   </div>
+                ) : (
+                  workout.exercises.map((group, exIdx) => {
+                    const ex = exerciseMap.get(group.exerciseId);
 
-                  {/* 組數記錄表格 */}
-                  <div className="border border-border/60 rounded-lg overflow-hidden divide-y divide-border/40 text-xs">
-                    <div className="grid grid-cols-4 px-3.5 py-2.5 bg-muted/30 text-xs sm:text-sm font-mono uppercase text-muted-foreground">
-                      <span>{t('workout.set')}</span>
-                      <span>{t('workout.weight')} ({bodyWeightUnit})</span>
-                      <span>{t('workout.reps')}</span>
-                      <span className="text-right">{t('workout.completed')}</span>
-                    </div>
+                    return (
+                      <div key={`${group.exerciseId}-${exIdx}`} className="bg-card">
+                        {/* 動作主體行 (48px 標準行高) */}
+                        <div className="min-h-12 py-2 px-3.5 sm:px-4 flex items-center justify-between gap-3 bg-card border-b border-border/40">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-foreground truncate">
+                              {group.exerciseName}
+                            </div>
+                            {ex && (
+                              <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                                <EquipmentBadge
+                                  name={getEquipmentDisplayName(ex.equipment, t)}
+                                  size="sm"
+                                  className="text-[9px] px-1 py-0 h-4 leading-none"
+                                />
+                              </div>
+                            )}
+                          </div>
 
-                    {exGroup.sets.map((set, setIdx) => (
-                      <div
-                        key={set.id || setIdx}
-                        className={`grid grid-cols-4 px-3.5 py-2.5 items-center transition-colors ${
-                          set.isCompleted ? 'bg-muted/40 opacity-75' : 'bg-background'
-                        }`}
-                      >
-                        <span className="font-mono text-xs text-muted-foreground">{setIdx + 1}</span>
-                        <div>
-                          <Input
-                            type="number"
-                            step="0.5"
-                            value={
-                              set.weight
-                                ? bodyWeightUnit === 'lbs'
-                                  ? kgToLbs(set.weight, 1)
-                                  : set.weight
-                                : ''
-                            }
-                            onChange={(e) => {
-                              const rawInput = parseFloat(e.target.value);
-                              const inputVal = isNaN(rawInput) ? 0 : rawInput;
-                              const finalWeightKg =
-                                bodyWeightUnit === 'lbs' ? lbsToKg(inputVal, 2) : inputVal;
-                              updateSetValues(
-                                workout.id,
-                                exIdx,
-                                setIdx,
-                                finalWeightKg,
-                                set.reps || 0
-                              );
-                            }}
-                            className="h-9 w-20 text-sm font-mono px-2.5"
-                          />
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[11px] font-mono text-muted-foreground">
+                              {group.sets.length} {t('workout.set', '組')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteExercise(workout, exIdx)}
+                              className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer"
+                              title={t('common.delete')}
+                              aria-label={t('common.delete')}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <Input
-                            type="number"
-                            value={set.reps || ''}
-                            onChange={(e) =>
-                              updateSetValues(
-                                workout.id,
-                                exIdx,
-                                setIdx,
-                                set.weight || 0,
-                                parseInt(e.target.value, 10) || 0
-                              )
-                            }
-                            className="h-9 w-20 text-sm font-mono px-2.5"
-                          />
-                        </div>
-                        <div className="text-right">
-                          <button
-                            type="button"
-                            onClick={() => toggleSetCompleted(workout.id, exIdx, setIdx)}
-                            className={`size-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ml-auto ${
-                              set.isCompleted
-                                ? 'bg-foreground border-foreground text-background'
-                                : 'border-border bg-background hover:border-foreground/50 text-transparent'
-                            }`}
-                          >
-                            <Check className="size-4 stroke-[2.5]" />
-                          </button>
+
+                        {/* 每組數值微調列表 (點擊膠囊即刻呼出數字鍵盤) */}
+                        <div className="divide-y divide-border/40 bg-muted/10">
+                          {group.sets.map((set, setIdx) => {
+                            const displayWeight =
+                              bodyWeightUnit === 'lbs'
+                                ? kgToLbs(set.weight || 0, 1)
+                                : set.weight || 0;
+
+                            return (
+                              <div
+                                key={set.id || setIdx}
+                                className="min-h-10 py-1.5 px-3.5 sm:px-4 flex items-center justify-between gap-3 text-xs font-mono"
+                              >
+                                <span className="text-muted-foreground text-xs w-14 shrink-0">
+                                  {t('workout.set')} {setIdx + 1}
+                                </span>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {/* 重量膠囊 */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) =>
+                                      handleOpenKeypad(
+                                        workout.id,
+                                        exIdx,
+                                        setIdx,
+                                        'weight',
+                                        set.weight || 0,
+                                        group.exerciseName,
+                                        e.currentTarget
+                                      )
+                                    }
+                                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                                  >
+                                    <span className="font-bold text-foreground">
+                                      {displayWeight}
+                                    </span>
+                                    <span className="text-muted-foreground text-[10px]">
+                                      {bodyWeightUnit}
+                                    </span>
+                                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                                  </button>
+
+                                  <span className="text-muted-foreground text-xs select-none">
+                                    ×
+                                  </span>
+
+                                  {/* 次數膠囊 */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) =>
+                                      handleOpenKeypad(
+                                        workout.id,
+                                        exIdx,
+                                        setIdx,
+                                        'reps',
+                                        set.reps || 0,
+                                        group.exerciseName,
+                                        e.currentTarget
+                                      )
+                                    }
+                                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                                  >
+                                    <span className="font-bold text-foreground">
+                                      {set.reps || 0}
+                                    </span>
+                                    <span className="text-muted-foreground text-[10px]">
+                                      {t('common.times', '次')}
+                                    </span>
+                                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                                  </button>
+
+                                  {/* 刪除組 */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteSet(workout, exIdx, setIdx)}
+                                    className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer ml-1"
+                                    title={t('common.delete')}
+                                    aria-label={t('common.delete')}
+                                  >
+                                    <Trash2 className="size-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* 動作底部快速增加一組按鈕 */}
+                          <div className="py-1.5 px-3.5 sm:px-4 flex justify-center bg-card/60">
+                            <button
+                              type="button"
+                              onClick={() => handleAddSet(workout, exIdx)}
+                              className="text-[11px] font-mono text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors cursor-pointer select-none py-0.5"
+                            >
+                              <Plus className="size-3" />
+                              <span>{t('workout.addSet', '增加一組')}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addSetToExercise(workout.id, exIdx)}
-                    className="w-full h-9 text-xs sm:text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer rounded-lg border-dashed"
-                  >
-                    + {t('workout.addSet')}
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })
       ) : (
-        <Card className="border border-border/60 bg-card p-8 text-center space-y-3 rounded-lg">
-          <Dumbbell className="size-8 mx-auto text-muted-foreground/40" />
-          <p className="text-xs text-muted-foreground">{t('common.noData')}</p>
-          <Button
-            size="sm"
-            onClick={() => openAddModal('workout')}
-            className="text-xs h-9 px-3 cursor-pointer rounded-lg"
-          >
-            <Plus className="size-4 mr-1" />
-            {t('workout.newWorkout')}
-          </Button>
-        </Card>
+        /* 當日無訓練記錄時的客觀極簡空狀態 (對標客觀測量儀哲學) */
+        <div className="border border-border bg-card text-card-foreground shadow-none rounded-lg p-8 text-center space-y-4">
+          <div className="size-10 rounded-full border border-border bg-muted/40 mx-auto flex items-center justify-center text-muted-foreground">
+            <Dumbbell className="size-5" />
+          </div>
+          <div className="space-y-1">
+            <div className="text-sm font-medium font-mono text-foreground">
+              {t('workout.noWorkoutLogs', '無訓練記錄')}
+            </div>
+            <div className="text-xs font-mono text-muted-foreground">
+              {t('workout.selectDateHint', '可套用現有組合或直接新增動作進行練後記錄')}
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                triggerHaptic('selection');
+                setIsRoutinePickerOpen(true);
+              }}
+              className="text-xs h-8 px-3 rounded-full border-border font-mono cursor-pointer"
+            >
+              <Layers className="size-3.5 mr-1 text-muted-foreground" />
+              <span>{t('workout.applyRoutine', '套用組合')}</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleOpenAddExercise()}
+              className="text-xs h-8 px-3 rounded-full bg-foreground text-background font-mono cursor-pointer"
+            >
+              <Plus className="size-3.5 mr-1" />
+              <span>{t('workout.addExercise', '新增動作')}</span>
+            </Button>
+          </div>
+        </div>
       )}
 
-      {/* 新增動作選擇彈窗 */}
-      <Dialog open={isAddExerciseModalOpen} onOpenChange={setIsAddExerciseModalOpen}>
-        <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-lg">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-semibold">
-              {t('workout.selectExercise')}
-            </DialogTitle>
-          </DialogHeader>
+      {/* ========================================================================= */}
+      {/* 次級彈窗區域：平鋪兄弟節點 (Flat Sibling Portals, Instant Pop) */}
+      {/* ========================================================================= */}
 
-          <div className="max-h-72 overflow-y-auto no-scrollbar space-y-1.5 pt-2">
-            {exercises.map((ex) => (
-              <button
-                key={ex.id}
-                type="button"
-                onClick={() => handleSelectAddExercise(ex.id)}
-                className="w-full p-2.5 text-left rounded-lg hover:bg-muted/60 border border-transparent hover:border-border transition-colors flex items-center justify-between text-xs cursor-pointer"
-              >
-                <span className="font-medium text-foreground text-sm">{ex.name}</span>
-                <span className="text-xs font-mono text-muted-foreground">
-                  {ex.category}
-                </span>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* 1. 動作挑選器 */}
+      <ExerciseSelectDialog
+        open={isExercisePickerOpen}
+        onOpenChange={setIsExercisePickerOpen}
+        onSelect={handleSelectExercise}
+        zIndex={70}
+      />
 
-      {/* 套用訓練組合彈窗 */}
-      <Dialog open={isApplyRoutineOpen} onOpenChange={setIsApplyRoutineOpen}>
-        <DialogContent className="sm:max-w-md p-5 bg-card text-card-foreground border border-border shadow-none rounded-lg space-y-3">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-semibold">
-              {t('workout.applyRoutine')}
-            </DialogTitle>
-          </DialogHeader>
+      {/* 2. 組合挑選器 */}
+      <RoutineSelectDialog
+        open={isRoutinePickerOpen}
+        onOpenChange={setIsRoutinePickerOpen}
+        onSelect={handleSelectRoutine}
+        zIndex={70}
+      />
 
-          <div className="max-h-72 overflow-y-auto space-y-1.5 pt-1">
-            {activeRoutines.map((routine) => (
-              <button
-                key={routine.id}
-                type="button"
-                onClick={() => handleApplyRoutineDirect(routine.id)}
-                className="w-full p-2.5 text-left rounded-lg hover:bg-muted/60 border border-border transition-colors flex items-center justify-between text-xs cursor-pointer group"
-              >
-                <div>
-                  <div className="font-medium text-foreground text-sm group-hover:underline">
-                    {routine.name}
-                  </div>
-                  <div className="text-[11px] font-mono text-muted-foreground">
-                    {routine.exercises.length} 個動作
-                  </div>
-                </div>
-                <Button size="sm" variant="ghost" className="h-7 text-xs font-mono pointer-events-none">
-                  套用
-                </Button>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* 3. 數字鍵盤微調彈窗 (微調組數重量與次數) */}
+      {keypadConfig && (
+        <NumericKeypadDialog
+          open={!!keypadConfig}
+          onOpenChange={(kOpen) => {
+            if (!kOpen) setKeypadConfig(null);
+          }}
+          title={keypadConfig.title}
+          value={keypadConfig.value}
+          unit={keypadConfig.unit}
+          allowDecimals={keypadConfig.allowDecimals}
+          maxDecimals={keypadConfig.allowDecimals ? 1 : 0}
+          anchorEl={keypadConfig.anchorEl}
+          onConfirm={handleKeypadConfirm}
+          onCancel={() => setKeypadConfig(null)}
+        />
+      )}
     </div>
   );
 }

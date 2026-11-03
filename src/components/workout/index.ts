@@ -3,4 +3,7 @@ export * from './bodyModelData';
 export * from './EquipmentFormDialog';
 export * from './ExerciseFormDialog';
 export * from './RoutineFormDialog';
+export * from './ExerciseSelectDialog';
+export * from './RoutineSelectDialog';
+export * from './WorkoutRecoveryDashboard';
 export * from './WorkoutManagementBrowser';
