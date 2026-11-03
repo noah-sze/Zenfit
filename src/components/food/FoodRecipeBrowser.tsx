@@ -305,11 +305,7 @@ export function FoodRecipeBrowser({
         }
         if (recipeSearchQuery.trim()) {
           const q = recipeSearchQuery.trim().toLowerCase();
-          const nameMatch = recipe.name.toLowerCase().includes(q);
-          const descMatch = recipe.description
-            ? recipe.description.toLowerCase().includes(q)
-            : false;
-          return nameMatch || descMatch;
+          return recipe.name.toLowerCase().includes(q);
         }
         return true;
       })
@@ -677,7 +673,7 @@ export function FoodRecipeBrowser({
               type="text"
               value={recipeSearchQuery}
               onChange={(e) => setRecipeSearchQuery(e.target.value)}
-              placeholder={t('diet.searchRecipePlaceholder', '搜尋食譜名稱或備註...')}
+              placeholder={t('diet.searchRecipePlaceholder', '搜尋食譜名稱...')}
               className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
             />
             {recipeSearchQuery && (

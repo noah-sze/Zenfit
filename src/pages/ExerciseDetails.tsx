@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Edit2,
@@ -14,8 +15,6 @@ import { db } from '@/services/db/db';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
-import { calculateE1RM } from '@/utils/workoutMath';
-import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
@@ -24,6 +23,8 @@ import type { DetailedMuscle, MuscleRole } from '@/types';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { convertBodyWeight } from '@/utils/unitMath';
 import { BodyHighlighter } from '@/components/workout/BodyHighlighter';
+import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
+import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
 import {
   getMuscleRoleBadgeClasses,
   getMuscleRoleLabel,
@@ -34,6 +35,15 @@ import {
   ExerciseFormDialog,
   type ExerciseFormData,
 } from '@/components/workout/ExerciseFormDialog';
+import {
+  type OverviewPeriod,
+  calculateTotalWeeks,
+  calculateExerciseFootprintData,
+} from '@/utils/heatmapMath';
+import {
+  OverviewPeriodSelector,
+  IntakeFootprintHeatmap,
+} from '@/components/food/IntakeFootprintHeatmap';
 
 export default function ExerciseDetails() {
   const { id } = useParams<{ id: string }>();
@@ -73,45 +83,51 @@ export default function ExerciseDetails() {
     [id, exercise?.name]
   );
 
-  // 計算客觀指標：歷史最佳 e1RM、累計完成組數、累計容量
-  const stats = useMemo(() => {
-    if (!workoutLogs || workoutLogs.length === 0 || !exercise) {
-      return { bestE1RM: 0, totalVolume: 0, totalCompletedSets: 0 };
-    }
+  // 刪除防護契約：有歷史記錄或被組合引用時不可刪除
+  const hasWorkoutLogs = (workoutLogs?.length ?? 0) > 0;
+  const hasRoutines = (relatedRoutines?.length ?? 0) > 0;
+  const hasUsage = hasWorkoutLogs || hasRoutines;
 
-    let bestE1RM = 0;
-    let totalVolume = 0;
-    let totalCompletedSets = 0;
+  // 概覽週期與矩陣容器寬度狀態
+  const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
+  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
 
-    for (const log of workoutLogs) {
+  // 提取動作在各日誌中的已記錄組數與數據
+  const exerciseDayLogs = useMemo(() => {
+    if (!workoutLogs || !exercise) return [];
+    return workoutLogs.map((log) => {
       const targetGroup = log.exercises.filter(
         (ex) =>
           ex.exerciseId === id ||
           ex.exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase()
       );
-      for (const group of targetGroup) {
-        for (const set of group.sets) {
-          if (set.isCompleted) {
-            totalCompletedSets += 1;
-            const w = set.weight || 0;
-            const r = set.reps || 0;
-            totalVolume += w * r;
-
-            const e1rm = calculateE1RM(w, r);
-            if (e1rm > bestE1RM) {
-              bestE1RM = e1rm;
-            }
-          }
-        }
-      }
-    }
-
-    return {
-      bestE1RM,
-      totalVolume: Math.round(totalVolume * 10) / 10,
-      totalCompletedSets,
-    };
+      const allSets = targetGroup.flatMap((g) => g.sets || []);
+      return {
+        date: log.date,
+        sets: allSets,
+      };
+    });
   }, [workoutLogs, exercise, id]);
+
+  const totalWeeks = useMemo(() => {
+    return calculateTotalWeeks({
+      logs: exerciseDayLogs,
+      matrixContainerWidth,
+    });
+  }, [exerciseDayLogs, matrixContainerWidth]);
+
+  const {
+    heatmapDays,
+    periodBestE1RM,
+    periodSets,
+    periodVolume,
+  } = useMemo(() => {
+    return calculateExerciseFootprintData({
+      logs: exerciseDayLogs,
+      overviewPeriod,
+      totalWeeks,
+    });
+  }, [exerciseDayLogs, overviewPeriod, totalWeeks]);
 
   // 當前選中的肌群 (地圖點擊反饋與雙向聯動)
   const [selectedMuscle, setSelectedMuscle] = useState<DetailedMuscle | null>(null);
@@ -140,11 +156,6 @@ export default function ExerciseDetails() {
   // 編輯動作彈窗狀態
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const handleOpenEdit = () => {
-    if (!exercise) return;
-    setIsEditOpen(true);
-  };
-
   const handleEditSubmit = async (formData: ExerciseFormData) => {
     if (!exercise) return;
 
@@ -163,9 +174,15 @@ export default function ExerciseDetails() {
   const handleToggleArchive = async () => {
     if (!exercise) return;
     if (exercise.isArchived) {
-      await unarchiveExercise(exercise.id);
-      triggerHaptic('success');
-      toast.show(t('common.saved'));
+      const ok = await confirm({
+        title: t('common.restore'),
+        description: t('common.confirmRestoreItem', { name: exercise.name }),
+      });
+      if (ok) {
+        await unarchiveExercise(exercise.id);
+        triggerHaptic('success');
+        toast.show(t('common.saved'));
+      }
     } else {
       const ok = await confirm({
         title: t('common.archive'),
@@ -181,7 +198,7 @@ export default function ExerciseDetails() {
   };
 
   const handleDelete = async () => {
-    if (!exercise) return;
+    if (!exercise || hasUsage) return;
     const ok = await confirm({
       title: t('common.delete'),
       description: t('common.confirmDeleteItem', { name: exercise.name }),
@@ -208,6 +225,18 @@ export default function ExerciseDetails() {
     return t(key);
   };
 
+  // 頂部 Header Action Portal 元素掛載
+  const [headerActionEl, setHeaderActionEl] = useState<HTMLElement | null>(() =>
+    typeof document !== 'undefined' ? document.getElementById('subpage-header-action') : null
+  );
+
+  useEffect(() => {
+    if (!headerActionEl) {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setHeaderActionEl(document.getElementById('subpage-header-action'));
+    }
+  }, [headerActionEl]);
+
   if (!exercise) {
     return (
       <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
@@ -218,38 +247,199 @@ export default function ExerciseDetails() {
 
   return (
     <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
-      {/* 動作頂部標題卡片 */}
-      <div className="border border-border rounded-lg p-4 bg-card space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
-              {exercise.name}
-            </h1>
-            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-              <EquipmentBadge name={getEquipmentDisplayName(exercise.equipment, t)} />
-            </div>
+      {/* 頂部 Header Action Portal (標準三操作：刪除 / 歸檔或還原 / 編輯) */}
+      {headerActionEl &&
+        createPortal(
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              disabled={hasUsage}
+              className={cn(
+                "size-8 text-muted-foreground transition-colors",
+                hasUsage
+                  ? "opacity-30 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
+                  : "hover:text-destructive hover:bg-destructive-subtle cursor-pointer"
+              )}
+              title={
+                hasWorkoutLogs
+                  ? t('workout.exerciseHasLogs')
+                  : hasRoutines
+                  ? t('workout.exerciseHasRoutines')
+                  : t('common.delete')
+              }
+              aria-label={t('common.delete')}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleArchive}
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              title={exercise.isArchived ? t('common.restore') : t('common.archive')}
+              aria-label={exercise.isArchived ? t('common.restore') : t('common.archive')}
+            >
+              {exercise.isArchived ? (
+                <RefreshCcw className="size-4" />
+              ) : (
+                <Archive className="size-4" />
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsEditOpen(true)}
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              title={t('common.edit')}
+              aria-label={t('common.edit')}
+            >
+              <Edit2 className="size-4" />
+            </Button>
+          </div>,
+          headerActionEl
+        )}
+
+      {/* 核心一體化主卡片 (與食材詳情頁 1:1 一體化設計) */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
+        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-8) */}
+        <div className="h-8 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono overflow-hidden">
+          <div className="flex items-center min-w-0 flex-1 mr-3 overflow-hidden">
+            {muscleEntries.length > 0 && (
+              <AdaptiveMuscleBadgeGroup entries={muscleEntries} className="min-w-0 flex-1" />
+            )}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenEdit}
-            className="h-8 text-xs font-mono px-2.5 cursor-pointer"
-          >
-            <Edit2 className="size-3.5 mr-1" />
-            {t('common.edit')}
-          </Button>
+          <div className="shrink-0">
+            {exercise.isArchived ? (
+              <span className="text-[10px] font-mono text-destructive tracking-wide">
+                {t('common.archived')}
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono text-emerald-500 tracking-wide">
+                {t('common.active')}
+              </span>
+            )}
+          </div>
         </div>
 
-        {exercise.notes && (
-          <p className="text-xs font-mono text-muted-foreground bg-muted/30 p-2 rounded">
-            {exercise.notes}
-          </p>
-        )}
+        {/* 第 2 層：B-1 大氣品名帶與特質微徽章 */}
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-card">
+          <div className="space-y-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
+              {exercise.name}
+            </h1>
+            {exercise.notes && (
+              <p className="text-xs font-mono text-muted-foreground">
+                {exercise.notes}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center shrink-0">
+            <EquipmentBadge
+              name={getEquipmentDisplayName(exercise.equipment, t)}
+              className="text-[11px] px-2 py-0.5 font-normal"
+            />
+          </div>
+        </div>
+
+        {/* 第 3 層：客觀指標三欄分割卡片 (支援 1w/30d/3m/6m/1y 切換) */}
+        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-card">
+          {/* 1. 最佳 e1RM */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-normal text-muted-foreground truncate">
+                {t('workout.bestE1RM')}
+              </span>
+              <OverviewPeriodSelector
+                value={overviewPeriod}
+                onChange={setOverviewPeriod}
+              />
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground tabular-nums">
+                {convertBodyWeight(periodBestE1RM, 'kg', bodyWeightUnit, 1)}
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                {bodyWeightUnit}
+              </span>
+            </div>
+          </div>
+
+          {/* 2. 累計組數 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-normal text-muted-foreground truncate">
+                {t('workout.totalCompletedSets')}
+              </span>
+              <OverviewPeriodSelector
+                value={overviewPeriod}
+                onChange={setOverviewPeriod}
+              />
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground tabular-nums">
+                {periodSets.toLocaleString()}
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                {t('workout.set', '組')}
+              </span>
+            </div>
+          </div>
+
+          {/* 3. 累計容量 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-normal text-muted-foreground truncate">
+                {t('workout.totalLifetimeVolume')}
+              </span>
+              <OverviewPeriodSelector
+                value={overviewPeriod}
+                onChange={setOverviewPeriod}
+              />
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground tabular-nums">
+                {convertBodyWeight(periodVolume, 'kg', bodyWeightUnit, 1)}
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                {bodyWeightUnit}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 第 4 層：微型訓練足跡熱點矩陣 (可左右滾動查看更早歷史，預設對齊今天) */}
+        <IntakeFootprintHeatmap
+          title={t('workout.footprint', '訓練足跡')}
+          heatmapDays={heatmapDays}
+          totalWeeks={totalWeeks}
+          onContainerWidthChange={setMatrixContainerWidth}
+          getTooltipText={(day) =>
+            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} ${bodyWeightUnit}`
+          }
+          renderSelectedDetails={(day) => (
+            <div className="flex items-center tabular-nums text-xs font-mono">
+              <span className={day.count === 0 ? "text-muted-foreground" : "text-foreground"}>
+                {day.count} {t('workout.set', '組')}
+              </span>
+              <span className="text-border mx-1.5 select-none">·</span>
+              <span className={day.count === 0 ? "text-muted-foreground" : "text-foreground"}>
+                {convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} {bodyWeightUnit}
+              </span>
+            </div>
+          )}
+        />
       </div>
 
-      {/* 目標細分肌群機能學分析畫布 (打破盒中盒，一體化舒展) */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2 font-mono">
+      {/* 目標細分肌群機能學分析畫布 (保留現有肌肉刺激區塊) */}
+      <div className="space-y-1.5">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 font-mono">
           {t('workout.targetMuscles')}
         </div>
         <div className="border border-border rounded-lg bg-card p-4 space-y-5">
@@ -357,47 +547,9 @@ export default function ExerciseDetails() {
         </div>
       </div>
 
-      {/* 客觀指標三並列卡片 (Grid Cards, 無陰影, 等寬數字) */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2 font-mono">
-          {t('workout.objectiveMetrics', '客觀指標')}
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="border border-border rounded-lg p-3 bg-card text-center space-y-1">
-            <div className="text-[10px] uppercase font-mono text-muted-foreground">
-              {t('workout.bestE1RM')}
-            </div>
-            <div className="text-lg font-mono font-bold text-foreground">
-              {convertBodyWeight(stats.bestE1RM, 'kg', bodyWeightUnit, 1)}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5">{bodyWeightUnit}</span>
-            </div>
-          </div>
-
-          <div className="border border-border rounded-lg p-3 bg-card text-center space-y-1">
-            <div className="text-[10px] uppercase font-mono text-muted-foreground truncate">
-              {t('workout.totalLifetimeVolume')}
-            </div>
-            <div className="text-lg font-mono font-bold text-foreground truncate">
-              {convertBodyWeight(stats.totalVolume, 'kg', bodyWeightUnit, 1)}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5">{bodyWeightUnit}</span>
-            </div>
-          </div>
-
-          <div className="border border-border rounded-lg p-3 bg-card text-center space-y-1">
-            <div className="text-[10px] uppercase font-mono text-muted-foreground">
-              {t('workout.totalCompletedSets')}
-            </div>
-            <div className="text-lg font-mono font-bold text-foreground">
-              {stats.totalCompletedSets}
-              <span className="text-xs font-normal text-muted-foreground ml-0.5">{t('workout.set', '組')}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 包含此動作的訓練組合 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2 font-mono">
+      <div className="space-y-1.5">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 font-mono">
           {t('workout.relatedRoutines')}
         </div>
         <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
@@ -410,7 +562,7 @@ export default function ExerciseDetails() {
               <Link
                 key={routine.id}
                 to={`/settings/routines/${routine.id}`}
-                className="p-3 flex items-center justify-between hover:bg-muted/30 transition-colors group cursor-pointer"
+                className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <Layers className="size-4 text-muted-foreground" />
@@ -426,36 +578,6 @@ export default function ExerciseDetails() {
             ))
           )}
         </div>
-      </div>
-
-      {/* 操作區塊 */}
-      <div className="pt-2 space-y-2">
-        <Button
-          variant="outline"
-          onClick={handleToggleArchive}
-          className="w-full text-xs font-mono h-10 border-border hover:bg-muted/40 cursor-pointer"
-        >
-          {exercise.isArchived ? (
-            <>
-              <RefreshCcw className="size-3.5 mr-1.5" />
-              {t('common.unarchive')}
-            </>
-          ) : (
-            <>
-              <Archive className="size-3.5 mr-1.5" />
-              {t('common.archive')}
-            </>
-          )}
-        </Button>
-
-        <Button
-          variant="destructive"
-          onClick={handleDelete}
-          className="w-full text-xs font-mono h-10 bg-destructive text-destructive-foreground hover:opacity-90 cursor-pointer"
-        >
-          <Trash2 className="size-3.5 mr-1.5" />
-          {t('common.delete')}
-        </Button>
       </div>
 
       {/* 編輯動作彈窗 (複用標準 ExerciseFormDialog) */}

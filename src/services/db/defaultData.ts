@@ -234,7 +234,6 @@ export const DEFAULT_RECIPES: Omit<FoodRecipe, 'createdAt' | 'updatedAt'>[] = [
   {
     id: 'recipe_tomato_egg',
     name: '經典家常番茄炒蛋',
-    description: '經典少油高蛋白家常菜，油脂可自由依烹調習慣調整',
     ingredients: [
       { foodId: 'food_tomato', foodName: '牛番茄', quantity: 150, unit: 'g', isOptional: false },
       { foodId: 'food_whole_egg', foodName: '雞蛋', quantity: 100, unit: 'g', isOptional: false },
@@ -246,7 +245,6 @@ export const DEFAULT_RECIPES: Omit<FoodRecipe, 'createdAt' | 'updatedAt'>[] = [
   {
     id: 'recipe_oat_bowl',
     name: '高蛋白燕麥優格碗',
-    description: '無油純淨碳水化合物與蛋白質組合，飽腹感極佳',
     ingredients: [
       { foodId: 'food_rolled_oats', foodName: '大燕麥片', quantity: 50, unit: 'g', isOptional: false },
       { foodId: 'food_greek_yogurt', foodName: '無糖希臘優格', quantity: 100, unit: 'g', isOptional: false },
@@ -258,7 +256,6 @@ export const DEFAULT_RECIPES: Omit<FoodRecipe, 'createdAt' | 'updatedAt'>[] = [
   {
     id: 'recipe_chicken_rice_box',
     name: '經典低脂雞胸便當',
-    description: '標準乾淨減脂主食，可選配微量烹調油',
     ingredients: [
       { foodId: 'food_chicken_breast', foodName: '雞胸肉', quantity: 150, unit: 'g', isOptional: false },
       { foodId: 'food_white_rice', foodName: '白米飯', quantity: 150, unit: 'g', isOptional: false },

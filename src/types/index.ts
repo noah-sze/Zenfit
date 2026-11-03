@@ -41,7 +41,6 @@ export interface RecipeIngredient {
 export interface FoodRecipe {
   id: string;
   name: string;
-  description?: string;
   ingredients: RecipeIngredient[];
   isCustom: boolean;
   isArchived?: boolean;
