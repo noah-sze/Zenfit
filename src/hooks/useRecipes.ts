@@ -42,7 +42,6 @@ export function useRecipes(searchQuery = '') {
         const q = searchQuery.toLowerCase().trim();
         return (
           r.name.toLowerCase().includes(q) ||
-          (r.description && r.description.toLowerCase().includes(q)) ||
           r.ingredients.some((ing) => ing.foodName.toLowerCase().includes(q))
         );
       })

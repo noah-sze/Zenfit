@@ -71,7 +71,7 @@ export function getMuscleRoleBadgeClasses(role: MuscleRole): {
     case 'primary':
       return {
         container:
-          'bg-[var(--muscle-intensity-high-bg)] border-[var(--muscle-intensity-high-border)] text-[var(--muscle-intensity-high-text)] font-semibold',
+          'bg-[var(--muscle-intensity-high-bg)] border-[var(--muscle-intensity-high-border)] text-[var(--muscle-intensity-high-text)]',
         text: 'text-[var(--muscle-intensity-high-text)]',
       };
     case 'secondary':

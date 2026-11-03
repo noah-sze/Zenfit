@@ -53,10 +53,10 @@ describe('肌群刺激強度分級純函數測試 (Muscle Intensity & Roles)', (
   });
 
   describe('getMuscleRoleBadgeClasses', () => {
-    it('各角色均回傳對應之赤陶 Design Token 樣式類名', () => {
+    it('各角色均回傳對應之赤陶 Design Token 樣式類名 (不含粗體)', () => {
       const primaryClasses = getMuscleRoleBadgeClasses('primary');
       expect(primaryClasses.container).toContain('--muscle-intensity-high-bg');
-      expect(primaryClasses.container).toContain('font-semibold');
+      expect(primaryClasses.container).not.toContain('font-semibold');
 
       const secondaryClasses = getMuscleRoleBadgeClasses('secondary');
       expect(secondaryClasses.container).toContain('--muscle-intensity-med-bg');

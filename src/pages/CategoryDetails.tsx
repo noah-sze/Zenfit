@@ -2,12 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
-import { Utensils, Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
+import { Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
-import { subDays, subYears, format } from 'date-fns';
-import { AutoMarquee } from '@/components/ui/AutoMarquee';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
@@ -20,10 +18,17 @@ import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
 import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
-import type { NutritionTag, FoodLog } from '@/types';
+import type { NutritionTag } from '@/types';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
-import { MacroSquares } from '@/components/food/MacroSquares';
-import { EditFoodLogDialog } from '@/components/diet/EditFoodLogDialog';
+import {
+  type OverviewPeriod,
+  calculateTotalWeeks,
+  calculateFootprintData,
+} from '@/utils/heatmapMath';
+import {
+  OverviewPeriodSelector,
+  IntakeFootprintHeatmap,
+} from '@/components/food/IntakeFootprintHeatmap';
 
 export default function CategoryDetails() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +38,7 @@ export default function CategoryDetails() {
   const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood, deleteFood } = useFoods();
   const { nutritionDisplayMode } = useAppStore();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
+  const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
 
   const food = useMemo(() => {
     return allFoods.find((f) => f.id === id);
@@ -68,25 +74,10 @@ export default function CategoryDetails() {
     }
   };
 
+
+
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editingFoodLog, setEditingFoodLog] = useState<FoodLog | null>(null);
 
-  const handleSaveFoodLog = async (
-    logId: string,
-    updates: { quantity: number; calories: number; carbs: number; protein: number; fat: number }
-  ) => {
-    await db.food_logs.update(logId, updates);
-    triggerHaptic('success');
-    toast.show(t('common.saved'));
-    setEditingFoodLog(null);
-  };
-
-  const handleDeleteFoodLog = async (logId: string) => {
-    await db.food_logs.delete(logId);
-    triggerHaptic('warning');
-    toast.show(t('common.deleted'));
-    setEditingFoodLog(null);
-  };
   const [headerActionEl, setHeaderActionEl] = useState<HTMLElement | null>(() =>
     typeof document !== 'undefined' ? document.getElementById('subpage-header-action') : null
   );
@@ -121,13 +112,7 @@ export default function CategoryDetails() {
           return logName === rawName || logName === displayName;
         })
         .toArray();
-      // 依日期與建立時間降序排序
-      return logs.sort((a, b) => {
-        if (a.date !== b.date) {
-          return b.date.localeCompare(a.date);
-        }
-        return b.createdAt - a.createdAt;
-      });
+      return logs.sort((a, b) => b.date.localeCompare(a.date));
     },
     [id, food?.name]
   );
@@ -204,91 +189,22 @@ export default function CategoryDetails() {
     }
   };
 
-  // 計算全部、近一月、近一年之攝入數據 (1:1 復刻 Zenance 統計邏輯)
-  const {
-    allTimeCount,
-    allTimeCalories,
-    pastMonthCount,
-    pastMonthCalories,
-    pastYearCount,
-    pastYearCalories,
-  } = useMemo(() => {
-    if (!foodLogs || foodLogs.length === 0) {
-      return {
-        allTimeCount: 0,
-        allTimeCalories: 0,
-        pastMonthCount: 0,
-        pastMonthCalories: 0,
-        pastYearCount: 0,
-        pastYearCalories: 0,
-      };
-    }
+  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
 
-    // oxlint-disable-next-line react/purity
-    const now = new Date();
-    const oneMonthAgoStr = format(subDays(now, 30), 'yyyy-MM-dd');
-    const oneYearAgoStr = format(subYears(now, 1), 'yyyy-MM-dd');
-
-    let allCalories = 0;
-    let monthCount = 0;
-    let monthCalories = 0;
-    let yearCount = 0;
-    let yearCalories = 0;
-
-    foodLogs.forEach((log) => {
-      const cal = log.calories || 0;
-      allCalories += cal;
-
-      if (log.date >= oneMonthAgoStr) {
-        monthCount += 1;
-        monthCalories += cal;
-      }
-      if (log.date >= oneYearAgoStr) {
-        yearCount += 1;
-        yearCalories += cal;
-      }
+  const totalWeeks = useMemo(() => {
+    return calculateTotalWeeks({
+      logs: foodLogs,
+      matrixContainerWidth,
     });
+  }, [foodLogs, matrixContainerWidth]);
 
-    return {
-      allTimeCount: foodLogs.length,
-      allTimeCalories: Math.round(allCalories),
-      pastMonthCount: monthCount,
-      pastMonthCalories: Math.round(monthCalories),
-      pastYearCount: yearCount,
-      pastYearCalories: Math.round(yearCalories),
-    };
-  }, [foodLogs]);
-
-  // 按日期分組歷史飲食記錄
-  const groupedLogs = useMemo(() => {
-    if (!foodLogs || foodLogs.length === 0) return [];
-    const groups: { date: string; items: typeof foodLogs; groupCalories: number }[] = [];
-    foodLogs.forEach((log) => {
-      let g = groups.find((grp) => grp.date === log.date);
-      if (!g) {
-        g = { date: log.date, items: [], groupCalories: 0 };
-        groups.push(g);
-      }
-      g.items.push(log);
-      g.groupCalories += log.calories || 0;
+  const { heatmapDays, periodCalories, periodCount, periodMaxGrams } = useMemo(() => {
+    return calculateFootprintData({
+      logs: foodLogs,
+      overviewPeriod,
+      totalWeeks,
     });
-    return groups;
-  }, [foodLogs]);
-
-  const getMealTypeLabel = (mealType: string) => {
-    switch (mealType) {
-      case 'breakfast':
-        return t('diet.breakfast');
-      case 'lunch':
-        return t('diet.lunch');
-      case 'dinner':
-        return t('diet.dinner');
-      case 'snack':
-        return t('diet.snack');
-      default:
-        return mealType;
-    }
-  };
+  }, [foodLogs, overviewPeriod, totalWeeks]);
 
   if (!id) return <Navigate to="/settings/foods" />;
 
@@ -359,74 +275,72 @@ export default function CategoryDetails() {
           headerActionEl
         )}
 
-      {/* 食物名稱與分類標籤 (分類膠囊在上，標題在下，居中對齊) */}
-      <div className="flex flex-col items-center justify-center text-center">
-        {/* 1. 分類膠囊與營養特質標籤在上 */}
-        <div className="flex items-center justify-center gap-1.5 mb-1.5 flex-wrap px-2">
-          <span className="text-xs font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">
-            {t(`diet.foodCategory.${food.category || 'natural'}`)}
-          </span>
-          {evalRes?.labels.map((tag) => (
-            <span
-              key={tag}
-              className={cn(
-                "text-xs font-mono border px-1.5 py-0.5 rounded font-medium",
-                getNutritionTagBadgeClass(tag)
-              )}
-            >
-              {t(`diet.nutritionTags.${tag}`)}
+      {/* 方案 B-1 + 10px 熱點圖全一體化卡片 */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
+        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-8) */}
+        <div className="h-8 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="uppercase tracking-widest text-[10px] text-muted-foreground font-semibold">
+              {t(`diet.foodCategory.${food.category || 'natural'}`)}
             </span>
-          ))}
-          {food.isArchived && (
-            <span className="text-xs font-mono text-destructive border border-destructive/30 bg-destructive-subtle px-1.5 py-0.5 rounded">
-              {t('common.archived')}
-            </span>
+            {food.brand && (
+              <>
+                <span className="text-border select-none">·</span>
+                <span className="text-muted-foreground text-[11px]">{food.brand}</span>
+              </>
+            )}
+          </div>
+          <div>
+            {food.isArchived ? (
+              <span className="text-[10px] font-mono text-destructive tracking-wide">
+                {t('common.archived')}
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono text-emerald-500 tracking-wide">
+                {t('common.active')}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 第 2 層：B-1 大氣品名帶與特質微徽章 */}
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-card">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
+            {food.name}
+          </h1>
+          {evalRes?.labels && evalRes.labels.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+              {evalRes.labels.map((tag) => (
+                <span
+                  key={tag}
+                  className={cn(
+                    "text-[11px] font-mono border px-1.5 py-0.5 rounded font-medium",
+                    getNutritionTagBadgeClass(tag)
+                  )}
+                >
+                  {t(`diet.nutritionTags.${tag}`)}
+                </span>
+              ))}
+            </div>
           )}
         </div>
-        {/* 標題在下 */}
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground px-4 break-words">
-          {formatFoodDisplayName(food)}
-        </h1>
-      </div>
 
-      {/* 1:1 復刻 Zenance 統計卡片 (Hero Metric Card) */}
-      <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
-        {/* 上半部：全部 (All Time) */}
-        <div className="py-5 px-4 border-b border-border flex flex-col items-center justify-center text-center">
-          <div className="relative flex items-center justify-center h-5 mb-1.5 w-full">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground leading-none">
-              {t('stats.allTime', '全部')}
-            </p>
-            <div className="absolute right-0 flex items-center">
-              <span className="text-[11px] font-mono text-muted-foreground leading-none">
-                {t('diet.loggedCount', { count: allTimeCount })}
+        {/* 第 3 層：三大指標三欄分割卡片 (圖 2 標準風格，支援 1w/30d/3m/6m/1y 切換) */}
+        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-card">
+          {/* 1. 總攝入 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-normal text-muted-foreground truncate">
+                {t('stats.totalIntake')}
               </span>
+              <OverviewPeriodSelector
+                value={overviewPeriod}
+                onChange={setOverviewPeriod}
+              />
             </div>
-          </div>
-          <AutoMarquee align="center" className="text-4xl sm:text-5xl font-mono tracking-tighter font-medium px-4 leading-none">
-            <span className="tabular-nums font-mono">
-              {formatEnergy(allTimeCalories, energyUnit).value.toLocaleString()}
-            </span>
-            <span className="text-lg sm:text-xl font-normal text-muted-foreground ml-1.5">
-              {energyUnit}
-            </span>
-          </AutoMarquee>
-        </div>
-
-        {/* 下半部：近一月 & 近一年 */}
-        <div className="grid grid-cols-2 gap-px bg-border">
-          <div className="bg-card p-4">
-            <div className="flex items-center justify-between h-5 mb-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground leading-none">
-                {t('stats.pastMonth', '近一月')}
-              </p>
-              <span className="text-[11px] font-mono text-muted-foreground leading-none">
-                {t('diet.loggedCountShort', { count: pastMonthCount })}
-              </span>
-            </div>
-            <div className="text-xl sm:text-2xl font-mono tracking-tight font-medium leading-none mt-2 truncate">
-              <span className="tabular-nums font-mono">
-                {formatEnergy(pastMonthCalories, energyUnit).value.toLocaleString()}
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground tabular-nums">
+                {formatEnergy(periodCalories, energyUnit).value.toLocaleString()}
               </span>
               <span className="text-xs font-normal text-muted-foreground ml-1">
                 {energyUnit}
@@ -434,25 +348,56 @@ export default function CategoryDetails() {
             </div>
           </div>
 
-          <div className="bg-card p-4">
-            <div className="flex items-center justify-between h-5 mb-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground leading-none">
-                {t('stats.pastYear', '近一年')}
-              </p>
-              <span className="text-[11px] font-mono text-muted-foreground leading-none">
-                {t('diet.loggedCountShort', { count: pastYearCount })}
+          {/* 2. 次數 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-normal text-muted-foreground truncate">
+                {t('stats.frequency')}
               </span>
+              <OverviewPeriodSelector
+                value={overviewPeriod}
+                onChange={setOverviewPeriod}
+              />
             </div>
-            <div className="text-xl sm:text-2xl font-mono tracking-tight font-medium leading-none mt-2 truncate">
-              <span className="tabular-nums font-mono">
-                {formatEnergy(pastYearCalories, energyUnit).value.toLocaleString()}
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground tabular-nums">
+                {periodCount.toLocaleString()}
               </span>
               <span className="text-xs font-normal text-muted-foreground ml-1">
-                {energyUnit}
+                {t('common.times')}
+              </span>
+            </div>
+          </div>
+
+          {/* 3. 最大量 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-normal text-muted-foreground truncate">
+                {t('stats.maxDaily')}
+              </span>
+              <OverviewPeriodSelector
+                value={overviewPeriod}
+                onChange={setOverviewPeriod}
+              />
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-bold text-foreground tabular-nums">
+                {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).size.toLocaleString()}
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).unit}
               </span>
             </div>
           </div>
         </div>
+
+        {/* 第 4 層：微型 GitHub 熱點矩陣 (可左右滾動查看更早歷史，預設對齊今天) + 選定日期數據檢測 */}
+        <IntakeFootprintHeatmap
+          heatmapDays={heatmapDays}
+          totalWeeks={totalWeeks}
+          isLoading={isLoading}
+          onContainerWidthChange={setMatrixContainerWidth}
+        />
       </div>
 
       {/* 每份營養素標籤基準卡片 */}
@@ -466,7 +411,7 @@ export default function CategoryDetails() {
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">{t('diet.serving')}</span>
-            <span className="font-mono text-foreground font-medium">
+            <span className="font-mono text-foreground">
               {formatFoodServing(scaledNutrition?.servingSize ?? food.servingSize, scaledNutrition?.servingUnit ?? food.servingUnit, foodWeightUnit, foodVolumeUnit).formatted}
             </span>
           </div>
@@ -509,137 +454,12 @@ export default function CategoryDetails() {
         </div>
       </div>
 
-      {/* 歷史飲食記錄清單 (沿用首頁表格設計) */}
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {t('diet.consumptionHistory', '飲食記錄清單')}
-          </h3>
-          <span className="text-xs font-mono text-muted-foreground">
-            {t('diet.itemsCount', { count: foodLogs?.length ?? 0 })}
-          </span>
-        </div>
-
-        {groupedLogs.length === 0 ? (
-          <div className="border border-border rounded-lg p-8 text-center bg-card text-muted-foreground text-sm">
-            <Utensils className="size-6 mx-auto mb-2 opacity-30" />
-            {t('diet.noFoodLogs', '尚無該食物的飲食記錄')}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {groupedLogs.map((group) => (
-              <div
-                key={group.date}
-                className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden"
-              >
-                {/* 灰底表頭橫欄 (單行 40px 高度，沿用首頁設計) */}
-                <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-semibold text-sm tracking-tight text-foreground shrink-0">
-                      {group.date}
-                    </span>
-                    {group.groupCalories > 0 && (
-                      <>
-                        <span className="text-border select-none shrink-0">·</span>
-                        <span className="text-foreground/80">
-                          {formatEnergy(group.groupCalories, energyUnit).formatted}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground">
-                    {t('diet.itemsCount', { count: group.items.length })}
-                  </span>
-                </div>
-
-                {/* 食物條目列表 (沿用首頁 MacroSquares 矩陣與雙行資訊佈局) */}
-                <div className="divide-y divide-border">
-                  {group.items.map((log) => {
-                    const logEvalRes = evaluateNutritionalHighlight({
-                      calories: log.calories,
-                      protein: log.protein,
-                      carbs: log.carbs,
-                      fat: log.fat,
-                      servingSize: log.quantity,
-                      servingUnit: log.unit || 'g',
-                    });
-                    const isLowCalorie = logEvalRes.labels.includes('low-calorie');
-                    const isHighCalorie = logEvalRes.labels.includes('high-calorie');
-
-                    return (
-                      <div
-                        key={log.id}
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setEditingFoodLog(log);
-                        }}
-                        className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
-                      >
-                        {/* 左側：餐別與份量熱量副標 */}
-                        <div className="flex-1 min-w-0 pr-3 select-none">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <span className="text-foreground font-medium text-sm truncate">
-                              {getMealTypeLabel(log.mealType)}
-                            </span>
-                            {log.notes && (
-                              <span className="text-xs text-muted-foreground truncate">
-                                ({log.notes})
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                            <span>
-                              {formatFoodServing(log.quantity, log.unit, foodWeightUnit, foodVolumeUnit).formatted}
-                            </span>
-                            <span className="text-border">·</span>
-                            <span
-                              className={cn(
-                                isLowCalorie &&
-                                  'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
-                                isHighCalorie &&
-                                  'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
-                              )}
-                            >
-                              {formatEnergy(log.calories, energyUnit).formatted}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* 右側：MacroSquares 矩陣 (首頁採用方案 A 柔和微光) */}
-                        <div className="flex items-center shrink-0">
-                          <MacroSquares
-                            protein={log.protein}
-                            carbs={log.carbs}
-                            fat={log.fat}
-                            highlights={logEvalRes.highlights}
-                            variant="subtle"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* 編輯食材 Dialog (FoodFormDialog 共用組件) */}
       <FoodFormDialog
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
         initialData={food}
         onSubmit={handleEditSubmit}
-      />
-
-      {/* 編輯單筆飲食記錄 Dialog (首頁同款組件) */}
-      <EditFoodLogDialog
-        open={!!editingFoodLog}
-        onOpenChange={(open) => !open && setEditingFoodLog(null)}
-        log={editingFoodLog}
-        onSave={handleSaveFoodLog}
-        onDelete={handleDeleteFoodLog}
       />
     </div>
   );

@@ -71,7 +71,6 @@ export function RecipeFormDialog({
 
   // 表單核心狀態
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [ingredients, setIngredients] = useState<FormIngredientRow[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,8 +88,8 @@ export function RecipeFormDialog({
     if (!open) return;
 
     if (initialData) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setName(initialData.name || '');
-      setDescription(initialData.description || '');
 
       const rows: FormIngredientRow[] = initialData.ingredients.map((ing, idx) => {
         const food = foodMap.get(ing.foodId);
@@ -122,7 +121,6 @@ export function RecipeFormDialog({
       setIngredients(rows);
     } else {
       setName('');
-      setDescription('');
       setIngredients([]);
     }
   }, [open, initialData, foodMap, foodWeightUnit, foodVolumeUnit]);
@@ -331,7 +329,6 @@ export function RecipeFormDialog({
     try {
       await onSubmit({
         name: name.trim(),
-        description: description.trim() || undefined,
         ingredients: validIngredients,
       });
       onOpenChange(false);
@@ -369,7 +366,7 @@ export function RecipeFormDialog({
                 <div className="text-[11px] uppercase tracking-widest text-muted-foreground px-0 font-semibold">
                   {t('diet.basicInfo')}
                 </div>
-                <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm font-sans">
+                <div className="border border-border rounded-lg overflow-hidden bg-card text-sm font-sans">
                   {/* 菜餚名稱行 */}
                   <div className="h-10 px-4 flex items-center justify-between gap-2 bg-card shrink-0">
                     <span className="text-muted-foreground text-xs shrink-0">
@@ -381,20 +378,6 @@ export function RecipeFormDialog({
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t('diet.recipeNamePlaceholder')}
                       className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-foreground font-medium focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 w-36"
-                    />
-                  </div>
-
-                  {/* 備註 (選填) 行 */}
-                  <div className="h-10 px-4 flex items-center justify-between gap-2 bg-card shrink-0">
-                    <span className="text-muted-foreground text-xs shrink-0">
-                      {t('common.notes')}
-                    </span>
-                    <input
-                      type="text"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder={t('diet.recipeDescription')}
-                      className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-muted-foreground focus:text-foreground focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 w-36"
                     />
                   </div>
                 </div>
