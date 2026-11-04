@@ -423,7 +423,16 @@
       "expandCircumferences": "Log Circumferences",
       "collapseCircumferences": "Collapse",
       "trend": "Trend",
-      "history": "History"
+      "history": "History",
+      "noWeightLog": "No Weight Log",
+      "recordWeight": "Log Today's Weight",
+      "recordWeightHint": "Log today's weight to update trend metrics",
+      "weightLog": "Weight Log",
+      "metricsTitle": "Body Metrics",
+      "weightHistory": "Weight History",
+      "recentDays": "Past {{count}} Days",
+      "unloggedEstimate": "Unlogged · Trend Estimate",
+      "confirmDeleteTodayWeight": "Delete today's weight log?"
     },
     "profileSettings": {
       "title": "Profile",

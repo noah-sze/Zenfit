@@ -423,7 +423,16 @@
       "expandCircumferences": "记录围度",
       "collapseCircumferences": "收起围度",
       "trend": "趋势",
-      "history": "过磅记录"
+      "history": "过磅记录",
+      "noWeightLog": "无过磅记录",
+      "recordWeight": "记录今日过磅",
+      "recordWeightHint": "记录今日过磅以更新体态趋势与各项指标",
+      "weightLog": "过磅记录",
+      "metricsTitle": "体态指标",
+      "weightHistory": "过磅流水",
+      "recentDays": "最近 {{count}} 天",
+      "unloggedEstimate": "无过磅 · 依平滑趋势估算",
+      "confirmDeleteTodayWeight": "确认删除今日过磅记录？"
     },
     "profileSettings": {
       "title": "基本资料",
