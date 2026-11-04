@@ -213,28 +213,6 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
             </PopoverContent>
           )}
         </Popover>
-
-        {/* 底部客觀狀態列：常駐顯示日曆天數微型圖例 (高度嚴格恆定為 h-7) */}
-        <div className="h-7 flex items-center justify-center select-none shrink-0 overflow-hidden">
-          <div className="flex items-center justify-center gap-3 sm:gap-4 text-[10px] font-mono text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-[var(--muscle-intensity-high-bg)] border border-[var(--muscle-intensity-high-text)]/40" />
-              <span>{t('workout.legendDay0', '當天')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-[var(--muscle-intensity-med-bg)] border border-[var(--muscle-intensity-med-text)]/40" />
-              <span>{t('workout.legendDay1', '1 天')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-[var(--muscle-intensity-low-bg)] border border-[var(--muscle-intensity-low-text)]/40" />
-              <span>{t('workout.legendDay2', '2 天')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-muted border border-border" />
-              <span>{t('workout.legendDay3Plus', '3 天')}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* 下半部：訓練客觀 3 欄指標 (完全對標飲食頁面的碳水、蛋白質、脂肪 3 欄) */}

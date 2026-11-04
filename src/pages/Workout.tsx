@@ -10,13 +10,12 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { kgToLbs, lbsToKg } from '@/utils/unitMath';
-import { findLastExerciseSet } from '@/utils/workoutMath';
+import { findLastExerciseRecord } from '@/utils/workoutMath';
 import { db } from '@/services/db/db';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, Dumbbell, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
-import { ExerciseSelectDialog } from '@/components/workout/ExerciseSelectDialog';
+import { ExerciseSelectDialog, type ExerciseSelectMode } from '@/components/workout/ExerciseSelectDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import type { WorkoutLog, WorkoutSet, WorkoutExerciseGroup, WorkoutRoutine, Exercise } from '@/types';
 
@@ -52,6 +51,7 @@ export default function Workout() {
   // 彈窗狀態
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
   const [activeWorkoutIdForAdd, setActiveWorkoutIdForAdd] = useState<string | null>(null);
+  const [exercisePickerMode, setExercisePickerMode] = useState<ExerciseSelectMode>('all');
 
   // 統計當前訓練記錄中已存在的動作與組合 (不可重複選取)
   const disabledExerciseIds = useMemo(() => {
@@ -140,22 +140,23 @@ export default function Workout() {
   }, [workouts, bodyWeightUnit]);
 
   // ==========================================
-  // 套用訓練組合
+  // 套用訓練組合 (組數與重量沿用最後記錄，次數預設為空待填入)
   // ==========================================
   const handleSelectRoutine = async (routine: WorkoutRoutine) => {
     try {
       const allLogs = await db.workout_logs.toArray();
       const exerciseGroups = routine.exercises.map((item) => {
         const ex = exerciseMap.get(item.exerciseId);
-        const lastSet = findLastExerciseSet(allLogs, item.exerciseId, ex?.name);
-        const defaultWeight = lastSet ? lastSet.weight : 20;
-        const defaultReps = lastSet ? lastSet.reps : 10;
-        const count = item.defaultSets || 3;
+        const record = findLastExerciseRecord(allLogs, item.exerciseId, ex?.name);
+        const count = record ? record.setsCount : (item.defaultSets || 3);
+        const weights = record ? record.weights : Array(count).fill(20);
+        const defaultWeight = record ? record.lastWeight : 20;
+
         const sets: WorkoutSet[] = Array.from({ length: count }, (_, i) => ({
           id: uuidv4(),
           setNumber: i + 1,
-          weight: defaultWeight,
-          reps: defaultReps,
+          weight: weights[i] !== undefined ? weights[i] : defaultWeight,
+          reps: 0,
           isCompleted: true,
         }));
 
@@ -186,12 +187,17 @@ export default function Workout() {
   // ==========================================
   // 新增空白訓練或為指定訓練新增動作
   // ==========================================
-  const handleOpenAddExercise = (workoutId?: string) => {
+  const handleOpenAddExercise = (
+    workoutId?: string,
+    mode: ExerciseSelectMode = 'all'
+  ) => {
     triggerHaptic('selection');
     if (workoutId) {
       setActiveWorkoutIdForAdd(workoutId);
+      setExercisePickerMode('exercises');
     } else {
       setActiveWorkoutIdForAdd(null);
+      setExercisePickerMode(mode);
     }
     setIsExercisePickerOpen(true);
   };
@@ -199,19 +205,24 @@ export default function Workout() {
   const handleSelectExercise = async (exercise: Exercise) => {
     try {
       const allLogs = await db.workout_logs.toArray();
-      const lastSet = findLastExerciseSet(allLogs, exercise.id, exercise.name);
-      const defaultWeight = lastSet ? lastSet.weight : 20;
-      const defaultReps = lastSet ? lastSet.reps : 10;
+      const record = findLastExerciseRecord(allLogs, exercise.id, exercise.name);
+      const count = record ? record.setsCount : 3;
+      const weights = record ? record.weights : Array(count).fill(20);
+      const defaultWeight = record ? record.lastWeight : 20;
+
+      const sets: WorkoutSet[] = Array.from({ length: count }, (_, i) => ({
+        id: uuidv4(),
+        setNumber: i + 1,
+        weight: weights[i] !== undefined ? weights[i] : defaultWeight,
+        reps: 0,
+        isCompleted: true,
+      }));
 
       const newGroup = {
         exerciseId: exercise.id,
         exerciseName: exercise.name,
         category: exercise.category,
-        sets: [
-          { id: uuidv4(), setNumber: 1, weight: defaultWeight, reps: defaultReps, isCompleted: true },
-          { id: uuidv4(), setNumber: 2, weight: defaultWeight, reps: defaultReps, isCompleted: true },
-          { id: uuidv4(), setNumber: 3, weight: defaultWeight, reps: defaultReps, isCompleted: true },
-        ],
+        sets,
       };
 
       const targetId = activeWorkoutIdForAdd;
@@ -265,8 +276,8 @@ export default function Workout() {
     const newSet: WorkoutSet = {
       id: uuidv4(),
       setNumber: exGroup.sets.length + 1,
-      weight: prevSet ? prevSet.weight : 20,
-      reps: prevSet ? prevSet.reps : 10,
+      weight: prevSet && typeof prevSet.weight === 'number' && prevSet.weight > 0 ? prevSet.weight : 20,
+      reps: 0,
       isCompleted: true,
     };
 
@@ -518,7 +529,7 @@ export default function Workout() {
                     ×
                   </span>
 
-                  {/* 次數膠囊 */}
+                  {/* 次數膠囊 (未填入時顯示 - 次) */}
                   <button
                     type="button"
                     onClick={(e) =>
@@ -534,8 +545,16 @@ export default function Workout() {
                     }
                     className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
                   >
-                    <span className="font-bold text-foreground">
-                      {set.reps || 0}
+                    <span
+                      className={
+                        typeof set.reps === 'number' && set.reps > 0
+                          ? 'font-bold text-foreground'
+                          : 'font-bold text-muted-foreground'
+                      }
+                    >
+                      {typeof set.reps === 'number' && set.reps > 0
+                        ? set.reps
+                        : '-'}
                     </span>
                     <span className="text-muted-foreground text-[10px]">
                       {t('common.times', '次')}
@@ -585,118 +604,122 @@ export default function Workout() {
         weightUnit={bodyWeightUnit}
       />
 
-      {/* 頂部快捷操作列 (對齊飲食頁面極簡風格) */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm sm:text-base font-semibold tracking-tight font-mono">
-          {t('workout.recentLogs', '訓練記錄')}
-        </h2>
-
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() => handleOpenAddExercise()}
-            className="text-xs h-8 px-3 rounded-full bg-foreground text-background font-mono cursor-pointer active:scale-95 transition-all"
-          >
-            <Plus className="size-3.5 mr-1" />
-            <span>{t('workout.addExercise', '新增動作')}</span>
-          </Button>
-        </div>
-      </div>
-
       {/* 訓練記錄列表：支援組合動作收納大卡片與單一動作獨立展示 */}
       {workouts.some((w) => w.exercises && w.exercises.length > 0) ? (
-        workouts
-          .filter((w) => w.exercises && w.exercises.length > 0)
-          .map((workout) => {
-            const isRoutine =
-              Boolean(workout.routineId) || workout.exercises.length > 1;
+        <>
+          {workouts
+            .filter((w) => w.exercises && w.exercises.length > 0)
+            .map((workout) => {
+              const isRoutine =
+                Boolean(workout.routineId) || workout.exercises.length > 1;
 
-            if (isRoutine) {
-              const workoutTotalSets = workout.exercises.reduce(
-                (sum, ex) => sum + ex.sets.length,
-                0
-              );
-              const workoutVolumeKg = workout.exercises.reduce(
-                (sum, ex) =>
-                  sum +
-                  ex.sets.reduce((sSum, s) => sSum + (s.weight || 0) * (s.reps || 0), 0),
-                0
-              );
-              const displayWorkoutVolume =
-                bodyWeightUnit === 'lbs'
-                  ? kgToLbs(workoutVolumeKg, 0)
-                  : workoutVolumeKg;
+              if (isRoutine) {
+                const workoutTotalSets = workout.exercises.reduce(
+                  (sum, ex) => sum + ex.sets.length,
+                  0
+                );
+                const workoutVolumeKg = workout.exercises.reduce(
+                  (sum, ex) =>
+                    sum +
+                    ex.sets.reduce((sSum, s) => sSum + (s.weight || 0) * (s.reps || 0), 0),
+                  0
+                );
+                const displayWorkoutVolume =
+                  bodyWeightUnit === 'lbs'
+                    ? kgToLbs(workoutVolumeKg, 0)
+                    : workoutVolumeKg;
 
-              return (
-                <div
-                  key={workout.id}
-                  className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden"
-                >
-                  {/* 組合專屬大卡片表頭 (40px 高度) */}
-                  <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {workout.routineId ? (
-                        <Link
-                          to={`/settings/routines/${workout.routineId}`}
-                          className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-muted/80 transition-all cursor-pointer select-none shrink-0"
-                        >{workout.title}</Link>
-                      ) : (
-                        <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">{workout.title}</span>
-                      )}
-                      <span className="text-border select-none shrink-0">·</span>
-                      <span className="truncate">
-                        {workout.exercises.length} {t('common.items', '項')}
-                      </span>
-                      <span className="text-border select-none shrink-0">·</span>
-                      <span className="shrink-0">
-                        {workoutTotalSets} {t('workout.set', '組')}
-                      </span>
-                      {displayWorkoutVolume > 0 && (
-                        <>
-                          <span className="text-border select-none shrink-0">·</span>
-                          <span className="text-muted-foreground shrink-0 truncate">
-                            {Math.round(displayWorkoutVolume).toLocaleString()} {bodyWeightUnit}
-                          </span>
-                        </>
-                      )}
+                return (
+                  <div
+                    key={workout.id}
+                    className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden"
+                  >
+                    {/* 組合專屬大卡片表頭 (40px 高度) */}
+                    <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {workout.routineId ? (
+                          <Link
+                            to={`/settings/routines/${workout.routineId}`}
+                            className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-muted/80 transition-all cursor-pointer select-none shrink-0"
+                          >{workout.title}</Link>
+                        ) : (
+                          <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">{workout.title}</span>
+                        )}
+                        <span className="text-border select-none shrink-0">·</span>
+                        <span className="truncate">
+                          {workout.exercises.length} {t('common.items', '項')}
+                        </span>
+                        <span className="text-border select-none shrink-0">·</span>
+                        <span className="shrink-0">
+                          {workoutTotalSets} {t('workout.set', '組')}
+                        </span>
+                        {displayWorkoutVolume > 0 && (
+                          <>
+                            <span className="text-border select-none shrink-0">·</span>
+                            <span className="text-muted-foreground shrink-0 truncate">
+                              {Math.round(displayWorkoutVolume).toLocaleString()} {bodyWeightUnit}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAddExercise(workout.id)}
+                          className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                          title={t('workout.addExercise', '新增動作')}
+                          aria-label={t('workout.addExercise', '新增動作')}
+                        >
+                          <Plus className="size-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteWorkout(workout)}
+                          className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                          title={t('common.delete', '刪除')}
+                          aria-label={t('common.delete', '刪除')}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenAddExercise(workout.id)}
-                        className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
-                        title={t('workout.addExercise', '新增動作')}
-                        aria-label={t('workout.addExercise', '新增動作')}
-                      >
-                        <Plus className="size-4" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteWorkout(workout)}
-                        className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                        title={t('common.delete', '刪除')}
-                        aria-label={t('common.delete', '刪除')}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
+                    {/* 較大卡片內部容器：收納組合內的所有動作表 */}
+                    <div className="p-3 sm:p-4 space-y-3 bg-muted/10">
+                      {workout.exercises.map((group, exIdx) =>
+                        renderExerciseTable(workout, group, exIdx)
+                      )}
                     </div>
                   </div>
+                );
+              }
 
-                  {/* 較大卡片內部容器：收納組合內的所有動作表 */}
-                  <div className="p-3 sm:p-4 space-y-3 bg-muted/10">
-                    {workout.exercises.map((group, exIdx) =>
-                      renderExerciseTable(workout, group, exIdx)
-                    )}
-                  </div>
-                </div>
-              );
-            }
+              // 單一自選動作：直接調用 renderExerciseTable 呈現，不包裹外層多餘的組合大卡片
+              return renderExerciseTable(workout, workout.exercises[0], 0);
+            })}
 
-            // 單一自選動作：直接調用 renderExerciseTable 呈現，不包裹外層多餘的組合大卡片
-            return renderExerciseTable(workout, workout.exercises[0], 0);
-          })
+          {/* 列表底部操作：方案 C 雙觸發分割卡 (與上方卡片間距完全由父容器 space-y-4 統一度量) */}
+          <div className="w-full h-10 rounded-lg border border-border bg-card grid grid-cols-2 divide-x divide-border font-mono text-xs overflow-hidden select-none shadow-none">
+            <button
+              type="button"
+              onClick={() => handleOpenAddExercise(undefined, 'exercises')}
+              className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+            >
+              <Plus className="size-3.5 text-muted-foreground" />
+              <span>{t('workout.addSingleExercise', '新增單個動作')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenAddExercise(undefined, 'routines')}
+              className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+            >
+              <Plus className="size-3.5 text-muted-foreground" />
+              <span>{t('workout.addRoutineWorkout', '新增組合動作')}</span>
+            </button>
+          </div>
+        </>
       ) : (
         /* 當日無訓練記錄時的客觀極簡空狀態 (對標客觀測量儀哲學) */
         <div className="border border-border bg-card text-card-foreground shadow-none rounded-lg p-8 text-center space-y-4">
@@ -711,15 +734,25 @@ export default function Workout() {
               {t('workout.selectDateHint', '可套用現有組合或直接新增動作進行練後記錄')}
             </div>
           </div>
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <Button
-              size="sm"
-              onClick={() => handleOpenAddExercise()}
-              className="text-xs h-8 px-3 rounded-full bg-foreground text-background font-mono cursor-pointer"
-            >
-              <Plus className="size-3.5 mr-1" />
-              <span>{t('workout.addExercise', '新增動作')}</span>
-            </Button>
+          <div className="max-w-xs mx-auto">
+            <div className="w-full h-9 rounded-lg border border-border bg-card grid grid-cols-2 divide-x divide-border font-mono text-xs overflow-hidden select-none shadow-none">
+              <button
+                type="button"
+                onClick={() => handleOpenAddExercise(undefined, 'exercises')}
+                className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+              >
+                <Plus className="size-3.5 text-muted-foreground" />
+                <span>{t('workout.addSingleExercise', '新增單個動作')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOpenAddExercise(undefined, 'routines')}
+                className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+              >
+                <Plus className="size-3.5 text-muted-foreground" />
+                <span>{t('workout.addRoutineWorkout', '新增組合動作')}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -732,7 +765,7 @@ export default function Workout() {
       <ExerciseSelectDialog
         open={isExercisePickerOpen}
         onOpenChange={setIsExercisePickerOpen}
-        mode={activeWorkoutIdForAdd ? 'exercises' : 'all'}
+        mode={activeWorkoutIdForAdd ? 'exercises' : exercisePickerMode}
         disabledIds={disabledIds}
         isItemDisabled={isItemDisabled}
         onSelect={handleItemSelect}
