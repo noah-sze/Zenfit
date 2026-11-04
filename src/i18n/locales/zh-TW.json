@@ -5,6 +5,7 @@
       "slogan": "極簡、隱私優先的飲食與健身追蹤 PWA"
     },
     "common": {
+      "all": "全部",
       "confirm": "確認",
       "cancel": "取消",
       "save": "儲存",
@@ -337,7 +338,13 @@
       "atLeastOneExercise": "至少包含一個動作",
       "routineNamePlaceholder": "例如：推力日 A",
       "searchExercisePlaceholder": "搜尋動作名稱或備註...",
-      "routineExerciseList": "動作構成",
+      "routineExerciseList": "動作構成清單",
+      "exerciseAlreadyInRoutine": "動作已在組合中",
+      "routineHasLogs": "已有訓練記錄",
+      "totalExercises": "動作總數",
+      "exerciseUnit": "個動作",
+      "muscleUnit": "個肌群",
+      "coveredMusclesShort": "覆蓋肌群",
       "exerciseHasLogs": "已有訓練記錄",
       "exerciseHasRoutines": "已被組合引用",
       "equipmentHasExercises": "已被動作引用",
