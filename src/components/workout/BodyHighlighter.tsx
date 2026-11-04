@@ -41,7 +41,12 @@ export interface BodyHighlighterProps {
   /** 是否允許點擊互動 */
   interactive?: boolean;
   /** 點擊肌群回調 */
-  onMuscleClick?: (muscle: DetailedMuscle, slug: BodyPartSlug, view: BodyView) => void;
+  onMuscleClick?: (
+    muscle: DetailedMuscle,
+    slug: BodyPartSlug,
+    view: BodyView,
+    event?: React.MouseEvent<SVGPathElement>
+  ) => void;
   /** 清除選中回調 */
   onClearSelection?: () => void;
   /** 高亮填充色 (預設遵循赤陶刺激強度體系，支援自訂覆蓋) */
@@ -208,7 +213,7 @@ export const BodyHighlighter = memo(function BodyHighlighter({
                 if (selectedMuscle === undefined) {
                   setInternalSelectedMuscle((prev) => (prev === primaryMuscle ? null : primaryMuscle));
                 }
-                onMuscleClick?.(primaryMuscle, group.slug, currentView);
+                onMuscleClick?.(primaryMuscle, group.slug, currentView, e);
               }
             : undefined
         }

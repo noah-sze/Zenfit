@@ -1,7 +1,8 @@
 import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { BodyHighlighter } from './BodyHighlighter';
-import type { BodyRecoverySummary } from '@/utils/recoveryMath';
+import type { BodyRecoverySummary, MuscleRecoveryTier } from '@/utils/recoveryMath';
 import type { DetailedMuscle } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -29,9 +30,30 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
 }: WorkoutRecoveryDashboardProps) {
   const { t } = useTranslation();
   const [selectedMuscle, setSelectedMuscle] = useState<DetailedMuscle | null>(null);
+  const [anchorEl, setAnchorEl] = useState<Element | null>(null);
 
   // 選中肌群的客觀狀態詳情
   const selectedStatus = selectedMuscle ? recoverySummary.muscles[selectedMuscle] : null;
+
+  const handleMuscleClick = (
+    muscle: DetailedMuscle,
+    _slug: unknown,
+    _view: unknown,
+    event?: React.MouseEvent<SVGPathElement>
+  ) => {
+    if (selectedMuscle === muscle) {
+      setSelectedMuscle(null);
+      setAnchorEl(null);
+    } else {
+      setSelectedMuscle(muscle);
+      setAnchorEl(event?.currentTarget ?? null);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedMuscle(null);
+    setAnchorEl(null);
+  };
 
   const getMuscleDisplayName = (muscle: DetailedMuscle) => {
     const key = `workout.muscle${muscle
@@ -39,6 +61,34 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join('')}`;
     return t(key, muscle);
+  };
+
+  const getTierDisplayName = (tier: MuscleRecoveryTier) => {
+    switch (tier) {
+      case 'acute':
+        return t('workout.tierAcute', '急性疲勞');
+      case 'recovering':
+        return t('workout.tierRecovering', '修復中');
+      case 'near_ready':
+        return t('workout.tierNearReady', '即將就緒');
+      case 'recovered':
+      default:
+        return t('workout.tierRecovered', '已就緒');
+    }
+  };
+
+  const getTierTextColor = (tier: MuscleRecoveryTier) => {
+    switch (tier) {
+      case 'acute':
+        return 'text-destructive';
+      case 'recovering':
+        return 'text-amber-500';
+      case 'near_ready':
+        return 'text-blue-500';
+      case 'recovered':
+      default:
+        return 'text-foreground';
+    }
   };
 
   return (
@@ -58,16 +108,14 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
 
           <div className="flex items-center gap-1.5">
             {recoverySummary.recoveringCount > 0 ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-[var(--muscle-intensity-high-text)]/40 bg-[var(--muscle-intensity-high-bg)]/30 text-[var(--muscle-intensity-high-text)]">
-                <span className="size-1.5 rounded-full bg-[var(--muscle-intensity-high-text)] animate-pulse" />
+              <span className="inline-flex items-center text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-[var(--muscle-intensity-high-text)]/40 bg-[var(--muscle-intensity-high-bg)]/30 text-[var(--muscle-intensity-high-text)]">
                 <span>
                   {recoverySummary.recoveringCount}{' '}
                   {t('workout.musclesRecovering', '個肌群恢復中')}
                 </span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-border bg-muted/40 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-foreground/60" />
+              <span className="inline-flex items-center text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-border bg-muted/40 text-muted-foreground">
                 <span>{t('workout.allMusclesReady', '全部肌群已就緒')}</span>
               </span>
             )}
@@ -80,10 +128,8 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
             view="both"
             muscles={recoverySummary.intensityMap}
             selectedMuscle={selectedMuscle}
-            onMuscleClick={(muscle) => {
-              setSelectedMuscle((prev) => (prev === muscle ? null : muscle));
-            }}
-            onClearSelection={() => setSelectedMuscle(null)}
+            onMuscleClick={handleMuscleClick}
+            onClearSelection={handleClearSelection}
             interactive={true}
             size="md"
             showLabels={true}
@@ -93,59 +139,101 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
           />
         </div>
 
-        {/* 底部客觀狀態列 (高度嚴格恆定為 h-7，非全寬膠囊，無關閉鈕，徹底杜絕撐大卡片與高度抖動) */}
-        <div className="h-7 flex items-center justify-center select-none shrink-0 overflow-hidden">
-          {selectedStatus ? (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-border bg-muted/60 text-[11px] font-mono text-foreground max-w-full truncate animate-in fade-in">
-              <span className="font-semibold text-foreground">
-                {getMuscleDisplayName(selectedStatus.muscle)}
-              </span>
-              <span className="text-border">·</span>
-              {selectedStatus.hoursElapsed !== null ? (
-                <>
-                  <span className="text-muted-foreground">
-                    {t('workout.hoursElapsedAgo', { count: Math.round(selectedStatus.hoursElapsed) })}
+        {/* 肌群恢復詳情 Popover 浮層提示 (單行極簡緊湊工藝微卡) */}
+        <Popover
+          open={Boolean(selectedMuscle && anchorEl && selectedStatus)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedMuscle(null);
+              setAnchorEl(null);
+            }
+          }}
+        >
+          {anchorEl && selectedStatus && (
+            <PopoverContent
+              anchor={anchorEl}
+              side="top"
+              sideOffset={6}
+              align="center"
+              className="p-0 border-none bg-transparent shadow-none flex flex-col items-center animate-none w-auto"
+            >
+              {/* 專案統計資訊分欄卡片 */}
+              <div className="w-[176px] rounded-lg border border-border bg-popover/98 backdrop-blur-md text-popover-foreground shadow-none font-mono select-none overflow-hidden">
+                {/* 頂部標題列 */}
+                <div className="px-2.5 py-1.5 border-b border-border bg-muted/30 flex items-center justify-between">
+                  <span className="font-bold text-foreground text-[13px] sm:text-sm leading-tight truncate">
+                    {getMuscleDisplayName(selectedStatus.muscle)}
                   </span>
-                  <span className="text-border">·</span>
-                  <span className="font-medium text-foreground">
-                    {t('workout.recoveryPercent', '恢復進度')} {selectedStatus.recoveryPercent}%
-                  </span>
-                  {selectedStatus.lastExerciseName && (
-                    <>
-                      <span className="text-border">·</span>
-                      <span className="text-muted-foreground truncate max-w-[90px] sm:max-w-[140px]">
-                        {selectedStatus.lastExerciseName}
-                      </span>
-                    </>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground">
-                  {t('workout.neverTrained', '近期無刺激 · 100% 就緒')}
-                </span>
-              )}
-            </div>
-          ) : (
-            /* 極簡微型圖例標記 */
-            <div className="flex items-center justify-center gap-3 sm:gap-4 text-[10px] font-mono text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-[var(--muscle-intensity-high-bg)] border border-[var(--muscle-intensity-high-text)]/40" />
-                <span>0-24h</span>
+                </div>
+
+                {/* 下方雙欄分割統計行 */}
+                <div className="grid grid-cols-2 divide-x divide-border bg-card/40">
+                  {/* 左欄（狀態） */}
+                  <div className="p-2 flex flex-col items-start gap-0.5 overflow-hidden">
+                    <span className="text-[10px] text-muted-foreground font-normal leading-none truncate">
+                      {t('workout.status', '狀態')}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-xs font-bold leading-tight truncate mt-0.5',
+                        getTierTextColor(selectedStatus.tier)
+                      )}
+                    >
+                      {getTierDisplayName(selectedStatus.tier)}
+                    </span>
+                  </div>
+
+                  {/* 右欄（上次刺激） */}
+                  <div className="p-2 flex flex-col items-start gap-0.5 overflow-hidden">
+                    <span className="text-[10px] text-muted-foreground font-normal leading-none truncate">
+                      {t('workout.lastStimulus', '上次刺激')}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-xs font-mono leading-tight truncate mt-0.5',
+                        selectedStatus.daysElapsed !== null
+                          ? 'font-bold text-foreground'
+                          : 'font-normal text-muted-foreground'
+                      )}
+                    >
+                      {selectedStatus.daysElapsed !== null
+                        ? selectedStatus.daysElapsed === 0
+                          ? t('workout.trainedToday', '今天')
+                          : selectedStatus.daysElapsed === 1
+                          ? t('workout.trainedYesterday', '昨天')
+                          : t('workout.daysElapsedAgo', { count: selectedStatus.daysElapsed })
+                        : t('workout.none', '無')}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-[var(--muscle-intensity-med-bg)] border border-[var(--muscle-intensity-med-text)]/40" />
-                <span>24-48h</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-[var(--muscle-intensity-low-bg)] border border-[var(--muscle-intensity-low-text)]/40" />
-                <span>48-72h</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-muted border border-border" />
-                <span>&gt;72h</span>
-              </div>
-            </div>
+
+              {/* 微型倒三角指針 */}
+              <div className="w-0 h-0 border-x-[4px] border-x-transparent border-t-[4.5px] border-t-border mx-auto -mb-1 mt-0.5" />
+            </PopoverContent>
           )}
+        </Popover>
+
+        {/* 底部客觀狀態列：常駐顯示日曆天數微型圖例 (高度嚴格恆定為 h-7) */}
+        <div className="h-7 flex items-center justify-center select-none shrink-0 overflow-hidden">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 text-[10px] font-mono text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[var(--muscle-intensity-high-bg)] border border-[var(--muscle-intensity-high-text)]/40" />
+              <span>{t('workout.legendDay0', '當天')}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[var(--muscle-intensity-med-bg)] border border-[var(--muscle-intensity-med-text)]/40" />
+              <span>{t('workout.legendDay1', '1 天')}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[var(--muscle-intensity-low-bg)] border border-[var(--muscle-intensity-low-text)]/40" />
+              <span>{t('workout.legendDay2', '2 天')}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-muted border border-border" />
+              <span>{t('workout.legendDay3Plus', '3 天')}</span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -394,9 +394,10 @@ export function RoutineFormDialog({
       <ExerciseSelectDialog
         open={isPickerOpen}
         onOpenChange={setIsPickerOpen}
+        mode="exercises"
         zIndex={80}
         disabledIds={disabledExerciseIds}
-        onSelect={handleSelectExercise}
+        onSelect={(item) => handleSelectExercise(item as Exercise)}
       />
     </>
   );

@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { calculateE1RM, calculateTotalVolume, getRoutineFactSummary } from './workoutMath';
-import type { Exercise, WorkoutRoutine } from '@/types';
+import {
+  calculateE1RM,
+  calculateTotalVolume,
+  getRoutineFactSummary,
+  findLastExerciseSet,
+} from './workoutMath';
+import type { Exercise, WorkoutRoutine, WorkoutLog } from '@/types';
 
 describe('workoutMath 純數學客觀計算函數', () => {
   describe('calculateE1RM (Brzycki 力量極限估算)', () => {
@@ -107,6 +112,204 @@ describe('workoutMath 純數學客觀計算函數', () => {
       expect(emptySummary.exerciseCount).toBe(0);
       expect(emptySummary.totalPlannedSets).toBe(0);
       expect(emptySummary.coveredMuscles).toEqual([]);
+    });
+  });
+
+  describe('findLastExerciseSet (動作歷史最近有效組查詢)', () => {
+    it('多日誌跨日期排序：正確繼承最近日期的重量與次數', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_3days_ago',
+          date: '2026-11-01',
+          title: '胸背訓練',
+          createdAt: 1000,
+          updatedAt: 1000,
+          exercises: [
+            {
+              exerciseId: 'ex_bench',
+              exerciseName: '槓鈴臥推',
+              sets: [{ id: 's1', setNumber: 1, weight: 10, reps: 12, isCompleted: true }],
+            },
+          ],
+        },
+        {
+          id: 'log_yesterday',
+          date: '2026-11-03',
+          title: '胸推強化',
+          createdAt: 2000,
+          updatedAt: 2000,
+          exercises: [
+            {
+              exerciseId: 'ex_bench',
+              exerciseName: '槓鈴臥推',
+              sets: [{ id: 's2', setNumber: 1, weight: 15, reps: 8, isCompleted: true }],
+            },
+          ],
+        },
+      ];
+
+      // 即使傳入未排序陣列，也應取得 2026-11-03 的 15kg / 8 reps
+      const result = findLastExerciseSet(logs, 'ex_bench');
+      expect(result).toEqual({ weight: 15, reps: 8 });
+    });
+
+    it('同日多筆日誌：依 createdAt 降序取最新記錄', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_morning',
+          date: '2026-11-04',
+          title: '早晨訓練',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_squat',
+              exerciseName: '深蹲',
+              sets: [{ id: 's1', setNumber: 1, weight: 80, reps: 5, isCompleted: true }],
+            },
+          ],
+        },
+        {
+          id: 'log_evening',
+          date: '2026-11-04',
+          title: '晚間訓練',
+          createdAt: 200,
+          updatedAt: 200,
+          exercises: [
+            {
+              exerciseId: 'ex_squat',
+              exerciseName: '深蹲',
+              sets: [{ id: 's2', setNumber: 1, weight: 90, reps: 3, isCompleted: true }],
+            },
+          ],
+        },
+      ];
+
+      const result = findLastExerciseSet(logs, 'ex_squat');
+      expect(result).toEqual({ weight: 90, reps: 3 });
+    });
+
+    it('同日誌多組不同重量：取最後一組有效記錄', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_1',
+          date: '2026-11-04',
+          title: '練腿日',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_leg_press',
+              exerciseName: '腿推機',
+              sets: [
+                { id: 's1', setNumber: 1, weight: 100, reps: 12, isCompleted: true },
+                { id: 's2', setNumber: 2, weight: 120, reps: 10, isCompleted: true },
+                { id: 's3', setNumber: 3, weight: 140, reps: 8, isCompleted: true },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const result = findLastExerciseSet(logs, 'ex_leg_press');
+      expect(result).toEqual({ weight: 140, reps: 8 });
+    });
+
+    it('支援透過 exerciseName 不區分大小寫匹配', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_1',
+          date: '2026-11-04',
+          title: '背部訓練',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'different_id',
+              exerciseName: 'Lat Pulldown',
+              sets: [{ id: 's1', setNumber: 1, weight: 55, reps: 10, isCompleted: true }],
+            },
+          ],
+        },
+      ];
+
+      const result = findLastExerciseSet(logs, 'non_existent_id', 'lat pulldown');
+      expect(result).toEqual({ weight: 55, reps: 10 });
+    });
+
+    it('無歷史記錄時回傳 null', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_1',
+          date: '2026-11-04',
+          title: '胸部',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_bench',
+              exerciseName: '臥推',
+              sets: [{ id: 's1', setNumber: 1, weight: 60, reps: 10, isCompleted: true }],
+            },
+          ],
+        },
+      ];
+
+      expect(findLastExerciseSet(logs, 'ex_deadlift')).toBeNull();
+    });
+
+    it('異常邊界防護：空值、負數或無效組安全回退', () => {
+      expect(findLastExerciseSet([], 'ex_1')).toBeNull();
+      expect(findLastExerciseSet(null, 'ex_1')).toBeNull();
+      expect(findLastExerciseSet(undefined, 'ex_1')).toBeNull();
+      expect(
+        findLastExerciseSet(
+          [{ id: '1', date: '2026-11-04', title: '', createdAt: 0, updatedAt: 0, exercises: [] }],
+          ''
+        )
+      ).toBeNull();
+
+      // 只有 weight <= 0 或 NaN
+      const invalidLogs: WorkoutLog[] = [
+        {
+          id: 'log_invalid',
+          date: '2026-11-04',
+          title: '測試',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_zero',
+              exerciseName: '徒手或無效',
+              sets: [
+                { id: 's1', setNumber: 1, weight: 0, reps: 10, isCompleted: true },
+                { id: 's2', setNumber: 2, weight: -10, reps: 10, isCompleted: true },
+                { id: 's3', setNumber: 3, weight: NaN, reps: 10, isCompleted: true },
+              ],
+            },
+          ],
+        },
+      ];
+      expect(findLastExerciseSet(invalidLogs, 'ex_zero')).toBeNull();
+
+      // 當 reps <= 0 或無效時回退預設 10
+      const zeroRepsLogs: WorkoutLog[] = [
+        {
+          id: 'log_zero_reps',
+          date: '2026-11-04',
+          title: '測試',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_weight_only',
+              exerciseName: '特殊組',
+              sets: [{ id: 's1', setNumber: 1, weight: 25, reps: 0, isCompleted: true }],
+            },
+          ],
+        },
+      ];
+      expect(findLastExerciseSet(zeroRepsLogs, 'ex_weight_only')).toEqual({ weight: 25, reps: 10 });
     });
   });
 });

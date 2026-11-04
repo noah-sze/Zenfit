@@ -594,8 +594,9 @@ export default function RoutineDetails() {
       <ExerciseSelectDialog
         open={isPickerOpen}
         onOpenChange={setIsPickerOpen}
+        mode="exercises"
         disabledIds={routine.exercises.map((e) => e.exerciseId)}
-        onSelect={handleSelectExercise}
+        onSelect={(item) => handleSelectExercise(item as Exercise)}
       />
     </div>
   );
