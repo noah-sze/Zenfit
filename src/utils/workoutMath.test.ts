@@ -4,6 +4,7 @@ import {
   calculateTotalVolume,
   getRoutineFactSummary,
   findLastExerciseSet,
+  findLastExerciseRecord,
 } from './workoutMath';
 import type { Exercise, WorkoutRoutine, WorkoutLog } from '@/types';
 
@@ -310,6 +311,136 @@ describe('workoutMath 純數學客觀計算函數', () => {
         },
       ];
       expect(findLastExerciseSet(zeroRepsLogs, 'ex_weight_only')).toEqual({ weight: 25, reps: 10 });
+    });
+  });
+
+  describe('findLastExerciseRecord (動作歷史最近完整記錄：組數與各組重量)', () => {
+    it('跨日期多筆日誌：正確繼承最新日期的組數與各組重量', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_old',
+          date: '2026-11-01',
+          title: '舊胸訓',
+          createdAt: 1000,
+          updatedAt: 1000,
+          exercises: [
+            {
+              exerciseId: 'ex_bench',
+              exerciseName: '槓鈴臥推',
+              sets: [
+                { id: 's1', setNumber: 1, weight: 50, reps: 10, isCompleted: true },
+                { id: 's2', setNumber: 2, weight: 60, reps: 8, isCompleted: true },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'log_new',
+          date: '2026-11-03',
+          title: '新胸訓',
+          createdAt: 2000,
+          updatedAt: 2000,
+          exercises: [
+            {
+              exerciseId: 'ex_bench',
+              exerciseName: '槓鈴臥推',
+              sets: [
+                { id: 's3', setNumber: 1, weight: 60, reps: 12, isCompleted: true },
+                { id: 's4', setNumber: 2, weight: 70, reps: 10, isCompleted: true },
+                { id: 's5', setNumber: 3, weight: 80, reps: 8, isCompleted: true },
+                { id: 's6', setNumber: 4, weight: 85, reps: 6, isCompleted: true },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const record = findLastExerciseRecord(logs, 'ex_bench');
+      expect(record).toEqual({
+        setsCount: 4,
+        weights: [60, 70, 80, 85],
+        lastWeight: 85,
+      });
+    });
+
+    it('同日多筆日誌：依 createdAt 降序取最新記錄', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_morning',
+          date: '2026-11-04',
+          title: '早晨',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_squat',
+              exerciseName: '深蹲',
+              sets: [{ id: 's1', setNumber: 1, weight: 60, reps: 10, isCompleted: true }],
+            },
+          ],
+        },
+        {
+          id: 'log_night',
+          date: '2026-11-04',
+          title: '晚間',
+          createdAt: 200,
+          updatedAt: 200,
+          exercises: [
+            {
+              exerciseId: 'ex_squat',
+              exerciseName: '深蹲',
+              sets: [
+                { id: 's2', setNumber: 1, weight: 80, reps: 5, isCompleted: true },
+                { id: 's3', setNumber: 2, weight: 90, reps: 5, isCompleted: true },
+                { id: 's4', setNumber: 3, weight: 100, reps: 3, isCompleted: true },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const record = findLastExerciseRecord(logs, 'ex_squat');
+      expect(record).toEqual({
+        setsCount: 3,
+        weights: [80, 90, 100],
+        lastWeight: 100,
+      });
+    });
+
+    it('以動作名稱 (大小寫不敏感) 匹配', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_1',
+          date: '2026-11-04',
+          title: '背部訓練',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_lat_id',
+              exerciseName: 'Lat Pulldown',
+              sets: [
+                { id: 's1', setNumber: 1, weight: 45, reps: 12, isCompleted: true },
+                { id: 's2', setNumber: 2, weight: 50, reps: 10, isCompleted: true },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const record = findLastExerciseRecord(logs, 'unknown_id', 'lat pulldown');
+      expect(record).toEqual({
+        setsCount: 2,
+        weights: [45, 50],
+        lastWeight: 50,
+      });
+    });
+
+    it('邊界情況：空日誌、無效輸入、無匹配回傳 null', () => {
+      expect(findLastExerciseRecord([], 'ex_1')).toBeNull();
+      expect(findLastExerciseRecord(null, 'ex_1')).toBeNull();
+      expect(findLastExerciseRecord(undefined, 'ex_1')).toBeNull();
+      expect(findLastExerciseRecord([{ id: '1', date: '2026-11-04', title: 't', createdAt: 1, updatedAt: 1, exercises: [] }], 'ex_1')).toBeNull();
     });
   });
 });

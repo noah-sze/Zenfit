@@ -125,6 +125,7 @@ export function ExerciseSelectDialog({
         {/* 核心瀏覽與選擇區 (點擊即選擇，直達底部) */}
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden pt-1">
           <ExerciseRoutineBrowser
+            key={mode}
             mode={mode}
             disabledIds={disabledIds}
             isItemDisabled={isItemDisabled}

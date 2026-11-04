@@ -186,3 +186,103 @@ export function findLastExerciseSet(
   return null;
 }
 
+export interface LastExerciseRecord {
+  /** 歷史總組數 (至少為 1) */
+  setsCount: number;
+  /** 歷史各組重量列表 (長度為 setsCount，單位 kg) */
+  weights: number[];
+  /** 最新有效基準重量 (單位 kg) */
+  lastWeight: number;
+}
+
+/**
+ * 尋找指定動作在歷史訓練日誌中的最近一次完整記錄（包含組數與各組重量）
+ *
+ * 排序優先級：
+ * 1. 日期降序 (YYYY-MM-DD)
+ * 2. 建立時間降序 (createdAt)
+ *
+ * 匹配條件：
+ * - exerciseId 相同，或 exerciseName 不區分大小寫相同
+ * - 且該動作群組包含組數 (sets.length > 0)
+ */
+export function findLastExerciseRecord(
+  logs: WorkoutLog[] | null | undefined,
+  exerciseId: string,
+  exerciseName?: string
+): LastExerciseRecord | null {
+  if (!Array.isArray(logs) || logs.length === 0) {
+    return null;
+  }
+
+  const cleanExerciseId = exerciseId ? exerciseId.trim() : '';
+  const cleanExerciseName = exerciseName ? exerciseName.trim().toLowerCase() : '';
+
+  if (!cleanExerciseId && !cleanExerciseName) {
+    return null;
+  }
+
+  // 1. 依日期降序，同日依建立時間降序排序
+  const sortedLogs = [...logs].sort((a, b) => {
+    const dateComp = (b.date || '').localeCompare(a.date || '');
+    if (dateComp !== 0) return dateComp;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
+
+  // 2. 依序遍歷排好序的日誌
+  for (const log of sortedLogs) {
+    if (!Array.isArray(log.exercises)) continue;
+
+    for (let g = log.exercises.length - 1; g >= 0; g--) {
+      const exGroup = log.exercises[g];
+      if (!exGroup) continue;
+
+      const idMatch = cleanExerciseId && exGroup.exerciseId === cleanExerciseId;
+      const nameMatch =
+        cleanExerciseName &&
+        typeof exGroup.exerciseName === 'string' &&
+        exGroup.exerciseName.trim().toLowerCase() === cleanExerciseName;
+
+      if (idMatch || nameMatch) {
+        if (Array.isArray(exGroup.sets) && exGroup.sets.length > 0) {
+          // 找出該群組中最後一筆 weight > 0 的有效基準重量
+          let fallbackWeight = 20;
+          for (let s = exGroup.sets.length - 1; s >= 0; s--) {
+            const set = exGroup.sets[s];
+            if (
+              set &&
+              typeof set.weight === 'number' &&
+              !isNaN(set.weight) &&
+              set.weight > 0
+            ) {
+              fallbackWeight = set.weight;
+              break;
+            }
+          }
+
+          // 提取各組重量，若某組 <= 0 或無重量則以 fallbackWeight 補充
+          const weights = exGroup.sets.map((set) => {
+            if (
+              set &&
+              typeof set.weight === 'number' &&
+              !isNaN(set.weight) &&
+              set.weight > 0
+            ) {
+              return set.weight;
+            }
+            return fallbackWeight;
+          });
+
+          return {
+            setsCount: Math.max(1, exGroup.sets.length),
+            weights,
+            lastWeight: fallbackWeight,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
