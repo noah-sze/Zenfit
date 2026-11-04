@@ -55,7 +55,6 @@ export function RoutineFormDialog({
   }, [allExercises]);
 
   const [name, setName] = useState('');
-  const [notes, setNotes] = useState('');
   const [items, setItems] = useState<RoutineExerciseItem[]>([]);
 
   // 動作挑選器狀態
@@ -73,12 +72,10 @@ export function RoutineFormDialog({
     if (initialData) {
       // oxlint-disable-next-line react/set-state-in-effect
       setName(initialData.name || '');
-      setNotes(initialData.notes || '');
       setItems(initialData.exercises || []);
     } else {
       // oxlint-disable-next-line react/set-state-in-effect
       setName('');
-      setNotes('');
       setItems([]);
     }
   }, [open, initialData]);
@@ -209,7 +206,6 @@ export function RoutineFormDialog({
     try {
       await onSubmit({
         name: trimmed,
-        notes: notes.trim() || undefined,
         exercises: items,
       });
       onOpenChange(false);
@@ -232,8 +228,8 @@ export function RoutineFormDialog({
             className="pt-3.5 space-y-3 font-mono text-xs select-none"
           >
             <div className="space-y-3">
-              {/* 表單段落 1: 名稱與備註 (Usage List 佈局) */}
-              <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-xs shrink-0">
+              {/* 表單段落 1: 名稱 (Usage List 佈局) */}
+              <div className="border border-border rounded-lg overflow-hidden bg-card text-xs shrink-0">
                 {/* 組合名稱 */}
                 <div className="min-h-11 py-2 px-3 sm:px-4 flex items-center justify-between gap-3 bg-card">
                   <span className="text-muted-foreground whitespace-nowrap shrink-0">
@@ -248,23 +244,6 @@ export function RoutineFormDialog({
                       placeholder={t('workout.routineNamePlaceholder', '例如：推力日 A')}
                       className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-foreground font-medium focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 w-36"
                       maxLength={50}
-                    />
-                  </div>
-                </div>
-
-                {/* 備註 (選填) */}
-                <div className="min-h-11 py-2 px-3 sm:px-4 flex items-center justify-between gap-3 bg-card">
-                  <span className="text-muted-foreground whitespace-nowrap shrink-0">
-                    {t('common.notes')}
-                  </span>
-                  <div className="flex-1 flex justify-end">
-                    <input
-                      type="text"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder={t('common.optional', '選填')}
-                      className="h-7 px-3 rounded-full border border-border/80 bg-background text-right text-xs font-sans text-foreground font-medium focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100 w-36"
-                      maxLength={100}
                     />
                   </div>
                 </div>

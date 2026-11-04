@@ -69,12 +69,6 @@ export const RoutineSelectDialog = memo(function RoutineSelectDialog({
                         <span>
                           {totalSets} {t('workout.set', '組')}
                         </span>
-                        {routine.notes && (
-                          <>
-                            <span className="text-border">·</span>
-                            <span className="truncate max-w-[120px]">{routine.notes}</span>
-                          </>
-                        )}
                       </div>
                     </div>
 

@@ -5,6 +5,7 @@
       "slogan": "Minimalist, privacy-first diet & fitness tracking PWA"
     },
     "common": {
+      "all": "All",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "save": "Save",
@@ -337,7 +338,13 @@
       "atLeastOneExercise": "At least one exercise",
       "routineNamePlaceholder": "e.g. Push Day A",
       "searchExercisePlaceholder": "Search exercise name or notes...",
-      "routineExerciseList": "Exercises",
+      "routineExerciseList": "Exercise Composition",
+      "exerciseAlreadyInRoutine": "Exercise already in routine",
+      "routineHasLogs": "Has workout logs",
+      "totalExercises": "Total Exercises",
+      "exerciseUnit": "exercises",
+      "muscleUnit": "muscles",
+      "coveredMusclesShort": "Covered Muscles",
       "exerciseHasLogs": "Has workout logs",
       "exerciseHasRoutines": "Referenced by routines",
       "equipmentHasExercises": "Referenced by exercises",

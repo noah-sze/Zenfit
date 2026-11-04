@@ -138,60 +138,62 @@ export function ExerciseSelectDialog({
           </div>
         </DialogHeader>
 
-        {/* 搜尋欄位 */}
-        <div className="relative shrink-0 pt-1 pb-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('common.search')}
-            className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/30 border border-border/80 font-mono text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors"
-          />
-        </div>
+        {/* 搜尋、過濾標籤列與動作清單主容器 (單一子節點接收 flex-1，避免多個同級元素全被 flex-1 拉伸) */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden space-y-2 pt-1">
+          {/* 搜尋欄位 */}
+          <div className="relative shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('common.search')}
+              className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/30 border border-border/80 font-mono text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors"
+            />
+          </div>
 
-        {/* 部位過濾標籤橫向滑動列 */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 pb-2.5">
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('selection');
-              setSelectedMuscleFilter('all');
-            }}
-            className={cn(
-              'h-6 px-2.5 rounded-full border text-[11px] font-mono transition-colors cursor-pointer shrink-0 select-none active:scale-95',
-              selectedMuscleFilter === 'all'
-                ? 'bg-foreground text-background border-foreground font-semibold'
-                : 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40'
-            )}
-          >
-            {t('common.all')}
-          </button>
-          {MAJOR_MUSCLE_GROUPS.map((group) => {
-            const isSelected = selectedMuscleFilter === group.id;
-            return (
-              <button
-                key={group.id}
-                type="button"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setSelectedMuscleFilter(group.id);
-                }}
-                className={cn(
-                  'h-6 px-2.5 rounded-full border text-[11px] font-mono transition-colors cursor-pointer shrink-0 select-none active:scale-95',
-                  isSelected
-                    ? 'bg-foreground text-background border-foreground font-semibold'
-                    : 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40'
-                )}
-              >
-                {t(`workout.${group.id}`)}
-              </button>
-            );
-          })}
-        </div>
+          {/* 部位過濾標籤橫向滑動列 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 pb-1">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('selection');
+                setSelectedMuscleFilter('all');
+              }}
+              className={cn(
+                'h-6 px-2.5 rounded-full border text-[11px] font-mono transition-colors cursor-pointer shrink-0 select-none active:scale-95',
+                selectedMuscleFilter === 'all'
+                  ? 'bg-foreground text-background border-foreground font-semibold'
+                  : 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40'
+              )}
+            >
+              {t('common.all', '全部')}
+            </button>
+            {MAJOR_MUSCLE_GROUPS.map((group) => {
+              const isSelected = selectedMuscleFilter === group.id;
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setSelectedMuscleFilter(group.id);
+                  }}
+                  className={cn(
+                    'h-6 px-2.5 rounded-full border text-[11px] font-mono transition-colors cursor-pointer shrink-0 select-none active:scale-95',
+                    isSelected
+                      ? 'bg-foreground text-background border-foreground font-semibold'
+                      : 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40'
+                  )}
+                >
+                  {t(`workout.${group.id}`)}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* 動作清單 */}
-        <div className="flex-1 min-h-0 overflow-y-auto border border-border rounded-lg bg-card divide-y divide-border">
+          {/* 動作清單 */}
+          <div className="flex-1 min-h-0 overflow-y-auto border border-border rounded-lg bg-card divide-y divide-border">
           {filteredExercises.length === 0 ? (
             <div className="py-8 text-center text-xs font-mono text-muted-foreground">
               {t('workout.noExercises')}
@@ -236,6 +238,7 @@ export function ExerciseSelectDialog({
               );
             })
           )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
