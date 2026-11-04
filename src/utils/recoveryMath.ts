@@ -2,17 +2,19 @@ import type { DetailedMuscle, WorkoutLog, Exercise, MuscleRole } from '@/types';
 import { DEFAULT_EXERCISES } from '@/services/db/defaultData';
 
 /**
- * 大肌群基準完全超補償恢復時長：72 小時
+ * 大肌群基準完全超補償恢復天數：3 天 (72 小時)
  */
+export const LARGE_MUSCLE_RECOVERY_DAYS = 3;
 export const LARGE_MUSCLE_RECOVERY_HOURS = 72;
 
 /**
- * 小肌群基準完全超補償恢復時長：48 小時
+ * 小肌群基準完全超補償恢復天數：2 天 (48 小時)
  */
+export const SMALL_MUSCLE_RECOVERY_DAYS = 2;
 export const SMALL_MUSCLE_RECOVERY_HOURS = 48;
 
 /**
- * 大肌群集合（神經徵召高、肌肉體積大、微創傷修復需 48～72h）
+ * 大肌群集合（神經徵召高、肌肉體積大、微創傷修復需 3 天 / 72h）
  */
 export const LARGE_MUSCLES: ReadonlySet<DetailedMuscle> = new Set([
   'upper_chest',
@@ -26,7 +28,7 @@ export const LARGE_MUSCLES: ReadonlySet<DetailedMuscle> = new Set([
 ]);
 
 /**
- * 小肌群集合（慢肌比例高或單關節孤立，修復需 24～48h）
+ * 小肌群集合（慢肌比例高或單關節孤立，修復需 2 天 / 48h）
  */
 export const SMALL_MUSCLES: ReadonlySet<DetailedMuscle> = new Set([
   'front_delts',
@@ -41,7 +43,14 @@ export const SMALL_MUSCLES: ReadonlySet<DetailedMuscle> = new Set([
 ]);
 
 /**
- * 獲取肌群的標準恢復窗口（小時）
+ * 獲取肌群的標準恢復窗口（天數）
+ */
+export function getMuscleRecoveryWindowDays(muscle: DetailedMuscle): number {
+  return LARGE_MUSCLES.has(muscle) ? LARGE_MUSCLE_RECOVERY_DAYS : SMALL_MUSCLE_RECOVERY_DAYS;
+}
+
+/**
+ * 獲取肌群的標準恢復窗口（小時，向下相容）
  */
 export function getMuscleRecoveryWindowHours(muscle: DetailedMuscle): number {
   return LARGE_MUSCLES.has(muscle) ? LARGE_MUSCLE_RECOVERY_HOURS : SMALL_MUSCLE_RECOVERY_HOURS;
@@ -71,7 +80,9 @@ export type MuscleRecoveryTier = 'acute' | 'recovering' | 'near_ready' | 'recove
 
 export interface DetailedMuscleRecoveryStatus {
   muscle: DetailedMuscle;
-  /** 距基準時間經過的小時數，若從未刺激過為 null */
+  /** 距基準日期經過的天數，若從未刺激過為 null */
+  daysElapsed: number | null;
+  /** 距基準時間經過的小時數 (向下相容) */
   hoursElapsed: number | null;
   /** 估算恢復百分比 (0 ~ 100%)，從未刺激過為 100% */
   recoveryPercent: number;
@@ -79,7 +90,9 @@ export interface DetailedMuscleRecoveryStatus {
   intensity: number;
   /** 客觀生理階段階梯 */
   tier: MuscleRecoveryTier;
-  /** 最近一次受刺激的時間戳 (ms) */
+  /** 最近一次受刺激的日期字串 (YYYY-MM-DD) */
+  lastTrainedDate: string | null;
+  /** 最近一次受刺激的時間戳 (ms) (向下相容) */
   lastTrainedTimestamp: number | null;
   /** 最近刺激該肌群的動作名稱 */
   lastExerciseName: string | null;
@@ -90,16 +103,20 @@ export interface BodyRecoverySummary {
   muscles: Record<DetailedMuscle, DetailedMuscleRecoveryStatus>;
   /** 用於 BodyHighlighter 的純強度映射表 (0 ~ 100) */
   intensityMap: Partial<Record<DetailedMuscle, number>>;
-  /** 處於急性修復期 (0~24h) 的肌群數量 */
+  /** 處於急性修復期 (Day 0) 的肌群數量 */
   acuteCount: number;
   /** 處於恢復期 (未滿 100% 恢復) 的肌群總數 */
   recoveringCount: number;
-  /** 最近一次訓練距今小時數 */
+  /** 最近一次訓練距今經過的天數 */
+  latestWorkoutDaysElapsed: number | null;
+  /** 最近一次訓練距今小時數 (向下相容) */
   latestWorkoutHoursElapsed: number | null;
 }
 
 export interface CalculateRecoveryOptions {
-  /** 參考基準時間戳 (預設為 Date.now()) */
+  /** 參考基準日期 (YYYY-MM-DD)，預設為今日 */
+  referenceDate?: string;
+  /** 參考基準時間戳 (向下相容) */
   referenceTimestamp?: number;
   /** 動作字典 Map */
   exerciseMap?: Map<string, Exercise>;
@@ -126,14 +143,28 @@ const ALL_DETAILED_MUSCLES: DetailedMuscle[] = [
 ];
 
 /**
- * 解析訓練記錄的時間戳
+ * 計算兩日期之間的客觀跨日天數差 (Δdays = referenceDate - targetDate)
+ * 使用 Date.UTC 杜絕任何時區與夏令時間誤差
+ */
+export function calculateDaysBetweenDates(targetDate: string, referenceDate: string): number {
+  if (!targetDate || !referenceDate) return 0;
+  const [tY, tM, tD] = targetDate.split('-').map(Number);
+  const [rY, rM, rD] = referenceDate.split('-').map(Number);
+  if (!tY || !tM || !tD || !rY || !rM || !rD) return 0;
+  const utcTarget = Date.UTC(tY, tM - 1, tD);
+  const utcRef = Date.UTC(rY, rM - 1, rD);
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.floor((utcRef - utcTarget) / msPerDay);
+}
+
+/**
+ * 解析訓練記錄的時間戳 (向下相容工具)
  */
 export function getWorkoutLogTimestamp(log: WorkoutLog): number {
   if (log.createdAt && !isNaN(log.createdAt) && log.createdAt > 0) {
     return log.createdAt;
   }
-  // 若僅有 YYYY-MM-DD，解析為當天正午 12:00:00，避免時區偏移
-  const [year, month, day] = log.date.split('-').map(Number);
+  const [year, month, day] = (log.date || '').split('-').map(Number);
   if (year && month && day) {
     return new Date(year, month - 1, day, 12, 0, 0).getTime();
   }
@@ -141,50 +172,60 @@ export function getWorkoutLogTimestamp(log: WorkoutLog): number {
 }
 
 /**
- * 計算單一肌群的時間衰減強度
- * @param hoursElapsed 經過小時數
- * @param windowHours 基準完全恢復窗口（如 72h 或 48h）
+ * 計算單一肌群的天數衰減強度 (方案 A：客觀日曆天數模型)
+ * @param daysElapsed 經過天數
+ * @param windowDays 基準完全恢復窗口（如大肌群 3 天、小肌群 2 天）
  * @param stimulusWeight 刺激權重 (0 ~ 1.0)
  * @returns intensity: 0 ~ 100
  */
 export function calculateDecayedIntensity(
-  hoursElapsed: number,
-  windowHours: number,
+  daysElapsed: number,
+  windowDays: number,
   stimulusWeight: number = 1.0
 ): number {
-  if (hoursElapsed < 0) return 100;
-  if (hoursElapsed >= windowHours) return 0;
+  if (daysElapsed < 0) return 100;
+  if (daysElapsed >= windowDays) return 0;
 
   // 線性衰減並結合刺激角色權重
-  const rawRatio = (1 - hoursElapsed / windowHours) * stimulusWeight;
+  const rawRatio = (1 - daysElapsed / windowDays) * stimulusWeight;
   const clamped = Math.max(0, Math.min(1, rawRatio));
   return Math.round(clamped * 100);
 }
 
 /**
- * 依據經過時數判定階梯
+ * 依據經過天數判定階梯 (方案 A)
  */
-export function getRecoveryTier(hoursElapsed: number | null, windowHours: number): MuscleRecoveryTier {
-  if (hoursElapsed === null || hoursElapsed >= windowHours) {
+export function getRecoveryTier(
+  daysElapsed: number | null,
+  windowDays: number
+): MuscleRecoveryTier {
+  if (daysElapsed === null || daysElapsed >= windowDays) {
     return 'recovered';
   }
-  if (hoursElapsed <= 24) {
+  if (daysElapsed === 0) {
     return 'acute';
   }
-  if (hoursElapsed <= 48) {
+  if (daysElapsed === 1) {
     return 'recovering';
   }
   return 'near_ready';
 }
 
 /**
- * 全域計算全身肌群恢復狀態核心純函數
+ * 全域計算全身肌群恢復狀態核心純函數 (方案 A：純粹客觀日曆天數模型)
  */
 export function calculateBodyRecovery(
   logs: WorkoutLog[],
   options?: CalculateRecoveryOptions
 ): BodyRecoverySummary {
-  const refTime = options?.referenceTimestamp ?? Date.now();
+  const todayStr = (() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  })();
+  const refDate = options?.referenceDate || todayStr;
   const exerciseMap = options?.exerciseMap;
 
   // 建立名稱索引快取
@@ -195,26 +236,28 @@ export function calculateBodyRecovery(
     }
   }
 
-  // 1. 初始化各肌群空狀態
+  // 1. 初始化各肌群記錄快取
   const muscleLatestMap = new Map<
     DetailedMuscle,
-    { timestamp: number; weight: number; exerciseName: string }
+    {
+      date: string;
+      daysElapsed: number;
+      weight: number;
+      exerciseName: string;
+      timestamp: number;
+    }
   >();
 
-  let latestWorkoutTime: number | null = null;
+  let minWorkoutDaysElapsed: number | null = null;
 
-  // 2. 遍歷歷史訓練記錄（按時間降序或比對最新）
+  // 2. 遍歷歷史訓練記錄
   for (const log of logs) {
-    let logTime = getWorkoutLogTimestamp(log);
-    if (logTime <= 0) continue;
+    if (!log.date) continue;
+    const daysElapsed = calculateDaysBetweenDates(log.date, refDate);
+    if (daysElapsed < 0) continue; // 未來記錄不計入
 
-    // 若時間戳微大於參考時間 (如剛在當下添加的記錄)，收斂為當前基準時間
-    if (logTime > refTime) {
-      logTime = refTime;
-    }
-
-    if (latestWorkoutTime === null || logTime > latestWorkoutTime) {
-      latestWorkoutTime = logTime;
+    if (minWorkoutDaysElapsed === null || daysElapsed < minWorkoutDaysElapsed) {
+      minWorkoutDaysElapsed = daysElapsed;
     }
 
     // 遍歷所有動作組
@@ -254,11 +297,18 @@ export function calculateBodyRecovery(
         if (weight <= 0) continue;
 
         const existing = muscleLatestMap.get(muscle);
-        if (!existing || logTime > existing.timestamp) {
+        // 若尚未記錄，或當前 log 更近（daysElapsed 較小），或同日但刺激權重更高
+        if (
+          !existing ||
+          daysElapsed < existing.daysElapsed ||
+          (daysElapsed === existing.daysElapsed && weight > existing.weight)
+        ) {
           muscleLatestMap.set(muscle, {
-            timestamp: logTime,
+            date: log.date,
+            daysElapsed,
             weight,
             exerciseName: exName,
+            timestamp: log.createdAt || 0,
           });
         }
       }
@@ -273,16 +323,18 @@ export function calculateBodyRecovery(
 
   for (const muscle of ALL_DETAILED_MUSCLES) {
     const latest = muscleLatestMap.get(muscle);
-    const windowHours = getMuscleRecoveryWindowHours(muscle);
+    const windowDays = getMuscleRecoveryWindowDays(muscle);
 
     if (!latest) {
       // 未曾訓練過：完全就緒
       musclesResult[muscle] = {
         muscle,
+        daysElapsed: null,
         hoursElapsed: null,
         recoveryPercent: 100,
         intensity: 0,
         tier: 'recovered',
+        lastTrainedDate: null,
         lastTrainedTimestamp: null,
         lastExerciseName: null,
       };
@@ -290,37 +342,34 @@ export function calculateBodyRecovery(
       continue;
     }
 
-    const diffMs = Math.max(0, refTime - latest.timestamp);
-    const hoursElapsed = Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10;
-    const intensity = calculateDecayedIntensity(hoursElapsed, windowHours, latest.weight);
+    const daysElapsed = latest.daysElapsed;
+    const intensity = calculateDecayedIntensity(daysElapsed, windowDays, latest.weight);
     const recoveryPercent = Math.min(100, Math.max(0, Math.round((1 - intensity / 100) * 100)));
-    const tier = getRecoveryTier(hoursElapsed, windowHours);
+    const tier = getRecoveryTier(daysElapsed, windowDays);
 
     if (tier === 'acute') acuteCount++;
     if (tier !== 'recovered') recoveringCount++;
 
     musclesResult[muscle] = {
       muscle,
-      hoursElapsed,
+      daysElapsed,
+      hoursElapsed: daysElapsed * 24,
       recoveryPercent,
       intensity,
       tier,
+      lastTrainedDate: latest.date,
       lastTrainedTimestamp: latest.timestamp,
       lastExerciseName: latest.exerciseName,
     };
     intensityMap[muscle] = intensity;
   }
 
-  const latestWorkoutHoursElapsed =
-    latestWorkoutTime !== null
-      ? Math.round((Math.max(0, refTime - latestWorkoutTime) / (1000 * 60 * 60)) * 10) / 10
-      : null;
-
   return {
     muscles: musclesResult,
     intensityMap,
     acuteCount,
     recoveringCount,
-    latestWorkoutHoursElapsed,
+    latestWorkoutDaysElapsed: minWorkoutDaysElapsed,
+    latestWorkoutHoursElapsed: minWorkoutDaysElapsed !== null ? minWorkoutDaysElapsed * 24 : null,
   };
 }

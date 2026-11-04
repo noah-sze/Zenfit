@@ -216,6 +216,7 @@ export interface WorkoutLog {
   id: string;
   date: string; // YYYY-MM-DD
   title: string;
+  routineId?: string;
   startTime?: number;
   endTime?: number;
   durationMinutes?: number;
