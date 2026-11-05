@@ -602,6 +602,7 @@ export default function Workout() {
         setCount={stats.setCount}
         totalVolume={stats.totalVolume}
         weightUnit={bodyWeightUnit}
+        showTitle={false}
       />
 
       {/* 訓練記錄列表：支援組合動作收納大卡片與單一動作獨立展示 */}

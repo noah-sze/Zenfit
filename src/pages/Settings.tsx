@@ -19,6 +19,7 @@ import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { useBodyPreferences } from '@/hooks/useBodyPreferences';
 import type {
   UnitSystemPreset,
   BodyWeightUnit,
@@ -32,6 +33,7 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { preferences, updatePreset, updatePreference } = useUnitPreferences();
+  const { bodyPreferences, updateBodyPreference } = useBodyPreferences();
   const confirm = useConfirm();
   const { activeFoods, archivedFoods } = useFoods();
   const { activeRecipes, archivedRecipes } = useRecipes();
@@ -177,13 +179,18 @@ export default function Settings() {
 
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
+    <div className="w-full max-w-xl mx-auto space-y-7 pb-20 select-none">
       {/* 區塊 1：偏好設定 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('settings.preferencesSection')}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.preferencesSection')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.preferencesDesc')}
+          </p>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 外觀主題 */}
           <div className="usage-row">
             <span className="text-sm font-normal text-foreground">{t('settings.theme')}</span>
@@ -227,14 +234,22 @@ export default function Settings() {
             </Select>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 區塊：度量衡單位偏好 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('settings.unitsSection')}
+      {/* 分割線 */}
+      <div className="border-t border-border/60" />
+
+      {/* 區塊 2：度量衡單位偏好 */}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.unitsSection')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.unitsDesc')}
+          </p>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 制式模板 */}
           <div className="usage-row">
             <span className="text-sm font-normal text-foreground">{t('settings.unitPreset')}</span>
@@ -386,15 +401,97 @@ export default function Settings() {
             </Select>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 區塊 2：飲食資料管理 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('settings.dietSection')}
+      {/* 分割線 */}
+      <div className="border-t border-border/60" />
+
+      {/* 區塊 3：體態指標追蹤與忽略設定 */}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.bodyTrackingSection', '體態指標')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.bodyTrackingDesc', '自訂需記錄或忽略的圍度範圍')}
+          </p>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          {/* 食材與食譜合一入口 */}
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          {/* 1. 胸腰臀 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.torsoCircumference', '胸腰臀')}
+            </span>
+            <Select
+              value={bodyPreferences.ignoreTorsoCircumferences ? 'ignore' : 'track'}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updateBodyPreference('ignoreTorsoCircumferences', v === 'ignore');
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {bodyPreferences.ignoreTorsoCircumferences
+                    ? t('settings.ignore', '忽略')
+                    : t('settings.track', '記錄')}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="track">{t('settings.track', '記錄')}</SelectItem>
+                <SelectItem value="ignore">{t('settings.ignore', '忽略')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 2. 手臂、大腿圍 */}
+          <div className="usage-row">
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.limbCircumference', '手臂、大腿圍')}
+            </span>
+            <Select
+              value={bodyPreferences.ignoreLimbCircumferences ? 'ignore' : 'track'}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                updateBodyPreference('ignoreLimbCircumferences', v === 'ignore');
+              }}
+            >
+              <SelectTrigger
+                size="custom"
+                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                <SelectValue className="flex-none text-right">
+                  {bodyPreferences.ignoreLimbCircumferences
+                    ? t('settings.ignore', '忽略')
+                    : t('settings.track', '記錄')}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="min-w-28">
+                <SelectItem value="track">{t('settings.track', '記錄')}</SelectItem>
+                <SelectItem value="ignore">{t('settings.ignore', '忽略')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      {/* 分割線 */}
+      <div className="border-t border-border/60" />
+
+      {/* 區塊 3：自訂資料庫管理 (飲食庫 + 訓練庫) */}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.databaseSection')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.databaseDesc')}
+          </p>
+        </div>
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          {/* 飲食資料管理 */}
           <Link
             to="/settings/foods"
             className="usage-row cursor-pointer group"
@@ -418,16 +515,8 @@ export default function Settings() {
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
             </div>
           </Link>
-        </div>
-      </div>
 
-      {/* 區塊 3：訓練資料管理 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('settings.workoutSection')}
-        </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          {/* 訓練資料管理合一入口 */}
+          {/* 訓練資料管理 */}
           <Link
             to="/settings/exercises"
             className="usage-row cursor-pointer group"
@@ -454,14 +543,22 @@ export default function Settings() {
             </div>
           </Link>
         </div>
-      </div>
+      </section>
+
+      {/* 分割線 */}
+      <div className="border-t border-border/60" />
 
       {/* 區塊 4：資料與儲存 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('settings.dataVaultSection')}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.dataVaultSection')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.dataVaultDesc')}
+          </p>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 匯出資料備份 */}
           <div
             onClick={handleExportJson}
@@ -490,21 +587,27 @@ export default function Settings() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
+      {/* 分割線 */}
+      <div className="border-t border-border/60" />
 
       {/* 區塊 5：危險操作 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-destructive/80 px-1 mb-2">
-          {t('settings.dangerZoneSection')}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-destructive font-mono">
+            {t('settings.dangerZoneSection')}
+          </h2>
+          <p className="text-[11px] text-destructive/70 font-mono leading-relaxed">
+            {t('settings.dangerZoneDesc')}
+          </p>
         </div>
-        <div className="border border-destructive/25 rounded-lg overflow-hidden bg-card">
+        <div className="sm:col-span-8 border border-destructive/25 rounded-lg overflow-hidden bg-card">
           {/* 清除所有本地資料 */}
           <div
             onClick={handleClearData}
             className="h-12 px-4 flex items-center justify-between hover:bg-destructive-subtle transition-colors cursor-pointer group"
           >
-
             <span className="text-sm font-normal text-destructive">
               {t('settings.clearData')}
             </span>
@@ -514,9 +617,9 @@ export default function Settings() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 頁尾版本標記 (完全復刻 Zenance) */}
+      {/* 頁尾版本標記 */}
       <div className="pt-4 text-center font-mono text-xs text-muted-foreground/50">
         Zenfit v1.0.0
       </div>
