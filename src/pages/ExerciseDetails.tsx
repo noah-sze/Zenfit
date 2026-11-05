@@ -280,7 +280,7 @@ export default function ExerciseDetails() {
               variant="ghost"
               size="icon"
               onClick={handleToggleArchive}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={exercise.isArchived ? t('common.restore') : t('common.archive')}
               aria-label={exercise.isArchived ? t('common.restore') : t('common.archive')}
             >
@@ -296,7 +296,7 @@ export default function ExerciseDetails() {
               variant="ghost"
               size="icon"
               onClick={() => setIsEditOpen(true)}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={t('common.edit')}
               aria-label={t('common.edit')}
             >
@@ -562,7 +562,7 @@ export default function ExerciseDetails() {
               <Link
                 key={routine.id}
                 to={`/settings/routines/${routine.id}`}
-                className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors group cursor-pointer"
+                className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <Layers className="size-4 text-muted-foreground" />

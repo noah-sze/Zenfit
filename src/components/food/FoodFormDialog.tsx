@@ -620,7 +620,7 @@ export function FoodFormDialog({
                   <SelectTrigger
                     size="custom"
                     iconClassName="size-3 text-muted-foreground/60"
-                    className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-sans text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95"
+                    className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-sans text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95"
                   >
                     <SelectValue className="font-bold text-foreground">
                       {t(`diet.foodCategory.${category}`)}
@@ -650,7 +650,7 @@ export function FoodFormDialog({
                   type="button"
                   onClick={(e) => openKeypad('serving', e.currentTarget)}
                   className={cn(
-                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
                     servingSize ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
@@ -718,7 +718,7 @@ export function FoodFormDialog({
                   {t('diet.perLabelBasis')}
                 </span>
                 {basisMode === 'serving' ? (
-                  <div className="h-7 px-3 rounded-full border border-border/50 bg-muted/40 font-mono text-xs flex items-center gap-1.5 text-muted-foreground select-none">
+                  <div className="h-7 px-3 rounded-full border border-border/50 bg-hover font-mono text-xs flex items-center gap-1.5 text-muted-foreground select-none">
                     {renderAmountValue(servingSize, "text-foreground/75")}
                     <span className="text-xs text-muted-foreground">{servingUnit}</span>
                   </div>
@@ -727,7 +727,7 @@ export function FoodFormDialog({
                     type="button"
                     onClick={(e) => openKeypad('basis', e.currentTarget)}
                     className={cn(
-                      "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                      "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
                       basisSize ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
@@ -745,7 +745,7 @@ export function FoodFormDialog({
                   type="button"
                   onClick={(e) => openKeypad('calories', e.currentTarget)}
                   className={cn(
-                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
                     calories ? "text-calories" : "text-muted-foreground"
                   )}
                 >
@@ -762,7 +762,7 @@ export function FoodFormDialog({
                   type="button"
                   onClick={(e) => openKeypad('carbs', e.currentTarget)}
                   className={cn(
-                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
                     carbs ? "text-carbs" : "text-muted-foreground"
                   )}
                 >
@@ -779,7 +779,7 @@ export function FoodFormDialog({
                   type="button"
                   onClick={(e) => openKeypad('protein', e.currentTarget)}
                   className={cn(
-                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
                     protein ? "text-protein" : "text-muted-foreground"
                   )}
                 >
@@ -796,7 +796,7 @@ export function FoodFormDialog({
                   type="button"
                   onClick={(e) => openKeypad('fat', e.currentTarget)}
                   className={cn(
-                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
+                    "h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 select-none",
                     fat ? "text-fat" : "text-muted-foreground"
                   )}
                 >

@@ -23,11 +23,14 @@ export function useBodyMetrics(date: string) {
 
   const recentHistory = [...(allMetrics || [])].reverse();
 
-  // 計算平滑趨勢點
+  // 計算平滑趨勢點 (全量時序)
   const trendPoints: SmoothedWeightPoint[] = allMetrics ? calculateWeightTrend(allMetrics) : [];
-  const currentTrendPoint = trendPoints.length > 0 ? trendPoints[trendPoints.length - 1] : null;
+
+  // 截止至當前選定日期 (date) 為止的歷史平滑點
+  const pointsUpToDate = trendPoints.filter((p) => p.date <= date);
+  const currentTrendPoint = pointsUpToDate.length > 0 ? pointsUpToDate[pointsUpToDate.length - 1] : null;
   const currentTrendWeight = currentTrendPoint ? currentTrendPoint.trendWeight : null;
-  const weeklyRate = calculateWeeklyChangeRate(trendPoints);
+  const weeklyRate = calculateWeeklyChangeRate(pointsUpToDate);
 
   const saveMetric = async (updates: Partial<Omit<BodyMetric, 'id' | 'date' | 'createdAt' | 'updatedAt'>>) => {
     const existing = await db.body_metrics.where('date').equals(date).first();

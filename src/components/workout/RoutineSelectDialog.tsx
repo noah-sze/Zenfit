@@ -55,7 +55,7 @@ export const RoutineSelectDialog = memo(function RoutineSelectDialog({
                   <div
                     key={routine.id}
                     onClick={() => handleSelect(routine)}
-                    className="min-h-12 py-2 px-3 sm:px-4 flex items-center justify-between gap-3 bg-card hover:bg-muted/40 transition-colors cursor-pointer"
+                    className="min-h-12 py-2 px-3 sm:px-4 flex items-center justify-between gap-3 bg-card hover:bg-hover transition-colors cursor-pointer"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-medium text-foreground truncate">

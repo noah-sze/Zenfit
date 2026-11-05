@@ -288,7 +288,7 @@ export default function RoutineDetails() {
               variant="ghost"
               size="icon"
               onClick={handleToggleArchive}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={routine.isArchived ? t('common.restore') : t('common.archive')}
               aria-label={routine.isArchived ? t('common.restore') : t('common.archive')}
             >
@@ -304,7 +304,7 @@ export default function RoutineDetails() {
               variant="ghost"
               size="icon"
               onClick={() => setIsEditOpen(true)}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={t('common.edit')}
               aria-label={t('common.edit')}
             >
@@ -522,7 +522,7 @@ export default function RoutineDetails() {
               triggerHaptic('selection');
               setIsPickerOpen(true);
             }}
-            className="h-6 px-2.5 rounded-full border border-border/80 bg-card hover:bg-muted/60 font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer text-muted-foreground hover:text-foreground active:scale-95 select-none"
+            className="h-6 px-2.5 rounded-full border border-border/80 bg-card hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer text-muted-foreground hover:text-foreground active:scale-95 select-none"
           >
             <Plus className="size-3 text-muted-foreground" />
             <span>{t('workout.addExercise')}</span>
@@ -545,7 +545,7 @@ export default function RoutineDetails() {
                 <Link
                   key={idx}
                   to={ex ? `/settings/exercises/${ex.id}` : '#'}
-                  className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer group"
+                  className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
                 >
                   <div className="space-y-1 min-w-0 flex-1 pr-2">
                     <div className="flex items-center gap-2">

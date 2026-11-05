@@ -249,7 +249,7 @@ export default function CategoryDetails() {
               variant="ghost"
               size="icon"
               onClick={handleToggleArchive}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={food.isArchived ? t('common.restore') : t('common.archive')}
               aria-label={food.isArchived ? t('common.restore') : t('common.archive')}
             >
@@ -265,7 +265,7 @@ export default function CategoryDetails() {
               variant="ghost"
               size="icon"
               onClick={() => setIsEditOpen(true)}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={t('common.edit')}
               aria-label={t('common.edit')}
             >

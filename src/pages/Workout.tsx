@@ -450,7 +450,7 @@ export default function Workout() {
             {group.exerciseId ? (
               <Link
                 to={`/settings/exercises/${group.exerciseId}`}
-                className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-muted/80 transition-all cursor-pointer select-none shrink-0"
+                className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none shrink-0"
               >{group.exerciseName}</Link>
             ) : (
               <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">{group.exerciseName}</span>
@@ -473,7 +473,7 @@ export default function Workout() {
             <button
               type="button"
               onClick={() => handleDeleteExercise(workout, exIdx)}
-              className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+              className="size-7 flex items-center justify-center rounded-full hover:bg-hover text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
               title={t('common.delete', '刪除')}
               aria-label={t('common.delete', '刪除')}
             >
@@ -514,7 +514,7 @@ export default function Workout() {
                         e.currentTarget
                       )
                     }
-                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
                   >
                     <span className="font-bold text-foreground">
                       {displayWeight}
@@ -543,7 +543,7 @@ export default function Workout() {
                         e.currentTarget
                       )
                     }
-                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
                   >
                     <span
                       className={
@@ -566,7 +566,7 @@ export default function Workout() {
                   <button
                     type="button"
                     onClick={() => handleDeleteSet(workout, exIdx, setIdx)}
-                    className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer ml-1"
+                    className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-hover transition-colors cursor-pointer ml-1"
                     title={t('common.delete')}
                     aria-label={t('common.delete')}
                   >
@@ -640,7 +640,7 @@ export default function Workout() {
                         {workout.routineId ? (
                           <Link
                             to={`/settings/routines/${workout.routineId}`}
-                            className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-muted/80 transition-all cursor-pointer select-none shrink-0"
+                            className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none shrink-0"
                           >{workout.title}</Link>
                         ) : (
                           <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">{workout.title}</span>
@@ -667,7 +667,7 @@ export default function Workout() {
                         <button
                           type="button"
                           onClick={() => handleOpenAddExercise(workout.id)}
-                          className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                          className="size-7 flex items-center justify-center rounded-full hover:bg-hover text-foreground transition-colors cursor-pointer"
                           title={t('workout.addExercise', '新增動作')}
                           aria-label={t('workout.addExercise', '新增動作')}
                         >
@@ -677,7 +677,7 @@ export default function Workout() {
                         <button
                           type="button"
                           onClick={() => handleDeleteWorkout(workout)}
-                          className="size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                          className="size-7 flex items-center justify-center rounded-full hover:bg-hover text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                           title={t('common.delete', '刪除')}
                           aria-label={t('common.delete', '刪除')}
                         >
@@ -705,7 +705,7 @@ export default function Workout() {
             <button
               type="button"
               onClick={() => handleOpenAddExercise(undefined, 'exercises')}
-              className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+              className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
             >
               <Plus className="size-3.5 text-muted-foreground" />
               <span>{t('workout.addSingleExercise', '新增單個動作')}</span>
@@ -713,7 +713,7 @@ export default function Workout() {
             <button
               type="button"
               onClick={() => handleOpenAddExercise(undefined, 'routines')}
-              className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+              className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
             >
               <Plus className="size-3.5 text-muted-foreground" />
               <span>{t('workout.addRoutineWorkout', '新增組合動作')}</span>
@@ -739,7 +739,7 @@ export default function Workout() {
               <button
                 type="button"
                 onClick={() => handleOpenAddExercise(undefined, 'exercises')}
-                className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+                className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
               >
                 <Plus className="size-3.5 text-muted-foreground" />
                 <span>{t('workout.addSingleExercise', '新增單個動作')}</span>
@@ -747,7 +747,7 @@ export default function Workout() {
               <button
                 type="button"
                 onClick={() => handleOpenAddExercise(undefined, 'routines')}
-                className="flex items-center justify-center gap-1.5 hover:bg-muted/50 text-foreground transition-colors cursor-pointer active:bg-muted/80"
+                className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
               >
                 <Plus className="size-3.5 text-muted-foreground" />
                 <span>{t('workout.addRoutineWorkout', '新增組合動作')}</span>

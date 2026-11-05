@@ -158,4 +158,62 @@ export function calculateTDEE(bmr: number, activityLevel = 1.55): number {
   return Math.round(bmr * activityLevel);
 }
 
+/**
+ * 依據週體重變化速率 (kg/週) 透過熱力學等效公式估算每日能量差額 (kcal/天)
+ * 1 kg 人體組織淨變動約等效於 7,700 kcal
+ * 能量差 = (週變動率 * 7700) / 7 = 週變動率 * 1100
+ */
+export function calculateDailyEnergyGap(weeklyRateKgPerWeek: number | null): number | null {
+  if (weeklyRateKgPerWeek === null || isNaN(weeklyRateKgPerWeek)) return null;
+  return Math.round(weeklyRateKgPerWeek * 1100);
+}
+
+/**
+ * 計算胸腰倒三角幾何比值 (Chest-to-Waist Ratio / V-Taper)
+ */
+export function calculateVTaperRatio(
+  chestCm: number | null | undefined,
+  waistCm: number | null | undefined
+): number | null {
+  if (!chestCm || !waistCm || chestCm <= 0 || waistCm <= 0) return null;
+  return Math.round((chestCm / waistCm) * 100) / 100;
+}
+
+/**
+ * 計算客觀腰臀幾何比值 (Waist-to-Hip Ratio / WHR)
+ */
+export function calculateWHRatio(
+  waistCm: number | null | undefined,
+  hipsCm: number | null | undefined
+): number | null {
+  if (!waistCm || !hipsCm || waistCm <= 0 || hipsCm <= 0) return null;
+  return Math.round((waistCm / hipsCm) * 100) / 100;
+}
+
+/**
+ * 計算客觀脂肪總重 (Fat Mass, kg)
+ * 脂肪總重 = 體重 * (體脂率 / 100)
+ */
+export function calculateFatMass(
+  weightKg: number | null | undefined,
+  bodyFatPercent: number | null | undefined
+): number | null {
+  if (!weightKg || !bodyFatPercent || weightKg <= 0 || bodyFatPercent <= 0) return null;
+  return Math.round(weightKg * (bodyFatPercent / 100) * 10) / 10;
+}
+
+/**
+ * 計算去脂體重指數 (Fat-Free Mass Index, FFMI)
+ * FFMI = 去脂體重 (kg) / (身高 (m))^2
+ */
+export function calculateFFMI(
+  leanMassKg: number | null | undefined,
+  heightCm: number | null | undefined
+): number | null {
+  if (!leanMassKg || !heightCm || leanMassKg <= 0 || heightCm <= 0) return null;
+  const heightM = heightCm / 100;
+  return Math.round((leanMassKg / (heightM * heightM)) * 10) / 10;
+}
+
+
 

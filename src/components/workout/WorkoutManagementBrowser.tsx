@@ -400,7 +400,7 @@ export function WorkoutManagementBrowser({
                     'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
                     !showExerciseArchived && selectedMuscleGroup === 'all'
                       ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                   )}
                 >
                   {t('common.all', '全部')}
@@ -431,7 +431,7 @@ export function WorkoutManagementBrowser({
                         'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
                         isSelected
                           ? 'bg-foreground text-background'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                       )}
                     >
                       {t(`workout.${group.id}`)}
@@ -459,7 +459,7 @@ export function WorkoutManagementBrowser({
                     'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
                     showExerciseArchived
                       ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                   )}
                 >
                   {t('common.archived', '已歸檔')}
@@ -482,7 +482,7 @@ export function WorkoutManagementBrowser({
                   'inline-flex items-center rounded-full text-xs font-mono transition-all border',
                   selectedEquipment !== 'all'
                     ? 'bg-foreground text-background border-foreground font-medium'
-                    : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
+                    : 'border-border/60 bg-hover text-muted-foreground hover:text-foreground hover:border-border'
                 )}
               >
                 <DropdownMenu>
@@ -574,7 +574,7 @@ export function WorkoutManagementBrowser({
                     <div
                       key={exercise.id}
                       onClick={() => onExerciseClick?.(exercise)}
-                      className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer group"
+                      className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
                     >
                       <div className="space-y-1 pr-2 min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -677,7 +677,7 @@ export function WorkoutManagementBrowser({
                   'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
                   !showRoutineArchived
                     ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                 )}
               >
                 {t('common.all', '全部')}
@@ -702,7 +702,7 @@ export function WorkoutManagementBrowser({
                   'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
                   showRoutineArchived
                     ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                 )}
               >
                 {t('common.archived', '已歸檔')}
@@ -742,7 +742,7 @@ export function WorkoutManagementBrowser({
                     <div
                       key={routine.id}
                       onClick={() => onRoutineClick?.(routine)}
-                      className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer group"
+                      className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
                     >
                       <div className="space-y-1 pr-2 min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -850,7 +850,7 @@ export function WorkoutManagementBrowser({
                   'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
                   !showEquipmentArchived
                     ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                 )}
               >
                 {t('common.all', '全部')}
@@ -875,7 +875,7 @@ export function WorkoutManagementBrowser({
                   'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
                   showEquipmentArchived
                     ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                 )}
               >
                 {t('common.archived', '已歸檔')}
@@ -916,7 +916,7 @@ export function WorkoutManagementBrowser({
                     <div
                       key={eq.id}
                       onClick={() => onEditEquipment?.(eq)}
-                      className="p-3.5 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer group"
+                      className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
                     >
                       <div className="space-y-1 pr-2 min-w-0 flex-1">
                         <div className="flex items-center gap-2">

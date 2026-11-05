@@ -401,13 +401,55 @@
     "body": {
       "title": "Body",
       "weight": "Weight",
-      "trendWeight": "Trend Weight",
+      "trendWeight": "Smoothed Weight",
       "rawWeight": "Scale Weight",
+      "recordedWeight": "Logged Weight",
       "weeklyRate": "7-Day Rate",
       "bodyFat": "Body Fat %",
       "leanBodyMass": "Lean Body Mass",
       "muscleMass": "Muscle Mass",
       "bmi": "BMI",
+      "ffmi": "FFMI",
+      "fatMass": "Fat Mass",
+      "metricExplanations": {
+        "formula": "Formula",
+        "trendWeight": {
+          "title": "Smoothed Weight",
+          "formula": "7-Day Smoothing (Today 15% + History 85%)",
+          "desc": "Daily scale weight fluctuates by 1~2 kg due to water retention, sodium, and digestion. By blending 85% historical baseline with 15% daily weight over a 7-day window, it filters out transient noise to objectively track true changes in fat and muscle tissue."
+        },
+        "bmi": {
+          "title": "BMI",
+          "formula": "Weight (kg) / Height (m)²",
+          "desc": "Standard WHO metric assessing weight-to-height ratio to objectively quantify baseline body dimensions."
+        },
+        "ffmi": {
+          "title": "FFMI",
+          "formula": "Lean Mass (kg) / Height (m)²",
+          "desc": "Fat-free mass index excluding adipose tissue to measure muscular development relative to height."
+        },
+        "leanBodyMass": {
+          "title": "Lean Body Mass",
+          "formula": "Weight × (1 - Body Fat %)",
+          "desc": "Total body mass excluding all adipose tissue, encompassing bones, skeletal muscles, internal organs, and fluids."
+        },
+        "fatMass": {
+          "title": "Fat Mass",
+          "formula": "Weight × Body Fat %",
+          "desc": "Absolute physical weight of total subcutaneous and visceral adipose tissue in the body."
+        },
+        "vTaperRatio": {
+          "title": "Chest-to-Waist Ratio",
+          "formula": "Chest / Waist",
+          "desc": "Objective geometric ratio evaluating upper body V-taper development, quantifying chest and lat proportion relative to the waist."
+        },
+        "whRatio": {
+          "title": "Waist-to-Hip Ratio",
+          "formula": "Waist / Hip",
+          "desc": "Standard objective metric established by the WHO assessing body fat distribution and trunk proportions, measuring waist circumference relative to the hips."
+        }
+      },
+      "referenceValue": "Estimate",
       "waist": "Waist",
       "hips": "Hips",
       "chest": "Chest",
@@ -428,11 +470,36 @@
       "recordWeight": "Log Today's Weight",
       "recordWeightHint": "Log today's weight to update trend metrics",
       "weightLog": "Weight Log",
+      "todayData": "Today's Data",
+      "lastRecord": "Last Record",
       "metricsTitle": "Body Metrics",
       "weightHistory": "Weight History",
       "recentDays": "Past {{count}} Days",
       "unloggedEstimate": "Unlogged · Trend Estimate",
-      "confirmDeleteTodayWeight": "Delete today's weight log?"
+      "unlogged": "Unlogged",
+      "moreCircumferences": "More Circumferences (Arms, Thighs)",
+      "confirmDeleteTodayWeight": "Delete today's weight log?",
+      "physiologicalDynamics": "Physiological Dynamics & Energy",
+      "rollingWindowHint": "EWMA · 7-Day Window",
+      "dailyEnergyGap": "Daily Energy Gap",
+      "energyGapHint": "Estimated · 7D Rate",
+      "bodyProportions": "Body Measurements",
+      "vTaperRatio": "Chest-to-Waist Ratio",
+      "vTaperHint": "V-Taper Ratio",
+      "whRatio": "Waist-to-Hip Ratio",
+      "whRatioHint": "Morphology Index",
+      "bodyPart": "Body Part",
+      "currentValue": "Current",
+      "thirtyDaysChange": "30D Change",
+      "trendLine": "Smoothed Weight",
+      "dailyWeight": "Daily Record",
+      "recordsCount": "{{count}} Records",
+      "trendLineExplanation": {
+        "title": "Smoothed Weight",
+        "algorithm": "7-Day Smoothing (Today 15% + History 85%)",
+        "desc": "Daily scale weight fluctuates by 1~2 kg due to water retention, sodium, and digestion. By blending 85% historical baseline with 15% daily weight over a 7-day window, it filters out transient noise to objectively track true changes in fat and muscle tissue."
+      },
+      "noSufficientData": "Insufficient time-series data"
     },
     "profileSettings": {
       "title": "Profile",

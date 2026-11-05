@@ -528,7 +528,7 @@ export default function Diet() {
                         triggerHaptic('selection');
                         setEditingFoodLog(item);
                       }}
-                      className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer"
                     >
                       {/* 左側：品名與份量熱量副標 */}
                       <div className="flex-1 min-w-0 pr-3 select-none">

@@ -229,13 +229,13 @@ export default function ProfileSettings() {
         </div>
         <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* BMI */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="h-12 px-4 flex items-center justify-between hover:bg-hover transition-colors">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.bmi')}
             </span>
             <div className="flex items-center gap-2 text-sm font-mono">
               <span className="font-medium text-foreground">
-                {currentBMI > 0 ? currentBMI : '--'}
+                {currentBMI > 0 ? currentBMI : '-'}
               </span>
               <span className="text-xs text-muted-foreground">
                 {t('profileSettings.whoStandard')}
@@ -244,13 +244,13 @@ export default function ProfileSettings() {
           </div>
 
           {/* 靜態基礎代謝 BMR */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
+          <div className="h-12 px-4 flex items-center justify-between hover:bg-hover transition-colors">
             <span className="text-sm font-normal text-foreground">
               {t('profileSettings.bmr')}
             </span>
             <div className="flex items-center gap-2 text-sm font-mono">
               <span className="font-medium text-foreground">
-                {currentBMR > 0 ? currentBMR : '--'}
+                {currentBMR > 0 ? currentBMR : '-'}
               </span>
               <span className="text-xs text-muted-foreground">
                 kcal/day
