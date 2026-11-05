@@ -340,7 +340,7 @@ export function ExerciseRoutineBrowser({
                       'p-3 flex items-center justify-between transition-colors select-none',
                       isDisabled
                         ? 'opacity-35 cursor-not-allowed bg-muted/10'
-                        : 'hover:bg-muted/30 active:bg-muted/50 cursor-pointer'
+                        : 'hover:bg-hover active:bg-muted/50 cursor-pointer'
                     )}
                   >
                     <div className="space-y-1 pr-2 min-w-0 flex-1">
@@ -422,7 +422,7 @@ export function ExerciseRoutineBrowser({
                       'min-h-12 py-2.5 px-3 sm:px-4 flex items-center justify-between gap-3 transition-colors select-none',
                       isDisabled
                         ? 'opacity-35 cursor-not-allowed bg-muted/10'
-                        : 'hover:bg-muted/30 active:bg-muted/50 cursor-pointer bg-card'
+                        : 'hover:bg-hover active:bg-muted/50 cursor-pointer bg-card'
                     )}
                   >
                     <div className="min-w-0 flex-1">

@@ -286,7 +286,7 @@ export function RoutineFormDialog({
                   <button
                     type="button"
                     onClick={handleOpenAddExercise}
-                    className="h-6 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-[11px] flex items-center gap-1 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
+                    className="h-6 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-[11px] flex items-center gap-1 transition-colors cursor-pointer text-foreground active:scale-95 select-none"
                   >
                     <Plus className="size-3 text-muted-foreground" />
                     <span>{t('workout.addExercise')}</span>
@@ -339,7 +339,7 @@ export function RoutineFormDialog({
                             <button
                               type="button"
                               onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
-                              className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
+                              className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                             >
                               <span className="font-bold text-foreground">
                                 {item.defaultSets}
@@ -353,7 +353,7 @@ export function RoutineFormDialog({
                             <button
                               type="button"
                               onClick={() => handleRemoveItem(index)}
-                              className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer shrink-0"
+                              className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-hover transition-colors cursor-pointer shrink-0"
                               title={t('common.delete')}
                               aria-label={t('common.delete')}
                             >

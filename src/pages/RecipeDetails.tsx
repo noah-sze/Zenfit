@@ -364,7 +364,7 @@ export default function RecipeDetails() {
               variant="ghost"
               size="icon"
               onClick={handleToggleArchive}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={recipe.isArchived ? t('common.restore') : t('common.archive')}
               aria-label={recipe.isArchived ? t('common.restore') : t('common.archive')}
             >
@@ -380,7 +380,7 @@ export default function RecipeDetails() {
               variant="ghost"
               size="icon"
               onClick={() => setIsEditDialogOpen(true)}
-              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer"
               title={t('common.edit')}
               aria-label={t('common.edit')}
             >
@@ -580,7 +580,7 @@ export default function RecipeDetails() {
           <button
             type="button"
             onClick={handleOpenAddIngredient}
-            className="h-6 px-2.5 rounded-full border border-border/80 bg-card hover:bg-muted/60 font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer text-muted-foreground hover:text-foreground active:scale-95 select-none"
+            className="h-6 px-2.5 rounded-full border border-border/80 bg-card hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer text-muted-foreground hover:text-foreground active:scale-95 select-none"
           >
             <Plus className="size-3 text-muted-foreground" />
             <span>{t('diet.addIngredient')}</span>
@@ -612,7 +612,7 @@ export default function RecipeDetails() {
                     navigate(`/settings/foods/${food.id}`);
                   }
                 }}
-                className="min-h-16 py-2.5 px-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer group"
+                className="min-h-16 py-2.5 px-4 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
               >
                 <div className="flex-1 min-w-0 pr-3 select-none">
                   <div className="flex items-center gap-1.5 truncate">

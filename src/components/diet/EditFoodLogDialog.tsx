@@ -251,7 +251,7 @@ export function EditFoodLogDialog({
                 <button
                   type="button"
                   onClick={(e) => handleOpenKeypad(e.currentTarget)}
-                  className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                  className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
                   title={t('diet.clickToEnter', '點擊輸入數值')}
                 >
                   <span className="font-bold text-foreground">

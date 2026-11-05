@@ -401,13 +401,55 @@
     "body": {
       "title": "體態",
       "weight": "體重",
-      "trendWeight": "平滑趨勢體重",
+      "trendWeight": "平滑體重",
       "rawWeight": "過磅體重",
+      "recordedWeight": "記錄體重",
       "weeklyRate": "7 天變動速率",
       "bodyFat": "體脂率",
       "leanBodyMass": "去脂體重",
       "muscleMass": "肌肉量",
       "bmi": "BMI 指數",
+      "ffmi": "FFMI",
+      "fatMass": "脂肪總重",
+      "metricExplanations": {
+        "formula": "計算公式",
+        "trendWeight": {
+          "title": "平滑體重",
+          "formula": "7 天生理平滑 (今日 15% + 歷史 85%)",
+          "desc": "單日過磅易受水分滯留、高鈉飲食與胃腸殘留干擾，常產生 1~2 kg 的短期浮動。以 85% 歷史基底搭配 15% 當日過磅進行 7 天平滑避震，過濾日常噪音，真實呈現脂肪與肌肉組織的長期客觀走向。"
+        },
+        "bmi": {
+          "title": "BMI 指數",
+          "formula": "體重 (kg) / 身高 (m)²",
+          "desc": "世界衛生組織評估身高與體重比例的基礎通用指標，客觀量化整體身形常數。"
+        },
+        "ffmi": {
+          "title": "FFMI 去脂指數",
+          "formula": "去脂體重 (kg) / 身高 (m)²",
+          "desc": "排除體脂干擾之瘦體重密度指標，精準衡量骨骼肌相對身高的客觀發達程度。"
+        },
+        "leanBodyMass": {
+          "title": "去脂體重",
+          "formula": "體重 × (1 - 體脂率)",
+          "desc": "身體扣除全部脂肪組織後的淨質量，涵蓋骨骼、肌肉、內臟組織與水分。"
+        },
+        "fatMass": {
+          "title": "脂肪總重",
+          "formula": "體重 × 體脂率",
+          "desc": "體內皮下脂肪與內臟脂肪的客觀物理總量，直接呈現脂肪儲備現狀。"
+        },
+        "vTaperRatio": {
+          "title": "胸腰比",
+          "formula": "胸圍 / 腰圍",
+          "desc": "評估上半身倒三角形態發達程度的客觀幾何常數。以胸部最大圍度除以腰部最細圍度，量化背闊肌與胸部相對腰腹的幾何輪廓。"
+        },
+        "whRatio": {
+          "title": "腰臀比",
+          "formula": "腰圍 / 臀圍",
+          "desc": "世界衛生組織衡量身體脂肪分佈與體態幾何比例的客觀指標。以腰圍除以臀圍，量化軀幹中心向骨盆過渡的生理形態。"
+        }
+      },
+      "referenceValue": "參考值",
       "waist": "腰圍",
       "hips": "臀圍",
       "chest": "胸圍",
@@ -428,11 +470,36 @@
       "recordWeight": "記錄今日過磅",
       "recordWeightHint": "記錄今日過磅以更新體態趨勢與各項指標",
       "weightLog": "過磅記錄",
+      "todayData": "今日數據",
+      "lastRecord": "上次記錄",
       "metricsTitle": "體態指標",
       "weightHistory": "過磅流水",
       "recentDays": "最近 {{count}} 天",
       "unloggedEstimate": "無過磅 · 依平滑趨勢估算",
-      "confirmDeleteTodayWeight": "確認刪除今日過磅記錄？"
+      "unlogged": "尚未過磅",
+      "moreCircumferences": "展開更多圍度 (臂圍、腿圍)",
+      "confirmDeleteTodayWeight": "確認刪除今日過磅記錄？",
+      "physiologicalDynamics": "生理動態與能量平衡",
+      "rollingWindowHint": "EWMA · 7 天窗口",
+      "dailyEnergyGap": "每日能量差",
+      "energyGapHint": "推算 · 7 天速率",
+      "bodyProportions": "體型圍度",
+      "vTaperRatio": "胸腰比",
+      "vTaperHint": "倒三角係數",
+      "whRatio": "腰臀比",
+      "whRatioHint": "形態基準",
+      "bodyPart": "部位圍度",
+      "currentValue": "當前數值",
+      "thirtyDaysChange": "30 天變動",
+      "trendLine": "平滑體重",
+      "dailyWeight": "每日記錄",
+      "recordsCount": "{{count}} 筆記錄",
+      "trendLineExplanation": {
+        "title": "平滑體重",
+        "algorithm": "7 天生理平滑 (今日 15% + 歷史 85%)",
+        "desc": "單日過磅易受水分滯留、高鈉飲食與胃腸殘留干擾，常產生 1~2 kg 的短期浮動。以 85% 歷史基底搭配 15% 當日過磅進行 7 天平滑避震，過濾日常噪音，真實呈現脂肪與肌肉組織的長期客觀走向。"
+      },
+      "noSufficientData": "暫無足夠時序數據"
     },
     "profileSettings": {
       "title": "基本資料",

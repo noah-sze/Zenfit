@@ -350,7 +350,7 @@ export function DietPlanModal({
               {/* 3 欄並列：碳水化合物 (C) ➔ 蛋白質 (P) ➔ 脂肪 (F) */}
               <div className="grid grid-cols-3 divide-x divide-border">
                 {/* 1. 碳水化合物 (C) */}
-                <div className="p-2.5 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-muted/10 transition-colors">
+                <div className="p-2.5 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-hover/10 transition-colors">
                   <span className="text-[11px] font-bold text-carbs tracking-tight truncate max-w-full">
                     {t('dietPlan.carbs', '碳水化合物')}
                   </span>
@@ -359,7 +359,7 @@ export function DietPlanModal({
                     <button
                       type="button"
                       onClick={(e) => handleOpenKeypad('carbs', e.currentTarget)}
-                      className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
+                      className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
                       title={t('diet.clickToEnter', '點擊輸入數值')}
                     >
                       <span className="font-bold text-foreground">{carbsPercent}</span>
@@ -381,7 +381,7 @@ export function DietPlanModal({
                 </div>
 
                 {/* 2. 蛋白質 (P) */}
-                <div className="p-2.5 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-muted/10 transition-colors">
+                <div className="p-2.5 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-hover/10 transition-colors">
                   <span className="text-[11px] font-bold text-protein tracking-tight truncate max-w-full">
                     {t('dietPlan.protein', '蛋白質')}
                   </span>
@@ -390,7 +390,7 @@ export function DietPlanModal({
                     <button
                       type="button"
                       onClick={(e) => handleOpenKeypad('protein', e.currentTarget)}
-                      className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
+                      className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
                       title={t('diet.clickToEnter', '點擊輸入數值')}
                     >
                       <span className="font-bold text-foreground">{proteinPercent}</span>
@@ -412,7 +412,7 @@ export function DietPlanModal({
                 </div>
 
                 {/* 3. 脂肪 (F) */}
-                <div className="p-2.5 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-muted/10 transition-colors">
+                <div className="p-2.5 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-hover/10 transition-colors">
                   <span className="text-[11px] font-bold text-fat tracking-tight truncate max-w-full">
                     {t('dietPlan.fat', '脂肪')}
                   </span>
@@ -421,7 +421,7 @@ export function DietPlanModal({
                     <button
                       type="button"
                       onClick={(e) => handleOpenKeypad('fat', e.currentTarget)}
-                      className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
+                      className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
                       title={t('diet.clickToEnter', '點擊輸入數值')}
                     >
                       <span className="font-bold text-foreground">{fatPercent}</span>

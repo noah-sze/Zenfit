@@ -73,7 +73,7 @@ export const FoodListItem = React.memo(function FoodListItem({
           ? 'opacity-40 select-none bg-muted/10 cursor-not-allowed'
           : selected
           ? 'bg-muted/70 ring-1 ring-inset ring-foreground/25 cursor-pointer'
-          : 'group hover:bg-muted/30 cursor-pointer',
+          : 'group hover:bg-hover cursor-pointer',
         className
       )}
     >

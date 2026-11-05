@@ -31,6 +31,8 @@ trigger: always_on
   - 數字、重量、次數與統計數據嚴格使用等寬字體 (`font-mono`)，確保對齊與精確感。
   - 大標題使用緊湊的字距 (`tracking-tight`)，小標籤（如 Category, Date, Macros 等提示）使用大寫寬字距 (`uppercase tracking-widest text-xs`)。
   - **中英數排版規則**：所有中文文案（包含 i18n 翻譯檔）都必須嚴格遵循「在中文與英文/數字之間插入一個半形空格」的排版規範（Pangu Spacing），例如「使用 Vite 開發」而不是「使用Vite開發」。
+- **無數據佔位符規範 (Empty Value Dash)**：全站所有無數據、尚未記錄或空值佔位符，**嚴格統一使用半形單破折號「`-`」**，絕對禁止使用雙破折號「`--`」或全形破折號「`—`」。
+- **全域統一懸停回饋規範 (Global Unified Hover Standard)**：卡片槽位、表單清單條目（Usage List）、可點擊交互區塊的懸停背景色，**嚴格統一採用全域 Token `hover:bg-hover`（`--hover: rgba(0, 0, 0, 0.025)` / 暗色 `rgba(255, 255, 255, 0.038)`）**。**絕對禁止**在卡片或列表中使用 `hover:bg-muted/40` 等微弱至不可見的隨意透明度（在白底上會產生近乎 100% 白色的 `#fdfdfd`，失去交互回饋感知）。
 
 ## 2. 佈局與元件標準 (Layout & Components)
 - **網格卡片 (Grid Cards)**：數據模組採用獨立的並列卡片設計，無陰影，僅靠邊框與內部留白界定範圍。
@@ -131,6 +133,7 @@ trigger: always_on
 20. **不得任意顛倒三大營養素（三大元素）順序**：全應用程式（包含輸入框、清單方塊矩陣、標籤選單、表頭統計、預覽看板與副標文本等所有介面呈現）嚴格固定三大元素順序為「碳水化合物、蛋白質、脂肪（Carbs, Protein, Fat / C, P, F）」，嚴禁任何顛倒為 P/C/F、P/F/C 或混亂無序的排版。
 21. **不得在標準數據彈窗上私自手寫覆蓋幾何尺寸與邊距類名**：嚴禁私寫 `sm:max-w-md`、`p-6`、`w-full` 等破壞 300px 與 16px 緊湊規格的類名，所有資料與管理彈窗必須透過 `<PrecisionDialogContent>` 或 `size="standard"` 自動繼承單一真理源。
 22. **不得在標準精密彈窗中手寫重複的標頭 JSX**：一律透過 `<PrecisionDialogContent>` 的 `title/onSubmit/onClose/form` props 或 `<DialogPrecisionHeader>` 統一輸出，杜絕在各業務頁面複製貼上 30 餘行標頭 JSX。
+23. **不得使用雙破折號「`--`」作為無數據佔位符**：全站無數據、未記錄或空值佔位符，一律嚴格使用半形單破折號「`-`」，嚴禁任何「`--`」或「`—`」。
 
 ## 6. 食物數據與原子計量規範 (Food Data & Atomic Metric Standards)
 - **原型食材原子化真理源 (Atomic Ingredients as Ground Truth)**：
