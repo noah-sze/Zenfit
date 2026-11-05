@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { calculateIngredientMacros, calculateRecipeTotals } from '@/utils/recipeMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { useBodyPreferences } from '@/hooks/useBodyPreferences';
 import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import {
   formatEnergy,
@@ -54,6 +55,7 @@ export function AddQuickModal() {
     bodyWeightUnit,
     lengthUnit,
   } = useUnitPreferences();
+  const { bodyPreferences } = useBodyPreferences();
 
   const [activeTab, setActiveTab] = useState<'food' | 'workout' | 'metric'>(addModalType);
 
@@ -825,20 +827,22 @@ export function AddQuickModal() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                  {t('body.waist')} ({lengthUnit})
-                </label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={waist}
-                  onChange={(e) => setWaist(e.target.value)}
-                  placeholder={lengthUnit === 'in' ? '如: 30.0' : '如: 78.0'}
-                  className="h-9 text-sm font-mono"
-                />
-              </div>
+            <div className={cn('grid gap-2', !bodyPreferences.ignoreTorsoCircumferences ? 'grid-cols-2' : 'grid-cols-1')}>
+              {!bodyPreferences.ignoreTorsoCircumferences && (
+                <div>
+                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
+                    {t('body.waist')} ({lengthUnit})
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={waist}
+                    onChange={(e) => setWaist(e.target.value)}
+                    placeholder={lengthUnit === 'in' ? '如: 30.0' : '如: 78.0'}
+                    className="h-9 text-sm font-mono"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">

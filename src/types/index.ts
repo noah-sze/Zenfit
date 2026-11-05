@@ -311,4 +311,17 @@ export const DEFAULT_UNIT_PREFERENCES: UnitPreferences = {
   energy: 'kcal',
 };
 
+// 體態追蹤與忽略偏好 (Body Metric Tracking & Ignore Preferences)
+export interface BodyPreferences {
+  /** 忽略「胸腰臀」（胸圍、腰圍、臀圍與軀幹幾何比例） */
+  ignoreTorsoCircumferences: boolean;
+  /** 忽略「手臂、大腿圍」（四肢部位圍度） */
+  ignoreLimbCircumferences: boolean;
+}
+
+export const DEFAULT_BODY_PREFERENCES: BodyPreferences = {
+  ignoreTorsoCircumferences: false,
+  ignoreLimbCircumferences: false,
+};
+
 

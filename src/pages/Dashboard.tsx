@@ -1,313 +1,308 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyMetrics } from '@/hooks/useBodyMetrics';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { SpringNumber } from '@/components/ui/SpringNumber';
-import { Plus, Flame, Droplet, Dumbbell, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useBodyRecovery } from '@/hooks/useBodyRecovery';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
-import { formatEnergy, convertFoodVolume, FL_OZ_TO_ML_RATIO } from '@/utils/unitMath';
+import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
+import { ChevronRight } from 'lucide-react';
+import { formatEnergy, convertBodyWeight, kgToLbs } from '@/utils/unitMath';
+import { triggerHaptic } from '@/lib/haptics';
+import { cn } from '@/lib/utils';
+
+function getGreeting(t: TFunction, name: string): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+    return t('dashboard.greetingMorning', { name, defaultValue: `早上好，${name}` });
+  }
+  if (hour >= 12 && hour < 18) {
+    return t('dashboard.greetingAfternoon', { name, defaultValue: `下午好，${name}` });
+  }
+  return t('dashboard.greetingEvening', { name, defaultValue: `晚上好，${name}` });
+}
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedDate, openAddModal } = useAppStore();
-  const { energyUnit, foodVolumeUnit } = useUnitPreferences();
+  const { selectedDate } = useAppStore();
+  const { profile } = useUserProfile();
+  const { energyUnit, bodyWeightUnit } = useUnitPreferences();
 
+  // 1. 體態與體重數據 (與體態頁面機制一致：今日已錄入為正常色，未錄入則調用最後一次歷史值並呈灰色)
+  const { metricToday, recentHistory } = useBodyMetrics(selectedDate);
+  const hasTodayWeight = typeof metricToday?.weight === 'number' && metricToday.weight > 0;
+
+  const lastRecordedWeight = useMemo(() => {
+    const priorHistory = recentHistory.filter((m) => m.date < selectedDate);
+    const candidateHistory = priorHistory.length > 0
+      ? priorHistory
+      : recentHistory.filter((m) => m.date !== selectedDate);
+
+    for (const rec of candidateHistory) {
+      if (typeof rec.weight === 'number' && rec.weight > 0) {
+        return rec.weight;
+      }
+    }
+    return profile.currentWeightKg || null;
+  }, [recentHistory, selectedDate, profile.currentWeightKg]);
+
+  const effectiveWeightKg = hasTodayWeight ? metricToday!.weight! : lastRecordedWeight;
+  const displayWeight = effectiveWeightKg
+    ? convertBodyWeight(effectiveWeightKg, 'kg', bodyWeightUnit)
+    : null;
+
+  // 2. 飲食與熱量統計數據 (復刻飲食界面熱量統計核心計算)
   const { plan: dietPlan } = useDietPlan(selectedDate);
   const { totals } = useFoodLogs(selectedDate);
 
+  const targetCalories = dietPlan.caloriesTarget || 2000;
+  const targetMacros = {
+    carbsGrams: dietPlan.carbsTarget || 220,
+    proteinGrams: dietPlan.proteinTarget || 140,
+    fatGrams: dietPlan.fatTarget || 60,
+  };
+
+  const calorieDiff = targetCalories - totals.calories;
+
+  // 3. 健身與肌群恢復狀態數據
   const { workouts } = useWorkoutLogs(selectedDate);
-  const { metricToday, addWater } = useBodyMetrics(selectedDate);
+  const { recoverySummary } = useBodyRecovery(selectedDate);
 
-  const calorieTarget = dietPlan.caloriesTarget || 2000;
-  const calorieConsumed = totals.calories || 0;
-  const calorieRemaining = Math.max(0, calorieTarget - calorieConsumed);
-  const calorieProgress = Math.min(100, Math.round((calorieConsumed / calorieTarget) * 100));
+  const stats = useMemo(() => {
+    let exerciseCount = 0;
+    let setCount = 0;
+    let totalVolumeKg = 0;
 
-  const displayCalorieTarget = formatEnergy(calorieTarget, energyUnit).value;
-  const displayCalorieConsumed = formatEnergy(calorieConsumed, energyUnit).value;
-  const displayCalorieRemaining = formatEnergy(calorieRemaining, energyUnit).value;
-
-  const proteinTarget = dietPlan.proteinTarget || 140;
-  const proteinConsumed = totals.protein || 0;
-  const proteinProgress = Math.min(100, Math.round((proteinConsumed / proteinTarget) * 100));
-
-  const carbsTarget = dietPlan.carbsTarget || 220;
-  const carbsConsumed = totals.carbs || 0;
-  const carbsProgress = Math.min(100, Math.round((carbsConsumed / carbsTarget) * 100));
-
-  const fatTarget = dietPlan.fatTarget || 60;
-  const fatConsumed = totals.fat || 0;
-  const fatProgress = Math.min(100, Math.round((fatConsumed / fatTarget) * 100));
-
-  const waterTarget = dietPlan.waterMlTarget || 2500;
-  const waterConsumed = metricToday?.waterMl || 0;
-  const waterProgress = Math.min(100, Math.round((waterConsumed / waterTarget) * 100));
-
-  const isFlOz = foodVolumeUnit === 'fl oz';
-  const displayWaterConsumed = isFlOz
-    ? convertFoodVolume(waterConsumed, 'ml', 'fl oz', 1)
-    : waterConsumed;
-  const displayWaterTarget = isFlOz
-    ? convertFoodVolume(waterTarget, 'ml', 'fl oz', 1)
-    : waterTarget;
-
-  // 計算今日訓練總容量與完成組數
-  let totalSetsCount = 0;
-  let completedSetsCount = 0;
-  let totalVolumeKg = 0;
-
-  workouts.forEach((w) => {
-    w.exercises.forEach((ex) => {
-      ex.sets.forEach((s) => {
-        totalSetsCount++;
-        if (s.isCompleted) {
-          completedSetsCount++;
-          totalVolumeKg += (s.weight || 0) * (s.reps || 0);
+    for (const w of workouts) {
+      exerciseCount += (w.exercises || []).length;
+      for (const ex of w.exercises || []) {
+        for (const s of ex.sets || []) {
+          setCount += 1;
+          const weight = s.weight || 0;
+          const reps = s.reps || 0;
+          totalVolumeKg += weight * reps;
         }
-      });
-    });
-  });
+      }
+    }
+
+    const displayVolume =
+      bodyWeightUnit === 'lbs' ? kgToLbs(totalVolumeKg, 0) : totalVolumeKg;
+
+    return {
+      exerciseCount,
+      setCount,
+      totalVolume: displayVolume,
+    };
+  }, [workouts, bodyWeightUnit]);
 
   return (
-    <div className="space-y-4">
-      {/* 核心熱量儀表卡片 */}
-      <Card className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
-        <CardHeader className="pb-2 pt-4 px-4 sm:px-5 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="size-4 sm:size-5 text-foreground" />
-            <CardTitle className="text-xs uppercase font-mono tracking-wider text-muted-foreground">
-              {t('diet.calories')}
-            </CardTitle>
-          </div>
-          <span className="text-xs font-mono text-muted-foreground">
-            {calorieProgress}%
-          </span>
-        </CardHeader>
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20 select-none">
+      {/* ========================================================================= */}
+      {/* 頂部列：問候語 + 今日體重入口卡片 (點擊跳轉「體態界面」) */}
+      {/* ========================================================================= */}
+      <div className="flex items-center justify-between pb-0.5">
+        <h1 className="text-lg sm:text-xl font-medium tracking-tight text-foreground font-sans truncate pr-2">
+          {getGreeting(t, profile.name || 'Noah')}
+        </h1>
 
-        <CardContent className="px-4 sm:px-5 pb-5 space-y-4">
-          <div className="flex items-baseline justify-between">
-            <div>
-              <div className="hero-number flex items-baseline gap-1">
-                <SpringNumber value={displayCalorieRemaining} />
-                <span className="text-xs font-normal text-muted-foreground font-sans">{energyUnit}</span>
-              </div>
-
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t('diet.remaining')}
-              </p>
-            </div>
-
-            <div className="text-right font-mono text-xs space-y-0.5">
-              <div className="text-muted-foreground">
-                {t('diet.consumed')}: <span className="text-foreground font-medium">{displayCalorieConsumed}</span>
-              </div>
-              <div className="text-muted-foreground">
-                {t('diet.target')}: <span className="text-foreground">{displayCalorieTarget}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 單色極簡進度條 */}
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-foreground transition-all duration-500 rounded-full"
-              style={{ width: `${calorieProgress}%` }}
-            />
-          </div>
-
-          {/* 三大營養素 Macros 網格 */}
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60">
-            {/* 蛋白質 */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-protein shrink-0" />
-                  <span className="font-medium text-foreground">{t('diet.protein')}</span>
-                </div>
-                <span className="font-mono text-muted-foreground">{Math.round(proteinConsumed)}g</span>
-              </div>
-              <div className="w-full h-2 bg-protein-subtle rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-protein rounded-full transition-all duration-300"
-                  style={{ width: `${proteinProgress}%` }}
-                />
-              </div>
-              <div className="text-xs font-mono text-muted-foreground">
-                / {proteinTarget}g
-              </div>
-            </div>
-
-            {/* 碳水化合物 */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-carbs shrink-0" />
-                  <span className="font-medium text-foreground">{t('diet.carbs')}</span>
-                </div>
-                <span className="font-mono text-muted-foreground">{Math.round(carbsConsumed)}g</span>
-              </div>
-              <div className="w-full h-2 bg-carbs-subtle rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-carbs rounded-full transition-all duration-300"
-                  style={{ width: `${carbsProgress}%` }}
-                />
-              </div>
-              <div className="text-xs font-mono text-muted-foreground">
-                / {carbsTarget}g
-              </div>
-            </div>
-
-            {/* 脂肪 */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-fat shrink-0" />
-                  <span className="font-medium text-foreground">{t('diet.fat')}</span>
-                </div>
-                <span className="font-mono text-muted-foreground">{Math.round(fatConsumed)}g</span>
-              </div>
-              <div className="w-full h-2 bg-fat-subtle rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-fat rounded-full transition-all duration-300"
-                  style={{ width: `${fatProgress}%` }}
-                />
-              </div>
-              <div className="text-xs font-mono text-muted-foreground">
-                / {fatTarget}g
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 今日訓練與打卡模組 */}
-      <Card className="border border-border bg-card text-card-foreground shadow-none rounded-lg">
-        <CardHeader className="pb-2 pt-4 px-4 sm:px-5 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Dumbbell className="size-4 sm:size-5 text-foreground" />
-            <CardTitle className="text-xs uppercase font-mono tracking-wider text-muted-foreground">
-              {t('workout.title')}
-            </CardTitle>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/workout')}
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
-          >
-            {t('common.more')} <ChevronRight className="size-3.5" />
-          </button>
-        </CardHeader>
-
-        <CardContent className="px-4 sm:px-5 pb-4">
-          {workouts.length > 0 ? (
-            <div className="space-y-3">
-              {workouts.map((w) => (
-                <div
-                  key={w.id}
-                  onClick={() => navigate('/workout')}
-                  className="p-3 bg-muted/40 hover:bg-muted/70 rounded-lg border border-border/50 flex items-center justify-between cursor-pointer transition-colors"
-                >
-                  <div>
-                    <h4 className="text-sm font-medium">{w.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                      {w.exercises.length} {t('settings.exercises')} · {w.exercises.reduce((acc, e) => acc + e.sets.length, 0)} {t('workout.set')}
-                    </p>
-                  </div>
-                  <div className="text-right font-mono text-xs">
-                    <span className="font-medium">{completedSetsCount}</span>
-                    <span className="text-muted-foreground">/{totalSetsCount} {t('workout.completed')}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-4 text-center space-y-2">
-              <p className="text-xs text-muted-foreground">{t('common.noData')}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openAddModal('workout')}
-                className="text-xs h-9 cursor-pointer rounded-lg"
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('light');
+            navigate('/body');
+          }}
+          className="h-8 px-3 rounded-full border border-border bg-card hover:bg-hover active:scale-95 transition-all cursor-pointer font-mono text-xs flex items-center gap-1.5 select-none shrink-0"
+          aria-label={t('body.title', '體態')}
+        >
+          <span className="text-muted-foreground">{t('body.weight', '體重')}</span>
+          {displayWeight !== null ? (
+            <span className="flex items-baseline gap-1">
+              <span
+                className={cn(
+                  'font-normal transition-colors',
+                  hasTodayWeight ? 'text-foreground' : 'text-muted-foreground'
+                )}
               >
-                <Plus className="size-4 mr-1" />
-                {t('workout.newWorkout')}
-              </Button>
-            </div>
+                {displayWeight}
+              </span>
+              <span className="text-muted-foreground font-normal">
+                {bodyWeightUnit}
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground font-normal">-</span>
           )}
-        </CardContent>
-      </Card>
+          <ChevronRight className="size-3.5 text-muted-foreground" />
+        </button>
+      </div>
 
-      {/* 今日飲水量打卡 */}
-      <Card className="border border-border bg-card text-card-foreground shadow-none rounded-lg">
-        <CardHeader className="pb-2 pt-4 px-4 sm:px-5 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Droplet className="size-4 sm:size-5 text-foreground" />
-            <CardTitle className="text-xs uppercase font-mono tracking-wider text-muted-foreground">
-              {t('body.water')}
-            </CardTitle>
-          </div>
-          <span className="text-xs font-mono text-muted-foreground">
-            {displayWaterConsumed} / {displayWaterTarget} {foodVolumeUnit}
-          </span>
-        </CardHeader>
+      {/* ========================================================================= */}
+      {/* 模組 1：熱量統計卡片 (復刻「飲食界面」熱量統計，無活動/目標膠囊，右上角「>」跳轉) */}
+      {/* ========================================================================= */}
+      <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none">
+        {/* 上半部：熱量統計 (Hero Metric) */}
+        <div className="p-4 sm:p-5 relative space-y-3">
+          {/* 頂部列：標題居中，右上角配置「>」膠囊按鈕 */}
+          <div className="relative flex items-center justify-between">
+            {/* 佔位平衡元素保證標題幾何絕對置中 */}
+            <div className="size-6 shrink-0 opacity-0 pointer-events-none" />
 
-        <CardContent className="px-4 sm:px-5 pb-4 space-y-3">
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-foreground rounded-full transition-all duration-300"
-              style={{ width: `${waterProgress}%` }}
-            />
+            <span className="text-xs sm:text-sm font-normal text-muted-foreground select-none">
+              {t('diet.calorieStats', '熱量統計')}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                navigate('/diet');
+              }}
+              className="size-6 rounded-full border border-border/80 bg-muted/20 hover:bg-hover text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+              aria-label={t('nav.diet', '飲食')}
+              title={t('nav.diet', '飲食')}
+            >
+              <ChevronRight className="size-3.5" />
+            </button>
           </div>
 
-          <div className="flex gap-2">
-            {isFlOz ? (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addWater(Math.round(8 * FL_OZ_TO_ML_RATIO))}
-                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
-                >
-                  +8 fl oz
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addWater(Math.round(16 * FL_OZ_TO_ML_RATIO))}
-                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
-                >
-                  +16 fl oz
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addWater(250)}
-                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
-                >
-                  +250 ml
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addWater(500)}
-                  className="flex-1 text-sm h-10 cursor-pointer rounded-lg font-medium"
-                >
-                  +500 ml
-                </Button>
-              </>
-            )}
+          {/* 核心巨型熱量數值 (居中) */}
+          <div className="pt-1 pb-1 text-center">
+            <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
+              <span>{formatEnergy(totals.calories, energyUnit).value.toLocaleString()}</span>
+              <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
+                {energyUnit}
+              </span>
+            </div>
+
+            {/* 客觀差額事實 */}
+            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
+              <span>
+                {calorieDiff >= 0
+                  ? `${t('dietPlan.underBudget', '剩餘')} ${formatEnergy(calorieDiff, energyUnit).value.toLocaleString()} ${energyUnit}`
+                  : `${t('dietPlan.overBudget', '超出')} +${formatEnergy(Math.abs(calorieDiff), energyUnit).value.toLocaleString()} ${energyUnit}`}
+              </span>
+            </div>
+
+            {/* 客觀進度標尺 */}
+            <div className="h-2 w-full max-w-[220px] mx-auto bg-track rounded-full overflow-hidden mt-3">
+              <div
+                className="h-full bg-foreground transition-all duration-300"
+                style={{
+                  width: `${Math.min(100, targetCalories > 0 ? (totals.calories / targetCalories) * 100 : 0)}%`,
+                }}
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* 下半部：三大營養素 (碳水、蛋白質、脂肪) */}
+        <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
+          {/* 1. 碳水化合物 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="text-xs font-medium text-carbs truncate whitespace-nowrap">
+              {t('dietPlan.carbsShort', '碳水')}
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-normal text-foreground">
+                {Math.round(totals.carbs)}g
+              </span>
+              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+                /{targetMacros.carbsGrams}g
+              </span>
+            </div>
+            <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
+              <div
+                className="h-full bg-carbs transition-all duration-300"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    targetMacros.carbsGrams > 0
+                      ? (totals.carbs / targetMacros.carbsGrams) * 100
+                      : 0
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 2. 蛋白質 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="text-xs font-medium text-protein truncate whitespace-nowrap">
+              {t('dietPlan.proteinShort', '蛋白質')}
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-normal text-foreground">
+                {Math.round(totals.protein)}g
+              </span>
+              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+                /{targetMacros.proteinGrams}g
+              </span>
+            </div>
+            <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
+              <div
+                className="h-full bg-protein transition-all duration-300"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    targetMacros.proteinGrams > 0
+                      ? (totals.protein / targetMacros.proteinGrams) * 100
+                      : 0
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 3. 脂肪 */}
+          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+            <div className="text-xs font-medium text-fat truncate whitespace-nowrap">
+              {t('dietPlan.fatShort', '脂肪')}
+            </div>
+            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <span className="font-normal text-foreground">
+                {Math.round(totals.fat)}g
+              </span>
+              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+                /{targetMacros.fatGrams}g
+              </span>
+            </div>
+            <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
+              <div
+                className="h-full bg-fat transition-all duration-300"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    targetMacros.fatGrams > 0
+                      ? (totals.fat / targetMacros.fatGrams) * 100
+                      : 0
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 模組 2：肌群恢復狀態卡片 (右上角「>」跳轉，卡片本體保留肌肉交互) */}
+      {/* ========================================================================= */}
+      <WorkoutRecoveryDashboard
+        recoverySummary={recoverySummary}
+        exerciseCount={stats.exerciseCount}
+        setCount={stats.setCount}
+        totalVolume={stats.totalVolume}
+        weightUnit={bodyWeightUnit}
+        onNavigate={() => {
+          triggerHaptic('light');
+          navigate('/workout');
+        }}
+      />
     </div>
   );
 }

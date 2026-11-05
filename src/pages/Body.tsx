@@ -19,7 +19,8 @@ import {
 } from '@/utils/weightMath';
 import { convertBodyWeight, cmToIn, inToCm, lbsToKg } from '@/utils/unitMath';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
-import { Trash2 } from 'lucide-react';
+import { useBodyPreferences } from '@/hooks/useBodyPreferences';
+import { Trash2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BodyMetric } from '@/types';
 
@@ -55,6 +56,7 @@ export default function Body() {
   const { selectedDate } = useAppStore();
   const { profile, updateProfile } = useUserProfile();
   const { bodyWeightUnit, lengthUnit } = useUnitPreferences();
+  const { bodyPreferences } = useBodyPreferences();
   const confirm = useConfirm();
 
   const {
@@ -110,13 +112,17 @@ export default function Body() {
     let count = 0;
     if (typeof metricToday.weight === 'number' && metricToday.weight > 0) count++;
     if (typeof metricToday.bodyFat === 'number' && metricToday.bodyFat > 0) count++;
-    if (typeof metricToday.waistCm === 'number' && metricToday.waistCm > 0) count++;
-    if (typeof metricToday.hipsCm === 'number' && metricToday.hipsCm > 0) count++;
-    if (typeof metricToday.chestCm === 'number' && metricToday.chestCm > 0) count++;
-    if (typeof metricToday.armsCm === 'number' && metricToday.armsCm > 0) count++;
-    if (typeof metricToday.thighsCm === 'number' && metricToday.thighsCm > 0) count++;
+    if (!bodyPreferences.ignoreTorsoCircumferences) {
+      if (typeof metricToday.waistCm === 'number' && metricToday.waistCm > 0) count++;
+      if (typeof metricToday.hipsCm === 'number' && metricToday.hipsCm > 0) count++;
+      if (typeof metricToday.chestCm === 'number' && metricToday.chestCm > 0) count++;
+    }
+    if (!bodyPreferences.ignoreLimbCircumferences) {
+      if (typeof metricToday.armsCm === 'number' && metricToday.armsCm > 0) count++;
+      if (typeof metricToday.thighsCm === 'number' && metricToday.thighsCm > 0) count++;
+    }
     return count;
-  }, [metricToday]);
+  }, [metricToday, bodyPreferences.ignoreTorsoCircumferences, bodyPreferences.ignoreLimbCircumferences]);
 
   const hasAnyTodayLog = loggedMetricsCount > 0;
 
@@ -281,6 +287,10 @@ export default function Body() {
     }
   };
 
+  // 是否忽略所有圍度（胸腰臀與四肢圍度均被忽略時，今日數據卡片切換為方案 C 極簡一體化微膠囊嵌合結構）
+  const isAllCircumferencesIgnored =
+    bodyPreferences.ignoreTorsoCircumferences && bodyPreferences.ignoreLimbCircumferences;
+
   // 30 天圍度演進變動量推算
   const circumferenceChanges = useMemo(() => {
     const thirtyDaysAgoStr = format(subDays(parseISO(selectedDate), 30), 'yyyy-MM-dd');
@@ -385,28 +395,36 @@ export default function Body() {
   return (
     <div className="w-full max-w-xl mx-auto space-y-4 pb-20 select-none">
       {/* ========================================================================= */}
-      {/* 模組 1：過磅記錄卡片 (100% 採用與體態指標相同的大卡片雙層結構) */}
+      {/* 模組 1：過磅記錄卡片 (方案 C：全圍度忽略時之一體化微膠囊嵌合結構) */}
       {/* ========================================================================= */}
-      <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
-        {/* 上半部：實測過磅體重 (Hero Metric) */}
-        <div className="p-4 sm:p-5 relative space-y-3">
+      {isAllCircumferencesIgnored ? (
+        <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono p-4 sm:p-5 space-y-3">
           {/* 頂部列：中間標題「今日數據」居中，右側動作 (刪除今日記錄) */}
-          <div className="relative flex items-center justify-center min-h-7 text-xs text-muted-foreground">
-            <span className="font-semibold text-xs uppercase tracking-widest text-muted-foreground font-sans">
-              {t('body.todayData', '今日數據')}
-            </span>
+          <div className="relative flex items-center justify-between">
+            {/* 佔位平衡元素保證標題幾何絕對置中 */}
+            <div className="size-6 shrink-0 opacity-0 pointer-events-none" />
 
-            {hasAnyTodayLog && (
-              <button
-                type="button"
-                onClick={handleDeleteTodayMetric}
-                className="absolute right-0 size-7 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                title={t('common.delete', '刪除')}
-                aria-label={t('common.delete', '刪除')}
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            )}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="text-xs sm:text-sm font-normal text-muted-foreground select-none">
+                {t('body.todayData', '今日數據')}
+              </span>
+            </div>
+
+            <div className="shrink-0 z-10">
+              {hasAnyTodayLog ? (
+                <button
+                  type="button"
+                  onClick={handleDeleteTodayMetric}
+                  className="size-6 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                  title={t('common.delete', '刪除')}
+                  aria-label={t('common.delete', '刪除')}
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              ) : (
+                <div className="size-6 shrink-0 opacity-0 pointer-events-none" />
+              )}
+            </div>
           </div>
 
           {/* 居中巨型數值 (點擊呼出鍵盤微調過磅體重) */}
@@ -420,7 +438,7 @@ export default function Body() {
                 e.currentTarget
               )
             }
-            className="pt-2 pb-1 text-center cursor-pointer group"
+            className="pt-1 text-center cursor-pointer group"
           >
             <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
               <span
@@ -445,200 +463,405 @@ export default function Body() {
               </span>
             </div>
           </div>
+
+          {/* 嵌合在下方的體脂率微型工藝膠囊 */}
+          <div className="flex justify-center pt-1">
+            <button
+              type="button"
+              onClick={(e) =>
+                handleOpenKeypad(
+                  'bodyFat',
+                  effectiveBodyFat || 0,
+                  t('body.bodyFat', '體脂率'),
+                  '%',
+                  e.currentTarget
+                )
+              }
+              className="h-7 px-3 rounded-full border border-border bg-muted/30 hover:bg-hover active:scale-95 transition-all cursor-pointer font-mono text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <span className="text-[11px]">{t('body.bodyFat', '體脂率')}</span>
+              <span
+                className={cn(
+                  'transition-colors font-medium',
+                  hasTodayBodyFat
+                    ? 'text-foreground'
+                    : effectiveBodyFat
+                      ? 'text-muted-foreground/60'
+                      : 'text-muted-foreground/40'
+                )}
+              >
+                {effectiveBodyFat ? `${effectiveBodyFat}%` : '-'}
+              </span>
+              <ChevronRight className="size-3 opacity-60" />
+            </button>
+          </div>
         </div>
+      ) : (
+        <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
+          {/* 上半部：實測過磅體重 (Hero Metric) */}
+          <div className="p-4 sm:p-5 relative space-y-3">
+            {/* 頂部列：中間標題「今日數據」居中，右側動作 (刪除今日記錄) */}
+            <div className="relative flex items-center justify-between">
+              {/* 佔位平衡元素保證標題幾何絕對置中 */}
+              <div className="size-6 shrink-0 opacity-0 pointer-events-none" />
 
-        {/* 下半部：4 欄微調槽 (體脂率 | 腰圍 | 胸圍 | 臀圍) */}
-        <div className="grid grid-cols-4 divide-x divide-border border-t border-border font-mono">
-          {/* 1. 體脂率 */}
-          <button
-            type="button"
-            onClick={(e) =>
-              handleOpenKeypad(
-                'bodyFat',
-                effectiveBodyFat || 0,
-                t('body.bodyFat', '體脂率'),
-                '%',
-                e.currentTarget
-              )
-            }
-            className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.bodyFat', '體脂率')}
-            </div>
-            <div
-              className={cn(
-                'text-sm sm:text-base font-bold truncate transition-colors',
-                hasTodayBodyFat
-                  ? 'text-foreground'
-                  : effectiveBodyFat
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
-            >
-              {effectiveBodyFat ? `${effectiveBodyFat}%` : '-'}
-            </div>
-          </button>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-xs sm:text-sm font-normal text-muted-foreground select-none">
+                  {t('body.todayData', '今日數據')}
+                </span>
+              </div>
 
-          {/* 2. 腰圍 */}
-          <button
-            type="button"
-            onClick={(e) =>
-              handleOpenKeypad(
-                'waistCm',
-                effectiveWaist || 0,
-                t('body.waist', '腰圍'),
-                lengthUnit,
-                e.currentTarget
-              )
-            }
-            className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.waist', '腰圍')}
+              <div className="shrink-0 z-10">
+                {hasAnyTodayLog ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteTodayMetric}
+                    className="size-6 flex items-center justify-center rounded-full hover:bg-muted/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                    title={t('common.delete', '刪除')}
+                    aria-label={t('common.delete', '刪除')}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                ) : (
+                  <div className="size-6 shrink-0 opacity-0 pointer-events-none" />
+                )}
+              </div>
             </div>
-            <div
-              className={cn(
-                'text-sm sm:text-base font-bold truncate transition-colors',
-                hasTodayWaist
-                  ? 'text-foreground'
-                  : effectiveWaist
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
-            >
-              {effectiveWaist ? `${effectiveWaist}${lengthUnit}` : '-'}
-            </div>
-          </button>
 
-          {/* 3. 胸圍 */}
-          <button
-            type="button"
-            onClick={(e) =>
-              handleOpenKeypad(
-                'chestCm',
-                effectiveChest || 0,
-                t('body.chest', '胸圍'),
-                lengthUnit,
-                e.currentTarget
-              )
-            }
-            className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.chest', '胸圍')}
-            </div>
+            {/* 居中巨型數值 (點擊呼出鍵盤微調過磅體重) */}
             <div
-              className={cn(
-                'text-sm sm:text-base font-bold truncate transition-colors',
-                hasTodayChest
-                  ? 'text-foreground'
-                  : effectiveChest
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
+              onClick={(e) =>
+                handleOpenKeypad(
+                  'weight',
+                  heroDisplayWeight || displayTrendWeight || displayCurrentWeight || 0,
+                  t('body.rawWeight', '過磅體重'),
+                  bodyWeightUnit,
+                  e.currentTarget
+                )
+              }
+              className="pt-2 pb-1 text-center cursor-pointer group"
             >
-              {effectiveChest ? `${effectiveChest}${lengthUnit}` : '-'}
+              <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
+                <span
+                  className={cn(
+                    'text-4xl sm:text-5xl font-bold tracking-tight transition-all',
+                    hasTodayWeight
+                      ? 'text-foreground group-hover:opacity-80'
+                      : heroDisplayWeight
+                        ? 'text-muted-foreground/40 group-hover:text-muted-foreground/70'
+                        : 'text-muted-foreground/30 group-hover:text-foreground'
+                  )}
+                >
+                  {heroDisplayWeight || '-'}
+                </span>
+                <span
+                  className={cn(
+                    'text-sm sm:text-base font-normal font-mono transition-colors',
+                    hasTodayWeight ? 'text-muted-foreground' : 'text-muted-foreground/40'
+                  )}
+                >
+                  {bodyWeightUnit}
+                </span>
+              </div>
             </div>
-          </button>
+          </div>
 
-          {/* 4. 臀圍 */}
-          <button
-            type="button"
-            onClick={(e) =>
-              handleOpenKeypad(
-                'hipsCm',
-                effectiveHips || 0,
-                t('body.hips', '臀圍'),
-                lengthUnit,
-                e.currentTarget
-              )
-            }
-            className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.hips', '臀圍')}
-            </div>
-            <div
-              className={cn(
-                'text-sm sm:text-base font-bold truncate transition-colors',
-                hasTodayHips
-                  ? 'text-foreground'
-                  : effectiveHips
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
+          {/* 下半部：微調槽 (體脂率與各部位圍度，依忽略偏好自適應排版) */}
+          {!bodyPreferences.ignoreTorsoCircumferences ? (
+            <>
+              {/* 包含胸腰臀時：第一排 4 欄 (體脂率 | 腰圍 | 胸圍 | 臀圍) */}
+              <div className="grid grid-cols-4 divide-x divide-border border-t border-border font-mono">
+                {/* 1. 體脂率 */}
+                <button
+                  type="button"
+                  onClick={(e) =>
+                    handleOpenKeypad(
+                      'bodyFat',
+                      effectiveBodyFat || 0,
+                      t('body.bodyFat', '體脂率'),
+                      '%',
+                      e.currentTarget
+                    )
+                  }
+                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                >
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {t('body.bodyFat', '體脂率')}
+                  </div>
+                  <div
+                    className={cn(
+                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      hasTodayBodyFat
+                        ? 'text-foreground'
+                        : effectiveBodyFat
+                          ? 'text-muted-foreground/40'
+                          : 'text-muted-foreground/25'
+                    )}
+                  >
+                    {effectiveBodyFat ? `${effectiveBodyFat}%` : '-'}
+                  </div>
+                </button>
+
+                {/* 2. 腰圍 */}
+                <button
+                  type="button"
+                  onClick={(e) =>
+                    handleOpenKeypad(
+                      'waistCm',
+                      effectiveWaist || 0,
+                      t('body.waist', '腰圍'),
+                      lengthUnit,
+                      e.currentTarget
+                    )
+                  }
+                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                >
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {t('body.waist', '腰圍')}
+                  </div>
+                  <div
+                    className={cn(
+                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      hasTodayWaist
+                        ? 'text-foreground'
+                        : effectiveWaist
+                          ? 'text-muted-foreground/40'
+                          : 'text-muted-foreground/25'
+                    )}
+                  >
+                    {effectiveWaist ? `${effectiveWaist}${lengthUnit}` : '-'}
+                  </div>
+                </button>
+
+                {/* 3. 胸圍 */}
+                <button
+                  type="button"
+                  onClick={(e) =>
+                    handleOpenKeypad(
+                      'chestCm',
+                      effectiveChest || 0,
+                      t('body.chest', '胸圍'),
+                      lengthUnit,
+                      e.currentTarget
+                    )
+                  }
+                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                >
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {t('body.chest', '胸圍')}
+                  </div>
+                  <div
+                    className={cn(
+                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      hasTodayChest
+                        ? 'text-foreground'
+                        : effectiveChest
+                          ? 'text-muted-foreground/40'
+                          : 'text-muted-foreground/25'
+                    )}
+                  >
+                    {effectiveChest ? `${effectiveChest}${lengthUnit}` : '-'}
+                  </div>
+                </button>
+
+                {/* 4. 臀圍 */}
+                <button
+                  type="button"
+                  onClick={(e) =>
+                    handleOpenKeypad(
+                      'hipsCm',
+                      effectiveHips || 0,
+                      t('body.hips', '臀圍'),
+                      lengthUnit,
+                      e.currentTarget
+                    )
+                  }
+                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                >
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {t('body.hips', '臀圍')}
+                  </div>
+                  <div
+                    className={cn(
+                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      hasTodayHips
+                        ? 'text-foreground'
+                        : effectiveHips
+                          ? 'text-muted-foreground/40'
+                          : 'text-muted-foreground/25'
+                    )}
+                  >
+                    {effectiveHips ? `${effectiveHips}${lengthUnit}` : '-'}
+                  </div>
+                </button>
+              </div>
+
+              {/* 若未忽略四肢圍度：第二排 2 欄 (手臂圍 | 大腿圍) */}
+              {!bodyPreferences.ignoreLimbCircumferences && (
+                <div className="grid grid-cols-2 divide-x divide-border border-t border-border font-mono">
+                  {/* 手臂圍 */}
+                  <button
+                    type="button"
+                    onClick={(e) =>
+                      handleOpenKeypad(
+                        'armsCm',
+                        effectiveArms || 0,
+                        t('body.arms', '手臂圍'),
+                        lengthUnit,
+                        e.currentTarget
+                      )
+                    }
+                    className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  >
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {t('body.arms', '手臂圍')}
+                    </div>
+                    <div
+                      className={cn(
+                        'text-sm sm:text-base font-bold truncate transition-colors',
+                        hasTodayArms
+                          ? 'text-foreground'
+                          : effectiveArms
+                            ? 'text-muted-foreground/40'
+                            : 'text-muted-foreground/25'
+                      )}
+                    >
+                      {effectiveArms ? `${effectiveArms}${lengthUnit}` : '-'}
+                    </div>
+                  </button>
+
+                  {/* 大腿圍 */}
+                  <button
+                    type="button"
+                    onClick={(e) =>
+                      handleOpenKeypad(
+                        'thighsCm',
+                        effectiveThighs || 0,
+                        t('body.thighs', '大腿圍'),
+                        lengthUnit,
+                        e.currentTarget
+                      )
+                    }
+                    className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  >
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {t('body.thighs', '大腿圍')}
+                    </div>
+                    <div
+                      className={cn(
+                        'text-sm sm:text-base font-bold truncate transition-colors',
+                        hasTodayThighs
+                          ? 'text-foreground'
+                          : effectiveThighs
+                            ? 'text-muted-foreground/40'
+                            : 'text-muted-foreground/25'
+                      )}
+                    >
+                      {effectiveThighs ? `${effectiveThighs}${lengthUnit}` : '-'}
+                    </div>
+                  </button>
+                </div>
               )}
-            >
-              {effectiveHips ? `${effectiveHips}${lengthUnit}` : '-'}
+            </>
+          ) : (
+            /* 忽略胸腰臀但未忽略四肢圍度時：單排 3 欄 (體脂率 | 手臂圍 | 大腿圍) */
+            <div className="divide-x divide-border border-t border-border font-mono grid grid-cols-3">
+              {/* 1. 體脂率 */}
+              <button
+                type="button"
+                onClick={(e) =>
+                  handleOpenKeypad(
+                    'bodyFat',
+                    effectiveBodyFat || 0,
+                    t('body.bodyFat', '體脂率'),
+                    '%',
+                    e.currentTarget
+                  )
+                }
+                className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+              >
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {t('body.bodyFat', '體脂率')}
+                </div>
+                <div
+                  className={cn(
+                    'text-sm sm:text-base font-bold truncate transition-colors',
+                    hasTodayBodyFat
+                      ? 'text-foreground'
+                      : effectiveBodyFat
+                        ? 'text-muted-foreground/40'
+                        : 'text-muted-foreground/25'
+                  )}
+                >
+                  {effectiveBodyFat ? `${effectiveBodyFat}%` : '-'}
+                </div>
+              </button>
+
+              {/* 手臂圍 */}
+              <button
+                type="button"
+                onClick={(e) =>
+                  handleOpenKeypad(
+                    'armsCm',
+                    effectiveArms || 0,
+                    t('body.arms', '手臂圍'),
+                    lengthUnit,
+                    e.currentTarget
+                  )
+                }
+                className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+              >
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {t('body.arms', '手臂圍')}
+                </div>
+                <div
+                  className={cn(
+                    'text-sm sm:text-base font-bold truncate transition-colors',
+                    hasTodayArms
+                      ? 'text-foreground'
+                      : effectiveArms
+                        ? 'text-muted-foreground/40'
+                        : 'text-muted-foreground/25'
+                  )}
+                >
+                  {effectiveArms ? `${effectiveArms}${lengthUnit}` : '-'}
+                </div>
+              </button>
+
+              {/* 大腿圍 */}
+              <button
+                type="button"
+                onClick={(e) =>
+                  handleOpenKeypad(
+                    'thighsCm',
+                    effectiveThighs || 0,
+                    t('body.thighs', '大腿圍'),
+                    lengthUnit,
+                    e.currentTarget
+                  )
+                }
+                className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+              >
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {t('body.thighs', '大腿圍')}
+                </div>
+                <div
+                  className={cn(
+                    'text-sm sm:text-base font-bold truncate transition-colors',
+                    hasTodayThighs
+                      ? 'text-foreground'
+                      : effectiveThighs
+                        ? 'text-muted-foreground/40'
+                        : 'text-muted-foreground/25'
+                    )}
+                >
+                  {effectiveThighs ? `${effectiveThighs}${lengthUnit}` : '-'}
+                </div>
+              </button>
             </div>
-          </button>
+          )}
         </div>
-
-        {/* 圍度數據預設展開（手臂圍、大腿圍） */}
-        <div className="grid grid-cols-2 divide-x divide-border border-t border-border font-mono">
-          {/* 手臂圍 */}
-          <button
-            type="button"
-            onClick={(e) =>
-              handleOpenKeypad(
-                'armsCm',
-                effectiveArms || 0,
-                t('body.arms', '手臂圍'),
-                lengthUnit,
-                e.currentTarget
-              )
-            }
-            className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.arms', '手臂圍')}
-            </div>
-            <div
-              className={cn(
-                'text-sm sm:text-base font-bold truncate transition-colors',
-                hasTodayArms
-                  ? 'text-foreground'
-                  : effectiveArms
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
-            >
-              {effectiveArms ? `${effectiveArms}${lengthUnit}` : '-'}
-            </div>
-          </button>
-
-          {/* 大腿圍 */}
-          <button
-            type="button"
-            onClick={(e) =>
-              handleOpenKeypad(
-                'thighsCm',
-                effectiveThighs || 0,
-                t('body.thighs', '大腿圍'),
-                lengthUnit,
-                e.currentTarget
-              )
-            }
-            className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.thighs', '大腿圍')}
-            </div>
-            <div
-              className={cn(
-                'text-sm sm:text-base font-bold truncate transition-colors',
-                hasTodayThighs
-                  ? 'text-foreground'
-                  : effectiveThighs
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
-            >
-              {effectiveThighs ? `${effectiveThighs}${lengthUnit}` : '-'}
-            </div>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 模組 2：體態指標 (平滑體重 · BMI · FFMI · 去脂體重 · 脂肪總重) */}
@@ -839,134 +1062,148 @@ export default function Body() {
       />
 
       {/* ========================================================================= */}
-      {/* 模組 4：體型圍度 */}
+      {/* 模組 4：體型圍度 (若全部圍度皆被忽略則整塊隱藏) */}
       {/* ========================================================================= */}
-      <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
-        <div className="px-3.5 sm:px-4 py-2.5 border-b border-border flex items-center justify-between text-xs">
-          <span className="font-semibold text-xs uppercase tracking-widest text-muted-foreground font-sans">
-            {t('body.bodyProportions', '體型圍度')}
-          </span>
+      {(!bodyPreferences.ignoreTorsoCircumferences || !bodyPreferences.ignoreLimbCircumferences) && (
+        <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
+          <div className="px-3.5 sm:px-4 py-2.5 border-b border-border flex items-center justify-between text-xs">
+            <span className="font-semibold text-xs uppercase tracking-widest text-muted-foreground font-sans">
+              {t('body.bodyProportions', '體型圍度')}
+            </span>
+          </div>
+
+          {/* 雙比例槽 (僅在未忽略胸腰臀時展示，點擊展開說明) */}
+          {!bodyPreferences.ignoreTorsoCircumferences && (
+            <div className="grid grid-cols-2 divide-x divide-border border-b border-border">
+              {/* 1. 胸腰比 */}
+              <button
+                type="button"
+                onClick={(e) => handleOpenMetricPopover('vTaperRatio', e.currentTarget)}
+                className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
+              >
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {t('body.vTaperRatio', '胸腰比')}
+                </div>
+                <div
+                  className={cn(
+                    'text-base sm:text-lg font-normal truncate transition-colors',
+                    hasTodayChest && hasTodayWaist
+                      ? 'text-foreground'
+                      : vTaperRatio !== null
+                        ? 'text-muted-foreground/40'
+                        : 'text-muted-foreground/25'
+                  )}
+                >
+                  {vTaperRatio !== null ? vTaperRatio : '-'}
+                </div>
+                <div className="text-[10px] text-muted-foreground/60 truncate">
+                  {t('body.vTaperHint', '倒三角係數')}
+                </div>
+              </button>
+
+              {/* 2. 腰臀比 */}
+              <button
+                type="button"
+                onClick={(e) => handleOpenMetricPopover('whRatio', e.currentTarget)}
+                className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
+              >
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {t('body.whRatio', '腰臀比')}
+                </div>
+                <div
+                  className={cn(
+                    'text-base sm:text-lg font-normal truncate transition-colors',
+                    hasTodayWaist && hasTodayHips
+                      ? 'text-foreground'
+                      : whRatio !== null
+                        ? 'text-muted-foreground/40'
+                        : 'text-muted-foreground/25'
+                  )}
+                >
+                  {whRatio !== null ? whRatio : '-'}
+                </div>
+                <div className="text-[10px] text-muted-foreground/60 truncate">
+                  {t('body.whRatioHint', '形態基準')}
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* 圍度演進表格 (三欄固定 Grid 佈局，依偏好動態過濾項目) */}
+          <div className="divide-y divide-border text-xs">
+            <div className="px-3.5 sm:px-4 py-2 grid grid-cols-3 items-center text-muted-foreground text-[11px] bg-muted/20">
+              <span className="text-left">{t('body.bodyPart', '部位圍度')}</span>
+              <span className="text-center">{t('body.currentValue', '當前數值')}</span>
+              <span className="text-right">{t('body.thirtyDaysChange', '30 天變動')}</span>
+            </div>
+
+            {/* 胸腰臀群組 */}
+            {!bodyPreferences.ignoreTorsoCircumferences && (
+              <>
+                {/* 腰圍 */}
+                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                  <span className="text-left font-medium text-foreground">{t('body.waist', '腰圍')}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveWaist ? `${effectiveWaist} ${lengthUnit}` : '-'}</span>
+                  <span className="text-right font-mono text-muted-foreground">
+                    {circumferenceChanges.waistDelta !== null
+                      ? `${circumferenceChanges.waistDelta > 0 ? '+' : ''}${circumferenceChanges.waistDelta} ${lengthUnit}`
+                      : '-'}
+                  </span>
+                </div>
+
+                {/* 胸圍 */}
+                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                  <span className="text-left font-medium text-foreground">{t('body.chest', '胸圍')}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveChest ? `${effectiveChest} ${lengthUnit}` : '-'}</span>
+                  <span className="text-right font-mono text-muted-foreground">
+                    {circumferenceChanges.chestDelta !== null
+                      ? `${circumferenceChanges.chestDelta > 0 ? '+' : ''}${circumferenceChanges.chestDelta} ${lengthUnit}`
+                      : '-'}
+                  </span>
+                </div>
+
+                {/* 臀圍 */}
+                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                  <span className="text-left font-medium text-foreground">{t('body.hips', '臀圍')}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveHips ? `${effectiveHips} ${lengthUnit}` : '-'}</span>
+                  <span className="text-right font-mono text-muted-foreground">
+                    {circumferenceChanges.hipsDelta !== null
+                      ? `${circumferenceChanges.hipsDelta > 0 ? '+' : ''}${circumferenceChanges.hipsDelta} ${lengthUnit}`
+                      : '-'}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* 手臂與大腿圍群組 */}
+            {!bodyPreferences.ignoreLimbCircumferences && (
+              <>
+                {/* 手臂圍 */}
+                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                  <span className="text-left font-medium text-foreground">{t('body.arms', '手臂圍')}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveArms ? `${effectiveArms} ${lengthUnit}` : '-'}</span>
+                  <span className="text-right font-mono text-muted-foreground">
+                    {circumferenceChanges.armsDelta !== null
+                      ? `${circumferenceChanges.armsDelta > 0 ? '+' : ''}${circumferenceChanges.armsDelta} ${lengthUnit}`
+                      : '-'}
+                  </span>
+                </div>
+
+                {/* 大腿圍 */}
+                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                  <span className="text-left font-medium text-foreground">{t('body.thighs', '大腿圍')}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveThighs ? `${effectiveThighs} ${lengthUnit}` : '-'}</span>
+                  <span className="text-right font-mono text-muted-foreground">
+                    {circumferenceChanges.thighsDelta !== null
+                      ? `${circumferenceChanges.thighsDelta > 0 ? '+' : ''}${circumferenceChanges.thighsDelta} ${lengthUnit}`
+                      : '-'}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-
-        {/* 雙比例槽 (點擊展開說明) */}
-        <div className="grid grid-cols-2 divide-x divide-border border-b border-border">
-          {/* 1. 胸腰比 */}
-          <button
-            type="button"
-            onClick={(e) => handleOpenMetricPopover('vTaperRatio', e.currentTarget)}
-            className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.vTaperRatio', '胸腰比')}
-            </div>
-            <div
-              className={cn(
-                'text-base sm:text-lg font-normal truncate transition-colors',
-                hasTodayChest && hasTodayWaist
-                  ? 'text-foreground'
-                  : vTaperRatio !== null
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
-            >
-              {vTaperRatio !== null ? vTaperRatio : '-'}
-            </div>
-            <div className="text-[10px] text-muted-foreground/60 truncate">
-              {t('body.vTaperHint', '倒三角係數')}
-            </div>
-          </button>
-
-          {/* 2. 腰臀比 */}
-          <button
-            type="button"
-            onClick={(e) => handleOpenMetricPopover('whRatio', e.currentTarget)}
-            className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
-          >
-            <div className="text-[11px] text-muted-foreground truncate">
-              {t('body.whRatio', '腰臀比')}
-            </div>
-            <div
-              className={cn(
-                'text-base sm:text-lg font-normal truncate transition-colors',
-                hasTodayWaist && hasTodayHips
-                  ? 'text-foreground'
-                  : whRatio !== null
-                    ? 'text-muted-foreground/40'
-                    : 'text-muted-foreground/25'
-              )}
-            >
-              {whRatio !== null ? whRatio : '-'}
-            </div>
-            <div className="text-[10px] text-muted-foreground/60 truncate">
-              {t('body.whRatioHint', '形態基準')}
-            </div>
-          </button>
-        </div>
-
-        {/* 圍度演進表格 (三欄固定 Grid 佈局，確保各欄位嚴格對齊) */}
-        <div className="divide-y divide-border text-xs">
-          <div className="px-3.5 sm:px-4 py-2 grid grid-cols-3 items-center text-muted-foreground text-[11px] bg-muted/20">
-            <span className="text-left">{t('body.bodyPart', '部位圍度')}</span>
-            <span className="text-center">{t('body.currentValue', '當前數值')}</span>
-            <span className="text-right">{t('body.thirtyDaysChange', '30 天變動')}</span>
-          </div>
-
-          {/* 腰圍 */}
-          <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
-            <span className="text-left font-medium text-foreground">{t('body.waist', '腰圍')}</span>
-            <span className="text-center font-normal text-foreground">{effectiveWaist ? `${effectiveWaist} ${lengthUnit}` : '-'}</span>
-            <span className="text-right font-mono text-muted-foreground">
-              {circumferenceChanges.waistDelta !== null
-                ? `${circumferenceChanges.waistDelta > 0 ? '+' : ''}${circumferenceChanges.waistDelta} ${lengthUnit}`
-                : '-'}
-            </span>
-          </div>
-
-          {/* 胸圍 */}
-          <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
-            <span className="text-left font-medium text-foreground">{t('body.chest', '胸圍')}</span>
-            <span className="text-center font-normal text-foreground">{effectiveChest ? `${effectiveChest} ${lengthUnit}` : '-'}</span>
-            <span className="text-right font-mono text-muted-foreground">
-              {circumferenceChanges.chestDelta !== null
-                ? `${circumferenceChanges.chestDelta > 0 ? '+' : ''}${circumferenceChanges.chestDelta} ${lengthUnit}`
-                : '-'}
-            </span>
-          </div>
-
-          {/* 臀圍 */}
-          <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
-            <span className="text-left font-medium text-foreground">{t('body.hips', '臀圍')}</span>
-            <span className="text-center font-normal text-foreground">{effectiveHips ? `${effectiveHips} ${lengthUnit}` : '-'}</span>
-            <span className="text-right font-mono text-muted-foreground">
-              {circumferenceChanges.hipsDelta !== null
-                ? `${circumferenceChanges.hipsDelta > 0 ? '+' : ''}${circumferenceChanges.hipsDelta} ${lengthUnit}`
-                : '-'}
-            </span>
-          </div>
-
-          {/* 手臂圍 */}
-          <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
-            <span className="text-left font-medium text-foreground">{t('body.arms', '手臂圍')}</span>
-            <span className="text-center font-normal text-foreground">{effectiveArms ? `${effectiveArms} ${lengthUnit}` : '-'}</span>
-            <span className="text-right font-mono text-muted-foreground">
-              {circumferenceChanges.armsDelta !== null
-                ? `${circumferenceChanges.armsDelta > 0 ? '+' : ''}${circumferenceChanges.armsDelta} ${lengthUnit}`
-                : '-'}
-            </span>
-          </div>
-
-          {/* 大腿圍 */}
-          <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
-            <span className="text-left font-medium text-foreground">{t('body.thighs', '大腿圍')}</span>
-            <span className="text-center font-normal text-foreground">{effectiveThighs ? `${effectiveThighs} ${lengthUnit}` : '-'}</span>
-            <span className="text-right font-mono text-muted-foreground">
-              {circumferenceChanges.thighsDelta !== null
-                ? `${circumferenceChanges.thighsDelta > 0 ? '+' : ''}${circumferenceChanges.thighsDelta} ${lengthUnit}`
-                : '-'}
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 次級彈窗區域：平鋪兄弟節點 (Instant Pop, 數字鍵盤微調彈窗) */}
