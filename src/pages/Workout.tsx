@@ -14,6 +14,7 @@ import { findLastExerciseRecord } from '@/utils/workoutMath';
 import { db } from '@/services/db/db';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, Dumbbell, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
 import { ExerciseSelectDialog, type ExerciseSelectMode } from '@/components/workout/ExerciseSelectDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
@@ -155,7 +156,7 @@ export default function Workout() {
       const exerciseGroups = routine.exercises.map((item) => {
         const ex = exerciseMap.get(item.exerciseId);
         const record = findLastExerciseRecord(allLogs, item.exerciseId, ex?.name);
-        const count = record ? record.setsCount : (item.defaultSets || 3);
+        const count = record ? record.setsCount : 3;
         const weights = record ? record.weights : Array(count).fill(20);
         const defaultWeight = record ? record.lastWeight : 20;
 
@@ -498,8 +499,8 @@ export default function Workout() {
                   {t('workout.set')} {setIdx + 1}
                 </span>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {/* 重量膠囊 */}
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  {/* 重量膠囊 (固定寬度 78px，內部數字右對齊，保證多組垂直對齊) */}
                   <button
                     type="button"
                     onClick={(e) =>
@@ -513,22 +514,22 @@ export default function Workout() {
                         e.currentTarget
                       )
                     }
-                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                    className="h-7 w-[78px] px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                   >
-                    <span className="font-bold text-foreground">
+                    <span className="font-bold text-foreground tabular-nums min-w-[20px] text-right">
                       {displayWeight}
                     </span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="text-muted-foreground text-[10px] shrink-0">
                       {bodyWeightUnit}
                     </span>
-                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
                   </button>
 
-                  <span className="text-muted-foreground text-xs select-none">
+                  <span className="text-muted-foreground text-xs select-none w-3 text-center shrink-0">
                     ×
                   </span>
 
-                  {/* 次數膠囊 (未填入時顯示 - 次) */}
+                  {/* 次數膠囊 (固定寬度 70px，內部數字右對齊，未填入時顯示 - 次，保證多組垂直對齊) */}
                   <button
                     type="button"
                     onClick={(e) =>
@@ -542,30 +543,31 @@ export default function Workout() {
                         e.currentTarget
                       )
                     }
-                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                    className="h-7 w-[70px] px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                   >
                     <span
-                      className={
+                      className={cn(
+                        'font-bold tabular-nums min-w-[14px] text-right',
                         typeof set.reps === 'number' && set.reps > 0
-                          ? 'font-bold text-foreground'
-                          : 'font-bold text-muted-foreground'
-                      }
+                          ? 'text-foreground'
+                          : 'text-muted-foreground'
+                      )}
                     >
                       {typeof set.reps === 'number' && set.reps > 0
                         ? set.reps
                         : '-'}
                     </span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="text-muted-foreground text-[10px] shrink-0">
                       {t('common.times', '次')}
                     </span>
-                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
                   </button>
 
                   {/* 刪除組 */}
                   <button
                     type="button"
                     onClick={() => handleDeleteSet(workout, exIdx, setIdx)}
-                    className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-hover transition-colors cursor-pointer ml-1"
+                    className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-hover transition-colors cursor-pointer shrink-0"
                     title={t('common.delete')}
                     aria-label={t('common.delete')}
                   >

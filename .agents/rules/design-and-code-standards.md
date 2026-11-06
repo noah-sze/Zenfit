@@ -138,6 +138,7 @@ trigger: always_on
 25. **不得使用語意化 Slug ID 區分預設與自定義實體（全域實體平權與 UUID 唯一標識契約）**：全系統所有領域實體（食材、菜餚、器械、動作、使用者設定等）主鍵一律統一採用標準 RFC 4122 UUID 格式。為杜絕多端同步時不同客戶端在運行時動態生成不同 UUID 導致重複膨脹，系統預設種子資料（Default Seed Data）必須統一採用全域固定、確定性的靜態 UUID；所有關聯外鍵嚴禁使用 `food_chicken_breast`、`barbell` 等舊式語意化 slug 字串，徹底消除系統資料與自訂資料的二元分化。
 26. **不得在飲食模型與日誌頭部中儲存主觀計劃名稱（全域嚴禁 `planName`）**：Zenfit 為冷靜、客觀之精密測量儀，每日飲食環境背景（`DailyDietMeta`）僅記錄當日客觀生理參數與事實（活動係數 `activityLevel` 與供能比 `macroSplit`），**全應用程式與資料庫中絕對嚴禁存在 `planName` 欄位**（如「標準目標」、「高碳日」等主觀命名）；全域嚴禁以任何形式聲明、儲存或在同步檔案中包含 `planName`。
 27. **不得在訓練日誌中儲存標題或動作/課表快照（全域嚴禁 `WorkoutLog.title`）**：訓練日誌（`WorkoutLog`）實體僅記錄客觀物理事實（`id`、`date`、`routineId`（可選）、`exercises` 動作組、`createdAt`、`updatedAt`），**絕對嚴禁儲存 `title` 欄位**。介面渲染所需的標題一律由前端記憶體在即時 Join 時依關聯之 `routineId -> db.routines.name` 或首個動作 `exercises[0].exerciseId -> db.exercises.name` 動態解析為 `HydratedWorkoutLog`，徹底杜絕日誌標題與課表/動作更名時的快照漂移。
+28. **不得在動作組合中配置組數（動作組合純粹化契約，全域嚴禁 `RoutineExerciseItem.defaultSets`）**：動作組合/課表（`WorkoutRoutine`）僅作為動作的有序集合（`exercises: [{ exerciseId }]`），代表訓練項目的編排結構，**絕對嚴禁設定或儲存 `defaultSets` 等組數設定**。組合詳情與表單介面中嚴禁展示「計劃總組數」或組數配置膠囊，相關統計指標統一採用「覆蓋肌群數」；實際訓練組數一律於開始訓練時依動作歷史記錄智能繼承或由使用者即時記錄。
 
 ## 6. 食物數據與原子計量規範 (Food Data & Atomic Metric Standards)
 - **原型食材原子化真理源 (Atomic Ingredients as Ground Truth)**：

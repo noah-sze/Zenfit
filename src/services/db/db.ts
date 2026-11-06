@@ -911,6 +911,25 @@ export class ZenfitDatabase extends Dexie {
           await tx.table('workout_logs').put(log);
         }
       }
+
+      // 5. 徹底清除 routines.exercises 中的 defaultSets 等組數設定
+      const allRoutines = await tx.table('routines').toArray();
+      for (const r of allRoutines) {
+        if (Array.isArray(r.exercises)) {
+          let modified = false;
+          const cleanEx = r.exercises.map((item: any) => {
+            if ('defaultSets' in item || 'notes' in item) {
+              modified = true;
+              return { exerciseId: item.exerciseId };
+            }
+            return item;
+          });
+          if (modified) {
+            r.exercises = cleanEx;
+            await tx.table('routines').put(r);
+          }
+        }
+      }
     });
   }
 

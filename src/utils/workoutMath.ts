@@ -1,5 +1,5 @@
 import type { WorkoutRoutine, Exercise, DetailedMuscle, WorkoutSet, WorkoutLog } from '@/types';
-import { muscleRoleToNumericWeight } from '@/utils/muscleIntensity';
+import { muscleRoleToNumericWeight, getMuscleRoleRank } from '@/utils/muscleIntensity';
 
 /**
  * 預估 1RM 力量極限 (Brzycki Formula)
@@ -52,14 +52,12 @@ export interface MuscleSummary {
 
 export interface RoutineFactSummary {
   exerciseCount: number;
-  totalPlannedSets: number;
   coveredMuscles: MuscleSummary[];
 }
 
 /**
  * 統計訓練組合的純粹客觀事實：
  * - 總動作數
- * - 總計劃組數
  * - 涵蓋的目標肌群清單及在該組合中受刺激的最高強度
  */
 export function getRoutineFactSummary(
@@ -67,15 +65,13 @@ export function getRoutineFactSummary(
   exerciseMap: Map<string, Exercise>
 ): RoutineFactSummary {
   if (!routine || !Array.isArray(routine.exercises)) {
-    return { exerciseCount: 0, totalPlannedSets: 0, coveredMuscles: [] };
+    return { exerciseCount: 0, coveredMuscles: [] };
   }
 
   const exerciseCount = routine.exercises.length;
-  let totalPlannedSets = 0;
   const muscleIntensityMap = new Map<DetailedMuscle, number>();
 
   for (const item of routine.exercises) {
-    totalPlannedSets += Math.max(0, Math.floor(item.defaultSets || 0));
     const ex = exerciseMap.get(item.exerciseId);
     if (ex && ex.targetMuscles) {
       for (const [mKey, intensity] of Object.entries(ex.targetMuscles)) {
@@ -92,16 +88,21 @@ export function getRoutineFactSummary(
     }
   }
 
-  const coveredMuscles: MuscleSummary[] = Array.from(muscleIntensityMap.entries()).map(
-    ([muscle, maxIntensity]) => ({
+  const coveredMuscles: MuscleSummary[] = Array.from(muscleIntensityMap.entries())
+    .map(([muscle, maxIntensity]) => ({
       muscle,
       maxIntensity,
-    })
-  );
+    }))
+    .sort((a, b) => {
+      const rankA = getMuscleRoleRank(a.maxIntensity);
+      const rankB = getMuscleRoleRank(b.maxIntensity);
+      if (rankA !== rankB) return rankA - rankB;
+      if (b.maxIntensity !== a.maxIntensity) return b.maxIntensity - a.maxIntensity;
+      return a.muscle.localeCompare(b.muscle);
+    });
 
   return {
     exerciseCount,
-    totalPlannedSets,
     coveredMuscles,
   };
 }

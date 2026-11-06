@@ -24,6 +24,7 @@ import {
   sanitizeFoodLog,
   sanitizeDailyDietLog,
   sanitizeWorkoutLog,
+  sanitizeWorkoutRoutine,
   sanitizeUserBaseInfo,
 } from './syncSanitizers';
 import { isDropboxConnected } from './dropboxAuth';
@@ -343,7 +344,10 @@ export async function uploadAllLocalData(
   // 4. 訓練模組基礎清單
   cachedRevs['/workout/exercises.json'] = await uploadJsonFile('/workout/exercises.json', exercises);
   cachedRevs['/workout/equipments.json'] = await uploadJsonFile('/workout/equipments.json', equipments);
-  cachedRevs['/workout/routines.json'] = await uploadJsonFile('/workout/routines.json', routines);
+  cachedRevs['/workout/routines.json'] = await uploadJsonFile(
+    '/workout/routines.json',
+    routines.map(sanitizeWorkoutRoutine)
+  );
   pushedTimes['exercises'] = now;
   pushedTimes['equipments'] = now;
   pushedTimes['routines'] = now;
@@ -1022,7 +1026,7 @@ export async function executeSync(
     if (!lastRoutinesPushed || maxRoutinesUpdated > getNormalizedTimestamp(lastRoutinesPushed)) {
       cachedRevs['/workout/routines.json'] = await uploadJsonFile(
         '/workout/routines.json',
-        localRoutines,
+        localRoutines.map(sanitizeWorkoutRoutine),
         cachedRevs['/workout/routines.json']
       );
       pushedTimes['routines'] = now;

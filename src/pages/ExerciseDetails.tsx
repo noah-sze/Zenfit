@@ -29,6 +29,7 @@ import {
   getMuscleRoleBadgeClasses,
   getMuscleRoleLabel,
   normalizeMuscleRole,
+  sortMuscleEntries,
 } from '@/utils/muscleIntensity';
 import { cn } from '@/lib/utils';
 import {
@@ -146,12 +147,12 @@ export default function ExerciseDetails() {
   }, [exercise]);
 
   const primaryEntries = useMemo(
-    () => muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) === 'primary'),
+    () => sortMuscleEntries(muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) === 'primary')),
     [muscleEntries]
   );
 
   const supportEntries = useMemo(
-    () => muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) !== 'primary'),
+    () => sortMuscleEntries(muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) !== 'primary')),
     [muscleEntries]
   );
 
@@ -314,7 +315,7 @@ export default function ExerciseDetails() {
         <div className="h-8 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono overflow-hidden">
           <div className="flex items-center min-w-0 flex-1 mr-3 overflow-hidden">
             {muscleEntries.length > 0 && (
-              <AdaptiveMuscleBadgeGroup entries={muscleEntries} className="min-w-0 flex-1" />
+              <AdaptiveMuscleBadgeGroup entries={sortMuscleEntries(muscleEntries)} className="min-w-0 flex-1" />
             )}
           </div>
           <div className="shrink-0">

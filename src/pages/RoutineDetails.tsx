@@ -30,6 +30,7 @@ import {
   getMuscleRoleLabel,
   normalizeMuscleRole,
   muscleRoleToNumericWeight,
+  sortMuscleEntries,
 } from '@/utils/muscleIntensity';
 import { cn } from '@/lib/utils';
 import {
@@ -130,12 +131,12 @@ export default function RoutineDetails() {
   }, [summary.coveredMuscles]);
 
   const primaryEntries = useMemo(
-    () => muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) === 'primary'),
+    () => sortMuscleEntries(muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) === 'primary')),
     [muscleEntries]
   );
 
   const supportEntries = useMemo(
-    () => muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) !== 'primary'),
+    () => sortMuscleEntries(muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) !== 'primary')),
     [muscleEntries]
   );
 
@@ -163,7 +164,7 @@ export default function RoutineDetails() {
 
     const updatedExercises = [
       ...routine.exercises,
-      { exerciseId: exercise.id, defaultSets: 3 },
+      { exerciseId: exercise.id },
     ];
 
     await updateRoutine(routine.id, {
@@ -318,8 +319,8 @@ export default function RoutineDetails() {
           </h1>
         </div>
 
-        {/* 第 3 層：三大指標三欄分割卡片 (動作總數、計劃總組數、覆蓋肌群數) */}
-        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-card">
+        {/* 第 3 層：兩大客觀指標雙欄分割卡片 (動作總數、覆蓋肌群數) */}
+        <div className="grid grid-cols-2 divide-x divide-border border-b border-border bg-card">
           {/* 1. 動作總數 */}
           <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
             <div className="flex items-center justify-between">
@@ -337,24 +338,7 @@ export default function RoutineDetails() {
             </div>
           </div>
 
-          {/* 2. 計劃總組數 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-normal text-muted-foreground truncate">
-                {t('workout.totalPlannedSets')}
-              </span>
-            </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
-                {summary.totalPlannedSets}
-              </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                {t('workout.set', '組')}
-              </span>
-            </div>
-          </div>
-
-          {/* 3. 覆蓋肌群數 */}
+          {/* 2. 覆蓋肌群數 */}
           <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
@@ -505,11 +489,11 @@ export default function RoutineDetails() {
         </div>
       </div>
 
-      {/* 動作構成清單 (Usage List, 點擊可直達動作詳情) */}
+      {/* 動作清單 (Usage List, 點擊可直達動作詳情) */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs uppercase tracking-widest text-muted-foreground font-mono">
-            {t('workout.routineExerciseList')} ({routine.exercises.length})
+            {t('workout.routineExerciseList', '動作清單')}
           </span>
           <button
             type="button"
@@ -552,19 +536,13 @@ export default function RoutineDetails() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground min-w-0">
-                      <span className="font-bold text-foreground shrink-0">
-                        {item.defaultSets} {t('workout.set', '組')}
-                      </span>
                       {ex && (
-                        <>
-                          <span className="shrink-0 opacity-50">·</span>
-                          <EquipmentBadge name={getEquipmentDisplayName(ex.equipment, t)} />
-                        </>
+                        <EquipmentBadge name={getEquipmentDisplayName(ex.equipment, t)} />
                       )}
                       {muscles.length > 0 && (
                         <>
-                          <span className="shrink-0 opacity-50">·</span>
-                          <AdaptiveMuscleBadgeGroup entries={muscles} className="min-w-0 flex-1" />
+                          {ex && <span className="shrink-0 opacity-50">·</span>}
+                          <AdaptiveMuscleBadgeGroup entries={sortMuscleEntries(muscles)} className="min-w-0 flex-1" />
                         </>
                       )}
                     </div>

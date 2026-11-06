@@ -212,8 +212,6 @@ export interface Exercise {
 
 export interface RoutineExerciseItem {
   exerciseId: string;
-  defaultSets: number;
-  notes?: string;
 }
 
 export interface WorkoutRoutine {

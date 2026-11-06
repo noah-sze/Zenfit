@@ -34,6 +34,47 @@ export function normalizeMuscleRole(val: unknown): MuscleRole {
 }
 
 /**
+ * 獲取 MuscleRole 的排序優先級權重：
+ * 1. primary (主動肌) -> 1
+ * 2. secondary (協同肌) -> 2
+ * 3. stabilizer (穩定肌) -> 3
+ */
+export function getMuscleRoleRank(role: unknown): number {
+  const normalized = normalizeMuscleRole(role);
+  switch (normalized) {
+    case 'primary':
+      return 1;
+    case 'secondary':
+      return 2;
+    case 'stabilizer':
+      return 3;
+  }
+}
+
+/**
+ * 排序機能學肌群條目：
+ * 嚴格遵循「主動肌在最前 -> 協同肌在中間 -> 穩定肌在最後 (協同在前，穩定在後)」
+ * 同角色內依數值強度由高到低排序
+ */
+export function sortMuscleEntries<T extends readonly [any, any]>(entries: readonly T[]): T[] {
+  return [...entries].sort((a, b) => {
+    const roleA = normalizeMuscleRole(a[1]);
+    const roleB = normalizeMuscleRole(b[1]);
+    const rankA = getMuscleRoleRank(roleA);
+    const rankB = getMuscleRoleRank(roleB);
+    if (rankA !== rankB) {
+      return rankA - rankB;
+    }
+    const weightA = typeof a[1] === 'number' ? a[1] : muscleRoleToNumericWeight(a[1]);
+    const weightB = typeof b[1] === 'number' ? b[1] : muscleRoleToNumericWeight(b[1]);
+    if (weightB !== weightA) {
+      return weightB - weightA;
+    }
+    return String(a[0]).localeCompare(String(b[0]));
+  });
+}
+
+/**
  * 依據刺激強度數值 (0 ~ 100) 獲取對應的強度階梯 (向後相容)
  */
 export function getMuscleIntensityTier(intensity: number): MuscleIntensityTier {

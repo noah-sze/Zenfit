@@ -4,6 +4,7 @@ import {
   sanitizeFoodLog,
   sanitizeDailyDietLog,
   sanitizeWorkoutLog,
+  sanitizeWorkoutRoutine,
   sanitizeUserBaseInfo,
 } from './syncSanitizers';
 import {
@@ -255,6 +256,32 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
       expect((cleaned.entries[0] as any).foodName).toBeUndefined();
       expect((cleaned.entries[0] as any).calories).toBeUndefined();
       expect((cleaned.entries[0] as any).notes).toBeUndefined();
+    });
+  });
+
+  describe('sanitizeWorkoutRoutine', () => {
+    it('徹底剔除動作組內的 defaultSets 等組數設定，僅保留 exerciseId 純關聯', () => {
+      const dirtyRoutine = {
+        id: 'routine_1',
+        name: '推力訓練',
+        notes: '胸三頭',
+        exercises: [
+          { exerciseId: 'barbell_bench_press', defaultSets: 4, notes: '正式組' },
+          { exerciseId: 'incline_dumbbell_press', defaultSets: 3 },
+        ],
+        isCustom: true,
+        createdAt: 1000,
+        updatedAt: 1000,
+      };
+
+      const cleaned = sanitizeWorkoutRoutine(dirtyRoutine);
+
+      expect(cleaned.exercises).toEqual([
+        { exerciseId: 'barbell_bench_press' },
+        { exerciseId: 'incline_dumbbell_press' },
+      ]);
+      expect('defaultSets' in cleaned.exercises[0]).toBe(false);
+      expect('notes' in cleaned.exercises[0]).toBe(false);
     });
   });
 });

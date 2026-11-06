@@ -1,11 +1,10 @@
-import { useState, useEffect, useId, useMemo, useRef } from 'react';
+import { useState, useEffect, useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
   PrecisionDialogContent,
 } from '@/components/ui/dialog';
-import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { ExerciseSelectDialog } from '@/components/workout/ExerciseSelectDialog';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 import { toast } from '@/components/ui/toast';
@@ -26,13 +25,6 @@ export interface RoutineFormDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: WorkoutRoutine | null;
   onSubmit: (data: RoutineFormData) => Promise<void> | void;
-}
-
-interface KeypadConfig {
-  index: number;
-  exerciseName: string;
-  value: number;
-  anchorEl?: HTMLElement | null;
 }
 
 export function RoutineFormDialog({
@@ -60,10 +52,6 @@ export function RoutineFormDialog({
   // 動作挑選器狀態
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
-
-  // 數字鍵盤狀態
-  const [keypadConfig, setKeypadConfig] = useState<KeypadConfig | null>(null);
-  const initialKeypadValueRef = useRef<number>(4);
 
   // 初始化或編輯回填
   useEffect(() => {
@@ -113,85 +101,24 @@ export function RoutineFormDialog({
       // 替換
       const updated = [...items];
       updated[replacingIndex] = {
-        ...updated[replacingIndex],
         exerciseId: exercise.id,
       };
       setItems(updated);
       setReplacingIndex(null);
     } else {
-      // 新增，預設組數為 4 組
-      setItems([...items, { exerciseId: exercise.id, defaultSets: 4 }]);
+      // 新增動作（不設置組數）
+      setItems([...items, { exerciseId: exercise.id }]);
     }
   };
 
-  // 喚起懸浮鍵盤微調組數
-  const handleOpenKeypad = (index: number, anchorEl?: HTMLElement) => {
-    const item = items[index];
-    if (!item) return;
-    const ex = exerciseMap.get(item.exerciseId);
-    initialKeypadValueRef.current = item.defaultSets;
-    setKeypadConfig({
-      index,
-      exerciseName: ex ? ex.name : t('workout.exercises'),
-      value: item.defaultSets,
-      anchorEl,
-    });
-  };
-
-  const handleKeypadLiveChange = (value: number) => {
-    if (!keypadConfig) return;
-    const cleanSets = Math.max(1, Math.min(30, Math.floor(value || 1)));
-    setItems((prev) => {
-      const next = [...prev];
-      if (next[keypadConfig.index]) {
-        next[keypadConfig.index] = {
-          ...next[keypadConfig.index],
-          defaultSets: cleanSets,
-        };
-      }
-      return next;
-    });
-  };
-
-  const handleKeypadConfirm = (value: number) => {
-    if (!keypadConfig) return;
-    const cleanSets = Math.max(1, Math.min(30, Math.floor(value || 1)));
-    setItems((prev) => {
-      const next = [...prev];
-      if (next[keypadConfig.index]) {
-        next[keypadConfig.index] = {
-          ...next[keypadConfig.index],
-          defaultSets: cleanSets,
-        };
-      }
-      return next;
-    });
-    setKeypadConfig(null);
-  };
-
-  const handleKeypadCancel = () => {
-    if (!keypadConfig) return;
-    const originalVal = initialKeypadValueRef.current;
-    setItems((prev) => {
-      const next = [...prev];
-      if (next[keypadConfig.index]) {
-        next[keypadConfig.index] = {
-          ...next[keypadConfig.index],
-          defaultSets: originalVal,
-        };
-      }
-      return next;
-    });
-    setKeypadConfig(null);
-  };
-
+  // 移除項目
   const handleRemoveItem = (index: number) => {
     triggerHaptic('selection');
-    setItems((prev) => prev.filter((_, i) => i !== index));
+    setItems(items.filter((_, idx) => idx !== index));
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
       toast.show(t('common.required'));
@@ -266,21 +193,21 @@ export function RoutineFormDialog({
                   </div>
                   <div className="px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider truncate">
-                      {t('workout.plannedSets', '計劃組數')}
+                      {t('workout.coveredMusclesShort', '覆蓋肌群')}
                     </span>
                     <div className="font-mono text-xs font-bold text-foreground mt-0.5 truncate flex items-baseline gap-0.5">
-                      <span>{summary.totalPlannedSets}</span>
-                      <span className="text-[9px] font-normal opacity-75">{t('workout.set', '組')}</span>
+                      <span>{summary.coveredMuscles.length}</span>
+                      <span className="text-[9px] font-normal opacity-75">{t('workout.muscleUnit', '個肌群')}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 表單段落 3: 動作構成清單 */}
+              {/* 表單段落 3: 動作清單 */}
               <div className="space-y-1.5 shrink-0">
                 <div className="flex items-center justify-between px-0">
                   <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-                    {t('workout.routineExerciseList', '動作構成')} ({items.length})
+                    {t('workout.routineExerciseList', '動作清單')}
                   </div>
 
                   <button
@@ -334,22 +261,8 @@ export function RoutineFormDialog({
                             )}
                           </button>
 
-                          {/* 右側：組數膠囊 + 刪除按鈕 */}
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
-                              className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
-                            >
-                              <span className="font-bold text-foreground">
-                                {item.defaultSets}
-                              </span>
-                              <span className="text-muted-foreground text-[11px]">
-                                {t('workout.set', '組')}
-                              </span>
-                              <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                            </button>
-
+                          {/* 右側：刪除按鈕 */}
+                          <div className="flex items-center shrink-0">
                             <button
                               type="button"
                               onClick={() => handleRemoveItem(index)}
@@ -370,25 +283,6 @@ export function RoutineFormDialog({
           </form>
         </PrecisionDialogContent>
       </Dialog>
-
-      {/* 次級懸浮鍵盤 (組數微調) */}
-      {keypadConfig && (
-        <NumericKeypadDialog
-          open={!!keypadConfig}
-          onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
-          }}
-          title={keypadConfig.exerciseName}
-          value={keypadConfig.value}
-          unit={t('workout.set', '組')}
-          allowDecimals={false}
-          maxDecimals={0}
-          anchorEl={keypadConfig.anchorEl}
-          onLiveChange={handleKeypadLiveChange}
-          onConfirm={handleKeypadConfirm}
-          onCancel={handleKeypadCancel}
-        />
-      )}
 
       {/* 次級動作選擇器 (平鋪兄弟節點，zIndex={80}) */}
       <ExerciseSelectDialog
