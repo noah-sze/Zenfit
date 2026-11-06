@@ -87,14 +87,9 @@ export function useExercises(equipmentFilter?: string, searchQuery = '') {
     }
 
     // 檢查是否有關聯之訓練日誌
+    // 檢查是否有關聯之訓練記錄（純 ID 關聯）
     const hasLogs = await db.workout_logs
-      .filter((log) =>
-        log.exercises.some(
-          (ex) =>
-            ex.exerciseId === id ||
-            ex.exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase()
-        )
-      )
+      .filter((log) => log.exercises.some((ex) => ex.exerciseId === id))
       .count();
 
     if (hasLogs > 0) {

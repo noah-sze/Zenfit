@@ -16,16 +16,16 @@ import {
 import { Toaster } from '@/components/ui/toast';
 import { AddQuickModal } from '@/components/quickAdd/AddQuickModal';
 import { AppLockOverlay } from '@/components/security/AppLockOverlay';
+import { InitialSyncModal } from '@/components/sync/InitialSyncModal';
+import { SyncStatusPill } from '@/components/sync/SyncStatusPill';
 import { format, addDays, subDays, parseISO, isToday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { useUserProfile } from '@/hooks/useUserProfile';
 
 export function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile } = useUserProfile();
 
   const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -115,20 +115,10 @@ export function AppLayout() {
         <div className="w-full max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
           {!isSubPage ? (
             <>
-              {/* 左上角用戶個人身體數據入口 */}
-              <button
-                type="button"
-                onClick={() => {
-                  navigate('/profile');
-                  triggerHaptic('light');
-                }}
-                className="py-1 px-2 -ml-2 rounded-lg hover:bg-muted/60 transition-colors cursor-pointer text-left group"
-                aria-label={t('profileSettings.title')}
-              >
-                <span className="font-semibold text-base sm:text-lg tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
-                  {profile.name || 'Noah'}
-                </span>
-              </button>
+              {/* 左上角 Dropbox 同步狀態膠囊 */}
+              <div className="flex items-center">
+                <SyncStatusPill />
+              </div>
 
               {/* 正中央絕對幾何置中、固定尺寸防抖日期切換器 */}
               <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-8 sm:h-9 bg-muted/60 border border-border/80 px-1 rounded-full text-sm">
@@ -257,6 +247,7 @@ export function AppLayout() {
       {/* 快捷彈窗與全域提示 */}
       <AddQuickModal />
       <AppLockOverlay />
+      <InitialSyncModal />
       <Toaster />
     </div>
   );

@@ -74,14 +74,9 @@ export default function RoutineDetails() {
     async () => {
       if (!id || !routine) return [];
       const logs = await db.workout_logs.toArray();
-      const rName = routine.name.trim().toLowerCase();
-      return logs.filter((log) => {
-        const titleMatch = log.title?.trim().toLowerCase() === rName;
-        const notesMatch = log.notes && log.notes.toLowerCase().includes(`[${rName}]`);
-        return titleMatch || notesMatch;
-      });
+      return logs.filter((log) => log.routineId === id);
     },
-    [id, routine?.name]
+    [id]
   );
 
   // 刪除防護契約：有歷史日誌時不可刪除

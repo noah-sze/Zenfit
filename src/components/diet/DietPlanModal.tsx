@@ -14,7 +14,12 @@ import {
 } from '@/components/ui/select';
 import { ChevronRight } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptics';
-import { calculateMacrosFromSplit } from '@/utils/weightMath';
+import {
+  calculateMacrosFromSplit,
+  calculateBMR,
+  calculateTDEE,
+  calculateAgeFromBirth,
+} from '@/utils/weightMath';
 import type { UserProfile, MacroSplit, DietPlan } from '@/types';
 
 export interface DietPlanModalProps {
@@ -40,6 +45,9 @@ export function DietPlanModal({
 }: DietPlanModalProps) {
   const { t } = useTranslation();
 
+  // 活動係數狀態
+  const [activityLevel, setActivityLevel] = useState<number>(1.55);
+
   // 本地供能比狀態 (嚴格固定順序：碳 C ➔ 蛋 P ➔ 脂 F)
   const [carbsPercent, setCarbsPercent] = useState<number>(40);
   const [proteinPercent, setProteinPercent] = useState<number>(30);
@@ -53,19 +61,44 @@ export function DietPlanModal({
   const anchorElRef = useRef<HTMLElement | null>(null);
   const initialValueRef = useRef<number>(0);
 
-  // 基準目標熱量 (純客觀換算克數使用，不在此彈窗設置)
-  const targetCaloriesKcal = useMemo(() => {
-    return currentPlan?.caloriesTarget || profile.dailyCaloriesTarget || 2000;
-  }, [currentPlan?.caloriesTarget, profile.dailyCaloriesTarget]);
+  // 計算客觀生理常數 (BMR)
+  const age = profile.birthDate
+    ? calculateAgeFromBirth(profile.birthDate)
+    : profile.age || 25;
+  const currentBMR = calculateBMR(
+    profile.currentWeightKg,
+    profile.heightCm,
+    profile.gender,
+    age
+  );
 
-  // 初始化讀取使用者或當日既有供能比 (僅在彈窗剛開啟時執行一次，防止編輯中被覆蓋)
+  // 基準目標熱量 (依據 BMR 與當前活動係數動態推算 TDEE)
+  const targetCaloriesKcal = useMemo(() => {
+    if (currentBMR > 0 && activityLevel > 0) {
+      return calculateTDEE(currentBMR, activityLevel);
+    }
+    return currentPlan?.caloriesTarget || 2000;
+  }, [currentBMR, activityLevel, currentPlan?.caloriesTarget]);
+
+  // 初始化讀取使用者或當日既有活動係數與供能比
   const prevIsOpenRef = useRef(false);
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
-      let split: MacroSplit = profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
+      const initialActivity = currentPlan?.activityLevel || profile.activityLevel || 1.55;
+      setActivityLevel(initialActivity);
 
-      // 若 currentPlan 具備克數目標，反推供能比百分比
-      if (currentPlan && currentPlan.caloriesTarget > 0 && currentPlan.proteinTarget) {
+      let split: MacroSplit = currentPlan?.macroSplit || profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
+
+      // 若 currentPlan 具備克數目標且無明確 macroSplit，反推供能比百分比
+      if (
+        !currentPlan?.macroSplit &&
+        currentPlan &&
+        typeof currentPlan.caloriesTarget === 'number' &&
+        currentPlan.caloriesTarget > 0 &&
+        typeof currentPlan.proteinTarget === 'number' &&
+        typeof currentPlan.carbsTarget === 'number' &&
+        typeof currentPlan.fatTarget === 'number'
+      ) {
         const cKcal = currentPlan.carbsTarget * 4;
         const pKcal = currentPlan.proteinTarget * 4;
         const fKcal = currentPlan.fatTarget * 9;
@@ -94,7 +127,7 @@ export function DietPlanModal({
       }
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, profile.macroSplit, currentPlan]);
+  }, [isOpen, profile, currentPlan]);
 
   // 配比總和計算
   const ratioTotal = carbsPercent + proteinPercent + fatPercent;
@@ -116,7 +149,34 @@ export function DietPlanModal({
   const proteinBarWidth = Math.min(100 - carbsBarWidth, Math.round(proteinPercent * ratioScale));
   const fatBarWidth = Math.max(0, 100 - carbsBarWidth - proteinBarWidth);
 
-  // 切換模板
+  // 切換活動係數
+  const handleActivityChange = (val: string) => {
+    const level = parseFloat(val);
+    if (!isNaN(level) && level > 0) {
+      setActivityLevel(level);
+      triggerHaptic('selection');
+    }
+  };
+
+  // 取得活動係數標籤
+  const getActivityLabel = (level: number) => {
+    switch (level) {
+      case 1.2:
+        return t('dietPlan.sedentary', '久坐辦公 (1.2)');
+      case 1.375:
+        return t('dietPlan.light', '輕度活動 (1.375)');
+      case 1.55:
+        return t('dietPlan.moderate', '中度活動 (1.55)');
+      case 1.725:
+        return t('dietPlan.heavy', '高強度活動 (1.725)');
+      case 1.9:
+        return t('dietPlan.athlete', '極重度活動 (1.9)');
+      default:
+        return String(level);
+    }
+  };
+
+  // 切換供能比模板
   const handleTemplateChange = (val: string) => {
     const tpl = val as TemplateId;
     setTemplate(tpl);
@@ -151,7 +211,6 @@ export function DietPlanModal({
         return t('dietPlan.customTemplate', '自定義');
     }
   };
-
 
   // 開啟數字鍵盤
   const handleOpenKeypad = (macro: MacroKey, el: HTMLElement) => {
@@ -242,7 +301,7 @@ export function DietPlanModal({
     }
   };
 
-  // 儲存設定 (以百分比為準更新 macroSplit 與目標克數)
+  // 儲存設定 (傳遞當日活動係數、供能比、推算目標熱量與三大營養素)
   const handleSubmit = async () => {
     if (!isRatioValid || isSubmitting) return;
 
@@ -256,18 +315,15 @@ export function DietPlanModal({
 
       if (onSavePlan) {
         await onSavePlan({
-          proteinTarget: calculatedMacros.proteinGrams,
-          carbsTarget: calculatedMacros.carbsGrams,
-          fatTarget: calculatedMacros.fatGrams,
+          activityLevel,
+          macroSplit: newSplit,
         });
       }
 
       if (onSave) {
         await onSave({
+          activityLevel,
           macroSplit: newSplit,
-          proteinGramsTarget: calculatedMacros.proteinGrams,
-          carbsGramsTarget: calculatedMacros.carbsGrams,
-          fatGramsTarget: calculatedMacros.fatGrams,
         });
       }
 
@@ -293,8 +349,36 @@ export function DietPlanModal({
         >
           {/* 主容器：pt-3.5 space-y-3 嚴格縱向律動 */}
           <div className="flex flex-col space-y-3 pt-3.5">
-            {/* 單行 Usage Table：比例選項 (單一選中文字 + 下拉箭頭，點擊呼出浮層選單) */}
-            <div className="border border-border rounded-lg bg-card overflow-hidden">
+            {/* 雙行 Usage Table：活動係數 + 供能比比例選項 (統一使用 Select 下拉選單) */}
+            <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
+              {/* 第 1 行：活動係數 */}
+              <div className="h-10 px-3 flex items-center justify-between">
+                <span className="text-xs font-normal text-foreground">
+                  {t('dietPlan.activity', '活動')}
+                </span>
+                <Select
+                  value={String(activityLevel)}
+                  onValueChange={(val) => val && handleActivityChange(val)}
+                >
+                  <SelectTrigger
+                    size="custom"
+                    className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                  >
+                    <SelectValue className="flex-none text-right">
+                      {getActivityLabel(activityLevel)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent align="end" className="min-w-48">
+                    <SelectItem value="1.2">{t('dietPlan.sedentary')}</SelectItem>
+                    <SelectItem value="1.375">{t('dietPlan.light')}</SelectItem>
+                    <SelectItem value="1.55">{t('dietPlan.moderate')}</SelectItem>
+                    <SelectItem value="1.725">{t('dietPlan.heavy')}</SelectItem>
+                    <SelectItem value="1.9">{t('dietPlan.athlete')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 第 2 行：供能比模板 */}
               <div className="h-10 px-3 flex items-center justify-between">
                 <span className="text-xs font-normal text-foreground">
                   {t('dietPlan.ratio', '比例')}
@@ -368,15 +452,13 @@ export function DietPlanModal({
                     </button>
                   ) : (
                     <div className="h-7 flex items-baseline justify-center gap-0.5 select-none">
-                      <span className="font-mono text-base font-bold text-foreground">
-                        {carbsPercent}
-                      </span>
-                      <span className="font-mono text-2xs text-muted-foreground">%</span>
+                      <span className="font-mono text-xs font-bold text-foreground">{carbsPercent}</span>
+                      <span className="text-muted-foreground text-2xs font-mono">%</span>
                     </div>
                   )}
 
-                  <span className="text-2xs font-mono text-muted-foreground">
-                    {calculatedMacros.carbsGrams} g
+                  <span className="text-2xs font-mono text-muted-foreground truncate max-w-full">
+                    {calculatedMacros.carbsGrams}g
                   </span>
                 </div>
 
@@ -399,15 +481,13 @@ export function DietPlanModal({
                     </button>
                   ) : (
                     <div className="h-7 flex items-baseline justify-center gap-0.5 select-none">
-                      <span className="font-mono text-base font-bold text-foreground">
-                        {proteinPercent}
-                      </span>
-                      <span className="font-mono text-2xs text-muted-foreground">%</span>
+                      <span className="font-mono text-xs font-bold text-foreground">{proteinPercent}</span>
+                      <span className="text-muted-foreground text-2xs font-mono">%</span>
                     </div>
                   )}
 
-                  <span className="text-2xs font-mono text-muted-foreground">
-                    {calculatedMacros.proteinGrams} g
+                  <span className="text-2xs font-mono text-muted-foreground truncate max-w-full">
+                    {calculatedMacros.proteinGrams}g
                   </span>
                 </div>
 
@@ -430,53 +510,43 @@ export function DietPlanModal({
                     </button>
                   ) : (
                     <div className="h-7 flex items-baseline justify-center gap-0.5 select-none">
-                      <span className="font-mono text-base font-bold text-foreground">
-                        {fatPercent}
-                      </span>
-                      <span className="font-mono text-2xs text-muted-foreground">%</span>
+                      <span className="font-mono text-xs font-bold text-foreground">{fatPercent}</span>
+                      <span className="text-muted-foreground text-2xs font-mono">%</span>
                     </div>
                   )}
 
-                  <span className="text-2xs font-mono text-muted-foreground">
-                    {calculatedMacros.fatGrams} g
+                  <span className="text-2xs font-mono text-muted-foreground truncate max-w-full">
+                    {calculatedMacros.fatGrams}g
                   </span>
                 </div>
               </div>
 
-              {/* 🌟 配比總和欄位：滿 100% 正常文本，超過或少於 100% 僅顯示紅色膠囊數值 */}
-              <div className="h-9 px-3 bg-muted/30 border-t border-border flex items-center justify-between text-xs font-mono">
-                <span className="text-muted-foreground">
+              {/* 底部總和狀態行 (恆定高度 h-8，嚴格防抖無抖動) */}
+              <div className="h-8 px-3 bg-muted/20 border-t border-border flex items-center justify-between text-2xs font-mono">
+                <span className="text-muted-foreground font-sans">
                   {t('dietPlan.ratioTotal', '配比總和')}
                 </span>
-
-                <div className="flex items-center">
-                  {isRatioValid ? (
-                    // 滿 100%：純文字顏色提示
-                    <span className="font-mono text-xs font-semibold text-foreground">
-                      100 %
-                    </span>
-                  ) : (
-                    // 未滿或超出 100%：紅色膠囊僅顯示總和百分比數值
-                    <div className="h-5 px-2 rounded-full bg-destructive-subtle text-destructive border border-destructive/30 font-mono text-2xs font-semibold flex items-center select-none">
-                      <span>{ratioTotal} %</span>
-                    </div>
-                  )}
-                </div>
+                <span
+                  className={
+                    isRatioValid
+                      ? 'text-muted-foreground font-bold'
+                      : 'text-destructive font-bold'
+                  }
+                >
+                  {ratioTotal}% {isRatioValid ? '' : `(${ratioTotal > 100 ? `+${ratioTotal - 100}%` : `-${100 - ratioTotal}%`})`}
+                </span>
               </div>
             </div>
           </div>
         </PrecisionDialogContent>
       </Dialog>
 
-      {/* 次級懸浮數字鍵盤 (平級兄弟節點聲明，層級 z-[70] 高於主彈窗) */}
-      {isKeypadOpen && activeKeypadKey && (
+      {/* 次級懸浮數字鍵盤 (平級兄弟節點聲明，層級 zIndex={70} 高於主彈窗) */}
+      {isKeypadOpen && (
         <NumericKeypadDialog
           open={isKeypadOpen}
           onOpenChange={(kOpen) => {
-            setIsKeypadOpen(kOpen);
-            if (!kOpen) {
-              setActiveKeypadKey(null);
-            }
+            if (!kOpen) handleKeypadCancel();
           }}
           title={getKeypadTitle(activeKeypadKey)}
           value={getKeypadCurrentValue(activeKeypadKey)}

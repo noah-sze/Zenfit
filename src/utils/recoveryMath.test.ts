@@ -142,7 +142,6 @@ describe('recoveryMath (純粹客觀日曆天數模型 - 方案 A)', () => {
       const log: WorkoutLog = {
         id: '1',
         date: '2026-11-03',
-        title: '訓練',
         exercises: [],
         createdAt: 1700000000000,
         updatedAt: 1700000000000,
@@ -154,7 +153,6 @@ describe('recoveryMath (純粹客觀日曆天數模型 - 方案 A)', () => {
       const log: WorkoutLog = {
         id: '1',
         date: '2026-11-03',
-        title: '訓練',
         exercises: [],
         createdAt: 0,
         updatedAt: 0,
@@ -200,11 +198,9 @@ describe('recoveryMath (純粹客觀日曆天數模型 - 方案 A)', () => {
       const log: WorkoutLog = {
         id: 'log-bench-1026',
         date: '2026-10-26',
-        title: '胸部推力',
         exercises: [
           {
             exerciseId: benchPressId,
-            exerciseName: '槓鈴臥推',
             sets: [{ id: 's1', setNumber: 1, weight: 100, reps: 5, isCompleted: true }],
           },
         ],

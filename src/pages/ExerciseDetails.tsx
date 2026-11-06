@@ -71,12 +71,13 @@ export default function ExerciseDetails() {
     async () => {
       if (!id || !exercise) return [];
       const logs = await db.workout_logs.toArray();
-      // 篩選出包含此動作的日誌
+      // 篩選出包含此動作的日誌（優先依據 exerciseId 純 ID 關聯，向下相容歷史快照）
       return logs.filter((log) =>
         log.exercises.some(
           (ex) =>
             ex.exerciseId === id ||
-            ex.exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase()
+            (typeof (ex as any).exerciseName === 'string' &&
+              (ex as any).exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase())
         )
       );
     },
@@ -99,7 +100,8 @@ export default function ExerciseDetails() {
       const targetGroup = log.exercises.filter(
         (ex) =>
           ex.exerciseId === id ||
-          ex.exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase()
+          (typeof (ex as any).exerciseName === 'string' &&
+            (ex as any).exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase())
       );
       const allSets = targetGroup.flatMap((g) => g.sets || []);
       return {

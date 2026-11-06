@@ -18,7 +18,7 @@ import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
 import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
-import type { NutritionTag } from '@/types';
+import type { NutritionTag, FoodLog } from '@/types';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import {
   type OverviewPeriod,
@@ -103,37 +103,29 @@ export default function CategoryDetails() {
   const foodLogs = useLiveQuery(
     async () => {
       if (!id || !food) return [];
-      const displayName = formatFoodDisplayName(food).trim().toLowerCase();
-      const rawName = food.name.trim().toLowerCase();
-      const logs = await db.food_logs
-        .filter((log) => {
-          if (log.foodId === id) return true;
-          const logName = log.foodName.trim().toLowerCase();
-          return logName === rawName || logName === displayName;
-        })
-        .toArray();
-      return logs.sort((a, b) => b.date.localeCompare(a.date));
+      const dailyLogs = await db.daily_diet_logs.toArray();
+      const logs: FoodLog[] = [];
+      for (const daily of dailyLogs) {
+        for (const entry of daily.entries) {
+          if (entry.foodId === id) {
+            logs.push({ ...entry, date: daily.date });
+          }
+        }
+      }
+      return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     },
-    [id, food?.name]
+    [id]
   );
 
   // 檢查此食材是否被菜餚組合引用
   const referencingRecipesCount = useLiveQuery(
     async () => {
       if (!id || !food) return 0;
-      const displayName = formatFoodDisplayName(food).trim().toLowerCase();
-      const rawName = food.name.trim().toLowerCase();
       return await db.recipes
-        .filter((r) =>
-          r.ingredients.some((ing) => {
-            if (ing.foodId === id) return true;
-            const ingName = ing.foodName.trim().toLowerCase();
-            return ingName === rawName || ingName === displayName;
-          })
-        )
+        .filter((r) => r.ingredients.some((ing) => ing.foodId === id))
         .count();
     },
-    [id, food?.name]
+    [id]
   );
 
   const hasUsage = (foodLogs?.length ?? 0) > 0 || (referencingRecipesCount ?? 0) > 0;

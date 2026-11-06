@@ -151,11 +151,12 @@ export function findLastExerciseSet(
       const exGroup = log.exercises[g];
       if (!exGroup) continue;
 
-      const idMatch = cleanExerciseId && exGroup.exerciseId === cleanExerciseId;
-      const nameMatch =
+      const idMatch = Boolean(cleanExerciseId && exGroup.exerciseId === cleanExerciseId);
+      const nameMatch = Boolean(
         cleanExerciseName &&
-        typeof exGroup.exerciseName === 'string' &&
-        exGroup.exerciseName.trim().toLowerCase() === cleanExerciseName;
+        (exGroup as any).exerciseName &&
+        String((exGroup as any).exerciseName).trim().toLowerCase() === cleanExerciseName
+      );
 
       if (idMatch || nameMatch) {
         if (Array.isArray(exGroup.sets)) {
@@ -237,11 +238,12 @@ export function findLastExerciseRecord(
       const exGroup = log.exercises[g];
       if (!exGroup) continue;
 
-      const idMatch = cleanExerciseId && exGroup.exerciseId === cleanExerciseId;
-      const nameMatch =
+      const idMatch = Boolean(cleanExerciseId && exGroup.exerciseId === cleanExerciseId);
+      const nameMatch = Boolean(
         cleanExerciseName &&
-        typeof exGroup.exerciseName === 'string' &&
-        exGroup.exerciseName.trim().toLowerCase() === cleanExerciseName;
+        (exGroup as any).exerciseName &&
+        String((exGroup as any).exerciseName).trim().toLowerCase() === cleanExerciseName
+      );
 
       if (idMatch || nameMatch) {
         if (Array.isArray(exGroup.sets) && exGroup.sets.length > 0) {

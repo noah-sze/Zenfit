@@ -31,7 +31,6 @@ import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import {
   formatEnergy,
   formatFoodServing,
-  convertEnergy,
   kgToLbs,
   lbsToKg,
   cmToIn,
@@ -81,6 +80,7 @@ export function AddQuickModal() {
   // Food Form State
   const [mealType, setMealType] = useState<MealType>('breakfast');
   const [foodEntryMode, setFoodEntryMode] = useState<'item' | 'recipe'>('item');
+  const [selectedFoodId, setSelectedFoodId] = useState('');
   const [foodName, setFoodName] = useState('');
   const defaultQuantity = foodWeightUnit === 'oz' ? '1' : '100';
   const [quantity, setQuantity] = useState(defaultQuantity);
@@ -120,7 +120,6 @@ export function AddQuickModal() {
     : { calories: 0, protein: 0, carbs: 0, fat: 0, totalWeightGrams: 0, ingredientCount: 0 };
 
   // Workout Form State
-  const [workoutTitle, setWorkoutTitle] = useState('');
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [firstSetWeight, setFirstSetWeight] = useState('40');
   const [firstSetReps, setFirstSetReps] = useState('10');
@@ -149,6 +148,7 @@ export function AddQuickModal() {
   const handleSelectPresetFood = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const found = foods.find((f) => f.id === e.target.value);
     if (found) {
+      setSelectedFoodId(found.id);
       setFoodName(formatFoodDisplayName(found));
       const s = formatFoodServing(found.servingSize, found.servingUnit, foodWeightUnit, foodVolumeUnit);
       setQuantity(String(s.size));
@@ -158,6 +158,8 @@ export function AddQuickModal() {
       setProtein(String(found.protein));
       setCarbs(String(found.carbs));
       setFat(String(found.fat));
+    } else {
+      setSelectedFoodId('');
     }
   };
 
@@ -166,19 +168,27 @@ export function AddQuickModal() {
       toast.show(t('common.required'));
       return;
     }
-    const rawCal = parseFloat(calories) || 0;
-    const finalCalKcal = energyUnit === 'kJ' ? convertEnergy(rawCal, 'kJ', 'kcal') : rawCal;
+
+    // 優先匹配食物 ID
+    let finalFoodId = selectedFoodId;
+    if (!finalFoodId) {
+      const trimmed = foodName.trim().toLowerCase();
+      const matched = foods.find(
+        (f) =>
+          f.name.trim().toLowerCase() === trimmed ||
+          formatFoodDisplayName(f).trim().toLowerCase() === trimmed
+      );
+      if (matched) {
+        finalFoodId = matched.id;
+      }
+    }
 
     await addFoodLog({
       date: selectedDate,
       mealType,
-      foodName: foodName.trim(),
+      foodId: finalFoodId,
       quantity: parseFloat(quantity) || (foodWeightUnit === 'oz' ? 1 : 100),
       unit: unit || foodWeightUnit,
-      calories: finalCalKcal,
-      protein: parseFloat(protein) || 0,
-      carbs: parseFloat(carbs) || 0,
-      fat: parseFloat(fat) || 0,
     });
     toast.show(t('common.saved'));
     resetFoodForm();
@@ -199,28 +209,17 @@ export function AddQuickModal() {
       return;
     }
 
-    const bundleId = uuidv4();
-    const bundleName = currentRecipe.name;
+    const bundleId = currentRecipe.id;
 
-    const logItems = ingredientsToLog.map((ing) => {
-      const targetFood = allFoods.find((f) => f.id === ing.foodId);
-      const macros = calculateIngredientMacros(targetFood, ing.quantity);
-      return {
-        date: selectedDate,
-        mealType,
-        foodId: ing.foodId,
-        foodName: ing.foodName,
-        quantity: ing.quantity,
-        unit: ing.unit || 'g',
-        calories: macros.calories,
-        protein: macros.protein,
-        carbs: macros.carbs,
-        fat: macros.fat,
-        notes: `[${bundleName}]`,
-      };
-    });
+    const logItems = ingredientsToLog.map((ing) => ({
+      date: selectedDate,
+      mealType,
+      foodId: ing.foodId,
+      quantity: ing.quantity,
+      unit: ing.unit || 'g',
+    }));
 
-    await addFoodLogBundle(bundleId, bundleName, logItems);
+    await addFoodLogBundle(bundleId, logItems);
 
     toast.show(t('common.saved'));
     setSelectedRecipeId('');
@@ -229,20 +228,16 @@ export function AddQuickModal() {
   };
 
   const handleSaveWorkout = async () => {
-    const title = workoutTitle.trim() || t('workout.newWorkout');
     const ex = exercises.find((item) => item.id === selectedExerciseId) || exercises[0];
     const rawWeight = parseFloat(firstSetWeight) || (bodyWeightUnit === 'lbs' ? 45 : 20);
     const weightKg = bodyWeightUnit === 'lbs' ? lbsToKg(rawWeight) : rawWeight;
     
     await addWorkout({
       date: selectedDate,
-      title,
       exercises: ex
         ? [
             {
               exerciseId: ex.id,
-              exerciseName: ex.name,
-              category: ex.category,
               sets: [
                 {
                   id: uuidv4(),
@@ -270,30 +265,25 @@ export function AddQuickModal() {
     }
 
     const exerciseGroups = currentRoutine.exercises.map((item) => {
-      const ex = exerciseMap.get(item.exerciseId);
       const setsCount = item.defaultSets || 3;
       const sets = Array.from({ length: setsCount }, (_, i) => ({
         id: uuidv4(),
         setNumber: i + 1,
-        weight: 20,
-        reps: 10,
+        weight: undefined,
+        reps: undefined,
         isCompleted: false,
       }));
 
       return {
         exerciseId: item.exerciseId,
-        exerciseName: ex ? ex.name : t('common.unknown'),
-        category: ex ? ex.category : 'free_weight',
         sets,
-        notes: item.notes,
       };
     });
 
     await addWorkout({
       date: selectedDate,
-      title: currentRoutine.name,
+      routineId: currentRoutine.id,
       exercises: exerciseGroups,
-      notes: currentRoutine.notes ? `[${currentRoutine.name}] ${currentRoutine.notes}` : `[${currentRoutine.name}]`,
     });
 
     toast.show(t('workout.routineApplied'));
@@ -328,6 +318,7 @@ export function AddQuickModal() {
   };
 
   const resetFoodForm = () => {
+    setSelectedFoodId('');
     setFoodName('');
     setCalories('');
     setProtein('');
@@ -336,7 +327,6 @@ export function AddQuickModal() {
   };
 
   const resetWorkoutForm = () => {
-    setWorkoutTitle('');
     setSelectedExerciseId('');
   };
 
@@ -549,6 +539,7 @@ export function AddQuickModal() {
                           const isExcluded = recipeExcludedIndices.includes(idx);
                           const targetFood = allFoods.find((f) => f.id === ing.foodId);
                           const ingMacros = calculateIngredientMacros(targetFood, ing.quantity);
+                          const ingDisplayName = targetFood ? formatFoodDisplayName(targetFood) : '';
 
                           return (
                             <label
@@ -565,7 +556,7 @@ export function AddQuickModal() {
                                   className="size-3.5 rounded border-border"
                                 />
                                 <div className="truncate">
-                                  <span className="font-medium text-foreground">{ing.foodName}</span>
+                                  <span className="font-medium text-foreground">{ingDisplayName}</span>
                                   {ing.isOptional && (
                                     <span className="ml-1.5 text-[10px] text-muted-foreground">
                                       ({t('diet.optionalBadge')})
@@ -672,18 +663,6 @@ export function AddQuickModal() {
 
             {workoutEntryMode === 'single' ? (
               <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
-                    {t('workout.workoutTitle')}
-                  </label>
-                  <Input
-                    value={workoutTitle}
-                    onChange={(e) => setWorkoutTitle(e.target.value)}
-                    placeholder="例如：胸與三頭推力訓練"
-                    className="h-9 text-sm"
-                  />
-                </div>
-
                 <div>
                   <label className="text-xs font-mono uppercase text-muted-foreground block mb-1">
                     {t('workout.selectExercise')}

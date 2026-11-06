@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateScaledNutrition, scaleNutritionFromBasis } from './nutritionMath';
+import { calculateScaledNutrition, scaleNutritionFromBasis, calculateFoodLogNutrients } from './nutritionMath';
 
 describe('nutritionMath - calculateScaledNutrition', () => {
   it('正確返回「每份」模式之原始數值', () => {
@@ -417,4 +417,41 @@ describe('nutritionMath - scaleNutritionFromBasis', () => {
     expect(res.servingUnit).toBe('ml');
   });
 });
+
+describe('nutritionMath - calculateFoodLogNutrients', () => {
+  const chickenBreast = {
+    calories: 165,
+    protein: 31,
+    carbs: 0,
+    fat: 3.6,
+    servingSize: 100,
+    servingUnit: 'g',
+  };
+
+  it('傳入空食物或 null 時安全回傳全 0 防護', () => {
+    expect(calculateFoodLogNutrients(null, 100)).toEqual({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+  });
+
+  it('根據標準 100g 份量等比放大計算（例如 200g）', () => {
+    const res = calculateFoodLogNutrients(chickenBreast, 200, 'g');
+    expect(res.calories).toBe(330);
+    expect(res.protein).toBe(62);
+    expect(res.carbs).toBe(0);
+    expect(res.fat).toBe(7.2);
+  });
+
+  it('根據非整數份量精準四捨五入計算（例如 150g）', () => {
+    const res = calculateFoodLogNutrients(chickenBreast, 150, 'g');
+    expect(res.calories).toBe(248);
+    expect(res.protein).toBe(46.5);
+    expect(res.carbs).toBe(0);
+    expect(res.fat).toBe(5.4);
+  });
+});
+
 

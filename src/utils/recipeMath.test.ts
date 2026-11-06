@@ -75,9 +75,9 @@ describe('recipeMath 核心純函數測試', () => {
     ]);
 
     const ingredients: RecipeIngredient[] = [
-      { foodId: mockTomato.id, foodName: '牛番茄', quantity: 150, unit: 'g', isOptional: false },
-      { foodId: mockEgg.id, foodName: '全蛋', quantity: 100, unit: 'g', isOptional: false }, // 2 顆 = 144 kcal, 12.6p, 0.8c, 9.6f
-      { foodId: mockOil.id, foodName: '食用植物油', quantity: 10, unit: 'g', isOptional: true }, // 10g = 90 kcal, 0p, 0c, 10f
+      { foodId: mockTomato.id, quantity: 150, unit: 'g', isOptional: false },
+      { foodId: mockEgg.id, quantity: 100, unit: 'g', isOptional: false }, // 2 顆 = 144 kcal, 12.6p, 0.8c, 9.6f
+      { foodId: mockOil.id, quantity: 10, unit: 'g', isOptional: true }, // 10g = 90 kcal, 0p, 0c, 10f
     ];
 
     it('完整勾選包含油量：精準計算番茄炒蛋', () => {

@@ -134,6 +134,10 @@ trigger: always_on
 21. **不得在標準數據彈窗上私自手寫覆蓋幾何尺寸與邊距類名**：嚴禁私寫 `sm:max-w-md`、`p-6`、`w-full` 等破壞 300px 與 16px 緊湊規格的類名，所有資料與管理彈窗必須透過 `<PrecisionDialogContent>` 或 `size="standard"` 自動繼承單一真理源。
 22. **不得在標準精密彈窗中手寫重複的標頭 JSX**：一律透過 `<PrecisionDialogContent>` 的 `title/onSubmit/onClose/form` props 或 `<DialogPrecisionHeader>` 統一輸出，杜絕在各業務頁面複製貼上 30 餘行標頭 JSX。
 23. **不得使用雙破折號「`--`」作為無數據佔位符**：全站無數據、未記錄或空值佔位符，一律嚴格使用半形單破折號「`-`」，嚴禁任何「`--`」或「`—`」。
+24. **不得在關聯引用或聚合實體中快照被引用對象的名稱、分類或衍生數值**：凡引用外部實體（如菜餚配方 `RecipeIngredient`、訓練日誌 `WorkoutExerciseGroup`、課表 `RoutineExerciseItem` 以及飲食日誌中的菜餚組合引用 `FoodLog` 等），資料持久化與同步檔案必須嚴格踐行純 ID 關聯正規化（僅儲存 `foodId`, `exerciseId`, `bundleId` 以及該引用的物理事實如 `quantity`, `sets`），**絕對嚴禁儲存 `foodName`、`bundleName`、`exerciseName`、`category`、`calories`、`protein` 等反正規化快照欄位**。視圖展示所需之名稱與衍生數值，一律在前端記憶體中透過維度表（`db.foods`, `db.recipes`, `db.exercises`）即時 Join 動態解析，徹底杜絕快照漂移與雙真理源衝突。
+25. **不得使用語意化 Slug ID 區分預設與自定義實體（全域實體平權與 UUID 唯一標識契約）**：全系統所有領域實體（食材、菜餚、器械、動作、使用者設定等）主鍵一律統一採用標準 RFC 4122 UUID 格式。為杜絕多端同步時不同客戶端在運行時動態生成不同 UUID 導致重複膨脹，系統預設種子資料（Default Seed Data）必須統一採用全域固定、確定性的靜態 UUID；所有關聯外鍵嚴禁使用 `food_chicken_breast`、`barbell` 等舊式語意化 slug 字串，徹底消除系統資料與自訂資料的二元分化。
+26. **不得在飲食模型與日誌頭部中儲存主觀計劃名稱（全域嚴禁 `planName`）**：Zenfit 為冷靜、客觀之精密測量儀，每日飲食環境背景（`DailyDietMeta`）僅記錄當日客觀生理參數與事實（活動係數 `activityLevel` 與供能比 `macroSplit`），**全應用程式與資料庫中絕對嚴禁存在 `planName` 欄位**（如「標準目標」、「高碳日」等主觀命名）；全域嚴禁以任何形式聲明、儲存或在同步檔案中包含 `planName`。
+27. **不得在訓練日誌中儲存標題或動作/課表快照（全域嚴禁 `WorkoutLog.title`）**：訓練日誌（`WorkoutLog`）實體僅記錄客觀物理事實（`id`、`date`、`routineId`（可選）、`exercises` 動作組、`createdAt`、`updatedAt`），**絕對嚴禁儲存 `title` 欄位**。介面渲染所需的標題一律由前端記憶體在即時 Join 時依關聯之 `routineId -> db.routines.name` 或首個動作 `exercises[0].exerciseId -> db.exercises.name` 動態解析為 `HydratedWorkoutLog`，徹底杜絕日誌標題與課表/動作更名時的快照漂移。
 
 ## 6. 食物數據與原子計量規範 (Food Data & Atomic Metric Standards)
 - **原型食材原子化真理源 (Atomic Ingredients as Ground Truth)**：
@@ -158,3 +162,11 @@ trigger: always_on
   3. **橫向看板與 HUD Banner (`RecipeFormDialog`, `DietPlanModal` 等)**：巨量素網格、供能比標尺 (Ratio Bar) 與 3 欄並列卡片，嚴格依「碳水 -> 蛋白質 -> 脂肪」排列。
   4. **文字副標與微彙總 (List Subtitle & Table Headers)**：凡以行內文字呈現三大元素時（如「`C: 28g · P: 10g · F: 2g`」或「`碳 28g · 蛋 10g · 脂 2g`」），嚴格維持 C/P/F 順序。
   5. **特徵過濾與下拉選單 (Filter Dropdowns & Tags)**：下拉選單選項嚴格依「碳水主食 (`carb-source`) -> 高蛋白 (`high-protein`) -> 脂質來源 (`fat-source`) -> 低熱量 -> 高熱量」順序排列。
+
+## 8. 關聯引用與純 ID 正規化規範 (Pure ID Reference & Association Normalization Standards)
+- **純 ID 關聯正規化原則 (Strict Pure ID Association)**：
+  - 專案所有資料庫實體（IndexedDB）、同步分卷（`.json`）與備份結構中，凡涉及「多對一」或「組合引用」之資料模型（例如菜餚引用食材、日誌引用動作、課表引用動作），**持久化層僅允許儲存外鍵 ID（如 `foodId`, `exerciseId`）以及該引用獨立產生的客觀物理量（如份量 `quantity`、單位 `unit`、組數 `sets`、次數 `reps`）**。
+  - **嚴格禁止在關聯引用中快照被引用實體的任何可變屬性**，包括但不限於：食材名稱（`foodName`）、動作名稱（`exerciseName`）、肌群分類（`category`）、營養素數值（`calories`, `protein`, `carbs`, `fat`）等。
+- **動態解析契約 (Dynamic Hydration at Runtime)**：
+  - 所有需要向使用者呈現的名稱、分類與計算指標，必須在視圖層（Hooks / Services）於記憶體中透過對應的維度表（`db.foods`, `db.exercises`）即時 Join 動態解析裝載（如 `HydratedFoodLog`, `HydratedWorkoutExerciseGroup`）。
+  - **保證全域同步唯一性**：當使用者在基礎庫中修改食材名稱或營養標籤時，全站所有引用該食材的歷史記錄、菜餚配方與統計圖表必須無感、即時且精確地同步反映最新數值，絕不殘留任何過期快照。

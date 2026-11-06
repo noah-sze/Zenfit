@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FoodLog } from '@/types';
+import type { HydratedFoodLog } from '@/types';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
@@ -9,17 +9,17 @@ import { cn } from '@/lib/utils';
 
 export interface MealBundleCardProps {
   bundleId: string;
-  bundleName: string;
-  logs: FoodLog[];
+  bundleTitle: string;
+  logs: HydratedFoodLog[];
   onDeleteBundle?: (bundleId: string) => void;
-  onDeleteSingle?: (log: FoodLog) => void;
-  onEditSingle?: (log: FoodLog) => void;
-  onEditBundle?: (bundleId: string, bundleName: string, logs: FoodLog[]) => void;
+  onDeleteSingle?: (log: HydratedFoodLog) => void;
+  onEditSingle?: (log: HydratedFoodLog) => void;
+  onEditBundle?: (bundleId: string, bundleTitle: string, logs: HydratedFoodLog[]) => void;
 }
 
 export function MealBundleCard({
   bundleId,
-  bundleName,
+  bundleTitle,
   logs,
   onEditBundle,
 }: MealBundleCardProps) {
@@ -66,7 +66,7 @@ export function MealBundleCard({
   const handleClick = () => {
     triggerHaptic('light');
     if (onEditBundle) {
-      onEditBundle(bundleId, bundleName, logs);
+      onEditBundle(bundleId, bundleTitle, logs);
     } else {
       setIsExpanded((prev) => !prev);
     }
@@ -82,7 +82,7 @@ export function MealBundleCard({
         <div className="flex-1 min-w-0 pr-3">
           {/* 標題 (刪除旁邊的膠囊) */}
           <div className="truncate text-foreground font-medium text-sm">
-            {bundleName}
+            {bundleTitle}
           </div>
 
           {/* 總重量與總熱量副標題 */}
@@ -125,10 +125,10 @@ export function MealBundleCard({
         <div className="border-t border-border bg-background/50 divide-y divide-border/40 pl-6 sm:pl-7 pr-3.5 sm:pr-4 py-1">
           {logs.map((item) => {
             const itemEval = evaluateNutritionalHighlight({
-              calories: item.calories,
-              protein: item.protein,
-              carbs: item.carbs,
-              fat: item.fat,
+              calories: item.calories || 0,
+              protein: item.protein || 0,
+              carbs: item.carbs || 0,
+              fat: item.fat || 0,
               servingSize: item.quantity,
               servingUnit: item.unit || 'g',
             });
@@ -157,16 +157,16 @@ export function MealBundleCard({
                           'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
                       )}
                     >
-                      {formatEnergy(item.calories, energyUnit).formatted}
+                      {formatEnergy(item.calories || 0, energyUnit).formatted}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center shrink-0">
                   <MacroSquares
-                    protein={item.protein}
-                    carbs={item.carbs}
-                    fat={item.fat}
+                    protein={item.protein || 0}
+                    carbs={item.carbs || 0}
+                    fat={item.fat || 0}
                     highlights={itemEval.highlights}
                     variant="subtle"
                     className="scale-[0.9] origin-right"

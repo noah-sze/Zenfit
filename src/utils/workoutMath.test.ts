@@ -122,13 +122,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_3days_ago',
           date: '2026-11-01',
-          title: '胸背訓練',
           createdAt: 1000,
           updatedAt: 1000,
           exercises: [
             {
               exerciseId: 'ex_bench',
-              exerciseName: '槓鈴臥推',
               sets: [{ id: 's1', setNumber: 1, weight: 10, reps: 12, isCompleted: true }],
             },
           ],
@@ -136,13 +134,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_yesterday',
           date: '2026-11-03',
-          title: '胸推強化',
           createdAt: 2000,
           updatedAt: 2000,
           exercises: [
             {
               exerciseId: 'ex_bench',
-              exerciseName: '槓鈴臥推',
               sets: [{ id: 's2', setNumber: 1, weight: 15, reps: 8, isCompleted: true }],
             },
           ],
@@ -159,13 +155,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_morning',
           date: '2026-11-04',
-          title: '早晨訓練',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
             {
               exerciseId: 'ex_squat',
-              exerciseName: '深蹲',
               sets: [{ id: 's1', setNumber: 1, weight: 80, reps: 5, isCompleted: true }],
             },
           ],
@@ -173,13 +167,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_evening',
           date: '2026-11-04',
-          title: '晚間訓練',
           createdAt: 200,
           updatedAt: 200,
           exercises: [
             {
               exerciseId: 'ex_squat',
-              exerciseName: '深蹲',
               sets: [{ id: 's2', setNumber: 1, weight: 90, reps: 3, isCompleted: true }],
             },
           ],
@@ -195,13 +187,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_1',
           date: '2026-11-04',
-          title: '練腿日',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
             {
               exerciseId: 'ex_leg_press',
-              exerciseName: '腿推機',
               sets: [
                 { id: 's1', setNumber: 1, weight: 100, reps: 12, isCompleted: true },
                 { id: 's2', setNumber: 2, weight: 120, reps: 10, isCompleted: true },
@@ -221,7 +211,6 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_1',
           date: '2026-11-04',
-          title: '背部訓練',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
@@ -229,7 +218,7 @@ describe('workoutMath 純數學客觀計算函數', () => {
               exerciseId: 'different_id',
               exerciseName: 'Lat Pulldown',
               sets: [{ id: 's1', setNumber: 1, weight: 55, reps: 10, isCompleted: true }],
-            },
+            } as any,
           ],
         },
       ];
@@ -243,13 +232,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_1',
           date: '2026-11-04',
-          title: '胸部',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
             {
               exerciseId: 'ex_bench',
-              exerciseName: '臥推',
               sets: [{ id: 's1', setNumber: 1, weight: 60, reps: 10, isCompleted: true }],
             },
           ],
@@ -265,7 +252,7 @@ describe('workoutMath 純數學客觀計算函數', () => {
       expect(findLastExerciseSet(undefined, 'ex_1')).toBeNull();
       expect(
         findLastExerciseSet(
-          [{ id: '1', date: '2026-11-04', title: '', createdAt: 0, updatedAt: 0, exercises: [] }],
+          [{ id: '1', date: '2026-11-04', createdAt: 0, updatedAt: 0, exercises: [] }],
           ''
         )
       ).toBeNull();
@@ -275,13 +262,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_invalid',
           date: '2026-11-04',
-          title: '測試',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
             {
               exerciseId: 'ex_zero',
-              exerciseName: '徒手或無效',
               sets: [
                 { id: 's1', setNumber: 1, weight: 0, reps: 10, isCompleted: true },
                 { id: 's2', setNumber: 2, weight: -10, reps: 10, isCompleted: true },
@@ -298,13 +283,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_zero_reps',
           date: '2026-11-04',
-          title: '測試',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
             {
               exerciseId: 'ex_weight_only',
-              exerciseName: '特殊組',
               sets: [{ id: 's1', setNumber: 1, weight: 25, reps: 0, isCompleted: true }],
             },
           ],
@@ -320,13 +303,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_old',
           date: '2026-11-01',
-          title: '舊胸訓',
           createdAt: 1000,
           updatedAt: 1000,
           exercises: [
             {
               exerciseId: 'ex_bench',
-              exerciseName: '槓鈴臥推',
               sets: [
                 { id: 's1', setNumber: 1, weight: 50, reps: 10, isCompleted: true },
                 { id: 's2', setNumber: 2, weight: 60, reps: 8, isCompleted: true },
@@ -337,13 +318,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_new',
           date: '2026-11-03',
-          title: '新胸訓',
           createdAt: 2000,
           updatedAt: 2000,
           exercises: [
             {
               exerciseId: 'ex_bench',
-              exerciseName: '槓鈴臥推',
               sets: [
                 { id: 's3', setNumber: 1, weight: 60, reps: 12, isCompleted: true },
                 { id: 's4', setNumber: 2, weight: 70, reps: 10, isCompleted: true },
@@ -368,13 +347,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_morning',
           date: '2026-11-04',
-          title: '早晨',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
             {
               exerciseId: 'ex_squat',
-              exerciseName: '深蹲',
               sets: [{ id: 's1', setNumber: 1, weight: 60, reps: 10, isCompleted: true }],
             },
           ],
@@ -382,13 +359,11 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_night',
           date: '2026-11-04',
-          title: '晚間',
           createdAt: 200,
           updatedAt: 200,
           exercises: [
             {
               exerciseId: 'ex_squat',
-              exerciseName: '深蹲',
               sets: [
                 { id: 's2', setNumber: 1, weight: 80, reps: 5, isCompleted: true },
                 { id: 's3', setNumber: 2, weight: 90, reps: 5, isCompleted: true },
@@ -412,7 +387,6 @@ describe('workoutMath 純數學客觀計算函數', () => {
         {
           id: 'log_1',
           date: '2026-11-04',
-          title: '背部訓練',
           createdAt: 100,
           updatedAt: 100,
           exercises: [
@@ -423,7 +397,7 @@ describe('workoutMath 純數學客觀計算函數', () => {
                 { id: 's1', setNumber: 1, weight: 45, reps: 12, isCompleted: true },
                 { id: 's2', setNumber: 2, weight: 50, reps: 10, isCompleted: true },
               ],
-            },
+            } as any,
           ],
         },
       ];
@@ -440,7 +414,7 @@ describe('workoutMath 純數學客觀計算函數', () => {
       expect(findLastExerciseRecord([], 'ex_1')).toBeNull();
       expect(findLastExerciseRecord(null, 'ex_1')).toBeNull();
       expect(findLastExerciseRecord(undefined, 'ex_1')).toBeNull();
-      expect(findLastExerciseRecord([{ id: '1', date: '2026-11-04', title: 't', createdAt: 1, updatedAt: 1, exercises: [] }], 'ex_1')).toBeNull();
+      expect(findLastExerciseRecord([{ id: '1', date: '2026-11-04', createdAt: 1, updatedAt: 1, exercises: [] }], 'ex_1')).toBeNull();
     });
   });
 });

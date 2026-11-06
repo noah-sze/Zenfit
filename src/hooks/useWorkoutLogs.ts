@@ -1,24 +1,61 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
-import type { WorkoutLog, WorkoutSet } from '@/types';
+import type { HydratedWorkoutLog, WorkoutExerciseGroup, WorkoutLog, WorkoutSet } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { triggerHaptic } from '@/lib/haptics';
 
 export function useWorkoutLogs(date?: string) {
   const workouts = useLiveQuery(
     async () => {
-      if (date) {
-        return await db.workout_logs.where('date').equals(date).sortBy('createdAt');
-      }
-      return await db.workout_logs.orderBy('date').reverse().limit(30).toArray();
+      const rawWorkouts = date
+        ? await db.workout_logs.where('date').equals(date).sortBy('createdAt')
+        : await db.workout_logs.orderBy('date').reverse().limit(30).toArray();
+
+      const allExercises = await db.exercises.toArray();
+      const exerciseMap = new Map(allExercises.map((e) => [e.id, e]));
+      const allRoutines = await db.routines.toArray();
+      const routineMap = new Map(allRoutines.map((r) => [r.id, r]));
+
+      const hydrated: HydratedWorkoutLog[] = rawWorkouts.map((w) => {
+        const routine = w.routineId ? routineMap.get(w.routineId) : undefined;
+        const firstEx = w.exercises?.[0] ? exerciseMap.get(w.exercises[0].exerciseId) : undefined;
+        const title = routine?.name || firstEx?.name || '訓練';
+
+        return {
+          ...w,
+          title,
+          routineName: routine?.name,
+          exercises: (w.exercises || []).map((group) => {
+            const ex = exerciseMap.get(group.exerciseId);
+            return {
+              ...group,
+              exerciseName: ex ? ex.name : '未知動作',
+              category: ex ? ex.category : undefined,
+            };
+          }),
+        };
+      });
+
+      return hydrated;
     },
     [date]
   );
 
   const addWorkout = async (data: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = Date.now();
+    // 嚴格落實 SSOT：日誌中動作組只記錄 exerciseId 與 sets，嚴禁存在 notes、動作名稱或分類
+    const cleanExercises: WorkoutExerciseGroup[] = (data.exercises || []).map((group) => ({
+      exerciseId: group.exerciseId,
+      sets: group.sets || [],
+    }));
+
     const newWorkout: WorkoutLog = {
-      ...data,
+      date: data.date,
+      routineId: data.routineId,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      durationMinutes: data.durationMinutes,
+      exercises: cleanExercises,
       id: uuidv4(),
       createdAt: now,
       updatedAt: now,
@@ -30,10 +67,15 @@ export function useWorkoutLogs(date?: string) {
 
   const updateWorkout = async (id: string, updates: Partial<Omit<WorkoutLog, 'id' | 'createdAt'>>) => {
     const now = Date.now();
-    await db.workout_logs.update(id, {
-      ...updates,
-      updatedAt: now,
-    });
+    // 若有更新 exercises，同樣確保清理冗餘屬性
+    const finalUpdates = { ...updates, updatedAt: now };
+    if (finalUpdates.exercises) {
+      finalUpdates.exercises = finalUpdates.exercises.map((group) => ({
+        exerciseId: group.exerciseId,
+        sets: group.sets || [],
+      }));
+    }
+    await db.workout_logs.update(id, finalUpdates);
   };
 
   const deleteWorkout = async (id: string) => {

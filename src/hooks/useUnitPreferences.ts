@@ -4,7 +4,6 @@ import type {
   UnitSystemPreset,
 } from '@/types';
 import { DEFAULT_UNIT_PREFERENCES } from '@/types';
-import { db } from '@/services/db/db';
 
 const STORAGE_KEY = 'zenfit_unit_preferences';
 const EVENT_KEY = 'zenfit_unit_preferences_change';
@@ -69,16 +68,6 @@ function persistPreferences(nextPrefs: UnitPreferences) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPrefs));
     window.dispatchEvent(new Event(EVENT_KEY));
-
-    // 同步既有資料庫中的 user_base_info.weightUnit (相容性保障)
-    db.user_base_info.toCollection().first().then((info) => {
-      if (info && info.weightUnit !== nextPrefs.bodyWeight) {
-        db.user_base_info.update(info.id, {
-          weightUnit: nextPrefs.bodyWeight,
-          updatedAt: Date.now(),
-        }).catch(() => {});
-      }
-    }).catch(() => {});
   } catch {
     // Ignore storage errors
   }

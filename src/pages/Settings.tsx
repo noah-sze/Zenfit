@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
@@ -20,6 +21,9 @@ import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { useBodyPreferences } from '@/hooks/useBodyPreferences';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useDropboxSync } from '@/hooks/useDropboxSync';
+import { DropboxSyncDialog } from '@/components/settings/dialogs/DropboxSyncDialog';
 import type {
   UnitSystemPreset,
   BodyWeightUnit,
@@ -34,7 +38,19 @@ export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { preferences, updatePreset, updatePreference } = useUnitPreferences();
   const { bodyPreferences, updateBodyPreference } = useBodyPreferences();
+  const { profile } = useUserProfile();
   const confirm = useConfirm();
+
+  const [isDropboxDialogOpen, setIsDropboxDialogOpen] = useState(false);
+  const {
+    isAuthenticated: isDropboxAuth,
+    isSyncing: isDropboxSyncing,
+    lastSyncTime: dropboxLastSyncTime,
+    isOnline,
+    connectDropbox,
+    disconnectDropbox,
+    syncNow: dropboxSyncNow,
+  } = useDropboxSync();
   const { activeFoods, archivedFoods } = useFoods();
   const { activeRecipes, archivedRecipes } = useRecipes();
   const { activeExercises, archivedExercises } = useExercises();
@@ -79,31 +95,47 @@ export default function Settings() {
   // 匯出資料備份
   const handleExportJson = async () => {
     try {
-      const [userBaseInfo, foods, dietPlans, foodLogs, exercises, workoutLogs, bodyMetrics] =
-        await Promise.all([
-          db.user_base_info.toArray(),
-          db.foods.toArray(),
-          db.diet_plans.toArray(),
-          db.food_logs.toArray(),
-          db.exercises.toArray(),
-          db.workout_logs.toArray(),
-          db.body_metrics.toArray(),
-        ]);
+      const [
+        userBaseInfo,
+        userProfile,
+        foods,
+        recipes,
+        dailyDietLogs,
+        exercises,
+        routines,
+        equipments,
+        workoutLogs,
+        bodyMetrics,
+      ] = await Promise.all([
+        db.user_base_info.toArray(),
+        db.user_profile.toArray(),
+        db.foods.toArray(),
+        db.recipes.toArray(),
+        db.daily_diet_logs.toArray(),
+        db.exercises.toArray(),
+        db.routines.toArray(),
+        db.equipments.toArray(),
+        db.workout_logs.toArray(),
+        db.body_metrics.toArray(),
+      ]);
 
       const data = {
-        version: 2,
+        version: 3,
         appName: 'Zenfit',
         exportedAt: new Date().toISOString(),
         profile: {
           userBaseInfo: userBaseInfo[0] || null,
+          userProfile: userProfile[0] || null,
         },
         diet: {
           foods,
-          dietPlans,
-          foodLogs,
+          recipes,
+          dailyDietLogs, // 按日自包含封裝規格 (日誌頭部 meta + 進食組件 entries)
         },
         workout: {
           exercises,
+          routines,
+          equipments,
           workoutLogs,
         },
         body: {
@@ -162,12 +194,15 @@ export default function Settings() {
       try {
         await Promise.all([
           db.foods.clear(),
-          db.food_logs.clear(),
-          db.diet_plans.clear(),
+          db.recipes.clear(),
+          db.daily_diet_logs.clear(),
           db.exercises.clear(),
+          db.routines.clear(),
+          db.equipments.clear(),
           db.workout_logs.clear(),
           db.body_metrics.clear(),
           db.user_base_info.clear(),
+          db.user_profile.clear(),
         ]);
         triggerHaptic('warning');
         toast.show(t('settings.dataCleared'));
@@ -180,6 +215,31 @@ export default function Settings() {
 
   return (
     <div className="w-full max-w-xl mx-auto space-y-7 pb-20 select-none">
+      {/* 區塊 0：個人資料 */}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.profileSection')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.profileDesc')}
+          </p>
+        </div>
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          <Link
+            to="/profile"
+            onClick={() => triggerHaptic('light')}
+            className="usage-row hover:bg-hover transition-colors group cursor-pointer"
+          >
+            <span className="text-sm font-normal text-foreground">{t('settings.profile')}</span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground transition-colors">
+              <span>{profile.name || 'Noah'}</span>
+              <ChevronRight className="size-4" />
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* 區塊 1：偏好設定 */}
       <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
@@ -559,6 +619,29 @@ export default function Settings() {
           </p>
         </div>
         <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          {/* Dropbox 雲端同步 */}
+          <div
+            onClick={() => {
+              triggerHaptic('selection');
+              setIsDropboxDialogOpen(true);
+            }}
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.dropboxSync', 'Dropbox 同步')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              {!isDropboxAuth ? (
+                <span>{t('settings.disconnected', '未連線')}</span>
+              ) : isDropboxSyncing ? (
+                <span className="text-primary">{t('settings.syncing', '同步中…')}</span>
+              ) : (
+                <span className="text-emerald-500 font-medium">{t('settings.connected', '已連線')}</span>
+              )}
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+
           {/* 匯出資料備份 */}
           <div
             onClick={handleExportJson}
@@ -623,6 +706,19 @@ export default function Settings() {
       <div className="pt-4 text-center font-mono text-xs text-muted-foreground/50">
         Zenfit v1.0.0
       </div>
+
+      {/* Dropbox 同步設定彈窗 (遵循 ui-guidelines 平級兄弟節點聲明) */}
+      <DropboxSyncDialog
+        open={isDropboxDialogOpen}
+        onOpenChange={setIsDropboxDialogOpen}
+        isAuthenticated={isDropboxAuth}
+        isSyncing={isDropboxSyncing}
+        lastSyncTime={dropboxLastSyncTime}
+        isOnline={isOnline}
+        onConnectDropbox={connectDropbox}
+        onDisconnectDropbox={disconnectDropbox}
+        onSyncNow={dropboxSyncNow}
+      />
     </div>
   );
 }

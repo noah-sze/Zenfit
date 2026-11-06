@@ -2,7 +2,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import type { FoodItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { formatFoodDisplayName } from '@/utils/foodNaming';
 
 export function useFoods(searchQuery = '') {
   const allFoodsList = useLiveQuery(
@@ -83,31 +82,18 @@ export function useFoods(searchQuery = '') {
       return { success: false, reason: 'not_found' };
     }
 
-    const displayName = formatFoodDisplayName(food).trim().toLowerCase();
-    const rawName = food.name.trim().toLowerCase();
-
-    // 檢查是否有關聯之飲食記錄
-    const hasLogs = await db.food_logs
-      .filter((log) => {
-        if (log.foodId === id) return true;
-        const logName = log.foodName.trim().toLowerCase();
-        return logName === rawName || logName === displayName;
-      })
+    // 檢查是否有關聯之飲食記錄（嚴格純 ID 關聯）
+    const hasLogs = await db.daily_diet_logs
+      .filter((daily) => daily.entries.some((entry) => entry.foodId === id))
       .count();
 
     if (hasLogs > 0) {
       return { success: false, reason: 'has_logs' };
     }
 
-    // 檢查是否有關聯之菜餚組合
+    // 檢查是否有關聯之菜餚組合（嚴格純 ID 關聯）
     const hasRecipes = await db.recipes
-      .filter((r) =>
-        r.ingredients.some((ing) => {
-          if (ing.foodId === id) return true;
-          const ingName = ing.foodName.trim().toLowerCase();
-          return ingName === rawName || ingName === displayName;
-        })
-      )
+      .filter((r) => r.ingredients.some((ing) => ing.foodId === id))
       .count();
 
     if (hasRecipes > 0) {
