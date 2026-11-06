@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import type { Exercise, WorkoutRoutine, Equipment, DetailedMuscle } from '@/types';
 import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
+import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 
 export type WorkoutTab = 'exercises' | 'routines' | 'equipments';
 
@@ -117,10 +118,25 @@ export function WorkoutManagementBrowser({
   // ==========================================
   // 分頁 1：動作 (Exercises) 狀態與過濾
   // ==========================================
-  const [exerciseSearchQuery, setExerciseSearchQuery] = useState('');
-  const [showExerciseArchived, setShowExerciseArchived] = useState(false);
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>('all');
-  const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
+  const { workoutBrowser, setWorkoutBrowserState } = useBrowserStateStore();
+
+  const exerciseSearchQuery = workoutBrowser.exerciseSearchQuery;
+  const setExerciseSearchQuery = (query: string) =>
+    setWorkoutBrowserState({ exerciseSearchQuery: query });
+
+  const showExerciseArchived = workoutBrowser.showExerciseArchived;
+  const setShowExerciseArchived = (updater: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof updater === 'function' ? updater(workoutBrowser.showExerciseArchived) : updater;
+    setWorkoutBrowserState({ showExerciseArchived: next });
+  };
+
+  const selectedMuscleGroup = workoutBrowser.selectedMuscleGroup;
+  const setSelectedMuscleGroup = (group: string) =>
+    setWorkoutBrowserState({ selectedMuscleGroup: group });
+
+  const selectedEquipment = workoutBrowser.selectedEquipment;
+  const setSelectedEquipment = (eq: string) =>
+    setWorkoutBrowserState({ selectedEquipment: eq });
 
   const exerciseBaseList = showExerciseArchived ? archivedExercises : activeExercises;
 
@@ -173,8 +189,15 @@ export function WorkoutManagementBrowser({
   // ==========================================
   // 分頁 2：訓練組合 (Routines) 狀態與過濾
   // ==========================================
-  const [routineSearchQuery, setRoutineSearchQuery] = useState('');
-  const [showRoutineArchived, setShowRoutineArchived] = useState(false);
+  const routineSearchQuery = workoutBrowser.routineSearchQuery;
+  const setRoutineSearchQuery = (query: string) =>
+    setWorkoutBrowserState({ routineSearchQuery: query });
+
+  const showRoutineArchived = workoutBrowser.showRoutineArchived;
+  const setShowRoutineArchived = (updater: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof updater === 'function' ? updater(workoutBrowser.showRoutineArchived) : updater;
+    setWorkoutBrowserState({ showRoutineArchived: next });
+  };
 
   const routineBaseList = showRoutineArchived ? archivedRoutines : activeRoutines;
 
@@ -195,8 +218,15 @@ export function WorkoutManagementBrowser({
   // ==========================================
   // 分頁 3：器械 (Equipments) 狀態與過濾
   // ==========================================
-  const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('');
-  const [showEquipmentArchived, setShowEquipmentArchived] = useState(false);
+  const equipmentSearchQuery = workoutBrowser.equipmentSearchQuery;
+  const setEquipmentSearchQuery = (query: string) =>
+    setWorkoutBrowserState({ equipmentSearchQuery: query });
+
+  const showEquipmentArchived = workoutBrowser.showEquipmentArchived;
+  const setShowEquipmentArchived = (updater: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof updater === 'function' ? updater(workoutBrowser.showEquipmentArchived) : updater;
+    setWorkoutBrowserState({ showEquipmentArchived: next });
+  };
 
   const equipmentBaseList = showEquipmentArchived ? archivedEquipments : activeEquipments;
 

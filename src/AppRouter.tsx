@@ -9,12 +9,8 @@ import Workout from './pages/Workout';
 import Body from './pages/Body';
 import Settings from './pages/Settings';
 import ProfileSettings from './pages/ProfileSettings';
-import Categories from './pages/Categories';
-import RecipeDetails from './pages/RecipeDetails';
-import CategoryDetails from './pages/CategoryDetails';
-import Exercises from './pages/Exercises';
-import ExerciseDetails from './pages/ExerciseDetails';
-import RoutineDetails from './pages/RoutineDetails';
+import FoodsPage from './pages/FoodsPage';
+import ExercisesPage from './pages/ExercisesPage';
 
 const router = createBrowserRouter([
   {
@@ -47,7 +43,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/foods',
-        element: <Categories />,
+        element: <FoodsPage />,
       },
       {
         path: 'settings/foods/archived',
@@ -55,7 +51,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/foods/:id',
-        element: <CategoryDetails />,
+        element: <FoodsPage />,
       },
       {
         path: 'settings/recipes',
@@ -67,11 +63,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/recipes/:id',
-        element: <RecipeDetails />,
+        element: <FoodsPage />,
       },
       {
         path: 'settings/exercises',
-        element: <Exercises />,
+        element: <ExercisesPage />,
       },
       {
         path: 'settings/exercises/archived',
@@ -79,7 +75,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/exercises/:id',
-        element: <ExerciseDetails />,
+        element: <ExercisesPage />,
       },
       {
         path: 'settings/workouts',
@@ -95,7 +91,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/routines/:id',
-        element: <RoutineDetails />,
+        element: <ExercisesPage />,
       },
       {
         path: 'settings/equipments',
@@ -107,7 +103,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/categories',
-        element: <Categories />,
+        element: <Navigate to="/settings/foods" replace />,
       },
       {
         path: 'settings/categories/archived',
@@ -115,7 +111,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'settings/categories/:id',
-        element: <CategoryDetails />,
+        element: <FoodsPage />,
       },
       {
         path: 'profile',

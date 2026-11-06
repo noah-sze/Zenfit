@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
@@ -21,11 +21,30 @@ import { SyncStatusPill } from '@/components/sync/SyncStatusPill';
 import { format, addDays, subDays, parseISO, isToday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { useSafeNavigate } from '@/hooks/useSafeNavigate';
+import { isStackNavigation } from '@/utils/navigation';
 
 export function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const { goBack } = useSafeNavigate();
+  const mainScrollRef = useRef<HTMLElement>(null);
+  const prevPathRef = useRef<string>(location.pathname);
+
+  // 導航棧滾動生命週期合約：
+  // 1. 同模組棧內導航（深入詳情或詳情返回列表）：保留底層滾動位置，0 屏閃 0 延遲
+  // 2. 跨模組切換、全新進入模組或退出模組：重置滾動容器至頂部 (scrollTop = 0)
+  useEffect(() => {
+    const prevPath = prevPathRef.current;
+    const currentPath = location.pathname;
+
+    if (!isStackNavigation(prevPath, currentPath) && mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
+
+    prevPathRef.current = currentPath;
+  }, [location.pathname]);
 
   const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -179,10 +198,7 @@ export function AppLayout() {
               <div className="flex items-center gap-1.5 -ml-2 min-w-0 pr-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    triggerHaptic('light');
-                    navigate(-1);
-                  }}
+                  onClick={() => goBack()}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
                   aria-label={t('common.back')}
                 >
@@ -199,7 +215,7 @@ export function AppLayout() {
       </header>
 
       {/* 核心滾動內容區 */}
-      <main className="flex-1 overflow-y-auto no-scrollbar w-full">
+      <main ref={mainScrollRef} className="flex-1 overflow-y-auto no-scrollbar w-full">
         <div className={cn("w-full max-w-xl mx-auto px-4 py-4", !isSubPage ? "pb-20" : "pb-8")}>
           <Outlet />
         </div>

@@ -13,8 +13,8 @@ import { triggerHaptic } from '@/lib/haptics';
 import type { Exercise, WorkoutRoutine, Equipment } from '@/types';
 import {
   WorkoutManagementBrowser,
-  type WorkoutTab,
 } from '@/components/workout/WorkoutManagementBrowser';
+import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 import {
   ExerciseFormDialog,
   type ExerciseFormData,
@@ -30,8 +30,9 @@ export default function Exercises() {
   const navigate = useNavigate();
   const confirm = useConfirm();
 
-  // 頂部視圖切換：動作 ➔ 組合 ➔ 器械 (純本地狀態，不污染 URL 歷史堆疊，遵守 Rule 4)
-  const [viewTab, setViewTab] = useState<WorkoutTab>('exercises');
+  // 頂部視圖切換：動作 ➔ 組合 ➔ 器械 (純客戶端 Session 記憶狀態，不污染 URL 歷史堆疊，遵守 Rule 4)
+  const { workoutBrowser, setWorkoutTab } = useBrowserStateStore();
+  const viewTab = workoutBrowser.activeTab;
 
   // 1. 動作資料庫 Hooks
   const {
@@ -261,11 +262,13 @@ export default function Exercises() {
       {/* 核心訓練資料管理瀏覽器 */}
       <WorkoutManagementBrowser
         activeTab={viewTab}
-        onTabChange={setViewTab}
+        onTabChange={setWorkoutTab}
         onExerciseClick={(exercise) => {
+          setWorkoutTab('exercises');
           navigate(`/settings/exercises/${exercise.id}`);
         }}
         onRoutineClick={(routine) => {
+          setWorkoutTab('routines');
           navigate(`/settings/routines/${routine.id}`);
         }}
         onEditEquipment={(equipment) => {

@@ -13,14 +13,16 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
 import { RecipeFormDialog, type RecipeFormData } from '@/components/food/RecipeFormDialog';
 import { FoodRecipeBrowser } from '@/components/food/FoodRecipeBrowser';
+import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 
 export default function Categories() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
 
-  // 頂部視圖切換：食材 vs 食譜 (純本地狀態，不污染 URL，遵守 Rule 4)
-  const [viewTab, setViewTab] = useState<'foods' | 'recipes'>('foods');
+  // 頂部視圖切換：食材 vs 食譜 (純客戶端 Session 記憶狀態，不污染 URL，遵守 Rule 4)
+  const { foodBrowser, setFoodTab } = useBrowserStateStore();
+  const viewTab = foodBrowser.activeTab;
 
   // 食物原子庫 (Foods)
   const {
@@ -152,13 +154,15 @@ export default function Categories() {
       <FoodRecipeBrowser
         mode="all"
         activeTab={viewTab}
-        onTabChange={setViewTab}
+        onTabChange={setFoodTab}
         interactiveMode="manage"
         showArchivedOption={true}
         onItemClick={(item, type) => {
           if (type === 'food') {
+            setFoodTab('foods');
             navigate(`/settings/foods/${item.id}`);
           } else {
+            setFoodTab('recipes');
             navigate(`/settings/recipes/${item.id}`);
           }
         }}

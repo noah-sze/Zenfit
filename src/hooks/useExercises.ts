@@ -3,15 +3,52 @@ import { db } from '@/services/db/db';
 import type { Exercise } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * 模組級動作記憶體注水快取 (In-Memory Hydration Cache)
+ * 解決彈窗與組件掛載時等待 IndexedDB 異步查詢造成的微閃爍問題
+ * 實現第 0 幀滿數據同步秒開
+ */
+let inMemoryExercisesCache: Exercise[] | null = null;
+
+export function getInMemoryExercisesCache(): Exercise[] | null {
+  return inMemoryExercisesCache;
+}
+
+export function setInMemoryExercisesCache(exercises: Exercise[]): void {
+  inMemoryExercisesCache = exercises;
+}
+
+export function clearExercisesCache(): void {
+  inMemoryExercisesCache = null;
+}
+
+/**
+ * 預熱動作記憶體快取 (非阻塞非同步預熱)
+ */
+export async function prewarmExercisesCache(): Promise<Exercise[]> {
+  if (inMemoryExercisesCache !== null) return inMemoryExercisesCache;
+  try {
+    if (typeof indexedDB === 'undefined') return [];
+    const exercises = await db.exercises.toArray();
+    inMemoryExercisesCache = exercises;
+    return exercises;
+  } catch {
+    return [];
+  }
+}
+
 export function useExercises(equipmentFilter?: string, searchQuery = '') {
   const allExercisesList = useLiveQuery(
     async () => {
-      return await db.exercises.toArray();
+      const result = await db.exercises.toArray();
+      inMemoryExercisesCache = result;
+      return result;
     },
     []
   );
 
-  const allExercises = allExercisesList || [];
+  // 核心即時注水：若 useLiveQuery 仍在等待微任務/IPC 回調，直接同步採用記憶體快照
+  const allExercises = allExercisesList ?? inMemoryExercisesCache ?? [];
   const activeExercises = allExercises.filter((item) => !item.isArchived);
   const archivedExercises = allExercises.filter((item) => item.isArchived);
 
@@ -120,7 +157,7 @@ export function useExercises(equipmentFilter?: string, searchQuery = '') {
     archivedPresetExercises,
     // 相容性別名
     exercises: filteredActiveExercises,
-    isLoading: allExercisesList === undefined,
+    isLoading: allExercisesList === undefined && inMemoryExercisesCache === null,
     addExercise,
     updateExercise,
     archiveExercise,
