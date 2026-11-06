@@ -42,7 +42,10 @@ export function useRecipes(searchQuery = '') {
         const q = searchQuery.toLowerCase().trim();
         return (
           r.name.toLowerCase().includes(q) ||
-          r.ingredients.some((ing) => ing.foodName.toLowerCase().includes(q))
+          r.ingredients.some((ing) => {
+            const food = foodMap.get(ing.foodId);
+            return food?.name.toLowerCase().includes(q);
+          })
         );
       })
     : activeRecipes;

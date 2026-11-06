@@ -78,14 +78,17 @@ export function RecipeStagingDialog({
   // 當彈窗打開或選取菜餚變更時，初始化暫存食材
   useEffect(() => {
     if (open && recipe) {
-      const initialStaged: StagedIngredient[] = recipe.ingredients.map((ing) => ({
-        id: `${ing.foodId}-${uuidv4()}`,
-        foodId: ing.foodId,
-        foodName: ing.foodName,
-        quantity: ing.quantity,
-        unit: ing.unit || 'g',
-        baseFood: foodMap.get(ing.foodId) || null,
-      }));
+      const initialStaged: StagedIngredient[] = recipe.ingredients.map((ing) => {
+        const baseFood = foodMap.get(ing.foodId) || null;
+        return {
+          id: `${ing.foodId}-${uuidv4()}`,
+          foodId: ing.foodId,
+          foodName: baseFood ? formatFoodDisplayName(baseFood) : '',
+          quantity: ing.quantity,
+          unit: ing.unit || 'g',
+          baseFood,
+        };
+      });
       setIngredients(initialStaged);
     } else if (!open) {
       setIngredients([]);
@@ -263,27 +266,17 @@ export function RecipeStagingDialog({
 
     setIsSubmitting(true);
     try {
-      const bundleId = uuidv4();
-      const bundleName = recipe.name;
+      const bundleId = recipe.id;
 
-      const logItems = ingredients.map((item) => {
-        const macros = getIngredientMacros(item);
-        return {
-          date,
-          mealType,
-          foodId: item.foodId,
-          foodName: item.foodName,
-          quantity: item.quantity,
-          unit: item.unit,
-          calories: macros.calories,
-          protein: macros.protein,
-          carbs: macros.carbs,
-          fat: macros.fat,
-          notes: `[${bundleName}]`,
-        };
-      });
+      const logItems = ingredients.map((item) => ({
+        date,
+        mealType,
+        foodId: item.foodId,
+        quantity: item.quantity,
+        unit: item.unit,
+      }));
 
-      await addFoodLogBundle(bundleId, bundleName, logItems);
+      await addFoodLogBundle(bundleId, logItems);
       triggerHaptic('success');
       toast.show(t('common.saved', '已儲存'));
       onOpenChange(false);

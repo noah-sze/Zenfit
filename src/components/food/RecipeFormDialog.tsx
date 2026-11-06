@@ -112,7 +112,7 @@ export function RecipeFormDialog({
         return {
           id: `${ing.foodId}-${idx}-${Date.now()}`,
           foodId: ing.foodId,
-          foodName: ing.foodName || (food ? formatFoodDisplayName(food) : ''),
+          foodName: food ? formatFoodDisplayName(food) : '',
           quantity: displayQty > 0 ? String(displayQty) : '100',
           unit: displayUnit,
         };
@@ -138,7 +138,6 @@ export function RecipeFormDialog({
 
       return {
         foodId: item.foodId,
-        foodName: item.foodName,
         quantity: normalizedQty,
         unit: item.unit === 'oz' ? 'g' : item.unit === 'fl oz' ? 'ml' : item.unit,
       };
@@ -316,7 +315,6 @@ export function RecipeFormDialog({
 
         validIngredients.push({
           foodId: item.foodId,
-          foodName: item.foodName,
           quantity: normalizedQty,
           unit: item.unit === 'oz' ? 'g' : item.unit === 'fl oz' ? 'ml' : item.unit,
         });

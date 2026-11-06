@@ -240,3 +240,40 @@ export function scaleNutritionFromBasis(params: ScaleBasisParams): ScaledServing
   };
 }
 
+/**
+ * 依據食物定義 (Food) 與攝入數量 (quantity, unit)，動態計算出該筆飲食日誌的客觀營養素
+ * 遵循 Precision Metric 純數學無副作用標準
+ */
+export function calculateFoodLogNutrients(
+  food: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    servingSize?: number;
+    servingUnit?: string;
+  } | null | undefined,
+  quantity: number,
+  unit?: string
+): { calories: number; protein: number; carbs: number; fat: number } {
+  if (!food) {
+    return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  }
+  const scaled = scaleNutritionFromBasis({
+    calories: food.calories,
+    protein: food.protein,
+    carbs: food.carbs,
+    fat: food.fat,
+    servingSize: quantity,
+    servingUnit: unit || food.servingUnit || 'g',
+    basisSize: food.servingSize || 100,
+    basisUnit: food.servingUnit || 'g',
+  });
+  return {
+    calories: scaled.calories,
+    protein: scaled.protein,
+    carbs: scaled.carbs,
+    fat: scaled.fat,
+  };
+}
+

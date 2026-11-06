@@ -263,7 +263,8 @@ export function calculateBodyRecovery(
     // 遍歷所有動作組
     for (const group of log.exercises || []) {
       let targetMuscles: Partial<Record<DetailedMuscle, MuscleRole | number>> | undefined;
-      let exName = group.exerciseName || '動作';
+      const legacyName = (group as any).exerciseName;
+      let exName = legacyName || '動作';
 
       // 1. 優先透過 exerciseId 匹配
       if (group.exerciseId && exerciseMap?.has(group.exerciseId)) {
@@ -272,17 +273,17 @@ export function calculateBodyRecovery(
         if (ex?.name) exName = ex.name;
       }
 
-      // 2. 次選透過 exerciseName 在庫中匹配
-      if (!targetMuscles && group.exerciseName) {
-        const ex = exerciseByNameMap.get(group.exerciseName);
+      // 2. 次選透過 legacyName 在庫中匹配 (向後相容)
+      if (!targetMuscles && legacyName) {
+        const ex = exerciseByNameMap.get(legacyName);
         targetMuscles = ex?.targetMuscles;
         if (ex?.name) exName = ex.name;
       }
 
       // 3. 兜底在預設動作庫匹配 (處理舊組合或未載入情況)
-      if (!targetMuscles && group.exerciseName) {
+      if (!targetMuscles && legacyName) {
         const defaultEx = DEFAULT_EXERCISES.find(
-          (d) => d.name === group.exerciseName || group.exerciseName.startsWith(d.name)
+          (d) => d.name === legacyName || legacyName.startsWith(d.name)
         );
         targetMuscles = defaultEx?.targetMuscles;
         if (defaultEx?.name) exName = defaultEx.name;

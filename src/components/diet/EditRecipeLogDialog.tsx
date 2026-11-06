@@ -9,7 +9,7 @@ import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
 import { HoldToDeleteButton } from '@/components/ui/HoldToDeleteButton';
 import { db } from '@/services/db/db';
-import type { FoodLog, FoodItem, FoodRecipe } from '@/types';
+import type { HydratedFoodLog, FoodItem, FoodRecipe } from '@/types';
 import { formatDisplayAmount } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
@@ -32,20 +32,15 @@ export interface EditRecipeLogDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bundleId: string | null;
-  bundleName: string;
-  logs: FoodLog[];
+  bundleTitle: string;
+  logs: HydratedFoodLog[];
   onSave: (
     bundleId: string,
     items: Array<{
       id?: string;
       foodId?: string;
-      foodName: string;
       quantity: number;
       unit: string;
-      calories: number;
-      carbs: number;
-      protein: number;
-      fat: number;
     }>
   ) => Promise<void>;
   onDeleteBundle: (bundleId: string) => Promise<void>;
@@ -55,7 +50,7 @@ export function EditRecipeLogDialog({
   open,
   onOpenChange,
   bundleId,
-  bundleName,
+  bundleTitle,
   logs,
   onSave,
   onDeleteBundle,
@@ -86,14 +81,14 @@ export function EditRecipeLogDialog({
         id: log.id,
         originalLogId: log.id,
         foodId: log.foodId,
-        foodName: log.foodName,
+        foodName: log.foodName || '未知食材',
         quantity: log.quantity,
         unit: log.unit || 'g',
         baseRatio: log.quantity > 0 ? {
-          calories: log.calories / log.quantity,
-          carbs: log.carbs / log.quantity,
-          protein: log.protein / log.quantity,
-          fat: log.fat / log.quantity,
+          calories: (log.calories || 0) / log.quantity,
+          carbs: (log.carbs || 0) / log.quantity,
+          protein: (log.protein || 0) / log.quantity,
+          fat: (log.fat || 0) / log.quantity,
         } : undefined,
       }));
 
@@ -291,20 +286,12 @@ export function EditRecipeLogDialog({
     if (!bundleId || isSubmitting || ingredients.length === 0) return;
     setIsSubmitting(true);
     try {
-      const updatedItems = ingredients.map((item) => {
-        const macros = getIngredientMacros(item);
-        return {
-          id: item.originalLogId,
-          foodId: item.foodId,
-          foodName: item.foodName,
-          quantity: item.quantity,
-          unit: item.unit,
-          calories: macros.calories,
-          carbs: macros.carbs,
-          protein: macros.protein,
-          fat: macros.fat,
-        };
-      });
+      const updatedItems = ingredients.map((item) => ({
+        id: item.originalLogId,
+        foodId: item.foodId,
+        quantity: item.quantity,
+        unit: item.unit,
+      }));
 
       await onSave(bundleId, updatedItems);
       triggerHaptic('success');
@@ -333,7 +320,7 @@ export function EditRecipeLogDialog({
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <PrecisionDialogContent
-          title={bundleName}
+          title={bundleTitle}
           onSubmit={handleSubmit}
           submitDisabled={isSubmitting || ingredients.length === 0}
           submitAriaLabel={t('common.save')}

@@ -17,7 +17,14 @@ import { Plus, Trash2, Dumbbell, ChevronRight } from 'lucide-react';
 import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
 import { ExerciseSelectDialog, type ExerciseSelectMode } from '@/components/workout/ExerciseSelectDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
-import type { WorkoutLog, WorkoutSet, WorkoutExerciseGroup, WorkoutRoutine, Exercise } from '@/types';
+import type {
+  WorkoutSet,
+  WorkoutExerciseGroup,
+  WorkoutRoutine,
+  Exercise,
+  HydratedWorkoutLog,
+  HydratedWorkoutExerciseGroup,
+} from '@/types';
 
 interface KeypadConfig {
   workoutId: string;
@@ -91,7 +98,7 @@ export default function Workout() {
           disabledExerciseIds.has(ex.id) ||
           workouts.some((w) =>
             w.exercises?.some(
-              (e) => e.exerciseId === ex.id || e.exerciseName === ex.name
+              (e) => e.exerciseId === ex.id
             )
           )
         );
@@ -100,7 +107,7 @@ export default function Workout() {
         const r = item as WorkoutRoutine;
         return (
           disabledRoutineIds.has(r.id) ||
-          workouts.some((w) => w.routineId === r.id || w.title === r.name)
+          workouts.some((w) => w.routineId === r.id)
         );
       }
       return false;
@@ -162,19 +169,14 @@ export default function Workout() {
 
         return {
           exerciseId: item.exerciseId,
-          exerciseName: ex ? ex.name : t('workout.unknownExercise'),
-          category: ex ? ex.category : 'free_weight',
           sets,
-          notes: item.notes,
         };
       });
 
       await addWorkout({
         date: selectedDate,
-        title: routine.name,
         routineId: routine.id,
         exercises: exerciseGroups,
-        notes: routine.notes,
       });
 
       triggerHaptic('success');
@@ -218,20 +220,17 @@ export default function Workout() {
         isCompleted: true,
       }));
 
-      const newGroup = {
+      const newGroup: WorkoutExerciseGroup = {
         exerciseId: exercise.id,
-        exerciseName: exercise.name,
-        category: exercise.category,
         sets,
       };
 
       const targetId = activeWorkoutIdForAdd;
 
-      // 若未指定目標訓練，建立一筆新訓練 (以 exercise.name 作為初始 title)
+      // 若未指定目標訓練，建立一筆新訓練
       if (!targetId) {
         await addWorkout({
           date: selectedDate,
-          title: exercise.name,
           exercises: [newGroup],
         });
         triggerHaptic('success');
@@ -268,7 +267,7 @@ export default function Workout() {
   // ==========================================
   // 增加一組 / 刪除組數
   // ==========================================
-  const handleAddSet = async (workout: WorkoutLog, exerciseIndex: number) => {
+  const handleAddSet = async (workout: HydratedWorkoutLog, exerciseIndex: number) => {
     const exGroup = workout.exercises[exerciseIndex];
     if (!exGroup) return;
 
@@ -292,7 +291,7 @@ export default function Workout() {
   };
 
   const handleDeleteSet = async (
-    workout: WorkoutLog,
+    workout: HydratedWorkoutLog,
     exerciseIndex: number,
     setIndex: number
   ) => {
@@ -319,7 +318,7 @@ export default function Workout() {
     await updateWorkout(workout.id, { exercises: nextExercises });
   };
 
-  const handleDeleteExercise = async (workout: WorkoutLog, exerciseIndex: number) => {
+  const handleDeleteExercise = async (workout: HydratedWorkoutLog, exerciseIndex: number) => {
     const exGroup = workout.exercises[exerciseIndex];
     if (!exGroup) return;
 
@@ -344,7 +343,7 @@ export default function Workout() {
     toast.show(t('common.deleted'));
   };
 
-  const handleDeleteWorkout = async (workout: WorkoutLog) => {
+  const handleDeleteWorkout = async (workout: HydratedWorkoutLog) => {
     const ok = await confirm({
       title: t('common.delete'),
       description: t('common.confirmDeleteItem', { name: workout.title }),
@@ -426,8 +425,8 @@ export default function Workout() {
   // 共用動作表渲染函數 (單一真理源，設計 100% 保持一致)
   // ==========================================
   const renderExerciseTable = (
-    workout: WorkoutLog,
-    group: WorkoutExerciseGroup,
+    workout: HydratedWorkoutLog,
+    group: HydratedWorkoutExerciseGroup,
     exIdx: number
   ) => {
     const groupVolumeKg = group.sets.reduce(
@@ -510,7 +509,7 @@ export default function Workout() {
                         setIdx,
                         'weight',
                         set.weight || 0,
-                        group.exerciseName,
+                        group.exerciseName || '',
                         e.currentTarget
                       )
                     }
@@ -539,7 +538,7 @@ export default function Workout() {
                         setIdx,
                         'reps',
                         set.reps || 0,
-                        group.exerciseName,
+                        group.exerciseName || '',
                         e.currentTarget
                       )
                     }

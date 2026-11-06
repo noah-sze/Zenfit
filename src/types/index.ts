@@ -28,11 +28,11 @@ export interface FoodItem {
   isArchived?: boolean;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
 export interface RecipeIngredient {
   foodId: string;
-  foodName: string;
   quantity: number;
   unit: string;
   isOptional?: boolean;
@@ -46,39 +46,90 @@ export interface FoodRecipe {
   isArchived?: boolean;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
+/**
+ * 飲食記錄唯一客觀事實表 (SSOT Ground Truth)
+ * 只記錄物理行為事實：何時、何餐、哪種食材 ID、攝入份量與單位
+ * 營養素與食材名稱由維度表 foods 動態推算，日誌不保留靜態快照
+ */
 export interface FoodLog {
   id: string;
   date: string; // YYYY-MM-DD
   mealType: MealType;
   foodId?: string;
-  foodName: string;
   quantity: number;
   unit: string;
+  bundleId?: string; // 所屬菜餚 ID (Recipe ID)
+  createdAt: number;
+  updatedAt: number;
+  rev?: number;
+}
+
+/**
+ * 視圖層裝載後的飲食記錄（包含即時推算的客觀營養素與食物名稱）
+ */
+export interface HydratedFoodLog extends FoodLog {
+  date: string;
+  foodName: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  notes?: string;
-  bundleId?: string; // 同一次食譜添加的食材共用此 UUID
-  bundleName?: string; // 食譜/分組名稱 (例如「番茄炒蛋」)
-  createdAt: number;
-  updatedAt: number;
 }
 
+/**
+ * 飲食計劃實體 (DietPlan Ground Truth)
+ * 遵循單一真理源原則：只記錄使用者的客觀決策輸入（活動係數 activityLevel 與供能比 macroSplit）
+ * 目標熱量與三大營養素目標克數嚴禁在資料庫與備份中保留靜態快照，全站統一交由軟體純函數即時動態推算
+ */
 export interface DietPlan {
   id: string; // 唯一識別碼 (UUID)
   date: string; // YYYY-MM-DD
-  planName?: string; // 計劃名稱（例如：「高碳訓練日」、「減脂期平日」）
-  caloriesTarget: number; // 目標總熱量 (kcal)
-  proteinTarget: number; // 蛋白質目標 (g)
-  carbsTarget: number; // 碳水化合物目標 (g)
-  fatTarget: number; // 脂肪目標 (g)
-  waterMlTarget?: number; // 目標飲水量 (ml)
-  notes?: string; // 飲食備註
+  activityLevel?: number; // 當日活動係數 (PAL)
+  macroSplit?: MacroSplit; // 當日供能比 (C/P/F)
+  // 視圖層裝載 / 向下相容之動態推算屬性
+  caloriesTarget?: number;
+  proteinTarget?: number;
+  carbsTarget?: number;
+  fatTarget?: number;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
+}
+
+export interface HydratedDietPlan extends DietPlan {
+  activityLevel: number;
+  macroSplit: MacroSplit;
+  caloriesTarget: number;
+  proteinTarget: number;
+  carbsTarget: number;
+  fatTarget: number;
+}
+
+/**
+ * 每日飲食背景環境與設定 (Daily Diet Meta)
+ * 記錄當天的生理基準事實（活動係數與供能比目標），做為當日自包含膠囊的一部分（日誌頭部）
+ */
+export interface DailyDietMeta {
+  activityLevel: number;
+  macroSplit: MacroSplit;
+}
+
+/**
+ * 自包含的每日飲食日誌膠囊 (Daily Diet Log Capsule)
+ * 聚合了當日的生理環境參數 (meta 日誌頭部) 與當日實際進食的物理事實 (entries 日誌組件)
+ * 全站單一真理源，徹底取代舊版獨立的 diet_plans 與平鋪 food_logs
+ */
+export interface DailyDietLog {
+  id: string; // UUID
+  date: string; // YYYY-MM-DD
+  meta: DailyDietMeta; // ⭐️ 日誌頭部 (SSOT)
+  entries: FoodLog[]; // ⭐️ 當日物理進食記錄
+  createdAt: number;
+  updatedAt: number;
+  rev?: number;
 }
 
 export type MuscleCategory =
@@ -124,26 +175,8 @@ export type DetailedMuscle =
   | 'abs'
   | 'obliques';
 
-export type PredefinedEquipmentId =
-  | 'barbell'
-  | 'dumbbell'
-  | 'kettlebell'
-  | 'specialty_bar'
-  | 'cable'
-  | 'pin_loaded_machine'
-  | 'plate_loaded_machine'
-  | 'smith_machine'
-  | 'leg_press'
-  | 'hack_squat'
-  | 'bodyweight'
-  | 'weighted_bodyweight'
-  | 'resistance_band'
-  | 'gymnastic_rings'
-  | 'cardio_machine'
-  | 'machine' // 相容舊版固定器械
-  | 'other';
-
-export type EquipmentType = PredefinedEquipmentId | (string & {});
+export type PredefinedEquipmentId = string;
+export type EquipmentType = string;
 
 export interface Equipment {
   id: string;
@@ -152,6 +185,7 @@ export interface Equipment {
   isArchived?: boolean;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
 /**
@@ -173,6 +207,7 @@ export interface Exercise {
   isArchived?: boolean;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
 export interface RoutineExerciseItem {
@@ -190,6 +225,7 @@ export interface WorkoutRoutine {
   isArchived?: boolean;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
 export interface WorkoutSet {
@@ -204,26 +240,41 @@ export interface WorkoutSet {
   isCompleted: boolean;
 }
 
+/**
+ * 訓練記錄中的動作群組客觀事實
+ * 嚴禁包含 notes，亦不儲存動作名稱與分類快照
+ */
 export interface WorkoutExerciseGroup {
   exerciseId: string;
-  exerciseName: string;
-  category?: string;
   sets: WorkoutSet[];
-  notes?: string;
 }
 
+export interface HydratedWorkoutExerciseGroup extends WorkoutExerciseGroup {
+  exerciseName: string;
+  category?: string;
+}
+
+/**
+ * 訓練記錄實體
+ * 遵循極簡與單一真理源，嚴禁包含 notes 欄位
+ */
 export interface WorkoutLog {
   id: string;
   date: string; // YYYY-MM-DD
-  title: string;
-  routineId?: string;
+  routineId?: string; // 課表 ID（選填，若由課表載入）
   startTime?: number;
   endTime?: number;
   durationMinutes?: number;
   exercises: WorkoutExerciseGroup[];
-  notes?: string;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
+}
+
+export interface HydratedWorkoutLog extends Omit<WorkoutLog, 'exercises'> {
+  title: string; // 前端記憶體中即時解析（優先課表名，次為首個動作名，再次為「訓練」）
+  routineName?: string;
+  exercises: HydratedWorkoutExerciseGroup[];
 }
 
 export interface BodyMetric {
@@ -242,6 +293,7 @@ export interface BodyMetric {
   notes?: string;
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
 export type FitnessGoalType = 'lose_fat' | 'build_muscle' | 'maintain' | 'strength';
@@ -258,10 +310,9 @@ export interface UserBaseInfo {
   gender: 'male' | 'female'; // 生理性別
   birthDate?: string; // 出生年月 ('YYYY-MM' 或 'YYYY-MM-DD')
   heightCm: number; // 身高 (cm)
-  weightUnit: 'kg' | 'lbs'; // 預設度量衡單位
-  activityLevel?: number; // 活動係數 (PAL)
   createdAt: number;
   updatedAt: number;
+  rev?: number;
 }
 
 export interface UserProfile {
@@ -274,11 +325,6 @@ export interface UserProfile {
   currentWeightKg: number;
   activityLevel?: number;
   goalType?: FitnessGoalType;
-  dailyCaloriesTarget?: number;
-  proteinGramsTarget?: number;
-  carbsGramsTarget?: number;
-  fatGramsTarget?: number;
-  dailyWaterMlTarget?: number;
   macroSplit?: MacroSplit;
   weightUnit: 'kg' | 'lbs';
   isSetupCompleted: boolean;

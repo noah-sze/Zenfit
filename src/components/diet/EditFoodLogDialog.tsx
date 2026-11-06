@@ -8,7 +8,7 @@ import {
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { HoldToDeleteButton } from '@/components/ui/HoldToDeleteButton';
 import { db } from '@/services/db/db';
-import type { FoodLog, FoodItem } from '@/types';
+import type { HydratedFoodLog, FoodItem } from '@/types';
 import { formatDisplayAmount } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
@@ -18,8 +18,8 @@ import { formatEnergy } from '@/utils/unitMath';
 export interface EditFoodLogDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  log: FoodLog | null;
-  onSave: (id: string, updates: { quantity: number; calories: number; carbs: number; protein: number; fat: number }) => Promise<void>;
+  log: HydratedFoodLog | null;
+  onSave: (id: string, updates: { quantity: number }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -142,10 +142,6 @@ export function EditFoodLogDialog({
     try {
       await onSave(log.id, {
         quantity,
-        calories: currentMacros.calories,
-        carbs: currentMacros.carbs,
-        protein: currentMacros.protein,
-        fat: currentMacros.fat,
       });
       triggerHaptic('success');
       onOpenChange(false);
@@ -173,7 +169,7 @@ export function EditFoodLogDialog({
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <PrecisionDialogContent
-          title={log.foodName}
+          title={log.foodName || ''}
           onSubmit={handleSubmit}
           submitDisabled={isSubmitting || quantity <= 0}
           submitAriaLabel={t('common.save')}
@@ -283,7 +279,7 @@ export function EditFoodLogDialog({
           onOpenChange={(kOpen) => {
             if (!kOpen) handleKeypadCancel();
           }}
-          title={log.foodName}
+          title={log.foodName || ''}
           value={initialQuantityRef.current}
           unit={log.unit || 'g'}
           allowDecimals={true}

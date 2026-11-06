@@ -96,7 +96,9 @@ export function useEquipments() {
   };
 
   const getEquipmentDisplayName = (equipmentId: string, t: TFunction): string => {
-    const predefined = PREDEFINED_EQUIPMENT_DEFINITIONS.find((p) => p.id === equipmentId);
+    const predefined = PREDEFINED_EQUIPMENT_DEFINITIONS.find(
+      (p) => p.id === equipmentId || p.slug === equipmentId
+    );
     if (predefined) {
       return t(predefined.nameKey);
     }

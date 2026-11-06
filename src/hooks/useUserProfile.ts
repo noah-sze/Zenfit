@@ -3,8 +3,8 @@ import { db } from '@/services/db/db';
 import type { UserBaseInfo, UserProfile } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { useUnitPreferences } from './useUnitPreferences';
-
-const PRIMARY_USER_ID = 'primary_user';
+import { calculateAgeFromBirth } from '@/utils/weightMath';
+import { PRIMARY_USER_ID } from '@/services/db/defaultData';
 
 const DEFAULT_BASE_INFO: UserBaseInfo = {
   id: PRIMARY_USER_ID,
@@ -12,8 +12,6 @@ const DEFAULT_BASE_INFO: UserBaseInfo = {
   gender: 'male',
   birthDate: '1999-01',
   heightCm: 175,
-  weightUnit: 'kg',
-  activityLevel: 1.55,
   createdAt: Date.now(),
   updatedAt: Date.now(),
 };
@@ -37,6 +35,7 @@ export function useUserProfile() {
   }, []);
 
   const currentWeightKg = latestWeightMetric?.weight || 70;
+  const computedAge = baseInfo?.birthDate ? calculateAgeFromBirth(baseInfo.birthDate) : 25;
 
   // 組合為具備向後相容性的 UserProfile 視圖
   const profile: UserProfile = {
@@ -44,16 +43,11 @@ export function useUserProfile() {
     name: baseInfo?.name || 'Noah',
     gender: baseInfo?.gender || 'male',
     birthDate: baseInfo?.birthDate || '1999-01',
-    age: 25,
+    age: computedAge,
     heightCm: baseInfo?.heightCm || 175,
     currentWeightKg,
     weightUnit: bodyWeightUnit,
-    activityLevel: baseInfo?.activityLevel || 1.55,
-    dailyCaloriesTarget: 2000,
-    proteinGramsTarget: 140,
-    carbsGramsTarget: 220,
-    fatGramsTarget: 60,
-    dailyWaterMlTarget: 2500,
+    activityLevel: 1.55,
     macroSplit: {
       carbs: 40,
       protein: 30,
@@ -67,14 +61,12 @@ export function useUserProfile() {
     const now = Date.now();
     const currentBase = baseInfo || DEFAULT_BASE_INFO;
 
-    // 更新基礎靜態資訊（姓名、性別、出生年月、身高、度量單位、活動係數）
+    // 更新基礎靜態資訊（姓名、性別、出生年月、身高）
     const baseUpdates: Partial<UserBaseInfo> = {};
     if (updates.name !== undefined) baseUpdates.name = updates.name;
     if (updates.gender !== undefined) baseUpdates.gender = updates.gender;
     if (updates.birthDate !== undefined) baseUpdates.birthDate = updates.birthDate;
     if (updates.heightCm !== undefined) baseUpdates.heightCm = updates.heightCm;
-    if (updates.weightUnit !== undefined) baseUpdates.weightUnit = updates.weightUnit;
-    if (updates.activityLevel !== undefined) baseUpdates.activityLevel = updates.activityLevel;
 
     if (Object.keys(baseUpdates).length > 0) {
       await db.user_base_info.put({

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
+import { useRecipes } from '@/hooks/useRecipes';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
 import { Plus } from 'lucide-react';
-import type { MealType, FoodLog, FoodItem, FoodRecipe } from '@/types';
+import type { MealType, HydratedFoodLog, FoodItem, FoodRecipe } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
 import { MacroSquares } from '@/components/food/MacroSquares';
@@ -26,24 +27,18 @@ import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { toast } from '@/components/ui/toast';
-import {
-  calculateBMR,
-  calculateTDEE,
-  calculateAgeFromBirth,
-  calculateMacrosFromSplit,
-} from '@/utils/weightMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { cn, evaluateAmountExpression } from '@/lib/utils';
 type GroupedMealEntry =
-  | { type: 'single'; log: FoodLog }
-  | { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] };
+  | { type: 'single'; log: HydratedFoodLog }
+  | { type: 'bundle'; bundleId: string; bundleTitle: string; logs: HydratedFoodLog[] };
 
-function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
+function groupMealLogs(logs: HydratedFoodLog[], recipeMap: Map<string, FoodRecipe>): GroupedMealEntry[] {
   const result: GroupedMealEntry[] = [];
-  const bundleMap = new Map<string, { type: 'bundle'; bundleId: string; bundleName: string; logs: FoodLog[] }>();
+  const bundleMap = new Map<string, { type: 'bundle'; bundleId: string; bundleTitle: string; logs: HydratedFoodLog[] }>();
 
   for (const log of logs) {
     if (log.bundleId) {
@@ -51,10 +46,12 @@ function groupMealLogs(logs: FoodLog[]): GroupedMealEntry[] {
       if (existing) {
         existing.logs.push(log);
       } else {
+        const recipe = recipeMap.get(log.bundleId);
+        const bundleTitle = recipe?.name || '菜餚';
         const bundleEntry = {
           type: 'bundle' as const,
           bundleId: log.bundleId,
-          bundleName: log.bundleName || (log.notes ? log.notes.replace(/^\[|\]$/g, '') : '食譜組合'),
+          bundleTitle,
           logs: [log],
         };
         bundleMap.set(log.bundleId, bundleEntry);
@@ -83,17 +80,27 @@ export default function Diet() {
     deleteFoodLogBundle,
     totals,
   } = useFoodLogs(selectedDate);
-  const { profile, updateProfile } = useUserProfile();
-  const { plan, saveDietPlan } = useDietPlan(selectedDate);
+  const { allRecipes } = useRecipes();
+  const recipeMap = useMemo(() => {
+    const map = new Map<string, FoodRecipe>();
+    allRecipes.forEach((r) => map.set(r.id, r));
+    return map;
+  }, [allRecipes]);
+  const { profile } = useUserProfile();
+  const {
+    plan,
+    saveDietPlan,
+    activityLevel: currentActivity,
+  } = useDietPlan(selectedDate);
   const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
   const confirm = useConfirm();
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [editingFoodLog, setEditingFoodLog] = useState<FoodLog | null>(null);
+  const [editingFoodLog, setEditingFoodLog] = useState<HydratedFoodLog | null>(null);
   const [editingBundle, setEditingBundle] = useState<{
     bundleId: string;
-    bundleName: string;
-    logs: FoodLog[];
+    bundleTitle: string;
+    logs: HydratedFoodLog[];
   } | null>(null);
 
   // 飲食新增記錄流程專用狀態
@@ -105,19 +112,7 @@ export default function Diet() {
 
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
-  // 計算客觀生理常數與飲食目標
-  const age = profile.birthDate
-    ? calculateAgeFromBirth(profile.birthDate)
-    : profile.age || 25;
-  const currentBMR = calculateBMR(
-    profile.currentWeightKg,
-    profile.heightCm,
-    profile.gender,
-    age
-  );
-  const currentActivity = profile.activityLevel || 1.55;
-
-  // 目標熱量與宏量營養素優先取用當日獨立之 DietPlan
+  // 目標熱量與宏量營養素優先取用當日獨立之 DietPlan (由 useDietPlan 純數學即時動態推算)
   const targetCalories = plan.caloriesTarget;
   const targetMacros = {
     carbsGrams: plan.carbsTarget,
@@ -125,26 +120,12 @@ export default function Diet() {
     fatGrams: plan.fatTarget,
   };
 
-  const currentSplit = profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
   const calorieDiff = targetCalories - totals.calories;
 
-  // 快捷切換活動係數（寫入當日專屬 DietPlan）
+  // 快捷切換活動係數（寫入當日專屬 DietPlan，由 saveDietPlan 自主處理今日後續沿用）
   const handleQuickActivityChange = async (newLevel: number) => {
     triggerHaptic('selection');
-    const newTDEE = calculateTDEE(currentBMR, newLevel);
-    const newMacros = calculateMacrosFromSplit(
-      newTDEE,
-      currentSplit.carbs,
-      currentSplit.protein,
-      currentSplit.fat
-    );
     await saveDietPlan({
-      caloriesTarget: newTDEE,
-      proteinTarget: newMacros.proteinGrams,
-      carbsTarget: newMacros.carbsGrams,
-      fatTarget: newMacros.fatGrams,
-    });
-    await updateProfile({
       activityLevel: newLevel,
     });
   };
@@ -167,7 +148,7 @@ export default function Diet() {
     }
   };
 
-  const handleDelete = async (item: FoodLog) => {
+  const handleDelete = async (item: HydratedFoodLog) => {
     const ok = await confirm({
       title: t('common.delete'),
       description: t('common.confirmDeleteItem', { name: item.foodName }),
@@ -191,7 +172,7 @@ export default function Diet() {
 
   const handleSaveFoodLog = async (
     id: string,
-    updates: { quantity: number; calories: number; carbs: number; protein: number; fat: number }
+    updates: { quantity: number }
   ) => {
     await updateFoodLog(id, updates);
   };
@@ -205,13 +186,8 @@ export default function Diet() {
     items: Array<{
       id?: string;
       foodId?: string;
-      foodName: string;
       quantity: number;
       unit: string;
-      calories: number;
-      carbs: number;
-      protein: number;
-      fat: number;
     }>
   ) => {
     await updateFoodLogBundle(bundleId, items);
@@ -249,19 +225,13 @@ export default function Diet() {
     if (!selectedFoodForAdd || !targetMealTypeForAdd) return;
     const finalQuantity = val > 0 ? val : (selectedFoodForAdd.servingSize || 100);
     const finalUnit = unit || selectedFoodForAdd.servingUnit || foodWeightUnit;
-    const macros = calculateIngredientMacros(selectedFoodForAdd, finalQuantity);
 
     await addFoodLog({
       date: selectedDate,
       mealType: targetMealTypeForAdd,
       foodId: selectedFoodForAdd.id,
-      foodName: formatFoodDisplayName(selectedFoodForAdd),
       quantity: finalQuantity,
       unit: finalUnit,
-      calories: macros.calories,
-      protein: macros.protein,
-      carbs: macros.carbs,
-      fat: macros.fat,
     });
 
     triggerHaptic('success');
@@ -492,18 +462,18 @@ export default function Diet() {
             {/* 食物條目列表 (沿用食物管理頁面 MacroSquares 矩陣) */}
             {items.length > 0 ? (
               <div className="divide-y divide-border">
-                {groupMealLogs(items).map((entry) => {
+                {groupMealLogs(items, recipeMap).map((entry) => {
                   if (entry.type === 'bundle') {
                     return (
                       <MealBundleCard
                         key={entry.bundleId}
                         bundleId={entry.bundleId}
-                        bundleName={entry.bundleName}
+                        bundleTitle={entry.bundleTitle}
                         logs={entry.logs}
                         onDeleteBundle={handleDeleteBundle}
                         onDeleteSingle={handleDelete}
-                        onEditBundle={(bundleId, bundleName, logs) => {
-                          setEditingBundle({ bundleId, bundleName, logs });
+                        onEditBundle={(bundleId, bundleTitle, logs) => {
+                          setEditingBundle({ bundleId, bundleTitle, logs });
                         }}
                       />
                     );
@@ -511,10 +481,10 @@ export default function Diet() {
 
                   const item = entry.log;
                   const evalRes = evaluateNutritionalHighlight({
-                    calories: item.calories,
-                    protein: item.protein,
-                    carbs: item.carbs,
-                    fat: item.fat,
+                    calories: item.calories || 0,
+                    protein: item.protein || 0,
+                    carbs: item.carbs || 0,
+                    fat: item.fat || 0,
                     servingSize: item.quantity,
                     servingUnit: item.unit || 'g',
                   });
@@ -548,7 +518,7 @@ export default function Diet() {
                                 'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
                             )}
                           >
-                            {formatEnergy(item.calories, energyUnit).formatted}
+                            {formatEnergy(item.calories || 0, energyUnit).formatted}
                           </span>
                         </div>
                       </div>
@@ -556,9 +526,9 @@ export default function Diet() {
                       {/* 右側：MacroSquares 矩陣 (首頁採用方案 A 柔和微光) */}
                       <div className="flex items-center shrink-0">
                         <MacroSquares
-                          protein={item.protein}
-                          carbs={item.carbs}
-                          fat={item.fat}
+                          protein={item.protein || 0}
+                          carbs={item.carbs || 0}
+                          fat={item.fat || 0}
                           highlights={evalRes.highlights}
                           variant="subtle"
                         />
@@ -576,7 +546,7 @@ export default function Diet() {
         );
       })}
 
-      {/* 完整飲食計劃設定彈窗 (包含供能比與客觀代謝常數微調) */}
+      {/* 完整飲食計劃設定彈窗 (包含活動係數與供能比微調) */}
       <DietPlanModal
         isOpen={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
@@ -584,7 +554,6 @@ export default function Diet() {
         currentPlan={plan}
         onSavePlan={saveDietPlan}
         profile={profile}
-        onSave={updateProfile}
       />
 
       {/* 單品食物記錄編輯管理 Dialog (方案 3) */}
@@ -601,7 +570,7 @@ export default function Diet() {
         open={!!editingBundle}
         onOpenChange={(open) => !open && setEditingBundle(null)}
         bundleId={editingBundle?.bundleId || null}
-        bundleName={editingBundle?.bundleName || ''}
+        bundleTitle={editingBundle?.bundleTitle || ''}
         logs={editingBundle?.logs || []}
         onSave={handleSaveRecipeLog}
         onDeleteBundle={handleDeleteRecipeBundle}

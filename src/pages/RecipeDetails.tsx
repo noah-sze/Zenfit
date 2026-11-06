@@ -35,7 +35,7 @@ import {
   mlToFlOz,
 } from '@/utils/unitMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
-import type { FoodItem, FoodRecipe, RecipeIngredient, NutritionTag } from '@/types';
+import type { FoodItem, FoodRecipe, RecipeIngredient, NutritionTag, FoodLog } from '@/types';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { MacroSquares } from '@/components/food/MacroSquares';
 import {
@@ -77,21 +77,23 @@ export default function RecipeDetails() {
     return map;
   }, [allFoods]);
 
-  // 取得此菜餚的所有歷史飲食記錄 (透過 bundleName 或 notes 包含 [菜餚名稱])
+  // 取得此菜餚的所有歷史飲食記錄 (透過 bundleId 關聯正規化)
   const relatedFoodLogs = useLiveQuery(
     async () => {
       if (!recipe) return [];
-      const logs = await db.food_logs
-        .filter(
-          (log) =>
-            log.bundleName === recipe.name ||
-            (!!log.notes && log.notes.includes(`[${recipe.name}]`))
-        )
-        .toArray();
+      const dailyLogs = await db.daily_diet_logs.toArray();
+      const logs: FoodLog[] = [];
+      for (const daily of dailyLogs) {
+        for (const entry of daily.entries) {
+          if (entry.bundleId === recipe.id) {
+            logs.push({ ...entry, date: daily.date });
+          }
+        }
+      }
 
-      return logs.sort((a, b) => b.date.localeCompare(a.date));
+      return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     },
-    [recipe?.name]
+    [recipe?.id]
   );
 
   // 刪除防護契約：有歷史記錄時不可刪除
@@ -247,7 +249,6 @@ export default function RecipeDetails() {
 
     const newIng: RecipeIngredient = {
       foodId: pendingFood.id,
-      foodName: formatFoodDisplayName(pendingFood),
       quantity: finalQty > 0 ? finalQty : 100,
       unit: finalUnit,
     };
@@ -617,7 +618,7 @@ export default function RecipeDetails() {
                 <div className="flex-1 min-w-0 pr-3 select-none">
                   <div className="flex items-center gap-1.5 truncate">
                     <span className="truncate text-foreground font-medium text-sm">
-                      {ing.foodName}
+                      {food ? formatFoodDisplayName(food) : t('common.unknown')}
                     </span>
                     {ing.isOptional && (
                       <span className="text-[10px] font-mono border border-dashed border-border px-1.5 py-0.5 rounded text-muted-foreground shrink-0">
