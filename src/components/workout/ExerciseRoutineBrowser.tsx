@@ -7,6 +7,7 @@ import { useEquipments } from '@/hooks/useEquipments';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
+import { sortMuscleEntries } from '@/utils/muscleIntensity';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import type { Exercise, WorkoutRoutine, DetailedMuscle } from '@/types';
@@ -353,7 +354,7 @@ export function ExerciseRoutineBrowser({
                           <>
                             <span className="opacity-40 shrink-0">·</span>
                             <AdaptiveMuscleBadgeGroup
-                              entries={muscleEntries}
+                              entries={sortMuscleEntries(muscleEntries)}
                               className="min-w-0 flex-1"
                             />
                           </>
@@ -409,10 +410,6 @@ export function ExerciseRoutineBrowser({
             ) : (
               filteredRoutines.map((routine) => {
                 const isDisabled = checkIsRoutineDisabled(routine);
-                const totalSets = routine.exercises.reduce(
-                  (sum, it) => sum + (it.defaultSets || 3),
-                  0
-                );
 
                 return (
                   <div
@@ -432,10 +429,6 @@ export function ExerciseRoutineBrowser({
                       <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 font-mono">
                         <span>
                           {routine.exercises.length} {t('common.items', '項')}
-                        </span>
-                        <span className="text-border">·</span>
-                        <span>
-                          {totalSets} {t('workout.set', '組')}
                         </span>
                         {routine.notes && (
                           <>

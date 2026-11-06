@@ -14,6 +14,7 @@ import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
+import { sortMuscleEntries } from '@/utils/muscleIntensity';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import type { Exercise, WorkoutRoutine, Equipment, DetailedMuscle } from '@/types';
@@ -587,7 +588,7 @@ export function WorkoutManagementBrowser({
                           {muscleEntries.length > 0 && (
                             <>
                               <span className="opacity-40 shrink-0">·</span>
-                              <AdaptiveMuscleBadgeGroup entries={muscleEntries} className="min-w-0 flex-1" />
+                              <AdaptiveMuscleBadgeGroup entries={sortMuscleEntries(muscleEntries)} className="min-w-0 flex-1" />
                             </>
                           )}
                         </div>
@@ -752,8 +753,6 @@ export function WorkoutManagementBrowser({
                         </div>
                         <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground flex-nowrap min-w-0 overflow-hidden">
                           <span className="shrink-0">{t('workout.exerciseCount', { count: summary.exerciseCount })}</span>
-                          <span className="opacity-40 shrink-0">·</span>
-                          <span className="shrink-0">{summary.totalPlannedSets} {t('workout.set', '組')}</span>
                           {summary.coveredMuscles.length > 0 && (
                             <>
                               <span className="opacity-40 shrink-0">·</span>

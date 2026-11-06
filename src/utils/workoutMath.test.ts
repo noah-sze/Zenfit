@@ -81,13 +81,13 @@ describe('workoutMath 純數學客觀計算函數', () => {
       [mockEx2.id, mockEx2],
     ]);
 
-    it('正確統計動作數、總計劃組數與受刺激肌群清單', () => {
+    it('正確統計動作數與受刺激肌群清單', () => {
       const mockRoutine: WorkoutRoutine = {
         id: 'r_1',
         name: '胸部經典組合',
         exercises: [
-          { exerciseId: 'ex_1', defaultSets: 4 },
-          { exerciseId: 'ex_2', defaultSets: 3 },
+          { exerciseId: 'ex_1' },
+          { exerciseId: 'ex_2' },
         ],
         isCustom: true,
         createdAt: 0,
@@ -96,7 +96,6 @@ describe('workoutMath 純數學客觀計算函數', () => {
 
       const summary = getRoutineFactSummary(mockRoutine, exerciseMap);
       expect(summary.exerciseCount).toBe(2);
-      expect(summary.totalPlannedSets).toBe(7); // 4 + 3
 
       // 涵蓋肌群包含 mid_lower_chest (max 100), front_delts (max 50), triceps (max 80)
       const chest = summary.coveredMuscles.find((m) => m.muscle === 'mid_lower_chest');
@@ -106,12 +105,18 @@ describe('workoutMath 純數學客觀計算函數', () => {
       expect(chest?.maxIntensity).toBe(100);
       expect(triceps?.maxIntensity).toBe(80);
       expect(frontDelts?.maxIntensity).toBe(50);
+
+      // 驗證機能學排序：主動肌在前 (mid_lower_chest 100, triceps 80)，協同肌在後 (front_delts 50)
+      expect(summary.coveredMuscles.map((m) => m.muscle)).toEqual([
+        'mid_lower_chest',
+        'triceps',
+        'front_delts',
+      ]);
     });
 
     it('邊界情況：空組合安全回傳', () => {
       const emptySummary = getRoutineFactSummary(null, exerciseMap);
       expect(emptySummary.exerciseCount).toBe(0);
-      expect(emptySummary.totalPlannedSets).toBe(0);
       expect(emptySummary.coveredMuscles).toEqual([]);
     });
   });

@@ -46,11 +46,6 @@ export const RoutineSelectDialog = memo(function RoutineSelectDialog({
               </div>
             ) : (
               activeRoutines.map((routine) => {
-                const totalSets = routine.exercises.reduce(
-                  (sum, it) => sum + (it.defaultSets || 3),
-                  0
-                );
-
                 return (
                   <div
                     key={routine.id}
@@ -64,10 +59,6 @@ export const RoutineSelectDialog = memo(function RoutineSelectDialog({
                       <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
                         <span>
                           {routine.exercises.length} {t('common.items', '項')}
-                        </span>
-                        <span className="text-border">·</span>
-                        <span>
-                          {totalSets} {t('workout.set', '組')}
                         </span>
                       </div>
                     </div>

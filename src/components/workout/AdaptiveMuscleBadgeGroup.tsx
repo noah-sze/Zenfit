@@ -1,8 +1,9 @@
-import { memo, useRef, useState, useLayoutEffect, useCallback } from 'react';
+import { memo, useRef, useState, useLayoutEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DetailedMuscle, MuscleRole } from '@/types';
 import { MuscleIntensityBadge } from './MuscleIntensityBadge';
 import { calculateVisibleBadgeCount } from '@/utils/badgeLayout';
+import { sortMuscleEntries } from '@/utils/muscleIntensity';
 import { cn } from '@/lib/utils';
 
 export interface AdaptiveMuscleBadgeGroupProps {
@@ -18,7 +19,11 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
   const containerRef = useRef<HTMLDivElement>(null);
   const measureContainerRef = useRef<HTMLDivElement>(null);
   const moreMeasureRef = useRef<HTMLSpanElement>(null);
-  const [visibleCount, setVisibleCount] = useState<number>(entries.length);
+
+  // 統一保證機能學排序：主動肌在最前 -> 協同肌在中間 -> 穩定肌在最後
+  const sortedEntries = useMemo(() => sortMuscleEntries(entries), [entries]);
+
+  const [visibleCount, setVisibleCount] = useState<number>(sortedEntries.length);
 
   const getMuscleLabel = (muscle: DetailedMuscle): string => {
     const key = `workout.muscle${muscle
@@ -31,7 +36,7 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
   const measureAndLayout = useCallback(() => {
     const container = containerRef.current;
     const measureContainer = measureContainerRef.current;
-    if (!container || !measureContainer || entries.length === 0) return;
+    if (!container || !measureContainer || sortedEntries.length === 0) return;
 
     const availableWidth = container.clientWidth;
     if (availableWidth <= 0) return;
@@ -57,7 +62,7 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
     });
 
     setVisibleCount(count);
-  }, [entries]);
+  }, [sortedEntries]);
 
   useLayoutEffect(() => {
     measureAndLayout();
@@ -75,9 +80,9 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
     };
   }, [measureAndLayout]);
 
-  if (entries.length === 0) return null;
+  if (sortedEntries.length === 0) return null;
 
-  const hiddenCount = entries.length - visibleCount;
+  const hiddenCount = sortedEntries.length - visibleCount;
 
   return (
     <div
@@ -90,7 +95,7 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
         className="absolute left-0 top-0 invisible pointer-events-none -z-50 flex items-center gap-1 flex-nowrap"
         aria-hidden="true"
       >
-        {entries.map(([m, intensity]) => (
+        {sortedEntries.map(([m, intensity]) => (
           <span key={m} data-measure-badge className="shrink-0">
             <MuscleIntensityBadge
               muscle={m}
@@ -104,12 +109,12 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
           ref={moreMeasureRef}
           className="text-[10px] font-mono shrink-0 px-1 py-0.5 rounded select-none"
         >
-          +{entries.length}
+          +{sortedEntries.length}
         </span>
       </div>
 
       {/* 實際渲染之可見項目 */}
-      {entries.slice(0, visibleCount).map(([m, intensity]) => (
+      {sortedEntries.slice(0, visibleCount).map(([m, intensity]) => (
         <span key={m} className="shrink-0">
           <MuscleIntensityBadge
             muscle={m}
@@ -123,7 +128,7 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
       {hiddenCount > 0 && (
         <span
           className="text-[10px] font-mono text-muted-foreground/70 shrink-0 px-1 py-0.5 rounded bg-muted/60 border border-border/40 select-none"
-          title={entries
+          title={sortedEntries
             .slice(visibleCount)
             .map(([m]) => getMuscleLabel(m))
             .join(', ')}
@@ -134,4 +139,3 @@ export const AdaptiveMuscleBadgeGroup = memo(function AdaptiveMuscleBadgeGroup({
     </div>
   );
 });
-

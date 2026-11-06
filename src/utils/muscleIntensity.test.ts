@@ -6,6 +6,8 @@ import {
   getMuscleIntensityBadgeClasses,
   getMuscleIntensityTier,
   getMuscleRoleLabel,
+  getMuscleRoleRank,
+  sortMuscleEntries,
 } from './muscleIntensity';
 
 describe('肌群刺激強度分級純函數測試 (Muscle Intensity & Roles)', () => {
@@ -94,6 +96,76 @@ describe('肌群刺激強度分級純函數測試 (Muscle Intensity & Roles)', (
       expect(getMuscleRoleLabel('primary', mockT)).toBe('主動肌');
       expect(getMuscleRoleLabel('secondary', mockT)).toBe('協同肌');
       expect(getMuscleRoleLabel('stabilizer', mockT)).toBe('穩定肌');
+    });
+  });
+
+  describe('getMuscleRoleRank (機能學排序優先級)', () => {
+    it('主動肌 (1) < 協同肌 (2) < 穩定肌 (3)', () => {
+      expect(getMuscleRoleRank('primary')).toBe(1);
+      expect(getMuscleRoleRank('secondary')).toBe(2);
+      expect(getMuscleRoleRank('stabilizer')).toBe(3);
+    });
+
+    it('相容數字強度映射優先級', () => {
+      expect(getMuscleRoleRank(100)).toBe(1);
+      expect(getMuscleRoleRank(60)).toBe(2);
+      expect(getMuscleRoleRank(30)).toBe(3);
+    });
+  });
+
+  describe('sortMuscleEntries (機能學肌群排序：協同在前，穩定在後)', () => {
+    it('嚴格保證協同肌排在穩定肌之前', () => {
+      const unsorted = [
+        ['forearms', 'stabilizer'],
+        ['erector_spinae', 'secondary'],
+        ['lats', 'secondary'],
+        ['biceps', 'secondary'],
+      ] as const;
+
+      const sorted = sortMuscleEntries([...unsorted]);
+
+      expect(sorted.map((item) => item[0])).toEqual([
+        'biceps',
+        'erector_spinae',
+        'lats',
+        'forearms',
+      ]);
+    });
+
+    it('完整階梯排序：主動肌在最前，協同肌在中間，穩定肌在最後', () => {
+      const unsorted = [
+        ['triceps', 'stabilizer'],
+        ['mid_lower_chest', 'primary'],
+        ['front_delts', 'secondary'],
+      ] as const;
+
+      const sorted = sortMuscleEntries([...unsorted]);
+
+      expect(sorted.map((item) => item[0])).toEqual([
+        'mid_lower_chest',
+        'front_delts',
+        'triceps',
+      ]);
+    });
+
+    it('同角色內依數值強度由高至低排序', () => {
+      const unsorted = [
+        ['muscle_a', 55],
+        ['muscle_b', 75],
+        ['muscle_c', 20],
+        ['muscle_d', 40],
+      ] as const;
+
+      const sorted = sortMuscleEntries([...unsorted]);
+
+      // 55, 75 are secondary (75 > 55)
+      // 20, 40 are stabilizer (40 > 20)
+      expect(sorted.map((item) => item[0])).toEqual([
+        'muscle_b',
+        'muscle_a',
+        'muscle_d',
+        'muscle_c',
+      ]);
     });
   });
 });

@@ -23,6 +23,7 @@ import {
   sanitizeFoodLog,
   sanitizeDailyDietLog,
   sanitizeWorkoutLog,
+  sanitizeWorkoutRoutine,
   sanitizeUserBaseInfo,
 } from './syncSanitizers';
 import {
@@ -377,7 +378,7 @@ async function executeDownloadQueue(): Promise<void> {
         if (data) staged.equipments.push(...data);
       } else if (path === '/workout/routines.json') {
         const data = await downloadJsonFile<WorkoutRoutine[]>(path);
-        if (data) staged.routines.push(...data);
+        if (data) staged.routines.push(...data.map(sanitizeWorkoutRoutine));
       } else if (path.startsWith('/workout/logs/')) {
         const data = await downloadJsonFile<WorkoutLog[]>(path);
         if (data) staged.workoutLogs.push(...data.map(sanitizeWorkoutLog));

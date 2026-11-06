@@ -265,7 +265,7 @@ export function AddQuickModal() {
     }
 
     const exerciseGroups = currentRoutine.exercises.map((item) => {
-      const setsCount = item.defaultSets || 3;
+      const setsCount = 3;
       const sets = Array.from({ length: setsCount }, (_, i) => ({
         id: uuidv4(),
         setNumber: i + 1,
@@ -747,9 +747,6 @@ export function AddQuickModal() {
                           <div key={idx} className="text-xs font-mono flex items-center justify-between">
                             <span className="truncate text-foreground">
                               {ex ? ex.name : t('common.unknown')}
-                            </span>
-                            <span className="text-muted-foreground shrink-0 ml-2">
-                              {item.defaultSets} {t('workout.set')}
                             </span>
                           </div>
                         );

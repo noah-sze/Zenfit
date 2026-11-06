@@ -1,4 +1,4 @@
-import type { FoodRecipe, FoodLog, DailyDietLog, WorkoutLog, UserBaseInfo } from '@/types';
+import type { FoodRecipe, FoodLog, DailyDietLog, WorkoutLog, WorkoutRoutine, UserBaseInfo } from '@/types';
 import { LEGACY_ID_TO_UUID_MAP, PRIMARY_USER_ID } from '@/services/db/defaultData';
 
 export function mapLegacyIdToUuid(id?: string): string {
@@ -124,5 +124,27 @@ export function sanitizeUserBaseInfo(info: any): UserBaseInfo {
     createdAt: Number(info.createdAt) || Date.now(),
     updatedAt: Number(info.updatedAt) || Date.now(),
     ...(info.rev !== undefined ? { rev: Number(info.rev) } : {}),
+  };
+}
+
+/**
+ * 清洗訓練課表/組合：僅保留 exerciseId，徹底剔除 defaultSets 等組數設定
+ */
+export function sanitizeWorkoutRoutine(routine: any): WorkoutRoutine {
+  const rawId = String(routine.id || '');
+  return {
+    id: mapLegacyIdToUuid(rawId) || rawId,
+    name: String(routine.name || ''),
+    ...(routine.notes ? { notes: String(routine.notes) } : {}),
+    exercises: Array.isArray(routine.exercises)
+      ? routine.exercises.map((item: any) => ({
+          exerciseId: mapLegacyIdToUuid(String(item.exerciseId || '')),
+        }))
+      : [],
+    isCustom: Boolean(routine.isCustom ?? true),
+    ...(routine.isArchived !== undefined ? { isArchived: Boolean(routine.isArchived) } : {}),
+    createdAt: Number(routine.createdAt) || Date.now(),
+    updatedAt: Number(routine.updatedAt) || Date.now(),
+    ...(routine.rev !== undefined ? { rev: Number(routine.rev) } : {}),
   };
 }
