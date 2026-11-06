@@ -17,6 +17,7 @@ import type { FoodItem, FoodRecipe, FoodCategory, NutritionTag } from '@/types';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 
 export type FoodSelectMode = 'all' | 'foods' | 'recipes';
 export type FoodInteractiveMode = 'manage' | 'select';
@@ -142,10 +143,36 @@ export function FoodRecipeBrowser({
     archivedPresetFoods,
   } = useFoods();
 
-  const [selectedCategory, setSelectedCategory] = useState<'all' | FoodCategory>('all');
-  const [selectedNutritionTag, setSelectedNutritionTag] = useState<'all' | NutritionTag>('all');
-  const [foodSearchQuery, setFoodSearchQuery] = useState('');
-  const [showFoodArchived, setShowFoodArchived] = useState(false);
+  const isManage = interactiveMode === 'manage';
+  const { foodBrowser, setFoodBrowserState } = useBrowserStateStore();
+
+  const [localCategory, setLocalCategory] = useState<'all' | FoodCategory>('all');
+  const [localNutritionTag, setLocalNutritionTag] = useState<'all' | NutritionTag>('all');
+  const [localFoodSearchQuery, setLocalFoodSearchQuery] = useState('');
+  const [localShowFoodArchived, setLocalShowFoodArchived] = useState(false);
+
+  const selectedCategory = isManage ? foodBrowser.selectedCategory : localCategory;
+  const setSelectedCategory = isManage
+    ? (cat: 'all' | FoodCategory) => setFoodBrowserState({ selectedCategory: cat })
+    : setLocalCategory;
+
+  const selectedNutritionTag = isManage ? foodBrowser.selectedNutritionTag : localNutritionTag;
+  const setSelectedNutritionTag = isManage
+    ? (tag: 'all' | NutritionTag) => setFoodBrowserState({ selectedNutritionTag: tag })
+    : setLocalNutritionTag;
+
+  const foodSearchQuery = isManage ? foodBrowser.foodSearchQuery : localFoodSearchQuery;
+  const setFoodSearchQuery = isManage
+    ? (query: string) => setFoodBrowserState({ foodSearchQuery: query })
+    : setLocalFoodSearchQuery;
+
+  const showFoodArchived = isManage ? foodBrowser.showFoodArchived : localShowFoodArchived;
+  const setShowFoodArchived = isManage
+    ? (updater: boolean | ((prev: boolean) => boolean)) => {
+        const next = typeof updater === 'function' ? updater(foodBrowser.showFoodArchived) : updater;
+        setFoodBrowserState({ showFoodArchived: next });
+      }
+    : setLocalShowFoodArchived;
 
   const totalActiveFoodsCount = useMemo(() => {
     return customFoods.length + presetFoods.length;
@@ -243,9 +270,29 @@ export function FoodRecipeBrowser({
     getRecipeMacros,
   } = useRecipes();
 
-  const [recipeSearchQuery, setRecipeSearchQuery] = useState('');
-  const [showRecipeArchived, setShowRecipeArchived] = useState(false);
-  const [selectedRecipeNutritionTag, setSelectedRecipeNutritionTag] = useState<'all' | NutritionTag>('all');
+  const [localRecipeSearchQuery, setLocalRecipeSearchQuery] = useState('');
+  const [localShowRecipeArchived, setLocalShowRecipeArchived] = useState(false);
+  const [localSelectedRecipeNutritionTag, setLocalSelectedRecipeNutritionTag] = useState<'all' | NutritionTag>('all');
+
+  const recipeSearchQuery = isManage ? foodBrowser.recipeSearchQuery : localRecipeSearchQuery;
+  const setRecipeSearchQuery = isManage
+    ? (query: string) => setFoodBrowserState({ recipeSearchQuery: query })
+    : setLocalRecipeSearchQuery;
+
+  const showRecipeArchived = isManage ? foodBrowser.showRecipeArchived : localShowRecipeArchived;
+  const setShowRecipeArchived = isManage
+    ? (updater: boolean | ((prev: boolean) => boolean)) => {
+        const next = typeof updater === 'function' ? updater(foodBrowser.showRecipeArchived) : updater;
+        setFoodBrowserState({ showRecipeArchived: next });
+      }
+    : setLocalShowRecipeArchived;
+
+  const selectedRecipeNutritionTag = isManage
+    ? foodBrowser.selectedRecipeNutritionTag
+    : localSelectedRecipeNutritionTag;
+  const setSelectedRecipeNutritionTag = isManage
+    ? (tag: 'all' | NutritionTag) => setFoodBrowserState({ selectedRecipeNutritionTag: tag })
+    : setLocalSelectedRecipeNutritionTag;
 
   const totalActiveRecipes = useMemo(() => {
     return [...customRecipes, ...presetRecipes];

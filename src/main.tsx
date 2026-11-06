@@ -9,6 +9,9 @@ import App from './App.tsx'
 
 import { ThemeProvider } from './components/ThemeProvider'
 import { requestStoragePersistence } from '@/services/storage/storageManager'
+import { prewarmFoodsCache } from '@/hooks/useFoods'
+import { prewarmRecipesCache } from '@/hooks/useRecipes'
+import { prewarmExercisesCache } from '@/hooks/useExercises'
 
 // 在生產環境自動註冊 PWA Service Worker 實現 100% 離線可用；
 // 在本機開發環境 (npm run dev) 主動清理並註銷殘留的 Service Worker，避免 HMR/ESM 請求被攔截導致死鎖
@@ -33,6 +36,15 @@ if (import.meta.env.DEV) {
 setTimeout(() => {
   requestStoragePersistence().catch(() => {});
 }, 1500);
+
+// 記憶體注水預熱：應用啟動後非阻塞預載入核心領域實體快照，達成全站選擇彈窗 0ms 即時秒開
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    prewarmFoodsCache().catch(() => {});
+    prewarmRecipesCache().catch(() => {});
+    prewarmExercisesCache().catch(() => {});
+  }, 100);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
