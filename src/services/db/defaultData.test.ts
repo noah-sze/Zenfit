@@ -387,4 +387,84 @@ describe('系統預設數據完整性與原子計量規範測試', () => {
     expect(day.entries[0].mealType).toBe('breakfast');
     expect(day.entries[1].mealType).toBe('lunch');
   });
+
+  describe('resetDatabaseToFactory (出廠重置核心邏輯)', () => {
+    it('應正確清空所有業務記錄，刪除自定義實體，並保留預設出廠實體與個人出廠狀態', async () => {
+      const mockClearMap: Record<string, boolean> = {};
+      const mockDeletedCustom: Record<string, boolean> = {};
+      const mockUnarchived: Record<string, boolean> = {};
+      const mockAddedItems: Record<string, any[]> = {};
+
+      const createMockTable = (name: string, items: any[] = []) => ({
+        clear: async () => {
+          mockClearMap[name] = true;
+        },
+        filter: (_predicate: any) => ({
+          delete: async () => {
+            mockDeletedCustom[name] = true;
+          },
+          first: async () => null,
+        }),
+        toCollection: () => ({
+          modify: async (_updates: any) => {
+            mockUnarchived[name] = true;
+          },
+        }),
+        get: async () => null,
+        where: () => ({
+          equals: () => ({
+            first: async () => null,
+          }),
+        }),
+        add: async (item: any) => {
+          if (!mockAddedItems[name]) mockAddedItems[name] = [];
+          mockAddedItems[name].push(item);
+        },
+        bulkAdd: async () => {},
+        toArray: async () => items,
+      });
+
+      const mockDb: any = {
+        daily_diet_logs: createMockTable('daily_diet_logs'),
+        workout_logs: createMockTable('workout_logs'),
+        body_metrics: createMockTable('body_metrics'),
+        routines: createMockTable('routines'),
+        foods: createMockTable('foods', DEFAULT_FOODS),
+        recipes: createMockTable('recipes', DEFAULT_RECIPES),
+        exercises: createMockTable('exercises', DEFAULT_EXERCISES),
+        equipments: createMockTable('equipments', DEFAULT_EQUIPMENTS),
+        user_profile: createMockTable('user_profile'),
+        user_base_info: createMockTable('user_base_info'),
+      };
+
+      const { resetDatabaseToFactory } = await import('./defaultData');
+      await resetDatabaseToFactory(mockDb);
+
+      expect(mockClearMap.daily_diet_logs).toBe(true);
+      expect(mockClearMap.workout_logs).toBe(true);
+      expect(mockClearMap.body_metrics).toBe(true);
+      expect(mockClearMap.routines).toBe(true);
+      expect(mockDeletedCustom.foods).toBe(true);
+      expect(mockDeletedCustom.recipes).toBe(true);
+      expect(mockDeletedCustom.exercises).toBe(true);
+      expect(mockDeletedCustom.equipments).toBe(true);
+      expect(mockUnarchived.foods).toBe(true);
+      expect(mockUnarchived.recipes).toBe(true);
+      expect(mockUnarchived.exercises).toBe(true);
+      expect(mockUnarchived.equipments).toBe(true);
+
+      // 驗證個人資料重置為出廠空白態
+      expect(mockClearMap.user_profile).toBe(true);
+      expect(mockClearMap.user_base_info).toBe(true);
+      expect(mockAddedItems.user_profile?.[0]?.name).toBe('');
+      expect(mockAddedItems.user_profile?.[0]?.heightCm).toBe(0);
+      expect(mockAddedItems.user_profile?.[0]?.currentWeightKg).toBe(0);
+      expect(mockAddedItems.user_profile?.[0]?.isSetupCompleted).toBe(false);
+      expect(mockAddedItems.user_base_info?.[0]?.name).toBe('');
+      expect(mockAddedItems.user_base_info?.[0]?.birthDate).toBe('');
+      expect(mockAddedItems.user_base_info?.[0]?.heightCm).toBe(0);
+      // 驗證未捏造虛假體重記錄
+      expect(mockAddedItems.body_metrics).toBeUndefined();
+    });
+  });
 });

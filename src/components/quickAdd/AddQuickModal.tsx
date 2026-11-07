@@ -265,12 +265,12 @@ export function AddQuickModal() {
     }
 
     const exerciseGroups = currentRoutine.exercises.map((item) => {
-      const setsCount = 3;
+      const setsCount = 1;
       const sets = Array.from({ length: setsCount }, (_, i) => ({
         id: uuidv4(),
         setNumber: i + 1,
-        weight: undefined,
-        reps: undefined,
+        weight: 0,
+        reps: 0,
         isCompleted: false,
       }));
 

@@ -156,9 +156,9 @@ export default function Workout() {
       const exerciseGroups = routine.exercises.map((item) => {
         const ex = exerciseMap.get(item.exerciseId);
         const record = findLastExerciseRecord(allLogs, item.exerciseId, ex?.name);
-        const count = record ? record.setsCount : 3;
-        const weights = record ? record.weights : Array(count).fill(20);
-        const defaultWeight = record ? record.lastWeight : 20;
+        const count = record ? record.setsCount : 1;
+        const weights = record ? record.weights : [0];
+        const defaultWeight = record ? record.lastWeight : 0;
 
         const sets: WorkoutSet[] = Array.from({ length: count }, (_, i) => ({
           id: uuidv4(),
@@ -209,9 +209,9 @@ export default function Workout() {
     try {
       const allLogs = await db.workout_logs.toArray();
       const record = findLastExerciseRecord(allLogs, exercise.id, exercise.name);
-      const count = record ? record.setsCount : 3;
-      const weights = record ? record.weights : Array(count).fill(20);
-      const defaultWeight = record ? record.lastWeight : 20;
+      const count = record ? record.setsCount : 1;
+      const weights = record ? record.weights : [0];
+      const defaultWeight = record ? record.lastWeight : 0;
 
       const sets: WorkoutSet[] = Array.from({ length: count }, (_, i) => ({
         id: uuidv4(),
@@ -276,7 +276,7 @@ export default function Workout() {
     const newSet: WorkoutSet = {
       id: uuidv4(),
       setNumber: exGroup.sets.length + 1,
-      weight: prevSet && typeof prevSet.weight === 'number' && prevSet.weight > 0 ? prevSet.weight : 20,
+      weight: prevSet && typeof prevSet.weight === 'number' && prevSet.weight > 0 ? prevSet.weight : 0,
       reps: 0,
       isCompleted: true,
     };
@@ -485,10 +485,12 @@ export default function Workout() {
         {/* 每組數值微調列表 (點擊膠囊即刻呼出數字鍵盤) */}
         <div className="divide-y divide-border/40 bg-muted/10">
           {group.sets.map((set, setIdx) => {
-            const displayWeight =
-              bodyWeightUnit === 'lbs'
+            const hasWeight = typeof set.weight === 'number' && set.weight > 0;
+            const displayWeight = hasWeight
+              ? bodyWeightUnit === 'lbs'
                 ? kgToLbs(set.weight || 0, 1)
-                : set.weight || 0;
+                : set.weight || 0
+              : '-';
 
             return (
               <div
@@ -500,7 +502,7 @@ export default function Workout() {
                 </span>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                  {/* 重量膠囊 (固定寬度 78px，內部數字右對齊，保證多組垂直對齊) */}
+                  {/* 重量膠囊 (固定寬度 78px，內部數字右對齊，未填入時顯示 - kg，保證多組垂直對齊) */}
                   <button
                     type="button"
                     onClick={(e) =>
@@ -516,7 +518,12 @@ export default function Workout() {
                     }
                     className="h-7 w-[78px] px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                   >
-                    <span className="font-bold text-foreground tabular-nums min-w-[20px] text-right">
+                    <span
+                      className={cn(
+                        'font-bold tabular-nums min-w-[20px] text-right',
+                        hasWeight ? 'text-foreground' : 'text-muted-foreground'
+                      )}
+                    >
                       {displayWeight}
                     </span>
                     <span className="text-muted-foreground text-[10px] shrink-0">

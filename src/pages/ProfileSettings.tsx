@@ -16,6 +16,7 @@ import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weigh
 import { cmToIn, inToCm, kgToLbs, lbsToKg } from '@/utils/unitMath';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { CalendarDays } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function ProfileSettings() {
   const { t } = useTranslation();
@@ -23,17 +24,19 @@ export default function ProfileSettings() {
   const { lengthUnit, bodyWeightUnit, updatePreference } = useUnitPreferences();
 
   // 本地表單狀態
-  const [name, setName] = useState(profile.name || 'Noah');
+  const [name, setName] = useState(profile.name || '');
   const [gender, setGender] = useState<'male' | 'female'>(profile.gender || 'male');
-  const [birthDate, setBirthDate] = useState(profile.birthDate || '1999-01');
+  const [birthDate, setBirthDate] = useState(profile.birthDate || '');
 
   // 身高與體重：依據偏好單位展示
   const getInitialHeight = () => {
-    const rawCm = profile.heightCm || 175;
+    const rawCm = profile.heightCm || 0;
+    if (rawCm <= 0) return '';
     return lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm);
   };
   const getInitialWeight = () => {
-    const rawKg = profile.currentWeightKg || 70;
+    const rawKg = profile.currentWeightKg || 0;
+    if (rawKg <= 0) return '';
     return bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg);
   };
 
@@ -42,13 +45,13 @@ export default function ProfileSettings() {
 
   useEffect(() => {
     if (profile) {
-      setName(profile.name || 'Noah');
+      setName(profile.name || '');
       setGender(profile.gender || 'male');
-      setBirthDate(profile.birthDate || '1999-01');
-      const rawCm = profile.heightCm || 175;
-      setDisplayHeight(lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm));
-      const rawKg = profile.currentWeightKg || 70;
-      setDisplayWeight(bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg));
+      setBirthDate(profile.birthDate || '');
+      const rawCm = profile.heightCm || 0;
+      setDisplayHeight(rawCm > 0 ? (lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm)) : '');
+      const rawKg = profile.currentWeightKg || 0;
+      setDisplayWeight(rawKg > 0 ? (bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg)) : '');
     }
   }, [profile, lengthUnit, bodyWeightUnit]);
 
@@ -58,14 +61,14 @@ export default function ProfileSettings() {
   const weightInKg = bodyWeightUnit === 'lbs' ? lbsToKg(parsedDisplayWeight) : parsedDisplayWeight;
   const heightInCm = lengthUnit === 'in' ? inToCm(parsedDisplayHeight) : parsedDisplayHeight;
 
-  const calculatedAge = calculateAgeFromBirth(birthDate);
+  const calculatedAge = birthDate ? calculateAgeFromBirth(birthDate) : 0;
   const currentBMI = calculateBMI(weightInKg, heightInCm);
   const currentBMR = calculateBMR(weightInKg, heightInCm, gender, calculatedAge);
 
   const handleSave = async () => {
-    const finalName = name.trim() || 'Noah';
-    const finalHeight = heightInCm > 0 ? heightInCm : 175;
-    const finalWeight = weightInKg > 0 ? weightInKg : 70;
+    const finalName = name.trim();
+    const finalHeight = heightInCm > 0 ? heightInCm : 0;
+    const finalWeight = weightInKg > 0 ? weightInKg : 0;
 
     await updateProfile({
       name: finalName,
@@ -98,7 +101,7 @@ export default function ProfileSettings() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t('profileSettings.namePlaceholder')}
+              placeholder="-"
               className="h-8 w-36 text-right text-sm font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
             />
           </div>
@@ -141,10 +144,14 @@ export default function ProfileSettings() {
               className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-1.5">
-                <span className="text-foreground">{birthDate}</span>
-                <span className="text-xs text-muted-foreground">
-                  ({calculatedAge} {t('profileSettings.yearsOld')})
+                <span className={cn(birthDate ? 'text-foreground' : 'text-muted-foreground font-mono')}>
+                  {birthDate || '-'}
                 </span>
+                {Boolean(birthDate) && calculatedAge > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({calculatedAge} {t('profileSettings.yearsOld')})
+                  </span>
+                )}
                 <CalendarDays className="size-3.5 text-muted-foreground/70" />
               </div>
             </MonthPicker>
@@ -161,7 +168,8 @@ export default function ProfileSettings() {
                 inputMode="decimal"
                 value={displayHeight}
                 onChange={(e) => setDisplayHeight(e.target.value)}
-                className="h-8 w-16 text-right text-sm font-mono text-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
+                placeholder="-"
+                className="h-8 w-16 text-right text-sm font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
               />
               <span>{lengthUnit}</span>
             </div>
@@ -213,7 +221,8 @@ export default function ProfileSettings() {
                 inputMode="decimal"
                 value={displayWeight}
                 onChange={(e) => setDisplayWeight(e.target.value)}
-                className="h-8 w-16 text-right text-sm font-mono text-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
+                placeholder="-"
+                className="h-8 w-16 text-right text-sm font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
               />
               <span>{bodyWeightUnit}</span>
             </div>

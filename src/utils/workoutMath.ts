@@ -248,8 +248,8 @@ export function findLastExerciseRecord(
 
       if (idMatch || nameMatch) {
         if (Array.isArray(exGroup.sets) && exGroup.sets.length > 0) {
-          // 找出該群組中最後一筆 weight > 0 的有效基準重量
-          let fallbackWeight = 20;
+          // 找出該群組中最後一筆 weight > 0 的有效基準重量（若無有效記錄則為 0 代表未輸入）
+          let fallbackWeight = 0;
           for (let s = exGroup.sets.length - 1; s >= 0; s--) {
             const set = exGroup.sets[s];
             if (

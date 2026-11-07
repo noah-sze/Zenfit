@@ -49,6 +49,28 @@ export function AppLayout() {
   const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  // 跨夜休眠喚醒自動校準：
+  // 當 PWA 或行動端從後台切回前景時，若已跨過午夜且使用者先前停留在「今天」，自動平滑切換至新的「今天」
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        const currentSelected = useAppStore.getState().selectedDate;
+
+        // 若前次日期不是今天，但恰好是昨天（代表過夜且非歷史補記），自動平滑過渡到新的一天
+        const yesterdayStr = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+        if (currentSelected === yesterdayStr) {
+          setSelectedDate(todayStr);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [setSelectedDate]);
+
   const currentDateObj = parseISO(selectedDate);
 
   const handlePrevDay = () => {

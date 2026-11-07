@@ -45,8 +45,8 @@ export function DietPlanModal({
 }: DietPlanModalProps) {
   const { t } = useTranslation();
 
-  // 活動係數狀態
-  const [activityLevel, setActivityLevel] = useState<number>(1.55);
+  // 活動係數：依據當日日誌或使用者個人資料繼承，彈窗內不再提供冗餘設置
+  const activityLevel = currentPlan?.activityLevel || profile.activityLevel || 1.55;
 
   // 本地供能比狀態 (嚴格固定順序：碳 C ➔ 蛋 P ➔ 脂 F)
   const [carbsPercent, setCarbsPercent] = useState<number>(40);
@@ -80,13 +80,10 @@ export function DietPlanModal({
     return currentPlan?.caloriesTarget || 2000;
   }, [currentBMR, activityLevel, currentPlan?.caloriesTarget]);
 
-  // 初始化讀取使用者或當日既有活動係數與供能比
+  // 初始化讀取使用者或當日既有供能比
   const prevIsOpenRef = useRef(false);
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
-      const initialActivity = currentPlan?.activityLevel || profile.activityLevel || 1.55;
-      setActivityLevel(initialActivity);
-
       let split: MacroSplit = currentPlan?.macroSplit || profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
 
       // 若 currentPlan 具備克數目標且無明確 macroSplit，反推供能比百分比
@@ -148,33 +145,6 @@ export function DietPlanModal({
   const carbsBarWidth = Math.min(100, Math.round(carbsPercent * ratioScale));
   const proteinBarWidth = Math.min(100 - carbsBarWidth, Math.round(proteinPercent * ratioScale));
   const fatBarWidth = Math.max(0, 100 - carbsBarWidth - proteinBarWidth);
-
-  // 切換活動係數
-  const handleActivityChange = (val: string) => {
-    const level = parseFloat(val);
-    if (!isNaN(level) && level > 0) {
-      setActivityLevel(level);
-      triggerHaptic('selection');
-    }
-  };
-
-  // 取得活動係數標籤
-  const getActivityLabel = (level: number) => {
-    switch (level) {
-      case 1.2:
-        return t('dietPlan.sedentary', '久坐辦公 (1.2)');
-      case 1.375:
-        return t('dietPlan.light', '輕度活動 (1.375)');
-      case 1.55:
-        return t('dietPlan.moderate', '中度活動 (1.55)');
-      case 1.725:
-        return t('dietPlan.heavy', '高強度活動 (1.725)');
-      case 1.9:
-        return t('dietPlan.athlete', '極重度活動 (1.9)');
-      default:
-        return String(level);
-    }
-  };
 
   // 切換供能比模板
   const handleTemplateChange = (val: string) => {
@@ -349,36 +319,8 @@ export function DietPlanModal({
         >
           {/* 主容器：pt-3.5 space-y-3 嚴格縱向律動 */}
           <div className="flex flex-col space-y-3 pt-3.5">
-            {/* 雙行 Usage Table：活動係數 + 供能比比例選項 (統一使用 Select 下拉選單) */}
-            <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
-              {/* 第 1 行：活動係數 */}
-              <div className="h-10 px-3 flex items-center justify-between">
-                <span className="text-xs font-normal text-foreground">
-                  {t('dietPlan.activity', '活動')}
-                </span>
-                <Select
-                  value={String(activityLevel)}
-                  onValueChange={(val) => val && handleActivityChange(val)}
-                >
-                  <SelectTrigger
-                    size="custom"
-                    className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                  >
-                    <SelectValue className="flex-none text-right">
-                      {getActivityLabel(activityLevel)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent align="end" className="min-w-48">
-                    <SelectItem value="1.2">{t('dietPlan.sedentary')}</SelectItem>
-                    <SelectItem value="1.375">{t('dietPlan.light')}</SelectItem>
-                    <SelectItem value="1.55">{t('dietPlan.moderate')}</SelectItem>
-                    <SelectItem value="1.725">{t('dietPlan.heavy')}</SelectItem>
-                    <SelectItem value="1.9">{t('dietPlan.athlete')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* 第 2 行：供能比模板 */}
+            {/* 單行 Usage Table：供能比比例選項 (統一使用 Select 下拉選單) */}
+            <div className="border border-border rounded-lg bg-card overflow-hidden">
               <div className="h-10 px-3 flex items-center justify-between">
                 <span className="text-xs font-normal text-foreground">
                   {t('dietPlan.ratio', '比例')}

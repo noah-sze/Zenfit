@@ -69,11 +69,17 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'zenfit-app-storage',
+      // selectedDate 永遠作為純內存會話狀態，絕不持久化至 localStorage，保證重開應用必定位至今天
       partialize: (state) => ({
-        selectedDate: state.selectedDate,
         lastSyncTime: state.lastSyncTime,
         hidePwaInstallPrompt: state.hidePwaInstallPrompt,
         nutritionDisplayMode: state.nutritionDisplayMode,
+      }),
+      merge: (persistedState: unknown, currentState) => ({
+        ...currentState,
+        ...((persistedState as object) || {}),
+        // 防禦性水合：徹底阻斷歷史殘留於 localStorage 的舊日期，確保第 0 幀恆定為今天的物理日期
+        selectedDate: currentState.selectedDate,
       }),
     }
   )

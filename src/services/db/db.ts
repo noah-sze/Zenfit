@@ -26,6 +26,7 @@ import {
   DEFAULT_USER_PROFILE_ID,
   LEGACY_ID_TO_UUID_MAP,
   restoreMissingDefaultData,
+  resetDatabaseToFactory,
 } from './defaultData';
 
 export class ZenfitDatabase extends Dexie {
@@ -971,14 +972,14 @@ export class ZenfitDatabase extends Dexie {
     if (profileCount === 0) {
       await this.user_profile.add({
         id: DEFAULT_USER_PROFILE_ID,
-        name: 'Noah',
+        name: '',
         gender: 'male',
-        heightCm: 175,
-        currentWeightKg: 70,
+        heightCm: 0,
+        currentWeightKg: 0,
         activityLevel: 1.55,
         goalType: 'lose_fat',
         weightUnit: 'kg',
-        isSetupCompleted: true,
+        isSetupCompleted: false,
         updatedAt: now,
       });
     }
@@ -987,23 +988,10 @@ export class ZenfitDatabase extends Dexie {
     if (baseInfoCount === 0) {
       await this.user_base_info.add({
         id: PRIMARY_USER_ID,
-        name: 'Noah',
+        name: '',
         gender: 'male',
-        birthDate: '1999-01',
-        heightCm: 175,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    const metricCount = await this.body_metrics.count();
-    if (metricCount === 0) {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      await this.body_metrics.add({
-        id: uuidv4(),
-        date: todayStr,
-        weight: 70,
-        waterMl: 0,
+        birthDate: '',
+        heightCm: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -1016,6 +1004,13 @@ export class ZenfitDatabase extends Dexie {
 
   async restoreDefaultData() {
     return await restoreMissingDefaultData(this);
+  }
+
+  /**
+   * 徹底出廠重置：清空所有業務日誌與自定義資料，恢復預設實體與個人出廠狀態，斷開雲端同步
+   */
+  async resetToFactoryDefaults() {
+    return await resetDatabaseToFactory(this);
   }
 
   /**

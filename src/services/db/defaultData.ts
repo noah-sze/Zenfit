@@ -1,5 +1,9 @@
 import type { Equipment, Exercise, FoodItem, FoodRecipe } from '@/types';
 import type { ZenfitDatabase } from './db';
+import { clearDropboxTokens } from '@/services/sync/dropboxAuth';
+import { clearFoodsCache } from '@/hooks/useFoods';
+import { clearRecipesCache } from '@/hooks/useRecipes';
+import { clearExercisesCache } from '@/hooks/useExercises';
 
 // ============================================================================
 // 系統預設實體確定性靜態 UUID (Deterministic Static UUIDs)
@@ -474,4 +478,89 @@ export async function restoreMissingDefaultData(db: ZenfitDatabase): Promise<{
       recipes: recipesRestored,
     },
   };
+}
+
+/**
+ * 徹底出廠重置 (Factory Reset)
+ * 1. 清空所有業務日誌 (飲食記錄 daily_diet_logs、訓練日誌 workout_logs、身體指標 body_metrics、課表 routines)
+ * 2. 清除所有使用者自定義項目 (isCustom: true 的食材、菜餚、動作、器械)
+ * 3. 預設飲食與動作庫 100% 保留並自動解除歸檔 (isArchived: false)；若有缺失自動補齊出廠數據
+ * 4. 個人基本資料與檔案重置為初始出廠狀態 (Noah / 70kg / 175cm)
+ * 5. 徹底中斷 Dropbox 雲端同步並清除本地授權 Token 與中繼資料
+ * 6. 清理記憶體快取與本地偏好存儲
+ */
+export async function resetDatabaseToFactory(db: ZenfitDatabase): Promise<void> {
+  const now = Date.now();
+
+  // 1. 清空所有業務日誌與課表
+  await Promise.all([
+    db.daily_diet_logs.clear(),
+    db.workout_logs.clear(),
+    db.body_metrics.clear(),
+    db.routines.clear(),
+  ]);
+
+  // 2. 清除所有自定義實體 (isCustom: true)
+  await Promise.all([
+    db.foods.filter((f) => Boolean(f.isCustom)).delete(),
+    db.recipes.filter((r) => Boolean(r.isCustom)).delete(),
+    db.exercises.filter((e) => Boolean(e.isCustom)).delete(),
+    db.equipments.filter((eq) => Boolean(eq.isCustom)).delete(),
+  ]);
+
+  // 3. 預設項目解除歸檔
+  await Promise.all([
+    db.foods.toCollection().modify({ isArchived: false }),
+    db.recipes.toCollection().modify({ isArchived: false }),
+    db.exercises.toCollection().modify({ isArchived: false }),
+    db.equipments.toCollection().modify({ isArchived: false }),
+  ]);
+
+  // 4. 補齊出廠預設實體（若預設項目曾被意外刪除）
+  await restoreMissingDefaultData(db);
+
+  // 5. 重置個人資料與基本生理常數 (純粹出廠空白態：無姓名、無捏造體重)
+  await Promise.all([
+    db.user_profile.clear(),
+    db.user_base_info.clear(),
+  ]);
+
+  await db.user_profile.add({
+    id: DEFAULT_USER_PROFILE_ID,
+    name: '',
+    gender: 'male',
+    heightCm: 0,
+    currentWeightKg: 0,
+    activityLevel: 1.55,
+    goalType: 'lose_fat',
+    weightUnit: 'kg',
+    isSetupCompleted: false,
+    updatedAt: now,
+  });
+
+  await db.user_base_info.add({
+    id: PRIMARY_USER_ID,
+    name: '',
+    gender: 'male',
+    birthDate: '',
+    heightCm: 0,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  // 6. 清理 Dropbox 憑證與同步中繼鍵
+  clearDropboxTokens();
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('zenfit_dropbox_last_sync');
+    localStorage.removeItem('zenfit_dropbox_cached_revs');
+    localStorage.removeItem('zenfit_dropbox_pushed_times');
+    localStorage.removeItem('zenfit-app-storage');
+    localStorage.removeItem('zenfit-ui-theme');
+    localStorage.removeItem('zenfit_app_locked');
+  }
+
+  // 7. 清空執行時期記憶體注水快取
+  clearFoodsCache();
+  clearRecipesCache();
+  clearExercisesCache();
 }
