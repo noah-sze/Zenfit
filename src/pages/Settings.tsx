@@ -24,6 +24,7 @@ import { useBodyPreferences } from '@/hooks/useBodyPreferences';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDropboxSync } from '@/hooks/useDropboxSync';
 import { DropboxSyncDialog } from '@/components/settings/dialogs/DropboxSyncDialog';
+import { ClearDataModal } from '@/components/settings/ClearDataModal';
 import type {
   UnitSystemPreset,
   BodyWeightUnit,
@@ -42,6 +43,7 @@ export default function Settings() {
   const confirm = useConfirm();
 
   const [isDropboxDialogOpen, setIsDropboxDialogOpen] = useState(false);
+  const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
   const {
     isAuthenticated: isDropboxAuth,
     isSyncing: isDropboxSyncing,
@@ -182,34 +184,10 @@ export default function Settings() {
     }
   };
 
-  // 清除所有本地資料
-  const handleClearData = async () => {
-    const ok = await confirm({
-      title: t('settings.clearData'),
-      description: t('settings.clearDataConfirm'),
-      variant: 'destructive',
-    });
-
-    if (ok) {
-      try {
-        await Promise.all([
-          db.foods.clear(),
-          db.recipes.clear(),
-          db.daily_diet_logs.clear(),
-          db.exercises.clear(),
-          db.routines.clear(),
-          db.equipments.clear(),
-          db.workout_logs.clear(),
-          db.body_metrics.clear(),
-          db.user_base_info.clear(),
-          db.user_profile.clear(),
-        ]);
-        triggerHaptic('warning');
-        toast.show(t('settings.dataCleared'));
-      } catch {
-        toast.show(t('common.error'));
-      }
-    }
+  // 開啟清除所有本地資料之高防呆安全確認彈窗
+  const handleClearData = () => {
+    triggerHaptic('warning');
+    setIsClearDataModalOpen(true);
   };
 
 
@@ -233,7 +211,7 @@ export default function Settings() {
           >
             <span className="text-sm font-normal text-foreground">{t('settings.profile')}</span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground transition-colors">
-              <span>{profile.name || 'Noah'}</span>
+              <span>{profile.name || '-'}</span>
               <ChevronRight className="size-4" />
             </div>
           </Link>
@@ -718,6 +696,12 @@ export default function Settings() {
         onConnectDropbox={connectDropbox}
         onDisconnectDropbox={disconnectDropbox}
         onSyncNow={dropboxSyncNow}
+      />
+
+      {/* 清除本地資料高防呆確認彈窗 (平級兄弟節點聲明) */}
+      <ClearDataModal
+        isOpen={isClearDataModalOpen}
+        onClose={() => setIsClearDataModalOpen(false)}
       />
     </div>
   );

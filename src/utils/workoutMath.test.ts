@@ -415,6 +415,33 @@ describe('workoutMath 純數學客觀計算函數', () => {
       });
     });
 
+    it('邊界情況：歷史記錄中所有組重量皆未輸入 (<= 0)，fallbackWeight 應為 0', () => {
+      const logs: WorkoutLog[] = [
+        {
+          id: 'log_zero',
+          date: '2026-11-04',
+          createdAt: 100,
+          updatedAt: 100,
+          exercises: [
+            {
+              exerciseId: 'ex_zero',
+              sets: [
+                { id: 's1', setNumber: 1, weight: 0, reps: 0, isCompleted: true },
+                { id: 's2', setNumber: 2, weight: 0, reps: 0, isCompleted: true },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const record = findLastExerciseRecord(logs, 'ex_zero');
+      expect(record).toEqual({
+        setsCount: 2,
+        weights: [0, 0],
+        lastWeight: 0,
+      });
+    });
+
     it('邊界情況：空日誌、無效輸入、無匹配回傳 null', () => {
       expect(findLastExerciseRecord([], 'ex_1')).toBeNull();
       expect(findLastExerciseRecord(null, 'ex_1')).toBeNull();

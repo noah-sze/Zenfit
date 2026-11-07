@@ -8,12 +8,12 @@ import { PRIMARY_USER_ID } from '@/services/db/defaultData';
 
 const DEFAULT_BASE_INFO: UserBaseInfo = {
   id: PRIMARY_USER_ID,
-  name: 'Noah',
+  name: '',
   gender: 'male',
-  birthDate: '1999-01',
-  heightCm: 175,
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
+  birthDate: '',
+  heightCm: 0,
+  createdAt: 0,
+  updatedAt: 0,
 };
 
 export function useUserProfile() {
@@ -34,17 +34,17 @@ export function useUserProfile() {
     return latest.length > 0 ? latest[latest.length - 1] : null;
   }, []);
 
-  const currentWeightKg = latestWeightMetric?.weight || 70;
-  const computedAge = baseInfo?.birthDate ? calculateAgeFromBirth(baseInfo.birthDate) : 25;
+  const currentWeightKg = latestWeightMetric?.weight || 0;
+  const computedAge = baseInfo?.birthDate ? calculateAgeFromBirth(baseInfo.birthDate) : 0;
 
   // 組合為具備向後相容性的 UserProfile 視圖
   const profile: UserProfile = {
     id: baseInfo?.id || PRIMARY_USER_ID,
-    name: baseInfo?.name || 'Noah',
+    name: baseInfo?.name || '',
     gender: baseInfo?.gender || 'male',
-    birthDate: baseInfo?.birthDate || '1999-01',
+    birthDate: baseInfo?.birthDate || '',
     age: computedAge,
-    heightCm: baseInfo?.heightCm || 175,
+    heightCm: baseInfo?.heightCm || 0,
     currentWeightKg,
     weightUnit: bodyWeightUnit,
     activityLevel: 1.55,
@@ -53,7 +53,7 @@ export function useUserProfile() {
       protein: 30,
       fat: 30,
     },
-    isSetupCompleted: true,
+    isSetupCompleted: Boolean(baseInfo?.name || (baseInfo?.heightCm && baseInfo.heightCm > 0)),
     updatedAt: baseInfo?.updatedAt || Date.now(),
   };
 

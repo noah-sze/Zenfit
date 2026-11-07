@@ -5,7 +5,7 @@ import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronRight } from 'lucide-react';
 import type { MealType, HydratedFoodLog, FoodItem, FoodRecipe } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
@@ -148,6 +148,21 @@ export default function Diet() {
     }
   };
 
+  // 供能比模板短標籤（例如「均衡」、「高蛋白」、「低碳」、「自定義」）
+  const macroSplitTemplateLabel = useMemo(() => {
+    const split = plan.macroSplit || profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
+    if (split.carbs === 40 && split.protein === 30 && split.fat === 30) {
+      return t('dietPlan.balance', '均衡');
+    }
+    if (split.carbs === 40 && split.protein === 35 && split.fat === 25) {
+      return t('dietPlan.highProtein', '高蛋白');
+    }
+    if (split.carbs === 25 && split.protein === 40 && split.fat === 35) {
+      return t('dietPlan.lowCarb', '低碳');
+    }
+    return t('dietPlan.custom', '自定義');
+  }, [plan.macroSplit, profile.macroSplit, t]);
+
   const handleDelete = async (item: HydratedFoodLog) => {
     const ok = await confirm({
       title: t('common.delete'),
@@ -284,7 +299,7 @@ export default function Diet() {
               </span>
             </div>
 
-            {/* 右側：目標純膠囊 (點擊可開啟飲食計劃設定) */}
+            {/* 右側：供能比模板膠囊 (點擊可開啟供能比設定) */}
             <div className="shrink-0 z-10">
               <button
                 type="button"
@@ -292,10 +307,11 @@ export default function Diet() {
                   setIsPlanModalOpen(true);
                   triggerHaptic('light');
                 }}
-                className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer select-none active:scale-95"
-                title={t('dietPlan.title')}
+                className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95"
+                title={t('dietPlan.title', '供能比')}
               >
-                <span>{t('diet.target')}</span>
+                <span>{macroSplitTemplateLabel}</span>
+                <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
               </button>
             </div>
           </div>
