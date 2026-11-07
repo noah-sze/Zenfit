@@ -1,47 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weightMath';
-import { cmToIn, inToCm, kgToLbs, lbsToKg } from '@/utils/unitMath';
+import { cmToIn, inToCm } from '@/utils/unitMath';
 import { MonthPicker } from '@/components/ui/month-picker';
+import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function ProfileSettings() {
   const { t } = useTranslation();
   const { profile, updateProfile } = useUserProfile();
-  const { lengthUnit, bodyWeightUnit, updatePreference } = useUnitPreferences();
+  const { lengthUnit } = useUnitPreferences();
 
   // 本地表單狀態
   const [name, setName] = useState(profile.name || '');
   const [gender, setGender] = useState<'male' | 'female'>(profile.gender || 'male');
   const [birthDate, setBirthDate] = useState(profile.birthDate || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 身高與體重：依據偏好單位展示
+  // 內置數字鍵盤狀態
+  const [keypadConfig, setKeypadConfig] = useState<{
+    type: 'height';
+    title: string;
+    value: number;
+    unit: string;
+    allowDecimals?: boolean;
+    anchorEl?: HTMLElement | null;
+  } | null>(null);
+
+  // 身高展示與換算
   const getInitialHeight = () => {
     const rawCm = profile.heightCm || 0;
     if (rawCm <= 0) return '';
     return lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm);
   };
-  const getInitialWeight = () => {
-    const rawKg = profile.currentWeightKg || 0;
-    if (rawKg <= 0) return '';
-    return bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg);
-  };
 
   const [displayHeight, setDisplayHeight] = useState(getInitialHeight);
-  const [displayWeight, setDisplayWeight] = useState(getInitialWeight);
 
   useEffect(() => {
     if (profile) {
@@ -50,25 +49,35 @@ export default function ProfileSettings() {
       setBirthDate(profile.birthDate || '');
       const rawCm = profile.heightCm || 0;
       setDisplayHeight(rawCm > 0 ? (lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm)) : '');
-      const rawKg = profile.currentWeightKg || 0;
-      setDisplayWeight(rawKg > 0 ? (bodyWeightUnit === 'lbs' ? String(kgToLbs(rawKg, 1)) : String(rawKg)) : '');
     }
-  }, [profile, lengthUnit, bodyWeightUnit]);
+  }, [profile, lengthUnit]);
 
-  // 即時計算客觀生理常數（折算為物理基準 kg & cm 計算）
-  const parsedDisplayWeight = parseFloat(displayWeight) || 0;
+  // 折算身高基準 cm
   const parsedDisplayHeight = parseFloat(displayHeight) || 0;
-  const weightInKg = bodyWeightUnit === 'lbs' ? lbsToKg(parsedDisplayWeight) : parsedDisplayWeight;
   const heightInCm = lengthUnit === 'in' ? inToCm(parsedDisplayHeight) : parsedDisplayHeight;
 
+  // 體重由系統既有記錄提供 (若無則為 0)
+  const weightInKg = profile.currentWeightKg || 0;
+
+  // 年齡與生理常數即時推算
   const calculatedAge = birthDate ? calculateAgeFromBirth(birthDate) : 0;
   const currentBMI = calculateBMI(weightInKg, heightInCm);
   const currentBMR = calculateBMR(weightInKg, heightInCm, gender, calculatedAge);
 
+  // 內置鍵盤確認與即時聯動回調
+  const handleKeypadConfirm = (val: number) => {
+    setDisplayHeight(val > 0 ? String(val) : '');
+    setKeypadConfig(null);
+  };
+
+  const handleKeypadLiveChange = (val: number) => {
+    setDisplayHeight(val > 0 ? String(val) : '');
+  };
+
   const handleSave = async () => {
+    setIsSubmitting(true);
     const finalName = name.trim();
     const finalHeight = heightInCm > 0 ? heightInCm : 0;
-    const finalWeight = weightInKg > 0 ? weightInKg : 0;
 
     await updateProfile({
       name: finalName,
@@ -76,194 +85,164 @@ export default function ProfileSettings() {
       birthDate,
       age: calculatedAge,
       heightCm: finalHeight,
-      currentWeightKg: finalWeight,
-      weightUnit: bodyWeightUnit,
     });
 
+    setIsSubmitting(false);
     triggerHaptic('success');
-    toast.show(t('profileSettings.saved'));
+    toast.show(t('profileSettings.saved', '已儲存'));
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-6 pb-20">
-      {/* 區塊 1：基本資料 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('profileSettings.basicSection')}
-        </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          {/* 姓名 */}
-          <div className="usage-row">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.name')}
-            </span>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="-"
-              className="h-8 w-36 text-right text-sm font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
-            />
-          </div>
+    <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
+      {/* 區塊 1：基本資料卡片 */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+        {/* 行 1：姓名 (收斂上下邊距，高度 h-16 64px，小屏幕防溢出防截斷 min-w-0) */}
+        <label className="h-16 px-3.5 sm:px-4 flex items-center justify-between hover:bg-hover transition-colors cursor-text min-w-0">
+          <span className="text-xs font-normal text-muted-foreground font-mono shrink-0">
+            {t('profileSettings.name', '姓名')}
+          </span>
+          <input
+            type="text"
+            size={1}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="-"
+            className="h-10 flex-1 min-w-0 ml-3 sm:ml-4 text-right text-base sm:text-lg font-bold font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
+          />
+        </label>
 
-          {/* 性別 */}
-          <div className="usage-row">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.gender')}
+        {/* 行 2：生理性別 與 出生年月 (各佔 50%，全寬點擊熱區) */}
+        <div className="grid grid-cols-2 divide-x divide-border">
+          {/* 左欄：生理性別 (極簡分段按鈕) */}
+          <div className="h-11 px-3 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden">
+            <span className="text-xs font-normal text-muted-foreground font-mono truncate">
+              {t('profileSettings.gender', '生理性別')}
             </span>
-            <Select
-              value={gender}
-              onValueChange={(v) => {
-                setGender(v as 'male' | 'female');
-                triggerHaptic('selection');
-              }}
-            >
-              <SelectTrigger
-                size="custom"
-                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-              >
-                <SelectValue className="flex-none text-right">
-                  {gender === 'female' ? t('profileSettings.female') : t('profileSettings.male')}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent align="end">
-                <SelectItem value="male">{t('profileSettings.male')}</SelectItem>
-                <SelectItem value="female">{t('profileSettings.female')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 出生年月 */}
-          <div className="usage-row">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.birthDate')}
-            </span>
-            <MonthPicker
-              value={birthDate}
-              onChange={setBirthDate}
-              className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-            >
-              <div className="flex items-center gap-1.5">
-                <span className={cn(birthDate ? 'text-foreground' : 'text-muted-foreground font-mono')}>
-                  {birthDate || '-'}
-                </span>
-                {Boolean(birthDate) && calculatedAge > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    ({calculatedAge} {t('profileSettings.yearsOld')})
-                  </span>
+            <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-muted/20 border border-border text-xs font-mono shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setGender('male');
+                  triggerHaptic('selection');
+                }}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer transition-all select-none',
+                  gender === 'male'
+                    ? 'bg-foreground text-background shadow-none'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
-                <CalendarDays className="size-3.5 text-muted-foreground/70" />
-              </div>
-            </MonthPicker>
-          </div>
-
-          {/* 身高 */}
-          <div className="usage-row">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.height')}
-            </span>
-            <div className="flex items-center gap-1 text-sm font-mono text-muted-foreground">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={displayHeight}
-                onChange={(e) => setDisplayHeight(e.target.value)}
-                placeholder="-"
-                className="h-8 w-16 text-right text-sm font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
-              />
-              <span>{lengthUnit}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 區塊 2：體重基準 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('profileSettings.weightSection')}
-        </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          {/* 度量單位 */}
-          <div className="usage-row">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.unit')}
-            </span>
-            <Select
-              value={bodyWeightUnit}
-              onValueChange={(v) => {
-                updatePreference('bodyWeight', v as 'kg' | 'lbs');
-                triggerHaptic('selection');
-              }}
-            >
-              <SelectTrigger
-                size="custom"
-                className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
               >
-                <SelectValue className="flex-none text-right">
-                  {bodyWeightUnit}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent align="end">
-                <SelectItem value="kg">kg</SelectItem>
-                <SelectItem value="lbs">lbs</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 基準體重 */}
-          <div className="usage-row">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.currentWeight')}
-            </span>
-            <div className="flex items-center gap-1 text-sm font-mono text-muted-foreground">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={displayWeight}
-                onChange={(e) => setDisplayWeight(e.target.value)}
-                placeholder="-"
-                className="h-8 w-16 text-right text-sm font-mono text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:ring-0 p-0"
-              />
-              <span>{bodyWeightUnit}</span>
+                {t('welcome.male', '男')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setGender('female');
+                  triggerHaptic('selection');
+                }}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer transition-all select-none',
+                  gender === 'female'
+                    ? 'bg-foreground text-background shadow-none'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t('welcome.female', '女')}
+              </button>
             </div>
           </div>
 
+          {/* 右欄：出生年月 (全格點擊呼出 MonthPicker，格式化帶空格歲數) */}
+          <MonthPicker
+            value={birthDate}
+            onChange={(val) => {
+              setBirthDate(val);
+              triggerHaptic('selection');
+            }}
+            className="h-11 px-3 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden cursor-pointer w-full select-none"
+          >
+            <span className="text-xs font-normal text-muted-foreground font-mono truncate">
+              {t('profileSettings.birthDate', '出生年月')}
+            </span>
+            <div className="flex items-center gap-1 text-xs font-mono shrink-0">
+              <span className={cn(birthDate ? 'text-foreground font-medium' : 'text-muted-foreground')}>
+                {birthDate ? (calculatedAge > 0 ? `${calculatedAge} ${t('welcome.yearsOld', '歲')}` : birthDate) : '-'}
+              </span>
+              <CalendarDays className="size-3 text-muted-foreground/70 shrink-0" />
+            </div>
+          </MonthPicker>
         </div>
+
+        {/* 行 3：身高 (全行可點擊呼出數字鍵盤) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            triggerHaptic('light');
+            setKeypadConfig({
+              type: 'height',
+              title: t('profileSettings.height', '身高'),
+              value: parsedDisplayHeight,
+              unit: lengthUnit,
+              allowDecimals: lengthUnit === 'in',
+              anchorEl: e.currentTarget,
+            });
+          }}
+          className="h-11 px-3.5 sm:px-4 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden cursor-pointer w-full text-left select-none"
+        >
+          <span className="text-xs font-normal text-muted-foreground font-mono truncate">
+            {t('profileSettings.height', '身高')}
+          </span>
+          <div className="flex items-center gap-1 font-mono text-xs shrink-0">
+            <span className={cn(displayHeight ? 'text-foreground font-medium' : 'text-muted-foreground')}>
+              {displayHeight || '-'}
+            </span>
+            <span className="text-xs text-foreground font-mono">{lengthUnit}</span>
+          </div>
+        </button>
       </div>
 
-      {/* 區塊 3：客觀生理常數 */}
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 mb-2">
-          {t('profileSettings.metricsCalculation')}
+      {/* 區塊 2：生理常數 (單獨一個獨立卡片區塊) */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card font-mono">
+        {/* 小標題列 (改為純生理常數標籤，無右側冗餘公式名) */}
+        <div className="px-3.5 py-1.5 flex items-center justify-between text-muted-foreground/80 border-b border-border/60 bg-muted/10">
+          <span className="text-[10px] uppercase tracking-wider font-semibold">
+            {t('profileSettings.metricsCalculation', '生理常數')}
+          </span>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+
+        {/* 雙欄指標 (BMI 與 BMR) */}
+        <div className="grid grid-cols-2 divide-x divide-border text-left">
           {/* BMI */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-hover transition-colors">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.bmi')}
-            </span>
-            <div className="flex items-center gap-2 text-sm font-mono">
-              <span className="font-medium text-foreground">
-                {currentBMI > 0 ? currentBMI : '-'}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {t('profileSettings.whoStandard')}
-              </span>
+          <div className="p-3 sm:p-3.5 space-y-1 overflow-hidden">
+            <div className="text-[10px] font-medium text-muted-foreground truncate">
+              {t('welcome.bmi', '身體質量指數 (BMI)')}
+            </div>
+            <div className="text-base sm:text-lg font-bold text-foreground font-mono leading-tight">
+              {currentBMI > 0 ? currentBMI : '-'}
+            </div>
+            <div className="text-[10px] text-muted-foreground font-mono leading-tight truncate">
+              {currentBMI > 0 ? (
+                t('welcome.whoStandard', '標準 18.5 - 24.9')
+              ) : (
+                <span className="invisible select-none">-</span>
+              )}
             </div>
           </div>
 
-          {/* 靜態基礎代謝 BMR */}
-          <div className="h-12 px-4 flex items-center justify-between hover:bg-hover transition-colors">
-            <span className="text-sm font-normal text-foreground">
-              {t('profileSettings.bmr')}
-            </span>
-            <div className="flex items-center gap-2 text-sm font-mono">
-              <span className="font-medium text-foreground">
-                {currentBMR > 0 ? currentBMR : '-'}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                kcal/day
-              </span>
+          {/* BMR */}
+          <div className="p-3 sm:p-3.5 space-y-1 overflow-hidden">
+            <div className="text-[10px] font-medium text-muted-foreground truncate">
+              {t('welcome.bmr', '靜態基礎代謝 (BMR)')}
+            </div>
+            <div className="text-base sm:text-lg font-bold text-foreground font-mono leading-tight">
+              {currentBMR > 0 ? currentBMR : '-'}
+            </div>
+            <div className="text-[10px] text-muted-foreground font-mono leading-tight truncate">
+              {currentBMR > 0 ? (
+                'kcal/day'
+              ) : (
+                <span className="invisible select-none">-</span>
+              )}
             </div>
           </div>
         </div>
@@ -273,15 +252,30 @@ export default function ProfileSettings() {
       <Button
         type="button"
         onClick={handleSave}
-        className="w-full h-10 rounded-lg bg-foreground text-background hover:opacity-90 font-medium cursor-pointer shadow-none transition-all active:scale-[0.99]"
+        disabled={isSubmitting}
+        className="w-full h-10 rounded-lg bg-foreground text-background hover:opacity-90 font-mono text-xs font-medium cursor-pointer shadow-none transition-all active:scale-[0.99]"
       >
-        {t('profileSettings.save')}
+        {t('profileSettings.save', '儲存')}
       </Button>
 
-      {/* 頁尾版本標記 (完全復刻 Zenance) */}
-      <div className="pt-4 text-center font-mono text-xs text-muted-foreground/50">
-        Zenfit v1.0.0
-      </div>
+      {/* 內置數字鍵盤微調彈窗 (平級兄弟節點, Instant Pop, 專屬身高調用) */}
+      {keypadConfig && (
+        <NumericKeypadDialog
+          open={Boolean(keypadConfig)}
+          onOpenChange={(open) => {
+            if (!open) setKeypadConfig(null);
+          }}
+          anchorEl={keypadConfig.anchorEl}
+          title={keypadConfig.title}
+          value={keypadConfig.value}
+          unit={keypadConfig.unit}
+          allowDecimals={keypadConfig.allowDecimals}
+          maxDecimals={keypadConfig.allowDecimals ? 1 : 0}
+          onConfirm={handleKeypadConfirm}
+          onLiveChange={handleKeypadLiveChange}
+          onCancel={() => setKeypadConfig(null)}
+        />
+      )}
     </div>
   );
 }
