@@ -53,7 +53,14 @@ export function useUserProfile() {
       protein: 30,
       fat: 30,
     },
-    isSetupCompleted: Boolean(baseInfo?.name || (baseInfo?.heightCm && baseInfo.heightCm > 0)),
+    isSetupCompleted: Boolean(
+      baseInfo?.name &&
+      baseInfo.name.trim().length > 0 &&
+      baseInfo?.birthDate &&
+      baseInfo.birthDate.trim().length > 0 &&
+      baseInfo?.heightCm &&
+      baseInfo.heightCm > 0
+    ),
     updatedAt: baseInfo?.updatedAt || Date.now(),
   };
 
@@ -74,6 +81,22 @@ export function useUserProfile() {
         ...baseUpdates,
         updatedAt: now,
       });
+    }
+
+    // 同步更新 user_profile 表
+    const profileUpdates: Partial<UserProfile> = {
+      updatedAt: now,
+    };
+    if (updates.name !== undefined) profileUpdates.name = updates.name;
+    if (updates.gender !== undefined) profileUpdates.gender = updates.gender;
+    if (updates.birthDate !== undefined) profileUpdates.birthDate = updates.birthDate;
+    if (updates.heightCm !== undefined) profileUpdates.heightCm = updates.heightCm;
+    if (updates.currentWeightKg !== undefined) profileUpdates.currentWeightKg = updates.currentWeightKg;
+    if (updates.isSetupCompleted !== undefined) profileUpdates.isSetupCompleted = updates.isSetupCompleted;
+
+    const existingProfile = await db.user_profile.toCollection().first();
+    if (existingProfile) {
+      await db.user_profile.update(existingProfile.id, profileUpdates);
     }
 
     // 若有傳入體重變更，更新或新增至當日的 body_metrics
