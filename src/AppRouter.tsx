@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { LockGuard } from './components/security/LockGuard';
+import { SetupGuard } from './components/security/SetupGuard';
 
 // 全頁面靜態直載 (Static Direct Import)，徹底消除白屏延遲，實現原生 App 級 0ms 秒開
 import Dashboard from './pages/Dashboard';
@@ -17,7 +18,9 @@ const router = createBrowserRouter([
     path: '/',
     element: (
       <LockGuard>
-        <AppLayout />
+        <SetupGuard>
+          <AppLayout />
+        </SetupGuard>
       </LockGuard>
     ),
     children: [

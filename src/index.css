@@ -95,6 +95,7 @@
 
   --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft JhengHei", "Microsoft YaHei", "Noto Sans CJK", sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-serif: 'Playfair Display', Georgia, Cambria, 'Times New Roman', 'Noto Serif TC', serif;
 }
 
 @keyframes shake {
@@ -491,4 +492,129 @@
   opacity: 0.4;
   z-index: 20;
   pointer-events: none;
+}
+
+/* ==================================================================== */
+/* Resend 頂級動態主題美學 (Resend Dynamic Aesthetic Toolkit: Light & Dark) */
+/* ==================================================================== */
+
+/* Resend 微彩虹/微漸變光暈邊框膠囊 (動態主題) */
+.resend-badge {
+  position: relative;
+  border-radius: 9999px;
+  z-index: 1;
+  background: var(--background);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+.dark .resend-badge {
+  background: #09090b;
+  box-shadow: none;
+}
+.resend-badge::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  padding: 1px;
+  background: linear-gradient(90deg, 
+    rgba(168, 85, 247, 0.35) 0%, 
+    rgba(236, 72, 153, 0.28) 30%, 
+    rgba(59, 130, 246, 0.32) 65%, 
+    rgba(20, 184, 166, 0.35) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.dark .resend-badge::before {
+  background: linear-gradient(90deg, 
+    rgba(168, 85, 247, 0.45) 0%, 
+    rgba(236, 72, 153, 0.35) 30%, 
+    rgba(59, 130, 246, 0.4) 65%, 
+    rgba(20, 184, 166, 0.45) 100%
+  );
+}
+
+/* Resend 標題金屬/深墨雕刻漸變 (動態主題) */
+/* 淺色：黑曜石深墨漸變 (Deep Charcoal / Black Obsidian) */
+.text-hero-gradient {
+  background: linear-gradient(180deg, 
+    #000000 0%, 
+    #18181b 40%, 
+    #3f3f46 80%, 
+    #52525b 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/* 深色：銀白金屬雕刻漸變 (Silver-White Metallic) */
+.dark .text-hero-gradient {
+  background: linear-gradient(180deg, 
+    #ffffff 0%, 
+    #ffffff 35%, 
+    #d0d3d8 75%, 
+    #9ca1aa 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 兼容保留 .text-silver-gradient */
+.text-silver-gradient {
+  background: linear-gradient(180deg, 
+    #ffffff 0%, 
+    #ffffff 35%, 
+    #d0d3d8 75%, 
+    #9ca1aa 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Resend 晶透立體微高光按鈕 (動態主題) */
+/* 淺色：黑曜石深邃實體按鈕 */
+.resend-primary-btn {
+  position: relative;
+  background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+    0 4px 14px -1px rgba(0, 0, 0, 0.18),
+    0 1px 3px 0 rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+}
+.resend-primary-btn:hover {
+  background: linear-gradient(180deg, #27272a 0%, #18181b 100%);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    0 6px 18px -2px rgba(0, 0, 0, 0.22);
+}
+/* 深色：暗黑晶透微高光立體按鈕 */
+.dark .resend-primary-btn {
+  background: linear-gradient(180deg, #242429 0%, #17171a 100%);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.6),
+    0 4px 14px -1px rgba(0, 0, 0, 0.7),
+    0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.dark .resend-primary-btn:hover {
+  background: linear-gradient(180deg, #2b2b32 0%, #1d1d22 100%);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.32),
+    0 6px 20px -2px rgba(0, 0, 0, 0.85);
+}
+
+/* 刪除線語意樣式 (動態主題) */
+del.resend-del {
+  text-decoration-line: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: #a1a1aa;
+  color: #a1a1aa;
+}
+.dark del.resend-del {
+  text-decoration-color: #71717a;
+  color: #71717a;
 }
