@@ -987,18 +987,6 @@ export class ZenfitDatabase extends Dexie {
       }
     });
 
-    this.version(19).upgrade(async (tx) => {
-      // 升級至 19：刪除預設食譜（番茄炒蛋、燕麥優格碗、雞胸便當等預設食譜，完全交由使用者自訂）
-      const recipesTable = tx.table('recipes');
-      const legacyRecipeIds = new Set(Object.values(DEFAULT_RECIPE_IDS));
-      const existingRecipes = await recipesTable.toArray();
-      for (const r of existingRecipes) {
-        if (!r.isCustom || legacyRecipeIds.has(r.id)) {
-          await recipesTable.delete(r.id);
-        }
-      }
-    });
-
     this.version(17).upgrade(async (tx) => {
       // 升級至 17：擴充生活高頻天然原型食材（生重基準，嚴禁「生」字前綴與「乾重」後綴）
       const now = Date.now();
@@ -1036,18 +1024,6 @@ export class ZenfitDatabase extends Dexie {
       }
     });
 
-    this.version(19).upgrade(async (tx) => {
-      // 升級至 19：刪除預設食譜（番茄炒蛋、燕麥優格碗、雞胸便當等預設食譜，完全交由使用者自訂）
-      const recipesTable = tx.table('recipes');
-      const legacyRecipeIds = new Set(Object.values(DEFAULT_RECIPE_IDS));
-      const existingRecipes = await recipesTable.toArray();
-      for (const r of existingRecipes) {
-        if (!r.isCustom || legacyRecipeIds.has(r.id)) {
-          await recipesTable.delete(r.id);
-        }
-      }
-    });
-
     this.version(18).upgrade(async (tx) => {
       // 升級至 18：擴充第二批常見食材（含羅非魚、地方水產、內臟部位、蔬菜、傳統主食與鮮果等 50 種，全庫達 409 種天然食材）
       const now = Date.now();
@@ -1077,6 +1053,49 @@ export class ZenfitDatabase extends Dexie {
       for (const r of existingRecipes) {
         if (!r.isCustom || legacyRecipeIds.has(r.id)) {
           await recipesTable.delete(r.id);
+        }
+      }
+    });
+
+    this.version(20).upgrade(async (tx) => {
+      // 升級至 20：落實純粹「重量 × 次數」物理契約，全面擴充 83 種權威阻力訓練動作庫 (NSCA / ExRx 雙重審計)
+      const now = Date.now();
+      const exercisesTable = tx.table('exercises');
+      const existingExercises = await exercisesTable.toArray();
+
+      // 1. 清理舊有非「重量 × 次數」的預設等長收縮與純有氧動作（如平板支撐、跑步機慢跑等）
+      const NON_WEIGHT_REPS_NAMES = new Set([
+        '平板支撐',
+        '側平板支撐',
+        '農夫行走',
+        '跑步機慢跑',
+        '划船機',
+        '室內划船機',
+        '橢圓機',
+        '飛輪單車',
+        '樓梯機',
+        '跳繩',
+      ]);
+      for (const ex of existingExercises) {
+        if (!ex.isCustom && NON_WEIGHT_REPS_NAMES.has(ex.name?.trim())) {
+          await exercisesTable.delete(ex.id);
+        }
+      }
+
+      // 2. 補入純粹阻力訓練動作庫（83 項）
+      const updatedExercises = await exercisesTable.toArray();
+      const existingIds = new Set(updatedExercises.map((e: Exercise) => e.id));
+      const existingNames = new Set(updatedExercises.map((e: Exercise) => e.name?.trim()));
+
+      for (const ex of DEFAULT_EXERCISES) {
+        if (!existingIds.has(ex.id) && !existingNames.has(ex.name.trim())) {
+          await exercisesTable.add({
+            ...ex,
+            createdAt: now,
+            updatedAt: now,
+          });
+          existingIds.add(ex.id);
+          existingNames.add(ex.name.trim());
         }
       }
     });
