@@ -1,15 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SmoothedWeightPoint } from '@/utils/weightMath';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { OverviewPeriodSelector } from '@/components/food/IntakeFootprintHeatmap';
+import { type OverviewPeriod, getPeriodDaysCount } from '@/utils/heatmapMath';
 import { triggerHaptic } from '@/lib/haptics';
 
 interface WeightTrendChartProps {
@@ -19,15 +14,25 @@ interface WeightTrendChartProps {
 
 export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
   const { t } = useTranslation();
-  const [range, setRange] = useState<'30d' | '90d' | 'all'>('30d');
+  const [range, setRange] = useState<OverviewPeriod>('30d');
   const [activePoint, setActivePoint] = useState<SmoothedWeightPoint | null>(null);
   const [pointAnchorEl, setPointAnchorEl] = useState<Element | null>(null);
 
   const filteredData = useMemo(() => {
     if (!data || data.length === 0) return [];
     if (range === 'all') return data;
-    const days = range === '30d' ? 30 : 90;
-    return data.slice(-days);
+    const days = getPeriodDaysCount(range);
+    if (days === Infinity) return data;
+
+    const now = new Date();
+    const todayStr = format(now, 'yyyy-MM-dd');
+    const baseDate =
+      data.length > 0 && data[data.length - 1].date > todayStr
+        ? parseISO(data[data.length - 1].date)
+        : now;
+    const startDateStr = format(subDays(baseDate, days - 1), 'yyyy-MM-dd');
+
+    return data.filter((p) => p.date >= startDateStr);
   }, [data, range]);
 
   if (!data || data.length === 0) {
@@ -132,31 +137,11 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
           </div>
         </div>
 
-        {/* 區間切換下拉選單膠囊 */}
-        <Select
+        {/* 區間切換下拉選單膠囊 (沿用動作詳情統一規格) */}
+        <OverviewPeriodSelector
           value={range}
-          onValueChange={(val) => {
-            if (val) {
-              triggerHaptic('selection');
-              setRange(val as '30d' | '90d' | 'all');
-            }
-          }}
-        >
-          <SelectTrigger
-            size="custom"
-            iconClassName="size-3 opacity-60 text-muted-foreground"
-            className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-hover text-xs font-mono text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95 focus:outline-hidden"
-          >
-            <SelectValue className="flex-none font-normal text-foreground">
-              {range === '30d' ? '30D' : range === '90d' ? '90D' : t('common.all', '全部')}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent align="end" className="font-mono text-xs min-w-28 z-[80]">
-            <SelectItem value="30d">30D</SelectItem>
-            <SelectItem value="90d">90D</SelectItem>
-            <SelectItem value="all">{t('common.all', '全部')}</SelectItem>
-          </SelectContent>
-        </Select>
+          onChange={setRange}
+        />
       </div>
 
       <div className="text-[11px] font-mono text-muted-foreground mb-2 text-right">
@@ -173,6 +158,18 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
             setPointAnchorEl(null);
           }}
         >
+          {/* 若當前區間無記錄，居中顯示客觀佔位符 */}
+          {sorted.length === 0 && (
+            <text
+              x={width / 2}
+              y={paddingTop + chartH / 2}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="fill-muted-foreground text-xs font-mono"
+            >
+              -
+            </text>
+          )}
           {/* Y 軸水平網格輔助線與刻度 */}
           {[0, 0.5, 1].map((ratio) => {
             const val = Math.round((minVal + ratio * valRange) * 10) / 10;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
@@ -22,29 +22,89 @@ import { format, addDays, subDays, parseISO, isToday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSafeNavigate } from '@/hooks/useSafeNavigate';
-import { isStackNavigation } from '@/utils/navigation';
+import { getHierarchicalFallbackPath } from '@/utils/navigation';
 
 export function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const { goBack } = useSafeNavigate();
   const mainScrollRef = useRef<HTMLElement>(null);
   const prevPathRef = useRef<string>(location.pathname);
+  // 路徑滾動座標快照字典：用於跨層級返回時精確還原先前閱讀位置 (Scroll Restoration)
+  const scrollPositionsRef = useRef<Record<string, number>>({});
+  // 滾動還原進行中標記：避免還原過渡期觸發 onScroll 污染目標座標
+  const isRestoringScrollRef = useRef<boolean>(false);
 
-  // 導航棧滾動生命週期合約：
-  // 1. 同模組棧內導航（深入詳情或詳情返回列表）：保留底層滾動位置，0 屏閃 0 延遲
-  // 2. 跨模組切換、全新進入模組或退出模組：重置滾動容器至頂部 (scrollTop = 0)
+  // 視圖棧滾動生命週期合約 (Navigation Stack Scroll Contract)：
+  // 1. 返回上級路由 (Pop)：精確還原上級滾動座標，並徹底銷毀下級子路由的座標快照
+  // 2. 深入下級路由或全新導航 (Push)：下級視為全新實例，滾動條強制置頂 (scrollTop = 0)，清除殘留
   useEffect(() => {
     const prevPath = prevPathRef.current;
     const currentPath = location.pathname;
 
-    if (!isStackNavigation(prevPath, currentPath) && mainScrollRef.current) {
-      mainScrollRef.current.scrollTop = 0;
+    if (prevPath === currentPath) return;
+
+    // 判斷是否為「返回上級」操作：
+    // 條件 A: 瀏覽器觸發原生 POP（歷史後退）
+    // 條件 B: 當前路徑正好是離開路徑的層級父路由 (Hierarchical Parent)
+    const isPop =
+      navigationType === 'POP' ||
+      getHierarchicalFallbackPath(prevPath) === currentPath;
+
+    if (isPop) {
+      // 1. 銷毀被退出的下級子路由（及所有其子路徑）的滾動紀錄
+      delete scrollPositionsRef.current[prevPath];
+      Object.keys(scrollPositionsRef.current).forEach((key) => {
+        if (key.startsWith(prevPath + '/')) {
+          delete scrollPositionsRef.current[key];
+        }
+      });
+
+      // 2. 還原上級路由先前保留的滾動座標
+      const savedPosition = scrollPositionsRef.current[currentPath];
+      if (typeof savedPosition === 'number' && savedPosition > 0) {
+        isRestoringScrollRef.current = true;
+        requestAnimationFrame(() => {
+          if (mainScrollRef.current) {
+            mainScrollRef.current.scrollTop = savedPosition;
+          }
+        });
+        // 應對部分依賴 IndexedDB liveQuery 或異步渲染的區塊，補正確保高度就緒後完全還原
+        const timer = setTimeout(() => {
+          if (mainScrollRef.current) {
+            mainScrollRef.current.scrollTop = savedPosition;
+          }
+          isRestoringScrollRef.current = false;
+        }, 50);
+
+        prevPathRef.current = currentPath;
+        return () => clearTimeout(timer);
+      } else if (mainScrollRef.current) {
+        isRestoringScrollRef.current = true;
+        mainScrollRef.current.scrollTop = 0;
+        requestAnimationFrame(() => {
+          isRestoringScrollRef.current = false;
+        });
+      }
+    } else {
+      // 進入下級路由或全新頁面 (Push)：
+      // 1. 銷毀目標路徑可能存在的任何舊座標快照
+      delete scrollPositionsRef.current[currentPath];
+
+      // 2. 強制重置滾動容器至頂部 (scrollTop = 0)
+      if (mainScrollRef.current) {
+        isRestoringScrollRef.current = true;
+        mainScrollRef.current.scrollTop = 0;
+        requestAnimationFrame(() => {
+          isRestoringScrollRef.current = false;
+        });
+      }
     }
 
     prevPathRef.current = currentPath;
-  }, [location.pathname]);
+  }, [location.pathname, navigationType]);
 
   const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -206,6 +266,7 @@ export function AppLayout() {
               <button
                 type="button"
                 onClick={() => {
+                  scrollPositionsRef.current['/settings'] = 0;
                   navigate('/settings');
                   triggerHaptic('light');
                 }}
@@ -237,7 +298,15 @@ export function AppLayout() {
       </header>
 
       {/* 核心滾動內容區 */}
-      <main ref={mainScrollRef} className="flex-1 overflow-y-auto no-scrollbar w-full">
+      <main
+        ref={mainScrollRef}
+        onScroll={(e) => {
+          if (!isRestoringScrollRef.current) {
+            scrollPositionsRef.current[location.pathname] = e.currentTarget.scrollTop;
+          }
+        }}
+        className="flex-1 overflow-y-auto no-scrollbar w-full"
+      >
         <div className={cn("w-full max-w-xl mx-auto px-4 py-4", !isSubPage ? "pb-20" : "pb-8")}>
           <Outlet />
         </div>
@@ -264,8 +333,11 @@ export function AppLayout() {
                   type="button"
                   onClick={() => {
                     if (location.pathname !== item.path) {
+                      scrollPositionsRef.current[item.path] = 0;
                       navigate(item.path);
                       triggerHaptic('selection');
+                    } else if (mainScrollRef.current) {
+                      mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                   }}
                   className={cn(

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import type { UserBaseInfo, UserProfile } from '@/types';
@@ -38,31 +39,33 @@ export function useUserProfile() {
   const computedAge = baseInfo?.birthDate ? calculateAgeFromBirth(baseInfo.birthDate) : 0;
 
   // 組合為具備向後相容性的 UserProfile 視圖
-  const profile: UserProfile = {
-    id: baseInfo?.id || PRIMARY_USER_ID,
-    name: baseInfo?.name || '',
-    gender: baseInfo?.gender || 'male',
-    birthDate: baseInfo?.birthDate || '',
-    age: computedAge,
-    heightCm: baseInfo?.heightCm || 0,
-    currentWeightKg,
-    weightUnit: bodyWeightUnit,
-    activityLevel: 1.55,
-    macroSplit: {
-      carbs: 40,
-      protein: 30,
-      fat: 30,
-    },
-    isSetupCompleted: Boolean(
-      baseInfo?.name &&
-      baseInfo.name.trim().length > 0 &&
-      baseInfo?.birthDate &&
-      baseInfo.birthDate.trim().length > 0 &&
-      baseInfo?.heightCm &&
-      baseInfo.heightCm > 0
-    ),
-    updatedAt: baseInfo?.updatedAt || Date.now(),
-  };
+  const profile: UserProfile = useMemo(() => {
+    return {
+      id: baseInfo?.id || PRIMARY_USER_ID,
+      name: baseInfo?.name || '',
+      gender: baseInfo?.gender || 'male',
+      birthDate: baseInfo?.birthDate || '',
+      age: computedAge,
+      heightCm: baseInfo?.heightCm || 0,
+      currentWeightKg,
+      weightUnit: bodyWeightUnit,
+      activityLevel: 1.55,
+      macroSplit: {
+        carbs: 40,
+        protein: 30,
+        fat: 30,
+      },
+      isSetupCompleted: Boolean(
+        baseInfo?.name &&
+        baseInfo.name.trim().length > 0 &&
+        baseInfo?.birthDate &&
+        baseInfo.birthDate.trim().length > 0 &&
+        baseInfo?.heightCm &&
+        baseInfo.heightCm > 0
+      ),
+      updatedAt: baseInfo?.updatedAt || 0,
+    };
+  }, [baseInfo, computedAge, currentWeightKg, bodyWeightUnit]);
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     const now = Date.now();

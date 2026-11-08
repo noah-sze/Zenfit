@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -9,12 +9,11 @@ import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weigh
 import { cmToIn, inToCm } from '@/utils/unitMath';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
-import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function ProfileSettings() {
   const { t } = useTranslation();
-  const { profile, updateProfile } = useUserProfile();
+  const { profile, updateProfile, isLoading } = useUserProfile();
   const { lengthUnit } = useUnitPreferences();
 
   // 本地表單狀態
@@ -41,16 +40,29 @@ export default function ProfileSettings() {
   };
 
   const [displayHeight, setDisplayHeight] = useState(getInitialHeight);
+  const isInitializedRef = useRef(false);
 
+  // 初始化個人資料表單數據（僅在初次非空載入時初始化，防止打字時被覆寫）
   useEffect(() => {
-    if (profile) {
+    if (!isLoading && !isInitializedRef.current) {
       setName(profile.name || '');
       setGender(profile.gender || 'male');
       setBirthDate(profile.birthDate || '');
       const rawCm = profile.heightCm || 0;
       setDisplayHeight(rawCm > 0 ? (lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm)) : '');
+      isInitializedRef.current = true;
     }
-  }, [profile, lengthUnit]);
+  }, [isLoading, profile, lengthUnit]);
+
+  // 長度單位切換時僅更新身高展示
+  useEffect(() => {
+    if (isInitializedRef.current) {
+      const rawCm = heightInCm;
+      if (rawCm > 0) {
+        setDisplayHeight(lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm));
+      }
+    }
+  }, [lengthUnit]);
 
   // 折算身高基準 cm
   const parsedDisplayHeight = parseFloat(displayHeight) || 0;
@@ -103,7 +115,6 @@ export default function ProfileSettings() {
           </span>
           <input
             type="text"
-            size={1}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="-"
@@ -164,11 +175,10 @@ export default function ProfileSettings() {
             <span className="text-xs font-normal text-muted-foreground font-mono truncate">
               {t('profileSettings.birthDate', '出生年月')}
             </span>
-            <div className="flex items-center gap-1 text-xs font-mono shrink-0">
+            <div className="flex items-center text-xs font-mono shrink-0">
               <span className={cn(birthDate ? 'text-foreground font-medium' : 'text-muted-foreground')}>
                 {birthDate ? (calculatedAge > 0 ? `${calculatedAge} ${t('welcome.yearsOld', '歲')}` : birthDate) : '-'}
               </span>
-              <CalendarDays className="size-3 text-muted-foreground/70 shrink-0" />
             </div>
           </MonthPicker>
         </div>

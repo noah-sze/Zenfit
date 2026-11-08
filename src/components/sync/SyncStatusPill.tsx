@@ -181,10 +181,6 @@ export function SyncStatusPill() {
                   <span className="text-muted-foreground">{t('syncStatus.disconnected', '未連線')}</span>
                 </div>
               </div>
-              <div className="h-10 px-3.5 flex items-center justify-between">
-                <span className="text-muted-foreground font-sans">{t('syncStatus.scope', '範圍')}</span>
-                <span className="text-foreground font-mono text-[11px]">{t('syncStatus.scopeAll', '飲食 · 訓練 · 體態')}</span>
-              </div>
             </div>
 
             {/* 客觀說明文本 */}

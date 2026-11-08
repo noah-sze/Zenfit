@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
@@ -13,6 +13,13 @@ import { useTheme } from '@/components/ThemeProvider';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { db } from '@/services/db/db';
+import { exportBackupZip } from '@/services/backup/exportBackupZip';
+import {
+  parseBackupFile,
+  executeImport,
+  type ParsedBackupData,
+  type ImportStrategy,
+} from '@/services/backup/importBackup';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { useBodyPreferences } from '@/hooks/useBodyPreferences';
@@ -20,6 +27,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDropboxSync } from '@/hooks/useDropboxSync';
 import { DropboxSyncDialog } from '@/components/settings/dialogs/DropboxSyncDialog';
 import { ClearDataModal } from '@/components/settings/ClearDataModal';
+import { ImportStrategyModal } from '@/components/settings/dialogs/ImportStrategyModal';
 import type {
   UnitSystemPreset,
   BodyWeightUnit,
@@ -27,6 +35,7 @@ import type {
   FoodVolumeUnit,
   LengthUnit,
   EnergyUnit,
+  UserBaseInfo,
 } from '@/types';
 
 export default function Settings() {
@@ -39,6 +48,10 @@ export default function Settings() {
 
   const [isDropboxDialogOpen, setIsDropboxDialogOpen] = useState(false);
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
+  const [isImportStrategyModalOpen, setIsImportStrategyModalOpen] = useState(false);
+  const [stagedBackupData, setStagedBackupData] = useState<ParsedBackupData | null>(null);
+  const [stagedLocalBase, setStagedLocalBase] = useState<UserBaseInfo | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const {
     isAuthenticated: isDropboxAuth,
     isSyncing: isDropboxSyncing,
@@ -73,64 +86,14 @@ export default function Settings() {
     return 'English';
   };
 
-  // 匯出資料備份
-  const handleExportJson = async () => {
+  // 匯出資料備份為 ZIP 檔案（文件結構與 Dropbox 同步目錄一致）
+  const handleExportZip = async () => {
     try {
-      const [
-        userBaseInfo,
-        userProfile,
-        foods,
-        recipes,
-        dailyDietLogs,
-        exercises,
-        routines,
-        equipments,
-        workoutLogs,
-        bodyMetrics,
-      ] = await Promise.all([
-        db.user_base_info.toArray(),
-        db.user_profile.toArray(),
-        db.foods.toArray(),
-        db.recipes.toArray(),
-        db.daily_diet_logs.toArray(),
-        db.exercises.toArray(),
-        db.routines.toArray(),
-        db.equipments.toArray(),
-        db.workout_logs.toArray(),
-        db.body_metrics.toArray(),
-      ]);
-
-      const data = {
-        version: 3,
-        appName: 'Zenfit',
-        exportedAt: new Date().toISOString(),
-        profile: {
-          userBaseInfo: userBaseInfo[0] || null,
-          userProfile: userProfile[0] || null,
-        },
-        diet: {
-          foods,
-          recipes,
-          dailyDietLogs, // 按日自包含封裝規格 (日誌頭部 meta + 進食組件 entries)
-        },
-        workout: {
-          exercises,
-          routines,
-          equipments,
-          workoutLogs,
-        },
-        body: {
-          bodyMetrics,
-        },
-      };
-
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json',
-      });
+      const blob = await exportBackupZip();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `zenfit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `zenfit-backup-${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -138,6 +101,92 @@ export default function Settings() {
       toast.show(t('settings.exported'));
     } catch {
       toast.show(t('common.error'));
+    }
+  };
+
+  // 觸發選擇備份檔案
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 處理匯入備份檔案
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 清空 input 數值，允許連續重複選擇同名檔案
+    e.target.value = '';
+
+    try {
+      // 1. 先行解析備份檔案內容至記憶體
+      const parsed = await parseBackupFile(file);
+
+      // 2. 統計本機記錄筆數以判定本機是否已有資料
+      const [
+        dietLogsCount,
+        workoutLogsCount,
+        metricsCount,
+        customFoodsCount,
+        customRecipesCount,
+        customExercisesCount,
+        customRoutinesCount,
+        localBase,
+      ] = await Promise.all([
+        db.daily_diet_logs.count(),
+        db.workout_logs.count(),
+        db.body_metrics.count(),
+        db.foods.filter((f) => Boolean(f.isCustom)).count(),
+        db.recipes.filter((r) => Boolean(r.isCustom)).count(),
+        db.exercises.filter((e) => Boolean(e.isCustom)).count(),
+        db.routines.filter((r) => Boolean(r.isCustom)).count(),
+        db.user_base_info.toCollection().first(),
+      ]);
+
+      const localCount =
+        dietLogsCount +
+        workoutLogsCount +
+        metricsCount +
+        customFoodsCount +
+        customRecipesCount +
+        customExercisesCount +
+        customRoutinesCount;
+
+      // 3. 若本機完全無任何日誌與自定義數據，直接執行覆寫匯入
+      if (localCount === 0) {
+        const result = await executeImport(parsed, 'overwrite');
+        if (result.success) {
+          triggerHaptic('success');
+          toast.show(t('settings.imported'));
+        }
+        return;
+      }
+
+      // 4. 若本機已有數據，暫存數據並呼出策略選擇彈窗
+      setStagedBackupData(parsed);
+      setStagedLocalBase(localBase || null);
+      setIsImportStrategyModalOpen(true);
+    } catch (err: unknown) {
+      triggerHaptic('error');
+      if (err instanceof Error && err.message === 'INVALID_BACKUP_FILE') {
+        toast.show(t('settings.invalidBackupFile'));
+      } else {
+        toast.show(t('settings.importFailed'));
+      }
+    }
+  };
+
+  // 執行確認之匯入策略
+  const handleExecuteImport = async (strategy: ImportStrategy) => {
+    if (!stagedBackupData) return;
+    try {
+      const result = await executeImport(stagedBackupData, strategy);
+      if (result.success) {
+        triggerHaptic('success');
+        toast.show(t('settings.imported'));
+      }
+    } catch {
+      triggerHaptic('error');
+      toast.show(t('settings.importFailed'));
     }
   };
 
@@ -529,6 +578,20 @@ export default function Settings() {
             </span>
             <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
           </Link>
+
+          {/* 恢復預設數據 */}
+          <div
+            onClick={handleRestoreDefaults}
+            className="usage-row cursor-pointer group"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.restoreDefaults')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
+              <span>{t('settings.restoreDefaultsAction')}</span>
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -571,31 +634,40 @@ export default function Settings() {
 
           {/* 匯出資料備份 */}
           <div
-            onClick={handleExportJson}
+            onClick={handleExportZip}
             className="usage-row cursor-pointer group"
           >
             <span className="text-sm font-normal text-foreground">
               {t('settings.exportData')}
             </span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>JSON</span>
+              <span>ZIP</span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
 
-          {/* 恢復預設數據 */}
+          {/* 匯入資料備份 */}
           <div
-            onClick={handleRestoreDefaults}
+            onClick={handleImportClick}
             className="usage-row cursor-pointer group"
           >
             <span className="text-sm font-normal text-foreground">
-              {t('settings.restoreDefaults')}
+              {t('settings.importData')}
             </span>
             <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>{t('settings.restoreDefaultsAction')}</span>
+              <span>ZIP</span>
               <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
+
+          {/* 隱藏之備份檔案選擇器 */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".zip,.json,application/zip,application/json"
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </div>
       </section>
 
@@ -651,6 +723,18 @@ export default function Settings() {
       <ClearDataModal
         isOpen={isClearDataModalOpen}
         onClose={() => setIsClearDataModalOpen(false)}
+      />
+
+      {/* 備份匯入衝突策略選擇彈窗 (平級兄弟節點聲明) */}
+      <ImportStrategyModal
+        isOpen={isImportStrategyModalOpen}
+        onClose={() => {
+          setIsImportStrategyModalOpen(false);
+          setStagedBackupData(null);
+        }}
+        localBaseInfo={stagedLocalBase}
+        backupBaseInfo={stagedBackupData?.baseInfos[0] || null}
+        onConfirm={handleExecuteImport}
       />
     </div>
   );
