@@ -16,6 +16,7 @@ import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
@@ -55,6 +56,16 @@ export default function ExerciseDetails() {
   const { allExercises, updateExercise, archiveExercise, unarchiveExercise, deleteExercise } = useExercises();
   const { allRoutines } = useRoutines();
   const { getEquipmentDisplayName } = useEquipments();
+
+  // 最佳 e1RM 說明 Popover 狀態
+  const [isE1rmPopoverOpen, setIsE1rmPopoverOpen] = useState(false);
+  const [e1rmAnchorEl, setE1rmAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleOpenE1rmPopover = (target: HTMLElement) => {
+    triggerHaptic('selection');
+    setE1rmAnchorEl(target);
+    setIsE1rmPopoverOpen(true);
+  };
 
   const exercise = useMemo(() => {
     return allExercises.find((e) => e.id === id);
@@ -310,23 +321,16 @@ export default function ExerciseDetails() {
 
       {/* 核心一體化主卡片 (與食材詳情頁 1:1 一體化設計) */}
       <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
-        {/* 大氣品名帶與特質微徽章 */}
-        <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-card">
-          <div className="space-y-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
-                {exercise.name}
-              </h1>
-              {exercise.isArchived && (
-                <span className="text-[10px] font-mono text-destructive border border-destructive/30 px-1.5 py-0.5 rounded">
-                  {t('common.archived')}
-                </span>
-              )}
-            </div>
-            {exercise.notes && (
-              <p className="text-xs font-mono text-muted-foreground">
-                {exercise.notes}
-              </p>
+        {/* 第 2 層：動作名稱與器材規格 (高度 68px 與指標區塊一致) */}
+        <div className="h-[68px] px-3.5 sm:px-4 border-b border-border flex items-center justify-between gap-2.5 bg-card overflow-hidden">
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
+              {exercise.name}
+            </h1>
+            {exercise.isArchived && (
+              <span className="text-[10px] font-mono text-destructive border border-destructive/30 px-1.5 py-0.5 rounded shrink-0">
+                {t('common.archived')}
+              </span>
             )}
           </div>
           <div className="flex items-center shrink-0">
@@ -337,52 +341,60 @@ export default function ExerciseDetails() {
           </div>
         </div>
 
-        {/* 第 3 層：客觀指標三欄分割卡片 (支援 1w/30d/3m/6m/1y 切換) */}
-        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-card">
-          {/* 1. 最佳 e1RM */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-normal text-muted-foreground truncate">
-                {t('workout.bestE1RM')}
-              </span>
-              <OverviewPeriodSelector
-                value={overviewPeriod}
-                onChange={setOverviewPeriod}
-              />
+        {/* 第 3 層：客觀指標分割卡片 (支援 1w/30d/3m/6m/1y 切換，各行高度 68px 一致) */}
+        <div className="border-b border-border bg-card divide-y divide-border">
+          {/* 上排：2 欄 (最佳 e1RM 與 累計完成組數) */}
+          <div className="grid grid-cols-2 divide-x divide-border h-[68px]">
+            {/* 1. 最佳 e1RM (點擊呼出說明 Popover) */}
+            <div
+              onClick={(e) => handleOpenE1rmPopover(e.currentTarget)}
+              className="h-[68px] px-3.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden cursor-pointer hover:bg-hover transition-colors group select-none"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-normal text-muted-foreground group-hover:text-foreground transition-colors truncate underline decoration-dotted underline-offset-2 decoration-muted-foreground/40 group-hover:decoration-foreground">
+                  {t('workout.bestE1RM')}
+                </span>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <OverviewPeriodSelector
+                    value={overviewPeriod}
+                    onChange={setOverviewPeriod}
+                  />
+                </div>
+              </div>
+              <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+                <span className="font-bold text-foreground tabular-nums">
+                  {convertBodyWeight(periodBestE1RM, 'kg', bodyWeightUnit, 1)}
+                </span>
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  {bodyWeightUnit}
+                </span>
+              </div>
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
-                {convertBodyWeight(periodBestE1RM, 'kg', bodyWeightUnit, 1)}
-              </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                {bodyWeightUnit}
-              </span>
+
+            {/* 2. 累計組數 */}
+            <div className="h-[68px] px-3.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-normal text-muted-foreground truncate">
+                  {t('workout.totalCompletedSets')}
+                </span>
+                <OverviewPeriodSelector
+                  value={overviewPeriod}
+                  onChange={setOverviewPeriod}
+                />
+              </div>
+              <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+                <span className="font-bold text-foreground tabular-nums">
+                  {periodSets.toLocaleString()}
+                </span>
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  {t('workout.set', '組')}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* 2. 累計組數 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-normal text-muted-foreground truncate">
-                {t('workout.totalCompletedSets')}
-              </span>
-              <OverviewPeriodSelector
-                value={overviewPeriod}
-                onChange={setOverviewPeriod}
-              />
-            </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
-                {periodSets.toLocaleString()}
-              </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                {t('workout.set', '組')}
-              </span>
-            </div>
-          </div>
-
-          {/* 3. 累計容量 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          {/* 下排：單獨一行 (累計訓練總容量) */}
+          <div className="h-[68px] px-3.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
                 {t('workout.totalLifetimeVolume')}
@@ -576,6 +588,55 @@ export default function ExerciseDetails() {
         initialData={exercise}
         onSubmit={handleEditSubmit}
       />
+
+      {/* 最佳 e1RM 指標說明 Popover 浮層 */}
+      <Popover
+        open={isE1rmPopoverOpen}
+        onOpenChange={(isOpen) => {
+          setIsE1rmPopoverOpen(isOpen);
+          if (!isOpen) {
+            setE1rmAnchorEl(null);
+          }
+        }}
+      >
+        {e1rmAnchorEl && (
+          <PopoverContent
+            anchor={e1rmAnchorEl}
+            align="start"
+            side="bottom"
+            sideOffset={6}
+            className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-3.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <div className="text-xs font-semibold text-foreground">
+                  {t('workout.e1rmExplanation.title')}
+                </div>
+                <div className="text-xs font-mono text-foreground tabular-nums">
+                  {convertBodyWeight(periodBestE1RM, 'kg', bodyWeightUnit, 1)} {bodyWeightUnit}
+                </div>
+              </div>
+
+              <div className="text-[11px] text-muted-foreground font-mono flex flex-wrap items-center gap-1.5 bg-muted/50 px-2.5 py-1.5 rounded leading-relaxed">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
+                  {t('workout.e1rmExplanation.formulaLabel')}:
+                </span>
+                <span className="text-foreground whitespace-normal break-words font-mono">
+                  {t('workout.e1rmExplanation.formula')}
+                </span>
+              </div>
+
+              <div className="text-xs text-muted-foreground font-sans leading-relaxed pt-0.5 break-words">
+                {t('workout.e1rmExplanation.desc')}
+              </div>
+
+              <div className="text-[11px] text-muted-foreground/80 font-sans leading-relaxed border-t border-border/60 pt-2 break-words">
+                {t('workout.e1rmExplanation.accuracy')}
+              </div>
+            </div>
+          </PopoverContent>
+        )}
+      </Popover>
     </div>
   );
 }

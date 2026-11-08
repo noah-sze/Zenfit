@@ -315,6 +315,13 @@
       "intensity": "強度",
       "footprint": "訓練足跡",
       "bestE1RM": "最佳 e1RM",
+      "e1rmExplanation": {
+        "title": "e1RM (預估單次極限力量)",
+        "formulaLabel": "計算公式",
+        "formula": "重量 × (36 / (37 - 次數)) (Brzycki 公式)",
+        "desc": "基於該動作已完成之重量與次數推算單次最大做功能力。無需挑戰極限單次重量（1RM）冒受傷風險，即可作為日常訓練客觀量化力量進步的精密標尺。",
+        "accuracy": "1~10 次區間誤差 < 3%，信度最高；次數大於 12 次時主要反映局部肌耐力，估算值僅供趨勢參考。"
+      },
       "objectiveMetrics": "客觀指標",
       "totalLifetimeVolume": "累計訓練總容量",
       "totalCompletedSets": "累計完成組數",
@@ -639,11 +646,12 @@
       "totalIntake": "總攝入",
       "frequency": "次數",
       "maxDaily": "最大量",
-      "period1w": "1w (近 7 天)",
-      "period30d": "30d (近 30 天)",
-      "period3m": "3m (近 3 個月)",
-      "period6m": "6m (近半年)",
-      "period1y": "1y (近 1 年)"
+      "period1w": "最近 7 天",
+      "period30d": "最近 30 天",
+      "period3m": "最近 3 個月",
+      "period6m": "最近 6 個月",
+      "period1y": "最近 1 年",
+      "periodAll": "全部"
     },
     "monthPicker": {
       "title": "選擇出生年月",

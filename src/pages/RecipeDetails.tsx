@@ -366,9 +366,9 @@ export default function RecipeDetails() {
           </div>
         </div>
 
-        {/* 第 2 層：B-1 大氣品名帶與特質微徽章 */}
-        <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-card">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
+        {/* 第 2 層：B-1 大氣品名帶與特質微徽章 (高度 68px 與指標區塊等高) */}
+        <div className="h-[68px] px-3.5 sm:px-4 border-b border-border flex items-center justify-between gap-2.5 bg-card overflow-hidden">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate min-w-0">
             {recipe.name}
           </h1>
           {evalRes && evalRes.labels.length > 0 && (
@@ -388,10 +388,10 @@ export default function RecipeDetails() {
           )}
         </div>
 
-        {/* 第 3 層：三大指標三欄分割卡片 (圖 2 標準風格，支援 1w/30d/3m/6m/1y 切換) */}
-        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-card">
+        {/* 第 3 層：三大指標三欄分割卡片 (高度 68px 與品名帶等高，支援 1w/30d/3m/6m/1y/all 切換) */}
+        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-card h-[68px]">
           {/* 1. 總攝入 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="h-[68px] px-2.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
                 {t('stats.totalIntake')}
@@ -412,7 +412,7 @@ export default function RecipeDetails() {
           </div>
 
           {/* 2. 次數 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="h-[68px] px-2.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
                 {t('stats.frequency')}
@@ -433,7 +433,7 @@ export default function RecipeDetails() {
           </div>
 
           {/* 3. 最大量 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="h-[68px] px-2.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
                 {t('stats.maxDaily')}
@@ -447,7 +447,7 @@ export default function RecipeDetails() {
               <span className="font-bold text-foreground tabular-nums">
                 {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).size.toLocaleString()}
               </span>
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-xs font-normal text-muted-foreground ml-1">
                 {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).unit}
               </span>
             </div>

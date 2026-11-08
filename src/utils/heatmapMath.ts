@@ -1,7 +1,7 @@
 import { subDays, format } from 'date-fns';
 import { calculateE1RM } from './workoutMath';
 
-export type OverviewPeriod = '1w' | '30d' | '3m' | '6m' | '1y';
+export type OverviewPeriod = '1w' | '30d' | '3m' | '6m' | '1y' | 'all';
 
 export interface HeatmapDay {
   date: string;
@@ -38,6 +38,8 @@ export function getPeriodDaysCount(period: OverviewPeriod): number {
       return 180;
     case '1y':
       return 365;
+    case 'all':
+      return Infinity;
     default:
       return 30;
   }
@@ -156,14 +158,17 @@ export function calculateFootprintData(params: {
   }
 
   const periodDaysCount = getPeriodDaysCount(overviewPeriod);
-  const startDateStr = format(subDays(now, periodDaysCount - 1), 'yyyy-MM-dd');
+  const startDateStr =
+    periodDaysCount === Infinity
+      ? ''
+      : format(subDays(now, periodDaysCount - 1), 'yyyy-MM-dd');
 
   let pCal = 0;
   let pCount = 0;
   let pMaxGrams = 0;
 
   logMap.forEach((dayData, dateStr) => {
-    if (dateStr >= startDateStr && dateStr <= todayStr) {
+    if ((!startDateStr || dateStr >= startDateStr) && dateStr <= todayStr) {
       pCal += dayData.calories;
       pCount += dayData.count;
       if (dayData.grams > pMaxGrams) {
@@ -299,16 +304,19 @@ export function calculateExerciseFootprintData(params: {
     });
   }
 
-  // 計算指定週期內的數據 (1w / 30d / 3m / 6m / 1y)
+  // 計算指定週期內的數據 (1w / 30d / 3m / 6m / 1y / all)
   const periodDaysCount = getPeriodDaysCount(overviewPeriod);
-  const startDateStr = format(subDays(now, periodDaysCount - 1), 'yyyy-MM-dd');
+  const startDateStr =
+    periodDaysCount === Infinity
+      ? ''
+      : format(subDays(now, periodDaysCount - 1), 'yyyy-MM-dd');
 
   let periodBestE1RM = 0;
   let periodSets = 0;
   let periodVolume = 0;
 
   dayStatsMap.forEach((dayData, dateStr) => {
-    if (dateStr >= startDateStr && dateStr <= todayStr) {
+    if ((!startDateStr || dateStr >= startDateStr) && dateStr <= todayStr) {
       periodSets += dayData.count;
       periodVolume += dayData.volume;
       if (dayData.bestE1RM > periodBestE1RM) {

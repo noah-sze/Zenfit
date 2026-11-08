@@ -15,6 +15,7 @@ describe('heatmapMath', () => {
       expect(getPeriodDaysCount('3m')).toBe(90);
       expect(getPeriodDaysCount('6m')).toBe(180);
       expect(getPeriodDaysCount('1y')).toBe(365);
+      expect(getPeriodDaysCount('all')).toBe(Infinity);
     });
   });
 
@@ -148,6 +149,17 @@ describe('heatmapMath', () => {
       expect(res.lifetimeSets).toBe(4);
       expect(res.lifetimeVolume).toBe(1950);
       expect(res.lifetimeBestE1RM).toBe(150);
+
+      // 當選擇 'all' 時，週期指標應等於歷史生涯累計
+      const resAll = calculateExerciseFootprintData({
+        logs,
+        overviewPeriod: 'all',
+        totalWeeks: 52,
+        now,
+      });
+      expect(resAll.periodSets).toBe(4);
+      expect(resAll.periodVolume).toBe(1950);
+      expect(resAll.periodBestE1RM).toBe(150);
 
       const todayItem = res.heatmapDays[res.heatmapDays.length - 1];
       expect(todayItem.date).toBe('2026-11-03');

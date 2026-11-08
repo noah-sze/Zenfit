@@ -312,17 +312,17 @@ export default function RoutineDetails() {
 
       {/* 核心一體化主卡片 */}
       <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
-        {/* 品名帶 */}
-        <div className="p-4 border-b border-border bg-card">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
+        {/* 品名帶 (高度 68px 與指標區塊等高) */}
+        <div className="h-[68px] px-3.5 sm:px-4 border-b border-border flex items-center justify-between gap-2.5 bg-card overflow-hidden">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate min-w-0">
             {routine.name}
           </h1>
         </div>
 
-        {/* 第 3 層：兩大客觀指標雙欄分割卡片 (動作總數、覆蓋肌群數) */}
-        <div className="grid grid-cols-2 divide-x divide-border border-b border-border bg-card">
+        {/* 第 3 層：兩大客觀指標雙欄分割卡片 (高度 68px 與品名帶等高) */}
+        <div className="grid grid-cols-2 divide-x divide-border border-b border-border bg-card h-[68px]">
           {/* 1. 動作總數 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="h-[68px] px-3.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
                 {t('workout.totalExercises')}
@@ -339,7 +339,7 @@ export default function RoutineDetails() {
           </div>
 
           {/* 2. 覆蓋肌群數 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="h-[68px] px-3.5 sm:px-4 py-2.5 flex flex-col justify-between overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-normal text-muted-foreground truncate">
                 {t('workout.coveredMusclesShort', '覆蓋肌群')}

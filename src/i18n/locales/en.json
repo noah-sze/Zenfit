@@ -316,6 +316,13 @@
       "intensity": "Intensity",
       "footprint": "Footprint",
       "bestE1RM": "Best e1RM",
+      "e1rmExplanation": {
+        "title": "e1RM (Estimated 1-Rep Max)",
+        "formulaLabel": "Formula",
+        "formula": "Weight × (36 / (37 - Reps)) (Brzycki Formula)",
+        "desc": "Estimates maximal single-rep capacity derived from completed weight and reps. Enables objective tracking of absolute strength progression without the injury risk of true 1RM testing.",
+        "accuracy": "Highest accuracy (< 3% margin) within 1-10 reps. Reps above 12 reflect localized muscular endurance and serve as general trend references."
+      },
       "objectiveMetrics": "Lifetime Metrics",
       "totalLifetimeVolume": "Lifetime Volume",
       "totalCompletedSets": "Completed Sets",
@@ -640,11 +647,12 @@
       "totalIntake": "Total Intake",
       "frequency": "Frequency",
       "maxDaily": "Peak Daily",
-      "period1w": "1w (Past 7 Days)",
-      "period30d": "30d (Past 30 Days)",
-      "period3m": "3m (Past 3 Months)",
-      "period6m": "6m (Past 6 Months)",
-      "period1y": "1y (Past 1 Year)"
+      "period1w": "Past 7 Days",
+      "period30d": "Past 30 Days",
+      "period3m": "Past 3 Months",
+      "period6m": "Past 6 Months",
+      "period1y": "Past 1 Year",
+      "periodAll": "All"
     },
     "monthPicker": {
       "title": "Select Birth Date",

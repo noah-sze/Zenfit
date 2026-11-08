@@ -45,7 +45,7 @@ export function OverviewPeriodSelector({ value, onChange }: OverviewPeriodSelect
         className="h-5 px-2 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/60 text-[10px] font-mono text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95"
       >
         <SelectValue className="flex-none tabular-nums font-normal">
-          {value}
+          {value === 'all' ? t('stats.periodAll') : value}
         </SelectValue>
       </SelectTrigger>
       <SelectContent align="end" className="font-mono text-xs min-w-[130px] z-[80]">
@@ -54,6 +54,7 @@ export function OverviewPeriodSelector({ value, onChange }: OverviewPeriodSelect
         <SelectItem value="3m">{t('stats.period3m')}</SelectItem>
         <SelectItem value="6m">{t('stats.period6m')}</SelectItem>
         <SelectItem value="1y">{t('stats.period1y')}</SelectItem>
+        <SelectItem value="all">{t('stats.periodAll')}</SelectItem>
       </SelectContent>
     </Select>
   );
