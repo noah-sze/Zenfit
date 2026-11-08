@@ -4,6 +4,7 @@ import { clearDropboxTokens } from '@/services/sync/dropboxAuth';
 import { clearFoodsCache } from '@/hooks/useFoods';
 import { clearRecipesCache } from '@/hooks/useRecipes';
 import { clearExercisesCache } from '@/hooks/useExercises';
+import { NATURAL_FOOD_IDS, DEFAULT_NATURAL_FOODS } from './defaultNaturalFoods';
 
 // ============================================================================
 // 系統預設實體確定性靜態 UUID (Deterministic Static UUIDs)
@@ -27,6 +28,7 @@ export const DEFAULT_FOOD_IDS = {
   tomato: '53aef1a1-7d50-4655-924c-aa544ef76558',
   cooking_oil: '182261b5-6e77-4f51-9cdd-4a2b3c5ab785',
   black_pepper: 'f564160e-46af-4a25-aaad-3c8fe8cf9710',
+  ...NATURAL_FOOD_IDS,
 } as const;
 
 export const DEFAULT_RECIPE_IDS = {
@@ -363,7 +365,7 @@ export const DEFAULT_EXERCISES: Omit<Exercise, 'createdAt' | 'updatedAt'>[] = [
 export const DEFAULT_FOODS: Omit<FoodItem, 'createdAt' | 'updatedAt'>[] = [
   { id: DEFAULT_FOOD_IDS.chicken_breast, name: '雞胸肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 110, protein: 23, carbs: 0, fat: 1.2, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.whole_egg, name: '雞蛋', category: 'natural', servingSize: 50, servingUnit: 'g', calories: 72, protein: 6.3, carbs: 0.4, fat: 4.8, isCustom: false, isArchived: false },
-  { id: DEFAULT_FOOD_IDS.white_rice, name: '白米飯', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.white_rice, name: '白米', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 358, protein: 6.8, carbs: 79.2, fat: 0.7, fiber: 1.3, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.sweet_potato, name: '地瓜', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 86, protein: 1.6, carbs: 20, fat: 0.1, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.whey_protein, name: '乳清蛋白粉', category: 'processed', servingSize: 30, servingUnit: 'g', calories: 120, protein: 24, carbs: 2, fat: 1.5, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.rolled_oats, name: '大燕麥片', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 389, protein: 16.9, carbs: 66, fat: 6.9, fiber: 10.6, isCustom: false, isArchived: false },
@@ -374,43 +376,11 @@ export const DEFAULT_FOODS: Omit<FoodItem, 'createdAt' | 'updatedAt'>[] = [
   { id: DEFAULT_FOOD_IDS.tomato, name: '牛番茄', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.cooking_oil, name: '食用植物油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.black_pepper, name: '黑胡椒粒', category: 'condiment', servingSize: 5, servingUnit: 'g', calories: 13, protein: 0.5, carbs: 3.2, fat: 0.2, isCustom: false, isArchived: false },
+  ...DEFAULT_NATURAL_FOODS,
 ];
 
-export const DEFAULT_RECIPES: Omit<FoodRecipe, 'createdAt' | 'updatedAt'>[] = [
-  {
-    id: DEFAULT_RECIPE_IDS.tomato_egg,
-    name: '經典家常番茄炒蛋',
-    ingredients: [
-      { foodId: DEFAULT_FOOD_IDS.tomato, quantity: 150, unit: 'g', isOptional: false },
-      { foodId: DEFAULT_FOOD_IDS.whole_egg, quantity: 100, unit: 'g', isOptional: false },
-      { foodId: DEFAULT_FOOD_IDS.cooking_oil, quantity: 10, unit: 'g', isOptional: true },
-    ],
-    isCustom: false,
-    isArchived: false,
-  },
-  {
-    id: DEFAULT_RECIPE_IDS.oat_bowl,
-    name: '高蛋白燕麥優格碗',
-    ingredients: [
-      { foodId: DEFAULT_FOOD_IDS.rolled_oats, quantity: 50, unit: 'g', isOptional: false },
-      { foodId: DEFAULT_FOOD_IDS.greek_yogurt, quantity: 100, unit: 'g', isOptional: false },
-      { foodId: DEFAULT_FOOD_IDS.whey_protein, quantity: 30, unit: 'g', isOptional: false },
-    ],
-    isCustom: false,
-    isArchived: false,
-  },
-  {
-    id: DEFAULT_RECIPE_IDS.chicken_rice_box,
-    name: '經典低脂雞胸便當',
-    ingredients: [
-      { foodId: DEFAULT_FOOD_IDS.chicken_breast, quantity: 150, unit: 'g', isOptional: false },
-      { foodId: DEFAULT_FOOD_IDS.white_rice, quantity: 150, unit: 'g', isOptional: false },
-      { foodId: DEFAULT_FOOD_IDS.cooking_oil, quantity: 5, unit: 'g', isOptional: true },
-    ],
-    isCustom: false,
-    isArchived: false,
-  },
-];
+// 預設食譜（菜餚）庫已完全清空，所有複合料理皆由使用者依個人烹飪習慣自訂
+export const DEFAULT_RECIPES: Omit<FoodRecipe, 'createdAt' | 'updatedAt'>[] = [];
 
 /**
  * 恢復預設數據 (無害補齊缺失項目，不覆蓋用戶已修改內容與自訂項目)

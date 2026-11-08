@@ -91,16 +91,8 @@ describe('系統預設數據完整性與原子計量規範測試', () => {
     }
   });
 
-  it('所有默認菜餚配方中所引用的食材 ID 必須客觀存在於單品食材庫中', () => {
-    const defaultFoodIdSet = new Set(DEFAULT_FOODS.map((f) => f.id));
-    for (const recipe of DEFAULT_RECIPES) {
-      expect(recipe.ingredients.length).toBeGreaterThan(0);
-      for (const ing of recipe.ingredients) {
-        expect(defaultFoodIdSet.has(ing.foodId)).toBe(true);
-        expect(ing.quantity).toBeGreaterThan(0);
-        expect(ing.unit).toBe('g');
-      }
-    }
+  it('預設菜餚配方庫應為空（無預設食譜，完全交由使用者依個人烹調習慣自訂）', () => {
+    expect(DEFAULT_RECIPES.length).toBe(0);
   });
 
   it('菜餚分組 notes 清理邏輯：應精確提取括號內菜餚名並清除冗餘 notes，且不影響自訂備註', () => {

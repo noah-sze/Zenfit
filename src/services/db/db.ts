@@ -21,13 +21,16 @@ import {
   DEFAULT_EQUIPMENTS,
   DEFAULT_EXERCISES,
   DEFAULT_FOODS,
+  DEFAULT_FOOD_IDS,
   DEFAULT_RECIPES,
+  DEFAULT_RECIPE_IDS,
   PRIMARY_USER_ID,
   DEFAULT_USER_PROFILE_ID,
   LEGACY_ID_TO_UUID_MAP,
   restoreMissingDefaultData,
   resetDatabaseToFactory,
 } from './defaultData';
+import { DEFAULT_NATURAL_FOODS } from './defaultNaturalFoods';
 
 export class ZenfitDatabase extends Dexie {
   foods!: Table<FoodItem>;
@@ -929,6 +932,151 @@ export class ZenfitDatabase extends Dexie {
             r.exercises = cleanEx;
             await tx.table('routines').put(r);
           }
+        }
+      }
+    });
+
+    this.version(16).upgrade(async (tx) => {
+      // 升級版本 16：完善天然原型食材預設資料庫 (全食材生重基準，嚴禁「生」字前綴與熟重副本)
+      const now = Date.now();
+      const foodsTable = tx.table('foods');
+      const existingFoods = await foodsTable.toArray();
+
+      // 1. 平滑清理與更名舊式非生重/贅詞預設食材
+      for (const f of existingFoods) {
+        if (!f.isCustom) {
+          if (f.id === DEFAULT_FOOD_IDS.white_rice && (f.name === '白米飯' || f.name === '生白米')) {
+            await foodsTable.update(f.id, {
+              name: '白米',
+              calories: 358,
+              protein: 6.8,
+              carbs: 79.2,
+              fat: 0.7,
+              fiber: 1.3,
+              updatedAt: now,
+            });
+          } else if (f.name === '生白米') {
+            await foodsTable.delete(f.id);
+          } else if (f.name === '生糙米') {
+            await foodsTable.update(f.id, { name: '糙米', updatedAt: now });
+          } else if (f.name === '生義大利麵') {
+            await foodsTable.update(f.id, { name: '義大利麵', updatedAt: now });
+          } else if (f.name === '生薑') {
+            await foodsTable.update(f.id, { name: '薑', updatedAt: now });
+          } else if (f.name === '糙米飯' || f.name === '熟義大利麵') {
+            await foodsTable.delete(f.id);
+          }
+        }
+      }
+
+      // 2. 補齊天然原型食材
+      const updatedFoods = await foodsTable.toArray();
+      const existingIds = new Set(updatedFoods.map((f: FoodItem) => f.id));
+      const existingNames = new Set(updatedFoods.map((f: FoodItem) => f.name?.trim()));
+
+      for (const food of DEFAULT_NATURAL_FOODS) {
+        if (!existingIds.has(food.id) && !existingNames.has(food.name.trim())) {
+          await foodsTable.add({
+            ...food,
+            createdAt: now,
+            updatedAt: now,
+          });
+          existingIds.add(food.id);
+          existingNames.add(food.name.trim());
+        }
+      }
+    });
+
+    this.version(19).upgrade(async (tx) => {
+      // 升級至 19：刪除預設食譜（番茄炒蛋、燕麥優格碗、雞胸便當等預設食譜，完全交由使用者自訂）
+      const recipesTable = tx.table('recipes');
+      const legacyRecipeIds = new Set(Object.values(DEFAULT_RECIPE_IDS));
+      const existingRecipes = await recipesTable.toArray();
+      for (const r of existingRecipes) {
+        if (!r.isCustom || legacyRecipeIds.has(r.id)) {
+          await recipesTable.delete(r.id);
+        }
+      }
+    });
+
+    this.version(17).upgrade(async (tx) => {
+      // 升級至 17：擴充生活高頻天然原型食材（生重基準，嚴禁「生」字前綴與「乾重」後綴）
+      const now = Date.now();
+      const foodsTable = tx.table('foods');
+      const existingFoods = await foodsTable.toArray();
+
+      // 1. 修正舊有純米粉與冬粉後綴，移除模糊泛稱純麵條
+      for (const f of existingFoods) {
+        if (!f.isCustom) {
+          if (f.name === '純麵條乾重') {
+            await foodsTable.delete(f.id);
+          } else if (f.name === '純米粉乾重') {
+            await foodsTable.update(f.id, { name: '米粉', updatedAt: now });
+          } else if (f.name === '冬粉乾重') {
+            await foodsTable.update(f.id, { name: '冬粉', updatedAt: now });
+          }
+        }
+      }
+
+      // 2. 補入天然原型食材
+      const updatedFoods = await foodsTable.toArray();
+      const existingIds = new Set(updatedFoods.map((f: FoodItem) => f.id));
+      const existingNames = new Set(updatedFoods.map((f: FoodItem) => f.name?.trim()));
+
+      for (const food of DEFAULT_NATURAL_FOODS) {
+        if (!existingIds.has(food.id) && !existingNames.has(food.name.trim())) {
+          await foodsTable.add({
+            ...food,
+            createdAt: now,
+            updatedAt: now,
+          });
+          existingIds.add(food.id);
+          existingNames.add(food.name.trim());
+        }
+      }
+    });
+
+    this.version(19).upgrade(async (tx) => {
+      // 升級至 19：刪除預設食譜（番茄炒蛋、燕麥優格碗、雞胸便當等預設食譜，完全交由使用者自訂）
+      const recipesTable = tx.table('recipes');
+      const legacyRecipeIds = new Set(Object.values(DEFAULT_RECIPE_IDS));
+      const existingRecipes = await recipesTable.toArray();
+      for (const r of existingRecipes) {
+        if (!r.isCustom || legacyRecipeIds.has(r.id)) {
+          await recipesTable.delete(r.id);
+        }
+      }
+    });
+
+    this.version(18).upgrade(async (tx) => {
+      // 升級至 18：擴充第二批常見食材（含羅非魚、地方水產、內臟部位、蔬菜、傳統主食與鮮果等 50 種，全庫達 409 種天然食材）
+      const now = Date.now();
+      const foodsTable = tx.table('foods');
+      const existingFoods = await foodsTable.toArray();
+      const existingIds = new Set(existingFoods.map((f: FoodItem) => f.id));
+      const existingNames = new Set(existingFoods.map((f: FoodItem) => f.name?.trim()));
+
+      for (const food of DEFAULT_NATURAL_FOODS) {
+        if (!existingIds.has(food.id) && !existingNames.has(food.name.trim())) {
+          await foodsTable.add({
+            ...food,
+            createdAt: now,
+            updatedAt: now,
+          });
+          existingIds.add(food.id);
+          existingNames.add(food.name.trim());
+        }
+      }
+    });
+
+    this.version(19).upgrade(async (tx) => {
+      // 升級至 19：刪除預設食譜（番茄炒蛋、燕麥優格碗、雞胸便當等預設食譜，完全交由使用者自訂）
+      const recipesTable = tx.table('recipes');
+      const legacyRecipeIds = new Set(Object.values(DEFAULT_RECIPE_IDS));
+      const existingRecipes = await recipesTable.toArray();
+      for (const r of existingRecipes) {
+        if (!r.isCustom || legacyRecipeIds.has(r.id)) {
+          await recipesTable.delete(r.id);
         }
       }
     });

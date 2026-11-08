@@ -975,7 +975,7 @@ export function FoodRecipeBrowser({
                 <div className="p-8 text-center text-sm text-muted-foreground">
                   {showRecipeArchived
                     ? t('settings.noArchivedRecipes')
-                    : t('settings.noCustomRecipes')}
+                    : t('diet.noRecipes')}
                 </div>
               ) : (
                 filteredRecipes.map((recipe) => {
