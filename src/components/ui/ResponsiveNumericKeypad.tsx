@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 import { X, Delete, Check, Equal, ChevronDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import { HoldToDeleteButton } from "@/components/ui/HoldToDeleteButton"
 import { cn, evaluateAmountExpression, formatDisplayAmount } from "@/lib/utils"
 import { triggerHaptic } from "@/lib/haptics"
 
@@ -11,6 +12,11 @@ export interface ResponsiveNumericKeypadProps {
   open: boolean
   /** 開啟/關閉狀態改變回調 */
   onOpenChange: (open: boolean) => void
+
+  /** 條目刪除回調 (若提供則在鍵盤上方展示獨立長按刪除卡片，未提供則完全隱藏) */
+  onDelete?: () => void
+  /** 刪除卡片自定義文案 (選填，預設為「刪除」) */
+  deleteText?: string
 
   /** 錨定的 DOM 元素 (按鈕或輸入框)，用於打開時自動平滑滾動 */
   anchorEl?: HTMLElement | null
@@ -78,7 +84,7 @@ function getLastOperand(val: string) {
 export function ResponsiveNumericKeypad({
   open,
   onOpenChange,
-  anchorEl,
+  anchorEl: _anchorEl,
   valueClassName,
   titleClassName,
   title,
@@ -91,6 +97,8 @@ export function ResponsiveNumericKeypad({
   allowNegative = false,
   onConfirm,
   onCancel,
+  onDelete,
+  deleteText,
   onLiveChange,
   renderContextRow,
   className,
@@ -113,6 +121,30 @@ export function ResponsiveNumericKeypad({
     onLiveChangeRef.current = onLiveChange
   })
 
+  // 滾動鎖定 (Scroll Lock) 防護：當數字鍵盤開啟時，徹底鎖定背景滾動，杜絕 touchmove / wheel 穿透
+  React.useEffect(() => {
+    if (!open) return
+
+    const originalBodyOverflow = document.body.style.overflow
+    const originalBodyTouchAction = document.body.style.touchAction
+
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    const preventDefaultTouchMove = (e: TouchEvent) => {
+      // 數字鍵盤為固定尺寸無滾動區域，所有 touchmove 均全面攔截，防止底層頁面上下滑動
+      e.preventDefault()
+    }
+
+    document.addEventListener('touchmove', preventDefaultTouchMove, { passive: false })
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow
+      document.body.style.touchAction = originalBodyTouchAction
+      document.removeEventListener('touchmove', preventDefaultTouchMove)
+    }
+  }, [open])
+
   // 記錄上一次向外派發的數值與單位，避免向父級發送重複更新
   const prevDispatchedRef = React.useRef<string | null>(null)
 
@@ -129,21 +161,6 @@ export function ResponsiveNumericKeypad({
     }
     prevOpenRef.current = open
   }, [open, value, unit])
-
-  // 打開時自動將錨定元素 (列表行) 平滑滾動至視窗最佳可視區域
-  React.useEffect(() => {
-    if (open && anchorEl) {
-      const timer = setTimeout(() => {
-        try {
-          const rowEl = anchorEl.closest('[data-keypad-row], .h-10, [role="button"]') || anchorEl
-          rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        } catch {
-          // Ignore
-        }
-      }, 50)
-      return () => clearTimeout(timer)
-    }
-  }, [open, anchorEl])
 
   // 即時數值雙向鏡像同步：敲擊數字且數值實質改變時即時更新原位列表行
   React.useEffect(() => {
@@ -334,6 +351,12 @@ export function ResponsiveNumericKeypad({
     onOpenChange(false)
   }
 
+  const handleDeleteAction = () => {
+    triggerHaptic('success')
+    onDelete?.()
+    onOpenChange(false)
+  }
+
   // 鍵盤物理快捷鍵監聽 (Enter / Escape / 數字鍵 0-9 / Backspace / Delete / C / 運算符)
   React.useEffect(() => {
     if (!open) return
@@ -380,15 +403,35 @@ export function ResponsiveNumericKeypad({
 
   // 方案 1: 全端統一渲染一體化精密卡片 (Unified Precision Modal, 寬度 350px 對齊 Dialog)
   return createPortal(
-    <div className="fixed inset-0 z-[80] pointer-events-auto flex flex-col justify-end">
+    <div
+      className="fixed inset-0 z-[80] pointer-events-auto flex flex-col justify-end touch-none select-none overscroll-none"
+      onTouchMove={(e) => e.preventDefault()}
+    >
       {/* 半透明毛玻璃遮罩層：點擊安全回滾放棄並收起 */}
       <div
-        className="fixed inset-0 bg-overlay backdrop-blur-[2px] cursor-pointer"
+        className="fixed inset-0 bg-overlay backdrop-blur-[2px] cursor-pointer touch-none"
         onClick={handleCloseAction}
+        onTouchMove={(e) => e.preventDefault()}
       />
 
       {/* 懸浮容器 (全屏水平居中，最大寬度 350px，底部懸浮留白) */}
-      <div className="relative z-[81] pointer-events-auto w-full max-w-[350px] mx-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))] mb-3 sm:mb-6">
+      <div className="relative z-[81] pointer-events-auto w-full max-w-[350px] mx-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))] mb-3 sm:mb-6 flex flex-col gap-2">
+        {/* 上方獨立長按刪除卡片 (可用時顯示，不可用時隱藏) */}
+        {onDelete && (
+          <div
+            className="w-full shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <HoldToDeleteButton
+              onConfirm={handleDeleteAction}
+              text={deleteText || t('common.delete', '刪除')}
+              className="h-10 rounded-[14px] shadow-none"
+            />
+          </div>
+        )}
+
         <div
           ref={keypadRef}
           className={cn(

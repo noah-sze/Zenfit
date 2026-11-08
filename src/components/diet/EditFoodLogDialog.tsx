@@ -199,7 +199,7 @@ export function EditFoodLogDialog({
                   <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
                     {t('diet.macroMicro.carbs', '碳')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{currentMacros.carbs}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -210,7 +210,7 @@ export function EditFoodLogDialog({
                   <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
                     {t('diet.macroMicro.protein', '蛋')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-protein mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{currentMacros.protein}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -221,7 +221,7 @@ export function EditFoodLogDialog({
                   <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
                     {t('diet.macroMicro.fat', '脂')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-fat mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{currentMacros.fat}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -261,11 +261,10 @@ export function EditFoodLogDialog({
               </div>
             </div>
 
-            {/* 底部破壞性按鈕 (長按 1s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
+            {/* 底部破壞性按鈕 (長按 0.5s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
             <HoldToDeleteButton
               onConfirm={handleDelete}
               disabled={isSubmitting}
-              durationMs={1000}
               text={t('common.delete', '刪除')}
             />
           </div>

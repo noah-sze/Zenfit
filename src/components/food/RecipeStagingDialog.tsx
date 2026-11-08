@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, ChevronRight } from 'lucide-react';
 import { Dialog, PrecisionDialogContent } from '@/components/ui/dialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
@@ -324,7 +324,7 @@ export function RecipeStagingDialog({
                   <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
                     {t('diet.macroMicro.carbs', '碳')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{totals.carbs}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -335,7 +335,7 @@ export function RecipeStagingDialog({
                   <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
                     {t('diet.macroMicro.protein', '蛋')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-protein mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{totals.protein}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -346,7 +346,7 @@ export function RecipeStagingDialog({
                   <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
                     {t('diet.macroMicro.fat', '脂')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-fat mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{totals.fat}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -396,35 +396,20 @@ export function RecipeStagingDialog({
                       <div className="truncate">{item.foodName}</div>
                     </button>
 
-                    {/* 右側：常用數字輸入框膠囊 + 移除按鈕 */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
-                        className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
-                      >
-                        <span className="font-bold text-foreground">
-                          {formatDisplayAmount(String(item.quantity)) || '0'}
-                        </span>
-                        <span className="text-muted-foreground text-[11px]">
-                          {item.unit}
-                        </span>
-                        <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                      </button>
-
-                      {/* 移除按鈕 (超過 1 項時允許移除) */}
-                      {ingredients.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveIngredient(index)}
-                          className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer shrink-0"
-                          title={t('common.delete')}
-                          aria-label={t('common.delete')}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    {/* 右側：常用數字輸入框膠囊 */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
+                      className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
+                    >
+                      <span className="font-bold text-foreground">
+                        {formatDisplayAmount(String(item.quantity)) || '0'}
+                      </span>
+                      <span className="text-muted-foreground text-[11px]">
+                        {item.unit}
+                      </span>
+                      <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -446,6 +431,11 @@ export function RecipeStagingDialog({
           allowDecimals={true}
           maxDecimals={2}
           anchorEl={keypadConfig.anchorEl}
+          onDelete={ingredients.length > 1 ? () => {
+            const idx = keypadConfig.index;
+            setKeypadConfig(null);
+            handleRemoveIngredient(idx);
+          } : undefined}
           onLiveChange={handleKeypadLiveChange}
           onConfirm={handleKeypadConfirm}
           onCancel={handleKeypadCancel}

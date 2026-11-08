@@ -14,11 +14,6 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { db } from '@/services/db/db';
 import { useConfirm } from '@/components/ui/confirm-dialog';
-import { useFoods } from '@/hooks/useFoods';
-import { useRecipes } from '@/hooks/useRecipes';
-import { useExercises } from '@/hooks/useExercises';
-import { useRoutines } from '@/hooks/useRoutines';
-import { useEquipments } from '@/hooks/useEquipments';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { useBodyPreferences } from '@/hooks/useBodyPreferences';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -53,22 +48,6 @@ export default function Settings() {
     disconnectDropbox,
     syncNow: dropboxSyncNow,
   } = useDropboxSync();
-  const { activeFoods, archivedFoods } = useFoods();
-  const { activeRecipes, archivedRecipes } = useRecipes();
-  const { activeExercises, archivedExercises } = useExercises();
-  const { activeRoutines, archivedRoutines } = useRoutines();
-  const { activeEquipments, archivedEquipments } = useEquipments();
-
-  const totalActiveFoods = activeFoods.length;
-  const totalArchivedFoods = archivedFoods.length;
-
-  const totalActiveRecipes = activeRecipes.length;
-  const totalArchivedRecipes = archivedRecipes.length;
-
-  const totalActiveExercises = activeExercises.length;
-  const totalActiveRoutines = activeRoutines.length;
-  const totalActiveEquipments = activeEquipments.length;
-  const totalArchivedWorkout = archivedExercises.length + archivedRoutines.length + archivedEquipments.length;
 
   const currentLang = i18n.resolvedLanguage || i18n.language || 'en';
 
@@ -537,21 +516,7 @@ export default function Settings() {
             <span className="text-sm font-normal text-foreground">
               {t('settings.dietSection')}
             </span>
-            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>
-                {totalArchivedFoods + totalArchivedRecipes > 0
-                  ? t('settings.dietCombinedSubtitleWithArchived', {
-                      foods: totalActiveFoods,
-                      recipes: totalActiveRecipes,
-                      archived: totalArchivedFoods + totalArchivedRecipes,
-                    })
-                  : t('settings.dietCombinedSubtitle', {
-                      foods: totalActiveFoods,
-                      recipes: totalActiveRecipes,
-                    })}
-              </span>
-              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-            </div>
+            <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
           </Link>
 
           {/* 訓練資料管理 */}
@@ -562,23 +527,7 @@ export default function Settings() {
             <span className="text-sm font-normal text-foreground">
               {t('settings.workoutSection')}
             </span>
-            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground">
-              <span>
-                {totalArchivedWorkout > 0
-                  ? t('settings.workoutCombinedSubtitleWithArchived', {
-                      exercises: totalActiveExercises,
-                      routines: totalActiveRoutines,
-                      equipments: totalActiveEquipments,
-                      archived: totalArchivedWorkout,
-                    })
-                  : t('settings.workoutCombinedSubtitle', {
-                      exercises: totalActiveExercises,
-                      routines: totalActiveRoutines,
-                      equipments: totalActiveEquipments,
-                    })}
-              </span>
-              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-            </div>
+            <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
           </Link>
         </div>
       </section>

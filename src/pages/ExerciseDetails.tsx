@@ -24,7 +24,6 @@ import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { convertBodyWeight } from '@/utils/unitMath';
 import { BodyHighlighter } from '@/components/workout/BodyHighlighter';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
-import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
 import {
   getMuscleRoleBadgeClasses,
   getMuscleRoleLabel,
@@ -311,32 +310,19 @@ export default function ExerciseDetails() {
 
       {/* 核心一體化主卡片 (與食材詳情頁 1:1 一體化設計) */}
       <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
-        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-8) */}
-        <div className="h-8 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono overflow-hidden">
-          <div className="flex items-center min-w-0 flex-1 mr-3 overflow-hidden">
-            {muscleEntries.length > 0 && (
-              <AdaptiveMuscleBadgeGroup entries={sortMuscleEntries(muscleEntries)} className="min-w-0 flex-1" />
-            )}
-          </div>
-          <div className="shrink-0">
-            {exercise.isArchived ? (
-              <span className="text-[10px] font-mono text-destructive tracking-wide">
-                {t('common.archived')}
-              </span>
-            ) : (
-              <span className="text-[10px] font-mono text-emerald-500 tracking-wide">
-                {t('common.active')}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 第 2 層：B-1 大氣品名帶與特質微徽章 */}
+        {/* 大氣品名帶與特質微徽章 */}
         <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-card">
           <div className="space-y-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
-              {exercise.name}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words min-w-0">
+                {exercise.name}
+              </h1>
+              {exercise.isArchived && (
+                <span className="text-[10px] font-mono text-destructive border border-destructive/30 px-1.5 py-0.5 rounded">
+                  {t('common.archived')}
+                </span>
+              )}
+            </div>
             {exercise.notes && (
               <p className="text-xs font-mono text-muted-foreground">
                 {exercise.notes}

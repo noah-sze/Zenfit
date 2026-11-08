@@ -63,7 +63,7 @@ export function MacroSquares({
         >
           {t('diet.macroMicro.carbs', '碳')}
         </div>
-        <AutoMarquee align="center" className="text-xs font-semibold tabular-nums">
+        <AutoMarquee align="center" className="text-xs tabular-nums">
           <span>{carbs}g</span>
         </AutoMarquee>
       </div>
@@ -91,7 +91,7 @@ export function MacroSquares({
         >
           {t('diet.macroMicro.protein', '蛋')}
         </div>
-        <AutoMarquee align="center" className="text-xs font-semibold tabular-nums">
+        <AutoMarquee align="center" className="text-xs tabular-nums">
           <span>{protein}g</span>
         </AutoMarquee>
       </div>
@@ -119,7 +119,7 @@ export function MacroSquares({
         >
           {t('diet.macroMicro.fat', '脂')}
         </div>
-        <AutoMarquee align="center" className="text-xs font-semibold tabular-nums">
+        <AutoMarquee align="center" className="text-xs tabular-nums">
           <span>{fat}g</span>
         </AutoMarquee>
       </div>

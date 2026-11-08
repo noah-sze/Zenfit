@@ -25,7 +25,11 @@ import {
 } from '@/components/workout/RoutineFormDialog';
 import { EquipmentFormDialog } from '@/components/workout/EquipmentFormDialog';
 
-export default function Exercises() {
+interface ExercisesProps {
+  isDetailOpen?: boolean;
+}
+
+export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -244,7 +248,7 @@ export default function Exercises() {
   return (
     <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部操作按鈕 (Portal 映射至 AppLayout 頂部標頭右側) */}
-      {headerActionEl &&
+      {headerActionEl && !isDetailOpen &&
         createPortal(
           <Button
             size="icon"

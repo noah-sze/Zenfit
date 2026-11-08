@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
-import { Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
+import { Edit2, Archive, RefreshCcw } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
@@ -35,7 +35,7 @@ export default function CategoryDetails() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood, deleteFood } = useFoods();
+  const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood } = useFoods();
   const { nutritionDisplayMode } = useAppStore();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
   const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
@@ -117,18 +117,7 @@ export default function CategoryDetails() {
     [id]
   );
 
-  // 檢查此食材是否被菜餚組合引用
-  const referencingRecipesCount = useLiveQuery(
-    async () => {
-      if (!id || !food) return 0;
-      return await db.recipes
-        .filter((r) => r.ingredients.some((ing) => ing.foodId === id))
-        .count();
-    },
-    [id]
-  );
 
-  const hasUsage = (foodLogs?.length ?? 0) > 0 || (referencingRecipesCount ?? 0) > 0;
 
   const handleToggleArchive = async () => {
     if (!food) return;
@@ -156,30 +145,6 @@ export default function CategoryDetails() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!food || hasUsage) return;
-    const ok = await confirm({
-      title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: formatFoodDisplayName(food) }),
-      variant: 'destructive',
-    });
-    if (ok) {
-      const res = await deleteFood(food.id);
-      if (!res.success) {
-        if (res.reason === 'has_logs') {
-          toast.show(t('settings.foodHasLogsCannotDelete'));
-        } else if (res.reason === 'has_recipes') {
-          toast.show(t('diet.foodHasRecipes', '已被菜餚引用'));
-        } else {
-          toast.show(t('common.error'));
-        }
-        return;
-      }
-      triggerHaptic('warning');
-      toast.show(t('common.deleted'));
-      navigate('/settings/foods');
-    }
-  };
 
   const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
 
@@ -218,24 +183,6 @@ export default function CategoryDetails() {
       {headerActionEl &&
         createPortal(
           <div className="flex items-center gap-0.5">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleDelete}
-              disabled={hasUsage}
-              className={cn(
-                "size-8 text-muted-foreground transition-colors",
-                hasUsage
-                  ? "opacity-30 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
-                  : "hover:text-destructive hover:bg-destructive-subtle cursor-pointer"
-              )}
-              title={hasUsage ? t('diet.foodHasUsageCannotDelete') : t('common.delete')}
-              aria-label={t('common.delete')}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-
             <Button
               type="button"
               variant="ghost"
@@ -376,7 +323,7 @@ export default function CategoryDetails() {
               <span className="font-bold text-foreground tabular-nums">
                 {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).size.toLocaleString()}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="text-xs font-normal text-muted-foreground">
                 {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).unit}
               </span>
             </div>
@@ -422,7 +369,7 @@ export default function CategoryDetails() {
           )}>
             <span className="text-carbs font-medium">{t('diet.carbs')}</span>
             <span className="font-mono text-carbs font-medium">
-              {scaledNutrition?.carbs ?? food.carbs} g
+              {scaledNutrition?.carbs ?? food.carbs}g
             </span>
           </div>
           <div className={cn(
@@ -431,7 +378,7 @@ export default function CategoryDetails() {
           )}>
             <span className="text-protein font-medium">{t('diet.protein')}</span>
             <span className="font-mono text-protein font-medium">
-              {scaledNutrition?.protein ?? food.protein} g
+              {scaledNutrition?.protein ?? food.protein}g
             </span>
           </div>
           <div className={cn(
@@ -440,7 +387,7 @@ export default function CategoryDetails() {
           )}>
             <span className="text-fat font-medium">{t('diet.fat')}</span>
             <span className="font-mono text-fat font-medium">
-              {scaledNutrition?.fat ?? food.fat} g
+              {scaledNutrition?.fat ?? food.fat}g
             </span>
           </div>
         </div>

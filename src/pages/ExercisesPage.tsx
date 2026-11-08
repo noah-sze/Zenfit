@@ -38,7 +38,7 @@ export default function ExercisesPage() {
     <div className="relative w-full">
       {/* 底層列表頁：恆定保活，0 卸載、0 重新查詢、0 滾動計算 */}
       <div className={cn(isDetailOpen && 'pointer-events-none select-none')}>
-        <Exercises />
+        <Exercises isDetailOpen={isDetailOpen} />
       </div>
 
       {/* 頂層詳情頁：覆蓋於列表頁上方，擁有獨立全屏滾動上下文 */}

@@ -59,10 +59,10 @@ export function WorkoutManagementBrowser({
   onExerciseClick,
   onRoutineClick,
   onEditEquipment,
-  onDeleteExercise,
-  onUnarchiveExercise,
-  onDeleteRoutine,
-  onUnarchiveRoutine,
+  onDeleteExercise: _onDeleteExercise,
+  onUnarchiveExercise: _onUnarchiveExercise,
+  onDeleteRoutine: _onDeleteRoutine,
+  onUnarchiveRoutine: _onUnarchiveRoutine,
   onArchiveEquipment,
   onUnarchiveEquipment,
   onDeleteEquipment,
@@ -419,31 +419,67 @@ export function WorkoutManagementBrowser({
           <div className="flex items-center justify-between gap-1.5 py-0.5 shrink-0">
             <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-1 shrink-0 pr-1">
-                {/* 全部膠囊 */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic('selection');
-                    setShowExerciseArchived(false);
-                    setSelectedMuscleGroup('all');
-                  }}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
-                    !showExerciseArchived && selectedMuscleGroup === 'all'
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-hover'
-                  )}
-                >
-                  {t('common.all', '全部')}
-                  <span
-                    className={cn(
-                      'ml-1 text-[10px] tabular-nums',
-                      !showExerciseArchived && selectedMuscleGroup === 'all' ? 'opacity-60' : 'opacity-45'
-                    )}
-                  >
-                    {activeExercises.length}
-                  </span>
-                </button>
+                {/* 狀態下拉膠囊：全部 vs 已歸檔 */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <button
+                        type="button"
+                        className={cn(
+                          'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
+                          showExerciseArchived || selectedMuscleGroup === 'all'
+                            ? 'bg-foreground text-background'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-hover'
+                        )}
+                      >
+                        <span>{showExerciseArchived ? t('common.archived', '已歸檔') : t('common.all', '全部')}</span>
+                        <span
+                          className={cn(
+                            'text-[10px] tabular-nums',
+                            showExerciseArchived || selectedMuscleGroup === 'all' ? 'opacity-60' : 'opacity-45'
+                          )}
+                        >
+                          {showExerciseArchived ? archivedExercises.length : activeExercises.length}
+                        </span>
+                        <ChevronDown className="size-3 opacity-60 shrink-0" />
+                      </button>
+                    }
+                  />
+                  <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setShowExerciseArchived(false);
+                        setSelectedMuscleGroup('all');
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        !showExerciseArchived && selectedMuscleGroup === 'all' && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{t('common.all', '全部')}</span>
+                      <span className="text-[10px] opacity-60 tabular-nums">
+                        {activeExercises.length}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setShowExerciseArchived(true);
+                        setSelectedMuscleGroup('all');
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        showExerciseArchived && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{t('common.archived', '已歸檔')}</span>
+                      <span className="text-[10px] opacity-60 tabular-nums">
+                        {archivedExercises.length}
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* 主肌群膠囊 */}
                 {MAJOR_MUSCLE_GROUPS.map((group) => {
@@ -459,7 +495,7 @@ export function WorkoutManagementBrowser({
                         setSelectedMuscleGroup(group.id);
                       }}
                       className={cn(
-                        'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
+                        'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
                         isSelected
                           ? 'bg-foreground text-background'
                           : 'text-muted-foreground hover:text-foreground hover:bg-hover'
@@ -477,32 +513,6 @@ export function WorkoutManagementBrowser({
                     </button>
                   );
                 })}
-
-                {/* 分隔線與已歸檔 */}
-                <div className="h-4 w-px bg-border/60 mx-0.5 shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic('selection');
-                    setShowExerciseArchived((prev) => !prev);
-                  }}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
-                    showExerciseArchived
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-hover'
-                  )}
-                >
-                  {t('common.archived', '已歸檔')}
-                  <span
-                    className={cn(
-                      'ml-1 text-[10px] tabular-nums',
-                      showExerciseArchived ? 'opacity-60' : 'opacity-45'
-                    )}
-                  >
-                    {archivedExercises.length}
-                  </span>
-                </button>
               </div>
             </div>
 
@@ -624,42 +634,7 @@ export function WorkoutManagementBrowser({
                         </div>
                       </div>
 
-                      {showExerciseArchived ? (
-                        <div className="flex items-center gap-1 shrink-0">
-                          {onUnarchiveExercise && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUnarchiveExercise(exercise);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                              title={t('common.restore')}
-                              aria-label={t('common.restore')}
-                            >
-                              <RotateCcw className="size-3.5" />
-                            </Button>
-                          )}
-                          {onDeleteExercise && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteExercise(exercise);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <ChevronRight className="size-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
-                      )}
+                      <ChevronRight className="size-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
                     </div>
                   );
                 })
@@ -695,57 +670,60 @@ export function WorkoutManagementBrowser({
             )}
           </div>
 
-          {/* 篩選列：左側「全部」與「已歸檔」膠囊 */}
+          {/* 篩選列：左側下拉膠囊整合「全部」與「已歸檔」 */}
           <div className="flex items-center justify-between gap-1.5 py-0.5 shrink-0">
             <div className="flex items-center gap-1 shrink-0 pr-1">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setShowRoutineArchived(false);
-                }}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
-                  !showRoutineArchived
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
-                )}
-              >
-                {t('common.all', '全部')}
-                <span
-                  className={cn(
-                    'ml-1 text-[10px] tabular-nums',
-                    !showRoutineArchived ? 'opacity-60' : 'opacity-45'
-                  )}
-                >
-                  {activeRoutines.length}
-                </span>
-              </button>
-
-              <div className="h-4 w-px bg-border/60 mx-0.5 shrink-0" />
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setShowRoutineArchived((prev) => !prev);
-                }}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
-                  showRoutineArchived
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
-                )}
-              >
-                {t('common.archived', '已歸檔')}
-                <span
-                  className={cn(
-                    'ml-1 text-[10px] tabular-nums',
-                    showRoutineArchived ? 'opacity-60' : 'opacity-45'
-                  )}
-                >
-                  {archivedRoutines.length}
-                </span>
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className={cn(
+                        'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
+                        'bg-foreground text-background'
+                      )}
+                    >
+                      <span>{showRoutineArchived ? t('common.archived', '已歸檔') : t('common.all', '全部')}</span>
+                      <span className="text-[10px] tabular-nums opacity-60">
+                        {showRoutineArchived ? archivedRoutines.length : activeRoutines.length}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60 shrink-0" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      setShowRoutineArchived(false);
+                    }}
+                    className={cn(
+                      'cursor-pointer flex items-center justify-between',
+                      !showRoutineArchived && 'font-semibold bg-muted'
+                    )}
+                  >
+                    <span>{t('common.all', '全部')}</span>
+                    <span className="text-[10px] opacity-60 tabular-nums">
+                      {activeRoutines.length}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      setShowRoutineArchived(true);
+                    }}
+                    className={cn(
+                      'cursor-pointer flex items-center justify-between',
+                      showRoutineArchived && 'font-semibold bg-muted'
+                    )}
+                  >
+                    <span>{t('common.archived', '已歸檔')}</span>
+                    <span className="text-[10px] opacity-60 tabular-nums">
+                      {archivedRoutines.length}
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -795,42 +773,7 @@ export function WorkoutManagementBrowser({
                         </div>
                       </div>
 
-                      {showRoutineArchived ? (
-                        <div className="flex items-center gap-1 shrink-0">
-                          {onUnarchiveRoutine && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUnarchiveRoutine(routine);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                              title={t('common.restore')}
-                              aria-label={t('common.restore')}
-                            >
-                              <RotateCcw className="size-3.5" />
-                            </Button>
-                          )}
-                          {onDeleteRoutine && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteRoutine(routine);
-                              }}
-                              className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                              title={t('common.delete')}
-                              aria-label={t('common.delete')}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <ChevronRight className="size-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
-                      )}
+                      <ChevronRight className="size-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
                     </div>
                   );
                 })
@@ -866,57 +809,60 @@ export function WorkoutManagementBrowser({
             )}
           </div>
 
-          {/* 篩選列：左側「全部」與「已歸檔」膠囊 */}
+          {/* 篩選列：左側下拉膠囊整合「全部」與「已歸檔」 */}
           <div className="flex items-center justify-between gap-1.5 py-0.5 shrink-0">
             <div className="flex items-center gap-1 shrink-0 pr-1">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setShowEquipmentArchived(false);
-                }}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
-                  !showEquipmentArchived
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
-                )}
-              >
-                {t('common.all', '全部')}
-                <span
-                  className={cn(
-                    'ml-1 text-[10px] tabular-nums',
-                    !showEquipmentArchived ? 'opacity-60' : 'opacity-45'
-                  )}
-                >
-                  {activeEquipments.length}
-                </span>
-              </button>
-
-              <div className="h-4 w-px bg-border/60 mx-0.5 shrink-0" />
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setShowEquipmentArchived((prev) => !prev);
-                }}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
-                  showEquipmentArchived
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-hover'
-                )}
-              >
-                {t('common.archived', '已歸檔')}
-                <span
-                  className={cn(
-                    'ml-1 text-[10px] tabular-nums',
-                    showEquipmentArchived ? 'opacity-60' : 'opacity-45'
-                  )}
-                >
-                  {archivedEquipments.length}
-                </span>
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className={cn(
+                        'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
+                        'bg-foreground text-background'
+                      )}
+                    >
+                      <span>{showEquipmentArchived ? t('common.archived', '已歸檔') : t('common.all', '全部')}</span>
+                      <span className="text-[10px] tabular-nums opacity-60">
+                        {showEquipmentArchived ? archivedEquipments.length : activeEquipments.length}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60 shrink-0" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      setShowEquipmentArchived(false);
+                    }}
+                    className={cn(
+                      'cursor-pointer flex items-center justify-between',
+                      !showEquipmentArchived && 'font-semibold bg-muted'
+                    )}
+                  >
+                    <span>{t('common.all', '全部')}</span>
+                    <span className="text-[10px] opacity-60 tabular-nums">
+                      {activeEquipments.length}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      setShowEquipmentArchived(true);
+                    }}
+                    className={cn(
+                      'cursor-pointer flex items-center justify-between',
+                      showEquipmentArchived && 'font-semibold bg-muted'
+                    )}
+                  >
+                    <span>{t('common.archived', '已歸檔')}</span>
+                    <span className="text-[10px] opacity-60 tabular-nums">
+                      {archivedEquipments.length}
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

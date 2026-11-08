@@ -13,7 +13,8 @@ import { kgToLbs, lbsToKg } from '@/utils/unitMath';
 import { findLastExerciseRecord } from '@/utils/workoutMath';
 import { db } from '@/services/db/db';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Dumbbell, ChevronRight } from 'lucide-react';
+import { Plus, Dumbbell, ChevronRight } from 'lucide-react';
+import { HoldToDeleteIconButton } from '@/components/ui/HoldToDeleteIconButton';
 import { cn } from '@/lib/utils';
 import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
 import { ExerciseSelectDialog, type ExerciseSelectMode } from '@/components/workout/ExerciseSelectDialog';
@@ -36,7 +37,6 @@ interface KeypadConfig {
   value: number;
   unit: string;
   allowDecimals: boolean;
-  anchorEl?: HTMLElement | null;
 }
 
 export default function Workout() {
@@ -294,14 +294,15 @@ export default function Workout() {
   const handleDeleteSet = async (
     workout: HydratedWorkoutLog,
     exerciseIndex: number,
-    setIndex: number
+    setIndex: number,
+    skipConfirm = false
   ) => {
     const exGroup = workout.exercises[exerciseIndex];
     if (!exGroup) return;
 
     // 若該動作只剩 1 組，刪除整個動作
     if (exGroup.sets.length <= 1) {
-      await handleDeleteExercise(workout, exerciseIndex);
+      await handleDeleteExercise(workout, exerciseIndex, skipConfirm);
       return;
     }
 
@@ -317,18 +318,25 @@ export default function Workout() {
 
     triggerHaptic('warning');
     await updateWorkout(workout.id, { exercises: nextExercises });
+    toast.show(t('common.deleted'));
   };
 
-  const handleDeleteExercise = async (workout: HydratedWorkoutLog, exerciseIndex: number) => {
+  const handleDeleteExercise = async (
+    workout: HydratedWorkoutLog,
+    exerciseIndex: number,
+    skipConfirm = false
+  ) => {
     const exGroup = workout.exercises[exerciseIndex];
     if (!exGroup) return;
 
-    const ok = await confirm({
-      title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: exGroup.exerciseName }),
-      variant: 'destructive',
-    });
-    if (!ok) return;
+    if (!skipConfirm) {
+      const ok = await confirm({
+        title: t('common.delete'),
+        description: t('common.confirmDeleteItem', { name: exGroup.exerciseName }),
+        variant: 'destructive',
+      });
+      if (!ok) return;
+    }
 
     // 若該動作為該訓練中最後一項，直接刪除整筆訓練
     if (workout.exercises.length <= 1) {
@@ -344,13 +352,15 @@ export default function Workout() {
     toast.show(t('common.deleted'));
   };
 
-  const handleDeleteWorkout = async (workout: HydratedWorkoutLog) => {
-    const ok = await confirm({
-      title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: workout.title }),
-      variant: 'destructive',
-    });
-    if (!ok) return;
+  const handleDeleteWorkout = async (workout: HydratedWorkoutLog, skipConfirm = false) => {
+    if (!skipConfirm) {
+      const ok = await confirm({
+        title: t('common.delete'),
+        description: t('common.confirmDeleteItem', { name: workout.title }),
+        variant: 'destructive',
+      });
+      if (!ok) return;
+    }
 
     triggerHaptic('warning');
     await deleteWorkout(workout.id);
@@ -366,8 +376,7 @@ export default function Workout() {
     setIndex: number,
     field: 'weight' | 'reps',
     currentVal: number,
-    exName: string,
-    anchorEl?: HTMLElement
+    exName: string
   ) => {
     triggerHaptic('light');
     const displayVal =
@@ -384,7 +393,6 @@ export default function Workout() {
       value: displayVal,
       unit: field === 'weight' ? bodyWeightUnit : t('common.times', '次'),
       allowDecimals: field === 'weight',
-      anchorEl,
     });
   };
 
@@ -442,10 +450,10 @@ export default function Workout() {
     return (
       <div
         key={`${workout.id}-${group.exerciseId}-${exIdx}`}
-        className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden"
+        className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-visible"
       >
         {/* 灰底表頭橫欄 (單行 40px 高度：動作名稱 · 組數 · 容量) */}
-        <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
+        <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
           <div className="flex items-center gap-1.5 min-w-0">
             {group.exerciseId ? (
               <Link
@@ -470,15 +478,11 @@ export default function Workout() {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => handleDeleteExercise(workout, exIdx)}
-              className="size-7 flex items-center justify-center rounded-full hover:bg-hover text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+            <HoldToDeleteIconButton
+              onConfirm={() => handleDeleteExercise(workout, exIdx, true)}
               title={t('common.delete', '刪除')}
               aria-label={t('common.delete', '刪除')}
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+            />
           </div>
         </div>
 
@@ -505,22 +509,21 @@ export default function Workout() {
                   {/* 重量膠囊 (固定寬度 78px，內部數字右對齊，未填入時顯示 - kg，保證多組垂直對齊) */}
                   <button
                     type="button"
-                    onClick={(e) =>
+                    onClick={() =>
                       handleOpenKeypad(
                         workout.id,
                         exIdx,
                         setIdx,
                         'weight',
                         set.weight || 0,
-                        group.exerciseName || '',
-                        e.currentTarget
+                        group.exerciseName || ''
                       )
                     }
                     className="h-7 w-[78px] px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                   >
                     <span
                       className={cn(
-                        'font-bold tabular-nums min-w-[20px] text-right',
+                        'tabular-nums min-w-[20px] text-right',
                         hasWeight ? 'text-foreground' : 'text-muted-foreground'
                       )}
                     >
@@ -539,22 +542,21 @@ export default function Workout() {
                   {/* 次數膠囊 (固定寬度 70px，內部數字右對齊，未填入時顯示 - 次，保證多組垂直對齊) */}
                   <button
                     type="button"
-                    onClick={(e) =>
+                    onClick={() =>
                       handleOpenKeypad(
                         workout.id,
                         exIdx,
                         setIdx,
                         'reps',
                         set.reps || 0,
-                        group.exerciseName || '',
-                        e.currentTarget
+                        group.exerciseName || ''
                       )
                     }
                     className="h-7 w-[70px] px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                   >
                     <span
                       className={cn(
-                        'font-bold tabular-nums min-w-[14px] text-right',
+                        'tabular-nums min-w-[14px] text-right',
                         typeof set.reps === 'number' && set.reps > 0
                           ? 'text-foreground'
                           : 'text-muted-foreground'
@@ -569,24 +571,13 @@ export default function Workout() {
                     </span>
                     <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
                   </button>
-
-                  {/* 刪除組 */}
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSet(workout, exIdx, setIdx)}
-                    className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-hover transition-colors cursor-pointer shrink-0"
-                    title={t('common.delete')}
-                    aria-label={t('common.delete')}
-                  >
-                    <Trash2 className="size-3" />
-                  </button>
                 </div>
               </div>
             );
           })}
 
           {/* 動作底部快速增加一組按鈕 */}
-          <div className="py-1.5 px-3.5 sm:px-4 flex justify-center bg-card/60">
+          <div className="py-1.5 px-3.5 sm:px-4 flex justify-center bg-card/60 rounded-b-lg">
             <button
               type="button"
               onClick={() => handleAddSet(workout, exIdx)}
@@ -641,10 +632,10 @@ export default function Workout() {
                 return (
                   <div
                     key={workout.id}
-                    className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden"
+                    className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-visible"
                   >
                     {/* 組合專屬大卡片表頭 (40px 高度) */}
-                    <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
+                    <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {workout.routineId ? (
                           <Link
@@ -683,20 +674,16 @@ export default function Workout() {
                           <Plus className="size-4" />
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteWorkout(workout)}
-                          className="size-7 flex items-center justify-center rounded-full hover:bg-hover text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                        <HoldToDeleteIconButton
+                          onConfirm={() => handleDeleteWorkout(workout, true)}
                           title={t('common.delete', '刪除')}
                           aria-label={t('common.delete', '刪除')}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
+                        />
                       </div>
                     </div>
 
                     {/* 較大卡片內部容器：收納組合內的所有動作表 */}
-                    <div className="p-3 sm:p-4 space-y-3 bg-muted/10">
+                    <div className="p-3 sm:p-4 space-y-3 bg-muted/10 rounded-b-lg">
                       {workout.exercises.map((group, exIdx) =>
                         renderExerciseTable(workout, group, exIdx)
                       )}
@@ -782,22 +769,39 @@ export default function Workout() {
       />
 
       {/* 2. 數字鍵盤微調彈窗 (微調組數重量與次數) */}
-      {keypadConfig && (
-        <NumericKeypadDialog
-          open={!!keypadConfig}
-          onOpenChange={(kOpen) => {
-            if (!kOpen) setKeypadConfig(null);
-          }}
-          title={keypadConfig.title}
-          value={keypadConfig.value}
-          unit={keypadConfig.unit}
-          allowDecimals={keypadConfig.allowDecimals}
-          maxDecimals={keypadConfig.allowDecimals ? 1 : 0}
-          anchorEl={keypadConfig.anchorEl}
-          onConfirm={handleKeypadConfirm}
-          onCancel={() => setKeypadConfig(null)}
-        />
-      )}
+      {keypadConfig && (() => {
+        const { workoutId, exerciseIndex, setIndex } = keypadConfig;
+        const targetWorkout = workouts.find((w) => w.id === workoutId);
+        const currentExercise = targetWorkout?.exercises[exerciseIndex];
+        const canDelete = Boolean(currentExercise && currentExercise.sets.length > 1);
+
+        return (
+          <NumericKeypadDialog
+            open={!!keypadConfig}
+            onOpenChange={(kOpen) => {
+              if (!kOpen) setKeypadConfig(null);
+            }}
+            title={keypadConfig.title}
+            value={keypadConfig.value}
+            unit={keypadConfig.unit}
+            allowDecimals={keypadConfig.allowDecimals}
+            maxDecimals={keypadConfig.allowDecimals ? 1 : 0}
+            onConfirm={handleKeypadConfirm}
+            onCancel={() => setKeypadConfig(null)}
+            onDelete={
+              canDelete
+                ? () => {
+                    if (targetWorkout) {
+                      handleDeleteSet(targetWorkout, exerciseIndex, setIndex, true);
+                    }
+                    setKeypadConfig(null);
+                  }
+                : undefined
+            }
+            deleteText={t('workout.deleteSet', '刪除該組')}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -247,12 +247,12 @@ export function IntakeFootprintHeatmap({
                     title={
                       getTooltipText
                         ? getTooltipText(item)
-                        : `${item.date}: ${item.count} ${t('common.times')} ${item.grams} g`
+                        : `${item.date}: ${item.count} ${t('common.times')} ${item.grams}g`
                     }
                     aria-label={
                       getTooltipText
                         ? getTooltipText(item)
-                        : `${item.date}: ${item.count} ${t('common.times')} ${item.grams} g`
+                        : `${item.date}: ${item.count} ${t('common.times')} ${item.grams}g`
                     }
                   />
                 );
@@ -283,7 +283,7 @@ export function IntakeFootprintHeatmap({
             </span>
             <span className="text-border mx-1.5 select-none">·</span>
             <span className={selectedCellData.count === 0 ? "text-muted-foreground" : "text-foreground"}>
-              {selectedCellData.grams} g
+              {selectedCellData.grams}g
             </span>
           </div>
         )}

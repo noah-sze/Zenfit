@@ -190,7 +190,10 @@
         "fat-source": "Fat Source",
         "low-calorie": "Low Calorie",
         "high-calorie": "High Calorie"
-      }
+      },
+      "servingUnit": "serving",
+      "servingCount_one": "1 serving",
+      "servingCount_other": "{{count}} servings"
     },
     "dietPlan": {
       "title": "Macro Split",
@@ -255,6 +258,7 @@
       "completed": "Done",
       "restTimer": "Rest Timer",
       "addSet": "Add Set",
+      "deleteSet": "Delete Set",
       "duration": "Duration",
       "totalVolume": "Total Volume",
       "chest": "Chest",
@@ -527,7 +531,6 @@
       "metricsCalculation": "Constants",
       "bmr": "Basal Metabolic Rate (BMR)",
       "bmi": "Body Mass Index (BMI)",
-      "whoStandard": "Standard 18.5 - 24.9",
       "saved": "Saved",
       "save": "Save"
     },
@@ -765,7 +768,6 @@
       "formula": "Mifflin-St Jeor",
       "bmi": "Body Mass Index (BMI)",
       "bmr": "Basal Metabolic Rate (BMR)",
-      "whoStandard": "Standard 18.5 - 24.9",
       "name": "Name",
       "namePlaceholder": "Enter name",
       "gender": "Gender",

@@ -355,7 +355,7 @@ export default function Diet() {
               {t('dietPlan.carbsShort')}
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground">
+              <span className="font-normal text-foreground">
                 {Math.round(totals.carbs)}g
               </span>
               <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
@@ -383,7 +383,7 @@ export default function Diet() {
               {t('dietPlan.proteinShort')}
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground">
+              <span className="font-normal text-foreground">
                 {Math.round(totals.protein)}g
               </span>
               <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
@@ -411,7 +411,7 @@ export default function Diet() {
               {t('dietPlan.fatShort')}
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground">
+              <span className="font-normal text-foreground">
                 {Math.round(totals.fat)}g
               </span>
               <span className="text-2xs sm:text-xs font-normal text-muted-foreground">

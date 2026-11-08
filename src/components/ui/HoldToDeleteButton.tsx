@@ -15,14 +15,14 @@ interface HoldToDeleteButtonProps {
 /**
  * 防誤觸長按刪除按鈕 (Hold to Delete Button)
  * - 方案 1：全背景蓄力充能 (Full Fill Gauge)
- * - 預設蓄力時長：1 秒 (1000ms)
+ * - 預設蓄力時長：0.5 秒 (500ms)
  * - 純粹極簡文案：「刪除」
- * - 輕點安全無效，隨時鬆開平滑撤銷，滿 1 秒震動並確認執行
+ * - 輕點安全無效，隨時鬆開平滑撤銷，滿 0.5 秒震動並確認執行
  */
 export function HoldToDeleteButton({
   onConfirm,
   disabled = false,
-  durationMs = 1000, // 1 秒 (1s)
+  durationMs = 500, // 0.5 秒 (500ms) 全站統一契約
   className,
   text,
 }: HoldToDeleteButtonProps) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, ChevronRight } from 'lucide-react';
 import {
   Dialog,
   PrecisionDialogContent,
@@ -350,7 +350,7 @@ export function EditRecipeLogDialog({
                   <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
                     {t('diet.macroMicro.carbs', '碳')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{Math.round(totals.carbs * 10) / 10}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -361,7 +361,7 @@ export function EditRecipeLogDialog({
                   <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
                     {t('diet.macroMicro.protein', '蛋')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-protein mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{Math.round(totals.protein * 10) / 10}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -372,7 +372,7 @@ export function EditRecipeLogDialog({
                   <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
                     {t('diet.macroMicro.fat', '脂')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-medium text-fat mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{Math.round(totals.fat * 10) / 10}</span>
                     <span className="text-[9px] font-normal opacity-75">g</span>
                   </div>
@@ -422,45 +422,29 @@ export function EditRecipeLogDialog({
                       <div className="truncate">{item.foodName}</div>
                     </button>
 
-                    {/* 右側：常用數字輸入框膠囊 + 移除按鈕 */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
-                        className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
-                      >
-                        <span className="font-bold text-foreground">
-                          {formatDisplayAmount(String(item.quantity)) || '0'}
-                        </span>
-                        <span className="text-muted-foreground text-[11px]">
-                          {item.unit}
-                        </span>
-                        <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                      </button>
-
-                      {/* 移除按鈕 (超過 1 項時允許移除) */}
-                      {ingredients.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveIngredient(index)}
-                          className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-hover transition-colors cursor-pointer shrink-0"
-                          title={t('common.delete')}
-                          aria-label={t('common.delete')}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    {/* 右側：常用數字輸入框膠囊 */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
+                      className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
+                    >
+                      <span className="font-bold text-foreground">
+                        {formatDisplayAmount(String(item.quantity)) || '0'}
+                      </span>
+                      <span className="text-muted-foreground text-[11px]">
+                        {item.unit}
+                      </span>
+                      <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 底部破壞性按鈕 (長按 1s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
+            {/* 底部破壞性按鈕 (長按 0.5s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
             <HoldToDeleteButton
               onConfirm={handleDeleteAll}
               disabled={isSubmitting}
-              durationMs={1000}
               text={t('common.delete', '刪除')}
               className="shrink-0"
             />
@@ -481,6 +465,11 @@ export function EditRecipeLogDialog({
           allowDecimals={true}
           maxDecimals={2}
           anchorEl={keypadConfig.anchorEl}
+          onDelete={ingredients.length > 1 ? () => {
+            const idx = keypadConfig.index;
+            setKeypadConfig(null);
+            handleRemoveIngredient(idx);
+          } : undefined}
           onLiveChange={handleKeypadLiveChange}
           onConfirm={handleKeypadConfirm}
           onCancel={handleKeypadCancel}

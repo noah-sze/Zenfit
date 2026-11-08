@@ -217,15 +217,8 @@ export default function ProfileSettings() {
             <div className="text-[10px] font-medium text-muted-foreground truncate">
               {t('welcome.bmi', '身體質量指數 (BMI)')}
             </div>
-            <div className="text-base sm:text-lg font-bold text-foreground font-mono leading-tight">
+            <div className="text-base sm:text-lg font-bold text-foreground font-mono leading-none">
               {currentBMI > 0 ? currentBMI : '-'}
-            </div>
-            <div className="text-[10px] text-muted-foreground font-mono leading-tight truncate">
-              {currentBMI > 0 ? (
-                t('welcome.whoStandard', '標準 18.5 - 24.9')
-              ) : (
-                <span className="invisible select-none">-</span>
-              )}
             </div>
           </div>
 
@@ -234,14 +227,14 @@ export default function ProfileSettings() {
             <div className="text-[10px] font-medium text-muted-foreground truncate">
               {t('welcome.bmr', '靜態基礎代謝 (BMR)')}
             </div>
-            <div className="text-base sm:text-lg font-bold text-foreground font-mono leading-tight">
-              {currentBMR > 0 ? currentBMR : '-'}
-            </div>
-            <div className="text-[10px] text-muted-foreground font-mono leading-tight truncate">
-              {currentBMR > 0 ? (
-                'kcal/day'
-              ) : (
-                <span className="invisible select-none">-</span>
+            <div className="flex items-baseline gap-1 text-foreground font-mono leading-none">
+              <span className="text-base sm:text-lg font-bold">
+                {currentBMR > 0 ? currentBMR : '-'}
+              </span>
+              {currentBMR > 0 && (
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  kcal/day
+                </span>
               )}
             </div>
           </div>

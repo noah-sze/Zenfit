@@ -21,7 +21,7 @@ import {
 } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { formatDisplayAmount } from '@/lib/utils';
-import { ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 
 export type RecipeFormData = Omit<
   FoodRecipe,
@@ -497,34 +497,20 @@ export function RecipeFormDialog({
                           <div className="truncate">{item.foodName}</div>
                         </button>
 
-                        {/* 右側：用量膠囊 + 移除按鈕 */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {/* 數量微調按鈕 (點擊喚起懸浮數字鍵盤) */}
-                          <button
-                            type="button"
-                            onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
-                            className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
-                          >
-                            <span className="font-bold text-foreground">
-                              {formatDisplayAmount(item.quantity) || '-'}
-                            </span>
-                            <span className="text-muted-foreground text-[11px]">
-                              {item.unit}
-                            </span>
-                            <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                          </button>
-
-                          {/* 移除按鈕 */}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveIngredient(index)}
-                            className="size-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-muted/40 transition-colors cursor-pointer shrink-0"
-                            title={t('common.delete')}
-                            aria-label={t('common.delete')}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
-                        </div>
+                        {/* 右側：用量膠囊 (點擊喚起懸浮數字鍵盤) */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
+                          className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
+                        >
+                          <span className="font-bold text-foreground">
+                            {formatDisplayAmount(item.quantity) || '-'}
+                          </span>
+                          <span className="text-muted-foreground text-[11px]">
+                            {item.unit}
+                          </span>
+                          <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                        </button>
                       </div>
                     ))
                   )}
@@ -550,6 +536,11 @@ export function RecipeFormDialog({
           allowDecimals={true}
           maxDecimals={2}
           anchorEl={keypadConfig.anchorEl}
+          onDelete={ingredients.length > 1 ? () => {
+            const idx = keypadConfig.index;
+            setKeypadConfig(null);
+            handleRemoveIngredient(idx);
+          } : undefined}
           onLiveChange={handleKeypadLiveChange}
           onConfirm={handleKeypadConfirm}
           onCancel={handleKeypadCancel}

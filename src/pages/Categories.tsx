@@ -15,7 +15,11 @@ import { RecipeFormDialog, type RecipeFormData } from '@/components/food/RecipeF
 import { FoodRecipeBrowser } from '@/components/food/FoodRecipeBrowser';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 
-export default function Categories() {
+interface CategoriesProps {
+  isDetailOpen?: boolean;
+}
+
+export default function Categories({ isDetailOpen = false }: CategoriesProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -129,7 +133,7 @@ export default function Categories() {
   return (
     <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部操作按鈕 (Portal 映射至 AppLayout 頂部標頭右側，依當前 Tab 動態映射) */}
-      {headerActionEl &&
+      {headerActionEl && !isDetailOpen &&
         createPortal(
           <Button
             size="icon"

@@ -190,7 +190,9 @@
         "fat-source": "脂質來源",
         "low-calorie": "低熱量",
         "high-calorie": "高熱量"
-      }
+      },
+      "servingUnit": "份",
+      "servingCount": "{{count}} 份"
     },
     "dietPlan": {
       "title": "供能比",
@@ -255,6 +257,7 @@
       "completed": "完成",
       "restTimer": "休息計時",
       "addSet": "增加一組",
+      "deleteSet": "刪除該組",
       "duration": "訓練時長",
       "totalVolume": "總容量",
       "chest": "胸部",
@@ -527,7 +530,6 @@
       "metricsCalculation": "生理常數",
       "bmr": "靜態基礎代謝 (BMR)",
       "bmi": "身體質量指數 (BMI)",
-      "whoStandard": "標準 18.5 - 24.9",
       "saved": "已儲存",
       "save": "儲存"
     },
@@ -765,7 +767,6 @@
       "formula": "Mifflin-St Jeor",
       "bmi": "身體質量指數 (BMI)",
       "bmr": "靜態基礎代謝 (BMR)",
-      "whoStandard": "標準 18.5 - 24.9",
       "name": "姓名",
       "namePlaceholder": "請輸入姓名",
       "gender": "性別",
