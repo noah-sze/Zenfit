@@ -4,7 +4,7 @@ import type { WorkoutTab } from '@/components/workout/WorkoutManagementBrowser';
 
 export interface FoodBrowserState {
   activeTab: 'foods' | 'recipes';
-  selectedCategory: 'all' | FoodCategory;
+  selectedCategory: 'recent' | 'all' | FoodCategory;
   selectedNutritionTag: 'all' | NutritionTag;
   foodSearchQuery: string;
   showFoodArchived: boolean;

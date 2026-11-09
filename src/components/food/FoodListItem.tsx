@@ -3,39 +3,47 @@ import { useTranslation } from 'react-i18next';
 import { RefreshCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MacroSquares } from '@/components/food/MacroSquares';
-import type { FoodItem } from '@/types';
+import type { FoodItem, FoodWeightUnit, FoodVolumeUnit, EnergyUnit } from '@/types';
+import type { NutritionDisplayMode } from '@/utils/nutritionMath';
 import { cn } from '@/lib/utils';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
-import { useAppStore } from '@/store/useAppStore';
-import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 
 export interface FoodListItemProps {
   food: FoodItem;
-  onClick?: () => void;
+  onClick?: (food: FoodItem) => void;
+  onSelect?: (food: FoodItem) => void;
   disabled?: boolean;
   selected?: boolean;
   showActions?: boolean;
   onRestore?: () => void;
   onDelete?: () => void;
   className?: string;
+  /** 單位與數值偏好注入（由父層統一傳遞，避免 40+ 個清單實例重複調用 Hook 訂閱） */
+  nutritionDisplayMode?: NutritionDisplayMode;
+  foodWeightUnit?: FoodWeightUnit;
+  foodVolumeUnit?: FoodVolumeUnit;
+  energyUnit?: EnergyUnit;
 }
 
 export const FoodListItem = React.memo(function FoodListItem({
   food,
   onClick,
+  onSelect,
   disabled = false,
   selected = false,
   showActions = false,
   onRestore,
   onDelete,
   className,
+  nutritionDisplayMode = 'serving',
+  foodWeightUnit = 'g',
+  foodVolumeUnit = 'ml',
+  energyUnit = 'kcal',
 }: FoodListItemProps) {
   const { t } = useTranslation();
-  const { nutritionDisplayMode } = useAppStore();
-  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   const evalRes = evaluateNutritionalHighlight(food);
   const isLowCalorie = evalRes.labels.includes('low-calorie');
@@ -61,7 +69,11 @@ export const FoodListItem = React.memo(function FoodListItem({
       e.preventDefault();
       return;
     }
-    onClick?.();
+    if (onSelect) {
+      onSelect(food);
+    } else if (onClick) {
+      onClick(food);
+    }
   };
 
   return (
@@ -73,80 +85,81 @@ export const FoodListItem = React.memo(function FoodListItem({
           ? 'opacity-40 select-none bg-muted/10 cursor-not-allowed'
           : selected
           ? 'bg-muted/70 ring-1 ring-inset ring-foreground/25 cursor-pointer'
-          : 'group hover:bg-hover cursor-pointer',
+          : 'hover:bg-hover active:bg-muted/50 cursor-pointer',
         className
       )}
     >
-      {/* 左側：品名與副標題規格 */}
-      <button
-        type="button"
-        disabled={disabled}
-        className={cn(
-          'flex-1 text-left min-w-0 pr-3 select-none outline-none',
-          disabled ? 'cursor-not-allowed pointer-events-none' : 'cursor-pointer'
-        )}
-        onClick={handleClick}
-      >
-        <div className="truncate text-foreground font-medium text-sm">
-          {formatFoodDisplayName(food)}
+      {/* 左側：食物資訊 */}
+      <div className="space-y-1 pr-3 flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-foreground text-sm tracking-tight truncate">
+            {formatFoodDisplayName(food)}
+          </span>
+          {food.brand && (
+            <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded shrink-0">
+              {food.brand}
+            </span>
+          )}
         </div>
 
-        <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
           <span>{displayServing.formatted}</span>
-          <span className="opacity-40">·</span>
+          <span className="text-muted-foreground/40">·</span>
           <span
             className={cn(
-              isLowCalorie &&
-                'text-emerald-500 px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20',
-              isHighCalorie &&
-                'text-rose-500 px-1 py-0.5 rounded bg-rose-500/10 border border-rose-500/20'
+              'tabular-nums px-1.5 py-0.5 rounded text-[11px] font-mono',
+              isLowCalorie && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium',
+              isHighCalorie && 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium',
+              !isLowCalorie && !isHighCalorie && 'text-muted-foreground'
             )}
           >
             {displayCal.formatted}
           </span>
         </div>
-      </button>
+      </div>
 
-      {/* 右側：獨立 3 列營養素矩陣 */}
-      <MacroSquares
-        protein={scaledNutrition.protein}
-        carbs={scaledNutrition.carbs}
-        fat={scaledNutrition.fat}
-        highlights={evalRes.highlights}
-      />
+      {/* 右側：營養素方塊矩陣與操作 */}
+      <div className="flex items-center gap-3 shrink-0">
+        <MacroSquares
+          carbs={scaledNutrition.carbs}
+          protein={scaledNutrition.protein}
+          fat={scaledNutrition.fat}
+          highlights={evalRes.highlights}
+        />
 
-      {/* 僅在歸檔模式且啟用時顯示恢復/刪除按鈕 */}
-      {showActions && (
-        <div
-          className="flex items-center gap-0.5 shrink-0 pl-1.5"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {onRestore && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
-              onClick={onRestore}
-              title={t('common.restore')}
-              aria-label={t('common.restore')}
-            >
-              <RefreshCcw className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-              onClick={onDelete}
-              title={t('common.delete')}
-              aria-label={t('common.delete')}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      )}
+        {showActions && (
+          <div className="flex items-center gap-1 border-l border-border pl-3">
+            {onRestore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRestore();
+                }}
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                title={t('settings.unarchive')}
+              >
+                <RefreshCcw className="size-3.5" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive"
+                title={t('common.delete')}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

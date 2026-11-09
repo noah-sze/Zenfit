@@ -3,13 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { RefreshCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MacroSquares } from '@/components/food/MacroSquares';
-import type { FoodRecipe } from '@/types';
+import type { FoodRecipe, FoodWeightUnit, FoodVolumeUnit, EnergyUnit } from '@/types';
+import type { NutritionDisplayMode } from '@/utils/nutritionMath';
 import { cn } from '@/lib/utils';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
-import { useAppStore } from '@/store/useAppStore';
-import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 
 export interface RecipeListItemProps {
   recipe: FoodRecipe;
@@ -20,29 +19,37 @@ export interface RecipeListItemProps {
     fat: number;
     totalWeightGrams: number;
   };
-  onClick?: () => void;
+  onClick?: (recipe: FoodRecipe) => void;
+  onSelect?: (recipe: FoodRecipe) => void;
   disabled?: boolean;
   selected?: boolean;
   showActions?: boolean;
   onRestore?: () => void;
   onDelete?: () => void;
   className?: string;
+  nutritionDisplayMode?: NutritionDisplayMode;
+  foodWeightUnit?: FoodWeightUnit;
+  foodVolumeUnit?: FoodVolumeUnit;
+  energyUnit?: EnergyUnit;
 }
 
 export const RecipeListItem = React.memo(function RecipeListItem({
   recipe,
   macros,
   onClick,
+  onSelect,
   disabled = false,
   selected = false,
   showActions = false,
   onRestore,
   onDelete,
   className,
+  nutritionDisplayMode = 'serving',
+  foodWeightUnit = 'g',
+  foodVolumeUnit = 'ml',
+  energyUnit = 'kcal',
 }: RecipeListItemProps) {
   const { t } = useTranslation();
-  const { nutritionDisplayMode } = useAppStore();
-  const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   const evalRes = evaluateNutritionalHighlight({
     calories: macros.calories,
@@ -77,7 +84,11 @@ export const RecipeListItem = React.memo(function RecipeListItem({
       e.preventDefault();
       return;
     }
-    onClick?.();
+    if (onSelect) {
+      onSelect(recipe);
+    } else if (onClick) {
+      onClick(recipe);
+    }
   };
 
   return (
@@ -120,13 +131,13 @@ export const RecipeListItem = React.memo(function RecipeListItem({
                   ).formatted
                 }
               </span>
-              <span className="opacity-40">·</span>
+              <span className="text-muted-foreground/40">·</span>
               <span
                 className={cn(
-                  isLowCalorie &&
-                    'text-emerald-500 px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20',
-                  isHighCalorie &&
-                    'text-rose-500 px-1 py-0.5 rounded bg-rose-500/10 border border-rose-500/20'
+                  'tabular-nums px-1.5 py-0.5 rounded text-[11px] font-mono',
+                  isLowCalorie && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium',
+                  isHighCalorie && 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium',
+                  !isLowCalorie && !isHighCalorie && 'text-muted-foreground'
                 )}
               >
                 {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
@@ -135,64 +146,68 @@ export const RecipeListItem = React.memo(function RecipeListItem({
           ) : (
             <>
               <span>
-                {t('diet.ingredientsCount', { count: recipe.ingredients.length })}
+                {t('diet.itemsCount', {
+                  count: recipe.ingredients ? recipe.ingredients.length : 0,
+                })}
               </span>
-              <span className="opacity-40">·</span>
+              <span className="text-muted-foreground/40">·</span>
               <span
                 className={cn(
-                  isLowCalorie &&
-                    'text-emerald-500 px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20',
-                  isHighCalorie &&
-                    'text-rose-500 px-1 py-0.5 rounded bg-rose-500/10 border border-rose-500/20'
+                  'tabular-nums px-1.5 py-0.5 rounded text-[11px] font-mono',
+                  isLowCalorie && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium',
+                  isHighCalorie && 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium',
+                  !isLowCalorie && !isHighCalorie && 'text-muted-foreground'
                 )}
               >
-                {formatEnergy(macros.calories, energyUnit).formatted}
+                {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
               </span>
             </>
           )}
         </div>
       </button>
 
-      {/* 右側：P / C / F 三列方塊矩陣 */}
-      <MacroSquares
-        protein={scaledRecipeMacros.protein}
-        carbs={scaledRecipeMacros.carbs}
-        fat={scaledRecipeMacros.fat}
-        highlights={evalRes.highlights}
-      />
+      {/* 右側：營養素方塊矩陣與管理按鈕 */}
+      <div className="flex items-center gap-3 shrink-0">
+        <MacroSquares
+          carbs={scaledRecipeMacros.carbs}
+          protein={scaledRecipeMacros.protein}
+          fat={scaledRecipeMacros.fat}
+          highlights={evalRes.highlights}
+        />
 
-      {/* 僅在歸檔模式且啟用時顯示恢復/刪除按鈕 */}
-      {showActions && (
-        <div
-          className="flex items-center gap-0.5 shrink-0 pl-1.5"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {onRestore && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-primary opacity-90 hover:opacity-100 cursor-pointer"
-              onClick={onRestore}
-              title={t('common.restore')}
-              aria-label={t('common.restore')}
-            >
-              <RefreshCcw className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-              onClick={onDelete}
-              title={t('common.delete')}
-              aria-label={t('common.delete')}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      )}
+        {showActions && (
+          <div className="flex items-center gap-1 border-l border-border pl-3">
+            {onRestore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRestore();
+                }}
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                title={t('settings.unarchive')}
+              >
+                <RefreshCcw className="size-3.5" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive"
+                title={t('common.delete')}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

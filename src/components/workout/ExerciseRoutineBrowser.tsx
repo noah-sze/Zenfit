@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, ChevronRight, X } from 'lucide-react';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
+import { useRecentExercises } from '@/hooks/useRecentExercises';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
 import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
@@ -84,15 +85,38 @@ export function ExerciseRoutineBrowser({
     }
   };
 
+  // 最近訓練動作提取
+  const { recentExerciseIds, recentRoutineIds } = useRecentExercises();
+  const recentExerciseIdSet = useMemo(() => new Set(recentExerciseIds), [recentExerciseIds]);
+
+
+  const recentExerciseOrderMap = useMemo(() => {
+    const map = new Map<string, number>();
+    recentExerciseIds.forEach((id, idx) => map.set(id, idx));
+    return map;
+  }, [recentExerciseIds]);
+
+  const recentRoutineOrderMap = useMemo(() => {
+    const map = new Map<string, number>();
+    recentRoutineIds.forEach((id, idx) => map.set(id, idx));
+    return map;
+  }, [recentRoutineIds]);
+
+  const recentExercisesCount = useMemo(() => {
+    return activeExercises.filter((e) => recentExerciseIdSet.has(e.id)).length;
+  }, [activeExercises, recentExerciseIdSet]);
+
   // 動作過濾狀態
   const [exerciseSearchQuery, setExerciseSearchQuery] = useState('');
-  const [selectedMuscleFilter, setSelectedMuscleFilter] = useState<string>('all');
+  const [selectedMuscleFilter, setSelectedMuscleFilter] = useState<string>('recent');
 
   const filteredExercises = useMemo(() => {
     let list = activeExercises;
 
-    // 1. 部位過濾
-    if (selectedMuscleFilter !== 'all') {
+    // 1. 部位過濾 / 最近過濾
+    if (selectedMuscleFilter === 'recent') {
+      list = list.filter((ex) => recentExerciseIdSet.has(ex.id));
+    } else if (selectedMuscleFilter !== 'all') {
       const targetGroup = MAJOR_MUSCLE_GROUPS.find((g) => g.id === selectedMuscleFilter);
       if (targetGroup) {
         list = list.filter((ex) => {
@@ -114,8 +138,17 @@ export function ExerciseRoutineBrowser({
       );
     }
 
+    // 3. 排序：若為「最近」，嚴格依據最後訓練時間順序（從新到舊）！
+    if (selectedMuscleFilter === 'recent') {
+      return list.slice().sort((a, b) => {
+        const orderA = recentExerciseOrderMap.get(a.id) ?? 999999;
+        const orderB = recentExerciseOrderMap.get(b.id) ?? 999999;
+        return orderA - orderB;
+      });
+    }
+
     return list;
-  }, [activeExercises, selectedMuscleFilter, exerciseSearchQuery]);
+  }, [activeExercises, selectedMuscleFilter, exerciseSearchQuery, recentExerciseIdSet, recentExerciseOrderMap]);
 
   // 組合過濾狀態
   const [routineSearchQuery, setRoutineSearchQuery] = useState('');
@@ -130,26 +163,33 @@ export function ExerciseRoutineBrowser({
           (r.notes && r.notes.toLowerCase().includes(query))
       );
     }
+    if (recentRoutineIds.length > 0) {
+      return list.slice().sort((a, b) => {
+        const orderA = recentRoutineOrderMap.get(a.id) ?? 999999;
+        const orderB = recentRoutineOrderMap.get(b.id) ?? 999999;
+        return orderA - orderB;
+      });
+    }
     return list;
-  }, [activeRoutines, routineSearchQuery]);
+  }, [activeRoutines, routineSearchQuery, recentRoutineIds, recentRoutineOrderMap]);
 
-  const handleExerciseClick = (exercise: Exercise, isDisabled: boolean) => {
+  const handleExerciseClick = useCallback((exercise: Exercise, isDisabled: boolean) => {
     if (isDisabled) {
       triggerHaptic('warning');
       return;
     }
     triggerHaptic('selection');
     onItemClick?.(exercise, 'exercise');
-  };
+  }, [onItemClick]);
 
-  const handleRoutineClick = (routine: WorkoutRoutine, isDisabled: boolean) => {
+  const handleRoutineClick = useCallback((routine: WorkoutRoutine, isDisabled: boolean) => {
     if (isDisabled) {
       triggerHaptic('warning');
       return;
     }
     triggerHaptic('selection');
     onItemClick?.(routine, 'routine');
-  };
+  }, [onItemClick]);
 
   return (
     <div className={cn('space-y-3 font-mono flex flex-col', className)}>
@@ -276,6 +316,31 @@ export function ExerciseRoutineBrowser({
 
           {/* 部位過濾標籤橫向滑動列 */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 pb-0.5">
+            {/* 最近動作膠囊 */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('selection');
+                setSelectedMuscleFilter('recent');
+              }}
+              className={cn(
+                'h-6 px-2.5 rounded-full border text-[11px] font-mono transition-colors cursor-pointer shrink-0 select-none active:scale-95 flex items-center gap-1',
+                selectedMuscleFilter === 'recent'
+                  ? 'bg-foreground text-background border-foreground font-semibold'
+                  : 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40'
+              )}
+            >
+              <span>{t('common.recent', '最近')}</span>
+              <span
+                className={cn(
+                  'text-[10px] tabular-nums',
+                  selectedMuscleFilter === 'recent' ? 'opacity-70' : 'opacity-50'
+                )}
+              >
+                {recentExercisesCount}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -298,7 +363,7 @@ export function ExerciseRoutineBrowser({
                   key={group.id}
                   type="button"
                   onClick={() => {
-                    triggerHaptic('selection');
+                        triggerHaptic('selection');
                     setSelectedMuscleFilter(group.id);
                   }}
                   className={cn(
@@ -323,7 +388,9 @@ export function ExerciseRoutineBrowser({
           >
             {filteredExercises.length === 0 ? (
               <div className="py-8 text-center text-xs font-mono text-muted-foreground">
-                {t('workout.noExercises', '無動作')}
+                {selectedMuscleFilter === 'recent'
+                  ? t('workout.noRecentExercises', '無最近記錄')
+                  : t('workout.noExercises', '無動作')}
               </div>
             ) : (
               filteredExercises.map((exercise) => {

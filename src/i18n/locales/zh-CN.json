@@ -48,7 +48,8 @@
       "confirmArchiveItem": "确认归档“{{name}}”？",
       "confirmRestoreItem": "确认恢复“{{name}}”？",
       "times": "次",
-      "selectedDate": "选定日期"
+      "selectedDate": "选定日期",
+      "recent": "最近"
     },
     "nav": {
       "dashboard": "总览",
@@ -130,6 +131,7 @@
       "recipeNutrients": "营养总计",
       "consumptionHistory": "饮食记录",
       "noFoodLogs": "无记录",
+      "noRecentFoods": "无最近记录",
       "loggedCount": "{{count}} 次记录",
       "loggedCountShort": "{{count}} 次记录",
       "itemsCount": "{{count}} 笔记录",
@@ -330,6 +332,7 @@
       "noRelatedRoutines": "无关联组合",
       "noRecentLogs": "无训练记录",
       "noExercises": "无动作",
+      "noRecentExercises": "无最近记录",
       "noTargetMuscles": "无肌群",
       "unknownExercise": "未知动作",
       "archivedExercises": "已归档",

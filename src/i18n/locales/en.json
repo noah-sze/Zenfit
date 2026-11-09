@@ -48,7 +48,8 @@
       "confirmArchiveItem": "Archive \"{{name}}\"?",
       "confirmRestoreItem": "Restore \"{{name}}\"?",
       "times": "times",
-      "selectedDate": "Selected Date"
+      "selectedDate": "Selected Date",
+      "recent": "Recent"
     },
     "nav": {
       "dashboard": "Overview",
@@ -130,6 +131,7 @@
       "recipeNutrients": "Nutrients Total",
       "consumptionHistory": "Logs",
       "noFoodLogs": "No logs",
+      "noRecentFoods": "No recent foods",
       "loggedCount": "{{count}} logs",
       "loggedCountShort": "{{count}} logs",
       "itemsCount": "{{count}} items",
@@ -331,6 +333,7 @@
       "noRelatedRoutines": "No related routines",
       "noRecentLogs": "No logs",
       "noExercises": "No exercises",
+      "noRecentExercises": "No recent exercises",
       "noTargetMuscles": "No Muscles",
       "unknownExercise": "Unknown Exercise",
       "archivedExercises": "Archived",
