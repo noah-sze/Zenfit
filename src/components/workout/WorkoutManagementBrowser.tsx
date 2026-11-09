@@ -402,7 +402,7 @@ export function WorkoutManagementBrowser({
               value={exerciseSearchQuery}
               onChange={(e) => setExerciseSearchQuery(e.target.value)}
               placeholder={t('workout.searchExercisePlaceholder', '搜尋動作名稱或備註...')}
-              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
+              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:border-foreground focus:ring-0 focus-visible:ring-0 shadow-none"
             />
             {exerciseSearchQuery && (
               <button
@@ -657,7 +657,7 @@ export function WorkoutManagementBrowser({
               value={routineSearchQuery}
               onChange={(e) => setRoutineSearchQuery(e.target.value)}
               placeholder={t('workout.searchRoutinePlaceholder', '搜尋組合名稱或備註...')}
-              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
+              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:border-foreground focus:ring-0 focus-visible:ring-0 shadow-none"
             />
             {routineSearchQuery && (
               <button
@@ -796,7 +796,7 @@ export function WorkoutManagementBrowser({
               value={equipmentSearchQuery}
               onChange={(e) => setEquipmentSearchQuery(e.target.value)}
               placeholder={t('workout.searchEquipmentPlaceholder', '搜尋器械名稱...')}
-              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
+              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:border-foreground focus:ring-0 focus-visible:ring-0 shadow-none"
             />
             {equipmentSearchQuery && (
               <button

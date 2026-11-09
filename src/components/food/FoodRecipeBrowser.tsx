@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, ChevronDown, X } from 'lucide-react';
+import { Search, ChevronDown, X, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -16,9 +16,10 @@ import { useRecipes } from '@/hooks/useRecipes';
 import { useRecentFoods } from '@/hooks/useRecentFoods';
 import type { FoodItem, FoodRecipe, FoodCategory, NutritionTag } from '@/types';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
+import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
-import { useBrowserStateStore } from '@/store/useBrowserStateStore';
+import { useBrowserStateStore, type FoodSortOption } from '@/store/useBrowserStateStore';
 import { useAppStore } from '@/store/useAppStore';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 
@@ -189,6 +190,7 @@ export function FoodRecipeBrowser({
     return !isManage ? 'recent' : 'all';
   });
   const [localNutritionTag, setLocalNutritionTag] = useState<'all' | NutritionTag>('all');
+  const [localFoodSortBy, setLocalFoodSortBy] = useState<FoodSortOption>('default');
   const [localFoodSearchQuery, setLocalFoodSearchQuery] = useState('');
   const [localShowFoodArchived, setLocalShowFoodArchived] = useState(false);
 
@@ -201,6 +203,11 @@ export function FoodRecipeBrowser({
   const setSelectedNutritionTag = isManage
     ? (tag: 'all' | NutritionTag) => setFoodBrowserState({ selectedNutritionTag: tag })
     : setLocalNutritionTag;
+
+  const foodSortBy = isManage ? (foodBrowser.foodSortBy ?? 'default') : localFoodSortBy;
+  const setFoodSortBy = isManage
+    ? (sort: FoodSortOption) => setFoodBrowserState({ foodSortBy: sort })
+    : setLocalFoodSortBy;
 
   const foodSearchQuery = isManage ? foodBrowser.foodSearchQuery : localFoodSearchQuery;
   const setFoodSearchQuery = isManage
@@ -305,49 +312,94 @@ export function FoodRecipeBrowser({
       });
     }
 
-    if (selectedCategory === 'recent') {
-      return list.slice().sort((a, b) => {
-        const orderA = recentFoodOrderMap.get(a.id) ?? 999999;
-        const orderB = recentFoodOrderMap.get(b.id) ?? 999999;
-        return orderA - orderB;
-      });
+    // 預先對列表項目計算對應當前 displayMode 的營養數值，避免在 sort O(N log N) 比較中重複多次計算
+    const scaledMap = new Map<string, { calories: number; protein: number; carbs: number; fat: number }>();
+    if (foodSortBy !== 'default') {
+      for (const item of list) {
+        scaledMap.set(item.id, calculateScaledNutrition(item, nutritionDisplayMode));
+      }
     }
 
-    return list.slice().sort((a, b) => a.name.localeCompare(b.name));
-  }, [tabBaseFoods, selectedCategory, selectedNutritionTag, foodSearchQuery, recentFoodIdSet, recentFoodOrderMap, foodNutritionTagMap]);
+    return list.slice().sort((a, b) => {
+      if (foodSortBy !== 'default') {
+        const valA = scaledMap.get(a.id);
+        const valB = scaledMap.get(b.id);
+        if (valA && valB) {
+          if (foodSortBy === 'calories-desc') {
+            const diff = valB.calories - valA.calories;
+            if (Math.abs(diff) > 0.001) return diff;
+          } else if (foodSortBy === 'calories-asc') {
+            const diff = valA.calories - valB.calories;
+            if (Math.abs(diff) > 0.001) return diff;
+          } else if (foodSortBy === 'protein-desc') {
+            const diff = valB.protein - valA.protein;
+            if (Math.abs(diff) > 0.001) return diff;
+          } else if (foodSortBy === 'carbs-desc') {
+            const diff = valB.carbs - valA.carbs;
+            if (Math.abs(diff) > 0.001) return diff;
+          } else if (foodSortBy === 'fat-desc') {
+            const diff = valB.fat - valA.fat;
+            if (Math.abs(diff) > 0.001) return diff;
+          }
+        }
+      } else {
+        if (selectedCategory === 'recent') {
+          const orderA = recentFoodOrderMap.get(a.id) ?? 999999;
+          const orderB = recentFoodOrderMap.get(b.id) ?? 999999;
+          if (orderA !== orderB) return orderA - orderB;
+        }
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [tabBaseFoods, selectedCategory, selectedNutritionTag, foodSearchQuery, foodSortBy, nutritionDisplayMode, recentFoodIdSet, recentFoodOrderMap, foodNutritionTagMap]);
 
   // ==========================================
   // 食材分批漸進加載 (Incremental Windowing)
   // 首屏渲染 40 筆，滾動觸底無感追加，消除 400+ DOM 節點一次性渲染卡頓
+  // 使用 Callback Ref 確保在 Tab 切換或 DOM 重新掛載時 100% 重新綁定 Observer
   // ==========================================
   const FOOD_BATCH_SIZE = 40;
   const [visibleFoodCount, setVisibleFoodCount] = useState(FOOD_BATCH_SIZE);
-  const foodSentinelRef = useRef<HTMLDivElement>(null);
+  const foodObserverRef = useRef<IntersectionObserver | null>(null);
+  const filteredFoodsLengthRef = useRef(filteredFoods.length);
+  filteredFoodsLengthRef.current = filteredFoods.length;
 
   useEffect(() => {
     setVisibleFoodCount(FOOD_BATCH_SIZE);
-  }, [selectedCategory, selectedNutritionTag, foodSearchQuery, showFoodArchived]);
+  }, [selectedCategory, selectedNutritionTag, foodSortBy, foodSearchQuery, showFoodArchived]);
 
-  useEffect(() => {
-    const sentinel = foodSentinelRef.current;
-    if (!sentinel) return;
+  const foodSentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (foodObserverRef.current) {
+      foodObserverRef.current.disconnect();
+      foodObserverRef.current = null;
+    }
+
+    if (!node) return;
+
     if (typeof IntersectionObserver === 'undefined') {
-      setVisibleFoodCount(filteredFoods.length);
+      setVisibleFoodCount(filteredFoodsLengthRef.current);
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleFoodCount((prev) => Math.min(prev + FOOD_BATCH_SIZE, filteredFoods.length));
+          setVisibleFoodCount((prev) => Math.min(prev + FOOD_BATCH_SIZE, filteredFoodsLengthRef.current));
         }
       },
       { rootMargin: '300px' }
     );
 
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [filteredFoods.length]);
+    observer.observe(node);
+    foodObserverRef.current = observer;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      foodObserverRef.current?.disconnect();
+    };
+  }, []);
 
   const visibleFoods = useMemo(() => {
     return filteredFoods.slice(0, visibleFoodCount);
@@ -390,6 +442,25 @@ export function FoodRecipeBrowser({
   const setSelectedRecipeNutritionTag = isManage
     ? (tag: 'all' | NutritionTag) => setFoodBrowserState({ selectedRecipeNutritionTag: tag })
     : setLocalSelectedRecipeNutritionTag;
+
+  const [localRecipeSortBy, setLocalRecipeSortBy] = useState<FoodSortOption>('default');
+  const recipeSortBy = isManage ? (foodBrowser.recipeSortBy ?? 'default') : localRecipeSortBy;
+  const setRecipeSortBy = isManage
+    ? (sort: FoodSortOption) => setFoodBrowserState({ recipeSortBy: sort })
+    : setLocalRecipeSortBy;
+
+  const sortOptions = useMemo(
+    () =>
+      [
+        { id: 'default' as const, label: t('diet.sort.default', '預設') },
+        { id: 'calories-desc' as const, label: t('diet.sort.caloriesDesc', '熱量最高') },
+        { id: 'calories-asc' as const, label: t('diet.sort.caloriesAsc', '熱量最低') },
+        { id: 'protein-desc' as const, label: t('diet.sort.proteinDesc', '蛋白質最高') },
+        { id: 'carbs-desc' as const, label: t('diet.sort.carbsDesc', '碳水最高') },
+        { id: 'fat-desc' as const, label: t('diet.sort.fatDesc', '脂肪最高') },
+      ] as const,
+    [t]
+  );
 
   const totalActiveRecipes = useMemo(() => {
     return [...customRecipes, ...presetRecipes];
@@ -462,48 +533,84 @@ export function FoodRecipeBrowser({
       list = list.filter((recipe) => recipe.name.toLowerCase().includes(q));
     }
 
-    if (selectedRecipeCategory === 'recent') {
-      return list.slice().sort((a, b) => {
-        const orderA = recentRecipeOrderMap.get(a.id) ?? 999999;
-        const orderB = recentRecipeOrderMap.get(b.id) ?? 999999;
-        return orderA - orderB;
-      });
-    }
+    return list.slice().sort((a, b) => {
+      if (recipeSortBy !== 'default') {
+        const macrosA = getRecipeMacros(a);
+        const macrosB = getRecipeMacros(b);
 
-    return list.slice().sort((a, b) => a.name.localeCompare(b.name));
-  }, [tabBaseRecipes, selectedRecipeCategory, selectedRecipeNutritionTag, recipeSearchQuery, recentRecipeIdSet, recentRecipeOrderMap, recipeNutritionTagMap]);
+        if (recipeSortBy === 'calories-desc') {
+          const diff = macrosB.calories - macrosA.calories;
+          if (Math.abs(diff) > 0.001) return diff;
+        } else if (recipeSortBy === 'calories-asc') {
+          const diff = macrosA.calories - macrosB.calories;
+          if (Math.abs(diff) > 0.001) return diff;
+        } else if (recipeSortBy === 'protein-desc') {
+          const diff = macrosB.protein - macrosA.protein;
+          if (Math.abs(diff) > 0.001) return diff;
+        } else if (recipeSortBy === 'carbs-desc') {
+          const diff = macrosB.carbs - macrosA.carbs;
+          if (Math.abs(diff) > 0.001) return diff;
+        } else if (recipeSortBy === 'fat-desc') {
+          const diff = macrosB.fat - macrosA.fat;
+          if (Math.abs(diff) > 0.001) return diff;
+        }
+      } else {
+        if (selectedRecipeCategory === 'recent') {
+          const orderA = recentRecipeOrderMap.get(a.id) ?? 999999;
+          const orderB = recentRecipeOrderMap.get(b.id) ?? 999999;
+          if (orderA !== orderB) return orderA - orderB;
+        }
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [tabBaseRecipes, selectedRecipeCategory, selectedRecipeNutritionTag, recipeSearchQuery, recipeSortBy, recentRecipeIdSet, recentRecipeOrderMap, recipeNutritionTagMap, getRecipeMacros]);
 
   // ==========================================
   // 食譜分批漸進加載 (Incremental Windowing)
+  // 使用 Callback Ref 確保在 Tab 切換或 DOM 重新掛載時 100% 重新綁定 Observer
   // ==========================================
   const RECIPE_BATCH_SIZE = 40;
   const [visibleRecipeCount, setVisibleRecipeCount] = useState(RECIPE_BATCH_SIZE);
-  const recipeSentinelRef = useRef<HTMLDivElement>(null);
+  const recipeObserverRef = useRef<IntersectionObserver | null>(null);
+  const filteredRecipesLengthRef = useRef(filteredRecipes.length);
+  filteredRecipesLengthRef.current = filteredRecipes.length;
 
   useEffect(() => {
     setVisibleRecipeCount(RECIPE_BATCH_SIZE);
-  }, [recipeSearchQuery, selectedRecipeNutritionTag, showRecipeArchived]);
+  }, [recipeSearchQuery, selectedRecipeNutritionTag, recipeSortBy, showRecipeArchived]);
 
-  useEffect(() => {
-    const sentinel = recipeSentinelRef.current;
-    if (!sentinel) return;
+  const recipeSentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (recipeObserverRef.current) {
+      recipeObserverRef.current.disconnect();
+      recipeObserverRef.current = null;
+    }
+
+    if (!node) return;
+
     if (typeof IntersectionObserver === 'undefined') {
-      setVisibleRecipeCount(filteredRecipes.length);
+      setVisibleRecipeCount(filteredRecipesLengthRef.current);
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleRecipeCount((prev) => Math.min(prev + RECIPE_BATCH_SIZE, filteredRecipes.length));
+          setVisibleRecipeCount((prev) => Math.min(prev + RECIPE_BATCH_SIZE, filteredRecipesLengthRef.current));
         }
       },
       { rootMargin: '300px' }
     );
 
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [filteredRecipes.length]);
+    observer.observe(node);
+    recipeObserverRef.current = observer;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      recipeObserverRef.current?.disconnect();
+    };
+  }, []);
 
   const visibleRecipes = useMemo(() => {
     return filteredRecipes.slice(0, visibleRecipeCount);
@@ -525,13 +632,16 @@ export function FoodRecipeBrowser({
             aria-selected={viewTab === 'foods'}
             onClick={() => handleTabChange('foods')}
             className={cn(
-              'p-2.5 sm:p-3 rounded-xl text-left cursor-pointer transition-all flex flex-col justify-between h-[66px] outline-none',
+              'px-3 rounded-xl text-left cursor-pointer transition-all flex flex-col outline-none',
+              isManage
+                ? 'py-2.5 sm:py-3 justify-between h-[66px]'
+                : 'h-10 justify-center',
               viewTab === 'foods'
                 ? 'border border-foreground bg-muted/30 shadow-none'
                 : 'border border-border hover:border-foreground/40 bg-card text-muted-foreground'
             )}
           >
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs w-full">
               <span
                 className={cn(
                   'font-medium',
@@ -547,19 +657,21 @@ export function FoodRecipeBrowser({
                 )}
               />
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className={cn(
-                  'text-xl font-bold tracking-tight',
-                  viewTab === 'foods' ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
-                {totalActiveFoodsCount}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {t('diet.itemsUnit', '項單品')}
-              </span>
-            </div>
+            {isManage && (
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className={cn(
+                    'text-xl font-bold tracking-tight',
+                    viewTab === 'foods' ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  {totalActiveFoodsCount}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {t('diet.itemsUnit', '項單品')}
+                </span>
+              </div>
+            )}
           </button>
 
           {/* 食譜指標卡 */}
@@ -569,13 +681,16 @@ export function FoodRecipeBrowser({
             aria-selected={viewTab === 'recipes'}
             onClick={() => handleTabChange('recipes')}
             className={cn(
-              'p-2.5 sm:p-3 rounded-xl text-left cursor-pointer transition-all flex flex-col justify-between h-[66px] outline-none',
+              'px-3 rounded-xl text-left cursor-pointer transition-all flex flex-col outline-none',
+              isManage
+                ? 'py-2.5 sm:py-3 justify-between h-[66px]'
+                : 'h-10 justify-center',
               viewTab === 'recipes'
                 ? 'border border-foreground bg-muted/30 shadow-none'
                 : 'border border-border hover:border-foreground/40 bg-card text-muted-foreground'
             )}
           >
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs w-full">
               <span
                 className={cn(
                   'font-medium',
@@ -591,19 +706,21 @@ export function FoodRecipeBrowser({
                 )}
               />
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className={cn(
-                  'text-xl font-bold tracking-tight',
-                  viewTab === 'recipes' ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
-                {totalActiveRecipes.length}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {t('diet.recipesUnit', '道配方')}
-              </span>
-            </div>
+            {isManage && (
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className={cn(
+                    'text-xl font-bold tracking-tight',
+                    viewTab === 'recipes' ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  {totalActiveRecipes.length}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {t('diet.recipesUnit', '道配方')}
+                </span>
+              </div>
+            )}
           </button>
         </div>
       )}
@@ -621,7 +738,7 @@ export function FoodRecipeBrowser({
               value={foodSearchQuery}
               onChange={(e) => setFoodSearchQuery(e.target.value)}
               placeholder={t('diet.searchFoodPlaceholder', '搜尋食材名稱或品牌...')}
-              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
+              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:border-foreground focus:ring-0 focus-visible:ring-0 shadow-none"
             />
             {foodSearchQuery && (
               <button
@@ -634,267 +751,319 @@ export function FoodRecipeBrowser({
             )}
           </div>
 
-          {/* 分類與特徵篩選列 (橫向滾動膠囊 + 右側釘住特徵選單) */}
-          <div className="flex items-center justify-between gap-1.5 py-0.5 shrink-0">
-            {/* 左側：分類選擇 */}
-            <div
-              ref={categoryScrollRef}
-              onWheel={(e) => {
-                if (e.deltaY !== 0 && categoryScrollRef.current) {
-                  categoryScrollRef.current.scrollLeft += e.deltaY;
-                }
-              }}
-              className="flex-1 min-w-0 overflow-x-auto no-scrollbar"
-            >
-              <div className="flex items-center gap-1 shrink-0 pr-1">
-                {/* 最近膠囊 (僅在選擇彈窗模式下顯示) */}
-                {!isManage && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      triggerHaptic('selection');
-                      setShowFoodArchived(false);
-                      setSelectedCategory('recent');
-                      handleScrollTabIntoView(e.currentTarget, true, false);
-                    }}
+          {/* 分類橫向滾動列 (全寬滾動，不被右側按鈕擠壓) */}
+          <div
+            ref={categoryScrollRef}
+            onWheel={(e) => {
+              if (e.deltaY !== 0 && categoryScrollRef.current) {
+                categoryScrollRef.current.scrollLeft += e.deltaY;
+              }
+            }}
+            className="overflow-x-auto no-scrollbar shrink-0 py-0.5"
+          >
+            <div className="flex items-center gap-1 shrink-0 pr-1">
+              {/* 最近膠囊 (僅在選擇彈窗模式下顯示) */}
+              {!isManage && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    triggerHaptic('selection');
+                    setShowFoodArchived(false);
+                    setSelectedCategory('recent');
+                    handleScrollTabIntoView(e.currentTarget, true, false);
+                  }}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1',
+                    !showFoodArchived && selectedCategory === 'recent'
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <span>{t('common.recent', '最近')}</span>
+                  <span
                     className={cn(
-                      'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1',
-                      !showFoodArchived && selectedCategory === 'recent'
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      'text-[10px] tabular-nums',
+                      !showFoodArchived && selectedCategory === 'recent' ? 'opacity-60' : 'opacity-45'
                     )}
                   >
-                    <span>{t('common.recent', '最近')}</span>
-                    <span
-                      className={cn(
-                        'text-[10px] tabular-nums',
-                        !showFoodArchived && selectedCategory === 'recent' ? 'opacity-60' : 'opacity-45'
-                      )}
-                    >
-                      {recentFoodsCount}
-                    </span>
-                  </button>
-                )}
+                    {recentFoodsCount}
+                  </span>
+                </button>
+              )}
 
-                {/* 狀態下拉膠囊：全部 vs 已歸檔 */}
-                {showArchivedOption ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <button
-                          type="button"
-                          className={cn(
-                            'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
-                            showFoodArchived || selectedCategory === 'all'
-                              ? 'bg-foreground text-background'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                          )}
-                        >
-                          <span>{showFoodArchived ? t('common.archived', '已歸檔') : t('diet.foodCategory.all', '全部')}</span>
-                          <span
-                            className={cn(
-                              'text-[10px] tabular-nums',
-                              showFoodArchived || selectedCategory === 'all' ? 'opacity-60' : 'opacity-45'
-                            )}
-                          >
-                            {showFoodArchived ? totalArchivedFoods.length : totalActiveFoodsCount}
-                          </span>
-                          <ChevronDown className="size-3 opacity-60 shrink-0" />
-                        </button>
-                      }
-                    />
-                    <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setShowFoodArchived(false);
-                          setSelectedCategory('all');
-                        }}
-                        className={cn(
-                          'cursor-pointer flex items-center justify-between',
-                          !showFoodArchived && selectedCategory === 'all' && 'font-semibold bg-muted'
-                        )}
-                      >
-                        <span>{t('diet.foodCategory.all', '全部')}</span>
-                        <span className="text-[10px] opacity-60 tabular-nums">
-                          {totalActiveFoodsCount}
-                        </span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setShowFoodArchived(true);
-                          setSelectedCategory('all');
-                        }}
-                        className={cn(
-                          'cursor-pointer flex items-center justify-between',
-                          showFoodArchived && 'font-semibold bg-muted'
-                        )}
-                      >
-                        <span>{t('common.archived', '已歸檔')}</span>
-                        <span className="text-[10px] opacity-60 tabular-nums">
-                          {totalArchivedFoods.length}
-                        </span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      triggerHaptic('selection');
-                      setSelectedCategory('all');
-                      handleScrollTabIntoView(e.currentTarget, true, false);
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
-                      selectedCategory === 'all'
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    )}
-                  >
-                    {t('diet.foodCategory.all')}
-                    <span
-                      className={cn(
-                        'ml-1 text-[10px] tabular-nums',
-                        selectedCategory === 'all' ? 'opacity-60' : 'opacity-45'
-                      )}
-                    >
-                      {categoryCounts.all}
-                    </span>
-                  </button>
-                )}
-
-                {/* 分類膠囊 */}
-                {(
-                  [
-                    { id: 'natural', label: t('diet.foodCategory.natural') },
-                    { id: 'processed', label: t('diet.foodCategory.processed') },
-                    { id: 'beverage', label: t('diet.foodCategory.beverage') },
-                    { id: 'oil', label: t('diet.foodCategory.oil') },
-                    { id: 'condiment', label: t('diet.foodCategory.condiment') },
-                  ] as const
-                ).map((cat) => {
-                  const isSelected = !showFoodArchived && selectedCategory === cat.id;
-                  const count = categoryCounts[cat.id];
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={(e) => {
-                        triggerHaptic('selection');
-                        setShowFoodArchived(false);
-                        setSelectedCategory(cat.id);
-                        handleScrollTabIntoView(e.currentTarget, false, false);
-                      }}
-                      className={cn(
-                        'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
-                        isSelected
-                          ? 'bg-foreground text-background'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                      )}
-                    >
-                      {cat.label}
-                      <span
-                        className={cn(
-                          'ml-1 text-[10px] tabular-nums',
-                          isSelected ? 'opacity-60' : 'opacity-45'
-                        )}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 右側：營養特質固定按鈕 */}
-            <div className="shrink-0 pl-1 border-l border-border/60">
-              <div
-                className={cn(
-                  'inline-flex items-center rounded-full text-xs font-mono transition-all border',
-                  selectedNutritionTag !== 'all'
-                    ? 'bg-foreground text-background border-foreground font-medium'
-                    : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
-                )}
-              >
+              {/* 狀態下拉膠囊：全部 vs 已歸檔 (未選中全部時點擊直接切換，已選中全部時點擊才打開選擇) */}
+              {showArchivedOption && (showFoodArchived || selectedCategory === 'all') ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
                       <button
                         type="button"
-                        className="flex items-center gap-1 py-1.5 pl-3 pr-2 cursor-pointer focus:outline-none"
+                        className="px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 bg-foreground text-background"
                       >
-                        <span className="truncate max-w-[80px]">
-                          {selectedNutritionTag === 'all'
-                            ? t('diet.nutritionTags.title', '特徵')
-                            : t(`diet.nutritionTags.${selectedNutritionTag}`)}
+                        <span>{showFoodArchived ? t('common.archived', '已歸檔') : t('diet.foodCategory.all', '全部')}</span>
+                        <span className="text-[10px] tabular-nums opacity-60">
+                          {showFoodArchived ? totalArchivedFoods.length : totalActiveFoodsCount}
                         </span>
-                        <ChevronDown className="size-3 opacity-60" />
+                        <ChevronDown className="size-3 opacity-60 shrink-0" />
                       </button>
                     }
                   />
-                  <DropdownMenuContent align="end" className="w-[180px] font-mono text-xs">
+                  <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
                     <DropdownMenuItem
                       onClick={() => {
                         triggerHaptic('selection');
-                        setSelectedNutritionTag('all');
+                        setShowFoodArchived(false);
+                        setSelectedCategory('all');
                       }}
                       className={cn(
                         'cursor-pointer flex items-center justify-between',
-                        selectedNutritionTag === 'all' && 'font-semibold bg-muted'
+                        !showFoodArchived && selectedCategory === 'all' && 'font-semibold bg-muted'
                       )}
                     >
-                      <span>{t('diet.nutritionTags.all', '全部')}</span>
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {tabBaseFoods.length}
+                      <span>{t('diet.foodCategory.all', '全部')}</span>
+                      <span className="text-[10px] opacity-60 tabular-nums">
+                        {totalActiveFoodsCount}
                       </span>
                     </DropdownMenuItem>
-                    {(
-                      [
-                        { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
-                        { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
-                        { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
-                        { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
-                        { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
-                      ] as const
-                    ).map((tag) => (
-                      <DropdownMenuItem
-                        key={tag.id}
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setSelectedNutritionTag(tag.id);
-                        }}
-                        className={cn(
-                          'cursor-pointer flex items-center justify-between',
-                          selectedNutritionTag === tag.id && 'font-semibold bg-muted'
-                        )}
-                      >
-                        <span>{tag.label}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {nutritionTagCounts[tag.id]}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setShowFoodArchived(true);
+                        setSelectedCategory('all');
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        showFoodArchived && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{t('common.archived', '已歸檔')}</span>
+                      <span className="text-[10px] opacity-60 tabular-nums">
+                        {totalArchivedFoods.length}
+                      </span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    triggerHaptic('selection');
+                    setShowFoodArchived(false);
+                    setSelectedCategory('all');
+                    handleScrollTabIntoView(e.currentTarget, true, false);
+                  }}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
+                    !showFoodArchived && selectedCategory === 'all'
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <span>{t('diet.foodCategory.all', '全部')}</span>
+                  <span
+                    className={cn(
+                      'text-[10px] tabular-nums',
+                      !showFoodArchived && selectedCategory === 'all' ? 'opacity-60' : 'opacity-45'
+                    )}
+                  >
+                    {totalActiveFoodsCount}
+                  </span>
+                  {showArchivedOption && <ChevronDown className="size-3 opacity-60 shrink-0" />}
+                </button>
+              )}
 
-                {selectedNutritionTag !== 'all' && (
+              {/* 分類膠囊 */}
+              {(
+                [
+                  { id: 'natural', label: t('diet.foodCategory.natural') },
+                  { id: 'processed', label: t('diet.foodCategory.processed') },
+                  { id: 'beverage', label: t('diet.foodCategory.beverage') },
+                  { id: 'oil', label: t('diet.foodCategory.oil') },
+                  { id: 'condiment', label: t('diet.foodCategory.condiment') },
+                ] as const
+              ).map((cat) => {
+                const isSelected = !showFoodArchived && selectedCategory === cat.id;
+                const count = categoryCounts[cat.id];
+                return (
                   <button
+                    key={cat.id}
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      triggerHaptic('light');
+                      triggerHaptic('selection');
+                      setShowFoodArchived(false);
+                      setSelectedCategory(cat.id);
+                      handleScrollTabIntoView(e.currentTarget, false, false);
+                    }}
+                    className={cn(
+                      'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0',
+                      isSelected
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    )}
+                  >
+                    {cat.label}
+                    <span
+                      className={cn(
+                        'ml-1 text-[10px] tabular-nums',
+                        isSelected ? 'opacity-60' : 'opacity-45'
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 工具過濾與排序列 (分類下方單獨一行) */}
+          <div className="flex items-center gap-1.5 shrink-0 py-0.5">
+            {/* 營養特徵選單 */}
+            <div
+              className={cn(
+                'inline-flex items-center rounded-full text-xs font-mono transition-all border',
+                selectedNutritionTag !== 'all'
+                  ? 'bg-foreground text-background border-foreground font-medium'
+                  : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
+              )}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 py-1 pl-2.5 pr-2 cursor-pointer focus:outline-none"
+                    >
+                      <SlidersHorizontal className="size-3 opacity-60" />
+                      <span className="truncate">
+                        {selectedNutritionTag === 'all'
+                          ? t('diet.nutritionTags.title', '營養特徵')
+                          : t(`diet.nutritionTags.${selectedNutritionTag}`)}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="start" className="w-[180px] font-mono text-xs">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      triggerHaptic('selection');
                       setSelectedNutritionTag('all');
                     }}
-                    className="p-1 pr-2 hover:opacity-70 cursor-pointer"
-                    title={t('diet.resetFilter', '重設')}
+                    className={cn(
+                      'cursor-pointer flex items-center justify-between',
+                      selectedNutritionTag === 'all' && 'font-semibold bg-muted'
+                    )}
                   >
-                    <X className="size-3" />
-                  </button>
-                )}
-              </div>
+                    <span>{t('diet.nutritionTags.all', '全部')}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {tabBaseFoods.length}
+                    </span>
+                  </DropdownMenuItem>
+                  {(
+                    [
+                      { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
+                      { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
+                      { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
+                      { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
+                      { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
+                    ] as const
+                  ).map((tag) => (
+                    <DropdownMenuItem
+                      key={tag.id}
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setSelectedNutritionTag(tag.id);
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        selectedNutritionTag === tag.id && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{tag.label}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {nutritionTagCounts[tag.id]}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {selectedNutritionTag !== 'all' && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic('light');
+                    setSelectedNutritionTag('all');
+                  }}
+                  className="p-1 pr-2 hover:opacity-70 cursor-pointer"
+                  title={t('diet.resetFilter', '重設')}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+
+            {/* 排序功能選單 */}
+            <div
+              className={cn(
+                'inline-flex items-center rounded-full text-xs font-mono transition-all border',
+                foodSortBy !== 'default'
+                  ? 'bg-foreground text-background border-foreground font-medium'
+                  : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
+              )}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 py-1 pl-2.5 pr-2 cursor-pointer focus:outline-none"
+                    >
+                      <ArrowUpDown className="size-3 opacity-60" />
+                      <span className="truncate">
+                        {foodSortBy === 'default'
+                          ? t('diet.sort.title', '排序')
+                          : sortOptions.find((o) => o.id === foodSortBy)?.label ?? t('diet.sort.title', '排序')}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="start" className="w-[180px] font-mono text-xs">
+                  {sortOptions.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.id}
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setFoodSortBy(opt.id);
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        foodSortBy === opt.id && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{opt.label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {foodSortBy !== 'default' && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic('light');
+                    setFoodSortBy('default');
+                  }}
+                  className="p-1 pr-2 hover:opacity-70 cursor-pointer"
+                  title={t('diet.resetFilter', '重設')}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -968,7 +1137,7 @@ export function FoodRecipeBrowser({
               value={recipeSearchQuery}
               onChange={(e) => setRecipeSearchQuery(e.target.value)}
               placeholder={t('diet.searchRecipePlaceholder', '搜尋食譜名稱...')}
-              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
+              className="h-10 pl-9 pr-9 text-xs rounded-lg border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:border-foreground focus:ring-0 focus-visible:ring-0 shadow-none"
             />
             {recipeSearchQuery && (
               <button
@@ -982,203 +1151,267 @@ export function FoodRecipeBrowser({
           </div>
 
           {/* 分類與特徵篩選列 */}
-          <div className="flex items-center justify-between gap-1.5 py-0.5 shrink-0">
-            <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-1 shrink-0 pr-1">
-                {/* 最近食譜膠囊 (僅在選擇彈窗模式下顯示) */}
-                {!isManage && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('selection');
-                      setShowRecipeArchived(false);
-                      setSelectedRecipeCategory('recent');
-                    }}
+          {/* 食譜分類橫向滾動列 (全寬滾動，不被右側按鈕擠壓) */}
+          <div className="overflow-x-auto no-scrollbar shrink-0 py-0.5">
+            <div className="flex items-center gap-1 shrink-0 pr-1">
+              {/* 最近食譜膠囊 (僅在選擇彈窗模式下顯示) */}
+              {!isManage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setShowRecipeArchived(false);
+                    setSelectedRecipeCategory('recent');
+                  }}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1',
+                    !showRecipeArchived && selectedRecipeCategory === 'recent'
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <span>{t('common.recent', '最近')}</span>
+                  <span
                     className={cn(
-                      'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1',
-                      !showRecipeArchived && selectedRecipeCategory === 'recent'
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      'text-[10px] tabular-nums',
+                      !showRecipeArchived && selectedRecipeCategory === 'recent' ? 'opacity-60' : 'opacity-45'
                     )}
                   >
-                    <span>{t('common.recent', '最近')}</span>
-                    <span
-                      className={cn(
-                        'text-[10px] tabular-nums',
-                        !showRecipeArchived && selectedRecipeCategory === 'recent' ? 'opacity-60' : 'opacity-45'
-                      )}
-                    >
-                      {recentRecipesCount}
-                    </span>
-                  </button>
-                )}
+                    {recentRecipesCount}
+                  </span>
+                </button>
+              )}
 
-                {showArchivedOption ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <button
-                          type="button"
-                          className={cn(
-                            'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
-                            'bg-foreground text-background'
-                          )}
-                        >
-                          <span>{showRecipeArchived ? t('common.archived', '已歸檔') : t('diet.foodCategory.all', '全部')}</span>
-                          <span className="text-[10px] tabular-nums opacity-60">
-                            {showRecipeArchived ? totalArchivedRecipes.length : totalActiveRecipes.length}
-                          </span>
-                          <ChevronDown className="size-3 opacity-60 shrink-0" />
-                        </button>
-                      }
-                    />
-                    <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setShowRecipeArchived(false);
-                        }}
-                        className={cn(
-                          'cursor-pointer flex items-center justify-between',
-                          !showRecipeArchived && 'font-semibold bg-muted'
-                        )}
-                      >
-                        <span>{t('diet.foodCategory.all', '全部')}</span>
-                        <span className="text-[10px] opacity-60 tabular-nums">
-                          {totalActiveRecipes.length}
-                        </span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setShowRecipeArchived(true);
-                        }}
-                        className={cn(
-                          'cursor-pointer flex items-center justify-between',
-                          showRecipeArchived && 'font-semibold bg-muted'
-                        )}
-                      >
-                        <span>{t('common.archived', '已歸檔')}</span>
-                        <span className="text-[10px] opacity-60 tabular-nums">
-                          {totalArchivedRecipes.length}
-                        </span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('selection');
-                      setShowRecipeArchived(false);
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap',
-                      !showRecipeArchived
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    )}
-                  >
-                    {t('diet.foodCategory.all', '全部')}
-                    <span
-                      className={cn(
-                        'ml-1 text-[10px] tabular-nums',
-                        !showRecipeArchived ? 'opacity-60' : 'opacity-45'
-                      )}
-                    >
-                      {totalActiveRecipes.length}
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 右側：特徵選單 */}
-            <div className="shrink-0">
-              <div
-                className={cn(
-                  'inline-flex items-center rounded-full text-xs font-mono transition-all border',
-                  selectedRecipeNutritionTag !== 'all'
-                    ? 'bg-foreground text-background border-foreground font-medium'
-                    : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
-                )}
-              >
+              {/* 狀態下拉膠囊：全部 vs 已歸檔 (未選中全部時點擊直接切換，已選中全部時點擊才打開選擇) */}
+              {showArchivedOption && (showRecipeArchived || selectedRecipeCategory === 'all') ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
                       <button
                         type="button"
-                        className="flex items-center gap-1 py-1.5 pl-3 pr-2 cursor-pointer focus:outline-none"
+                        className="px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 bg-foreground text-background"
                       >
-                        <span className="truncate max-w-[80px]">
-                          {selectedRecipeNutritionTag === 'all'
-                            ? t('diet.nutritionTags.title', '特徵')
-                            : t(`diet.nutritionTags.${selectedRecipeNutritionTag}`)}
+                        <span>{showRecipeArchived ? t('common.archived', '已歸檔') : t('diet.foodCategory.all', '全部')}</span>
+                        <span className="text-[10px] tabular-nums opacity-60">
+                          {showRecipeArchived ? totalArchivedRecipes.length : totalActiveRecipes.length}
                         </span>
-                        <ChevronDown className="size-3 opacity-60" />
+                        <ChevronDown className="size-3 opacity-60 shrink-0" />
                       </button>
                     }
                   />
-                  <DropdownMenuContent align="end" className="w-[180px] font-mono text-xs">
+                  <DropdownMenuContent align="start" className="w-[140px] font-mono text-xs">
                     <DropdownMenuItem
                       onClick={() => {
                         triggerHaptic('selection');
-                        setSelectedRecipeNutritionTag('all');
+                        setShowRecipeArchived(false);
+                        setSelectedRecipeCategory('all');
                       }}
                       className={cn(
                         'cursor-pointer flex items-center justify-between',
-                        selectedRecipeNutritionTag === 'all' && 'font-semibold bg-muted'
+                        !showRecipeArchived && selectedRecipeCategory === 'all' && 'font-semibold bg-muted'
                       )}
                     >
-                      <span>{t('diet.nutritionTags.all', '全部')}</span>
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {tabBaseRecipes.length}
+                      <span>{t('diet.foodCategory.all', '全部')}</span>
+                      <span className="text-[10px] opacity-60 tabular-nums">
+                        {totalActiveRecipes.length}
                       </span>
                     </DropdownMenuItem>
-                    {(
-                      [
-                        { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
-                        { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
-                        { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
-                        { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
-                        { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
-                      ] as const
-                    ).map((tag) => (
-                      <DropdownMenuItem
-                        key={tag.id}
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setSelectedRecipeNutritionTag(tag.id);
-                        }}
-                        className={cn(
-                          'cursor-pointer flex items-center justify-between',
-                          selectedRecipeNutritionTag === tag.id && 'font-semibold bg-muted'
-                        )}
-                      >
-                        <span>{tag.label}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {recipeNutritionTagCounts[tag.id]}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setShowRecipeArchived(true);
+                        setSelectedRecipeCategory('all');
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        showRecipeArchived && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{t('common.archived', '已歸檔')}</span>
+                      <span className="text-[10px] opacity-60 tabular-nums">
+                        {totalArchivedRecipes.length}
+                      </span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setShowRecipeArchived(false);
+                    setSelectedRecipeCategory('all');
+                  }}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0',
+                    !showRecipeArchived && selectedRecipeCategory === 'all'
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <span>{t('diet.foodCategory.all', '全部')}</span>
+                  <span
+                    className={cn(
+                      'text-[10px] tabular-nums',
+                      !showRecipeArchived && selectedRecipeCategory === 'all' ? 'opacity-60' : 'opacity-45'
+                    )}
+                  >
+                    {totalActiveRecipes.length}
+                  </span>
+                  {showArchivedOption && <ChevronDown className="size-3 opacity-60 shrink-0" />}
+                </button>
+              )}
+            </div>
+          </div>
 
-                {selectedRecipeNutritionTag !== 'all' && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      triggerHaptic('light');
+          {/* 工具過濾與排序列 (分類下方單獨一行) */}
+          <div className="flex items-center gap-1.5 shrink-0 py-0.5">
+            {/* 營養特徵選單 */}
+            <div
+              className={cn(
+                'inline-flex items-center rounded-full text-xs font-mono transition-all border',
+                selectedRecipeNutritionTag !== 'all'
+                  ? 'bg-foreground text-background border-foreground font-medium'
+                  : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
+              )}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 py-1 pl-2.5 pr-2 cursor-pointer focus:outline-none"
+                    >
+                      <SlidersHorizontal className="size-3 opacity-60" />
+                      <span className="truncate">
+                        {selectedRecipeNutritionTag === 'all'
+                          ? t('diet.nutritionTags.title', '營養特徵')
+                          : t(`diet.nutritionTags.${selectedRecipeNutritionTag}`)}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="start" className="w-[180px] font-mono text-xs">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      triggerHaptic('selection');
                       setSelectedRecipeNutritionTag('all');
                     }}
-                    className="p-1 pr-2 hover:opacity-70 cursor-pointer"
-                    title={t('diet.resetFilter', '重設')}
+                    className={cn(
+                      'cursor-pointer flex items-center justify-between',
+                      selectedRecipeNutritionTag === 'all' && 'font-semibold bg-muted'
+                    )}
                   >
-                    <X className="size-3" />
-                  </button>
-                )}
-              </div>
+                    <span>{t('diet.nutritionTags.all', '全部')}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {tabBaseRecipes.length}
+                    </span>
+                  </DropdownMenuItem>
+                  {(
+                    [
+                      { id: 'carb-source', label: t('diet.nutritionTags.carb-source') },
+                      { id: 'high-protein', label: t('diet.nutritionTags.high-protein') },
+                      { id: 'fat-source', label: t('diet.nutritionTags.fat-source') },
+                      { id: 'low-calorie', label: t('diet.nutritionTags.low-calorie') },
+                      { id: 'high-calorie', label: t('diet.nutritionTags.high-calorie') },
+                    ] as const
+                  ).map((tag) => (
+                    <DropdownMenuItem
+                      key={tag.id}
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setSelectedRecipeNutritionTag(tag.id);
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        selectedRecipeNutritionTag === tag.id && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{tag.label}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {recipeNutritionTagCounts[tag.id]}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {selectedRecipeNutritionTag !== 'all' && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic('light');
+                    setSelectedRecipeNutritionTag('all');
+                  }}
+                  className="p-1 pr-2 hover:opacity-70 cursor-pointer"
+                  title={t('diet.resetFilter', '重設')}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+
+            {/* 排序功能選單 */}
+            <div
+              className={cn(
+                'inline-flex items-center rounded-full text-xs font-mono transition-all border',
+                recipeSortBy !== 'default'
+                  ? 'bg-foreground text-background border-foreground font-medium'
+                  : 'border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border'
+              )}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 py-1 pl-2.5 pr-2 cursor-pointer focus:outline-none"
+                    >
+                      <ArrowUpDown className="size-3 opacity-60" />
+                      <span className="truncate">
+                        {recipeSortBy === 'default'
+                          ? t('diet.sort.title', '排序')
+                          : sortOptions.find((o) => o.id === recipeSortBy)?.label ?? t('diet.sort.title', '排序')}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="start" className="w-[180px] font-mono text-xs">
+                  {sortOptions.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.id}
+                      onClick={() => {
+                        triggerHaptic('selection');
+                        setRecipeSortBy(opt.id);
+                      }}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between',
+                        recipeSortBy === opt.id && 'font-semibold bg-muted'
+                      )}
+                    >
+                      <span>{opt.label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {recipeSortBy !== 'default' && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic('light');
+                    setRecipeSortBy('default');
+                  }}
+                  className="p-1 pr-2 hover:opacity-70 cursor-pointer"
+                  title={t('diet.resetFilter', '重設')}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
             </div>
           </div>
 

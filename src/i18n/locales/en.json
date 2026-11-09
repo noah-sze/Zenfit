@@ -195,7 +195,16 @@
       },
       "servingUnit": "serving",
       "servingCount_one": "1 serving",
-      "servingCount_other": "{{count}} servings"
+      "servingCount_other": "{{count}} servings",
+      "sort": {
+        "title": "Sort",
+        "default": "Default",
+        "caloriesDesc": "Highest Calories",
+        "caloriesAsc": "Lowest Calories",
+        "proteinDesc": "Highest Protein",
+        "carbsDesc": "Highest Carbs",
+        "fatDesc": "Highest Fat"
+      }
     },
     "dietPlan": {
       "title": "Macro Split",

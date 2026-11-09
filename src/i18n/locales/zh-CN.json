@@ -194,7 +194,16 @@
         "high-calorie": "高热量"
       },
       "servingUnit": "份",
-      "servingCount": "{{count}} 份"
+      "servingCount": "{{count}} 份",
+      "sort": {
+        "title": "排序",
+        "default": "默认",
+        "caloriesDesc": "热量最高",
+        "caloriesAsc": "热量最低",
+        "proteinDesc": "蛋白质最高",
+        "carbsDesc": "碳水最高",
+        "fatDesc": "脂肪最高"
+      }
     },
     "dietPlan": {
       "title": "供能比",

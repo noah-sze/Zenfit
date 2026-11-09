@@ -2,15 +2,25 @@ import { create } from 'zustand';
 import type { FoodCategory, NutritionTag } from '@/types';
 import type { WorkoutTab } from '@/components/workout/WorkoutManagementBrowser';
 
+export type FoodSortOption =
+  | 'default'
+  | 'calories-desc'
+  | 'calories-asc'
+  | 'protein-desc'
+  | 'carbs-desc'
+  | 'fat-desc';
+
 export interface FoodBrowserState {
   activeTab: 'foods' | 'recipes';
   selectedCategory: 'recent' | 'all' | FoodCategory;
   selectedNutritionTag: 'all' | NutritionTag;
+  foodSortBy: FoodSortOption;
   foodSearchQuery: string;
   showFoodArchived: boolean;
   recipeSearchQuery: string;
   showRecipeArchived: boolean;
   selectedRecipeNutritionTag: 'all' | NutritionTag;
+  recipeSortBy: FoodSortOption;
 }
 
 export interface WorkoutBrowserState {
@@ -29,11 +39,13 @@ export const initialFoodBrowserState: FoodBrowserState = {
   activeTab: 'foods',
   selectedCategory: 'all',
   selectedNutritionTag: 'all',
+  foodSortBy: 'default',
   foodSearchQuery: '',
   showFoodArchived: false,
   recipeSearchQuery: '',
   showRecipeArchived: false,
   selectedRecipeNutritionTag: 'all',
+  recipeSortBy: 'default',
 };
 
 export const initialWorkoutBrowserState: WorkoutBrowserState = {
