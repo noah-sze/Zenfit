@@ -73,8 +73,14 @@ export function evaluateNutritionalHighlight(food: NutritionEvaluationInput): Nu
   const pPer100 = protein * factor;
   const fPer100 = fat * factor;
 
-  // 調味品截斷防護：調味品分類或微量調味品（<=10g 且 <=30 kcal）不強掛標籤，留白維持清爽
-  if (food.category === 'condiment' || (servingAmount <= 10 && calories <= 30)) {
+  // 微量調味品截斷防護：微量調料（如黑胡椒粒、食鹽、醬油、醋等 <=40 kcal 或 <=10g 且 <=60 kcal）不強掛標籤，留白維持清爽，
+  // 避免微量調料因換算至 100g 放大倍數而誤觸高碳水/高蛋白/高熱量標籤。
+  // 但實質高能量或富含特定營養素之調味品/抹醬（如四季寶花生醬 122 kcal、芝麻醬、蛋黃醬等）應正常評估點亮。
+  const isMicroCondiment = food.category === 'condiment'
+    ? calories <= 40 || (servingAmount <= 10 && calories <= 60)
+    : (servingAmount <= 10 && calories <= 30);
+
+  if (isMicroCondiment) {
     return {
       labels: [],
       highlights,

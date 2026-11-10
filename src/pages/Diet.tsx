@@ -5,7 +5,7 @@ import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
-import { Plus, ChevronRight } from 'lucide-react';
+import { ChevronRight, Plus, Zap } from 'lucide-react';
 import type { MealType, HydratedFoodLog, FoodItem, FoodRecipe } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
@@ -21,11 +21,15 @@ import { DietPlanModal } from '@/components/diet/DietPlanModal';
 import { EditFoodLogDialog } from '@/components/diet/EditFoodLogDialog';
 import { EditRecipeLogDialog } from '@/components/diet/EditRecipeLogDialog';
 import { MealEnergyPopover } from '@/components/diet/MealEnergyPopover';
+import { MealAddActionPopover } from '@/components/diet/MealAddActionPopover';
+import { CopyMealDialog } from '@/components/diet/CopyMealDialog';
+import { QuickPlaceholderDialog } from '@/components/diet/QuickPlaceholderDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
 import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { calculateMealBudget } from '@/utils/nutritionMath';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
@@ -74,6 +78,8 @@ export default function Diet() {
   const {
     mealGroups,
     addFoodLog,
+    addQuickPlaceholder,
+    addAsPlannedMeal,
     updateFoodLog,
     updateFoodLogBundle,
     deleteFoodLog,
@@ -109,6 +115,13 @@ export default function Diet() {
   const [selectedFoodForAdd, setSelectedFoodForAdd] = useState<FoodItem | null>(null);
   const [foodQuantityForAdd, setFoodQuantityForAdd] = useState<number>(100);
   const [selectedRecipeForStaging, setSelectedRecipeForStaging] = useState<FoodRecipe | null>(null);
+
+  // 複製餐點流程專用狀態
+  const [copyMealType, setCopyMealType] = useState<MealType | null>(null);
+
+  // 快速粗估 / 營養佔位符專用狀態
+  const [placeholderMealType, setPlaceholderMealType] = useState<MealType | null>(null);
+  const [editingPlaceholderLog, setEditingPlaceholderLog] = useState<HydratedFoodLog | null>(null);
 
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -187,13 +200,82 @@ export default function Diet() {
 
   const handleSaveFoodLog = async (
     id: string,
-    updates: { quantity: number }
+    updates: {
+      quantity: number;
+      calories?: number;
+      carbs?: number;
+      protein?: number;
+      fat?: number;
+      foodName?: string;
+    }
   ) => {
     await updateFoodLog(id, updates);
   };
 
   const handleDeleteFoodLog = async (id: string) => {
     await deleteFoodLog(id);
+  };
+
+  // 算我正常吃（A+B 雙軌並行寫入）
+  const handleLogAsPlanned = async (
+    mealType: MealType,
+    budgetOverride?: { calories: number; carbs: number; protein: number; fat: number }
+  ) => {
+    const budget =
+      budgetOverride ||
+      calculateMealBudget(mealType, {
+        calories: targetCalories,
+        carbsGrams: targetMacros.carbsGrams,
+        proteinGrams: targetMacros.proteinGrams,
+        fatGrams: targetMacros.fatGrams,
+      });
+    const foodName = t('diet.asPlanned.defaultName', '{{meal}} 配額', {
+      meal: t(`diet.${mealType}`),
+    });
+    await addAsPlannedMeal(mealType, budget, {
+      foodName,
+    });
+  };
+
+  // 快速粗估彈窗操作
+  const handleOpenPlaceholderForMeal = (mealType: MealType) => {
+    setEditingPlaceholderLog(null);
+    setPlaceholderMealType(mealType);
+  };
+
+  const handleConfirmPlaceholder = async (data: {
+    foodName: string;
+    calories: number;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+  }) => {
+    if (editingPlaceholderLog) {
+      await updateFoodLog(editingPlaceholderLog.id, {
+        foodName: data.foodName,
+        calories: data.calories,
+        carbs: data.carbs,
+        protein: data.protein,
+        fat: data.fat,
+      });
+      setEditingPlaceholderLog(null);
+    } else if (placeholderMealType) {
+      await addQuickPlaceholder({
+        mealType: placeholderMealType,
+        foodName: data.foodName,
+        calories: data.calories,
+        carbs: data.carbs,
+        protein: data.protein,
+        fat: data.fat,
+      });
+    }
+    setPlaceholderMealType(null);
+  };
+
+  const handleDeletePlaceholder = async (id: string) => {
+    await deleteFoodLog(id);
+    setEditingPlaceholderLog(null);
+    setPlaceholderMealType(null);
   };
 
   const handleSaveRecipeLog = async (
@@ -217,6 +299,12 @@ export default function Diet() {
     triggerHaptic('light');
     setTargetMealTypeForAdd(type);
     setIsSelectDialogOpen(true);
+  };
+
+  // 開啟複製餐點彈窗
+  const handleOpenCopyForMeal = (type: MealType) => {
+    triggerHaptic('light');
+    setCopyMealType(type);
   };
 
   // 選擇食材或食譜回調
@@ -443,6 +531,13 @@ export default function Diet() {
         const groupCarbs = items.reduce((acc, curr) => acc + (curr.carbs || 0), 0);
         const groupFat = items.reduce((acc, curr) => acc + (curr.fat || 0), 0);
 
+        const mealBudget = calculateMealBudget(type, {
+          calories: targetCalories,
+          carbsGrams: targetMacros.carbsGrams,
+          proteinGrams: targetMacros.proteinGrams,
+          fatGrams: targetMacros.fatGrams,
+        });
+
         return (
           <div key={type} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
             {/* 灰底表頭橫欄 (單行 40px 高度：左側餐別名稱 + 3C-2 供能微線微箭頭 Popover，右側圓形「+」圖標按鈕) */}
@@ -465,14 +560,14 @@ export default function Diet() {
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleOpenAddForMeal(type)}
-                className="shrink-0 p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center"
-                aria-label={t('common.add')}
-              >
-                <Plus className="size-4" />
-              </button>
+              <MealAddActionPopover
+                mealType={type}
+                budget={mealBudget}
+                onOpenAddFood={handleOpenAddForMeal}
+                onOpenCopyMeal={handleOpenCopyForMeal}
+                onOpenQuickPlaceholder={handleOpenPlaceholderForMeal}
+                onLogAsPlanned={handleLogAsPlanned}
+              />
             </div>
 
             {/* 食物條目列表 (沿用食物管理頁面 MacroSquares 矩陣) */}
@@ -512,30 +607,57 @@ export default function Diet() {
                       key={item.id}
                       onClick={() => {
                         triggerHaptic('selection');
-                        setEditingFoodLog(item);
+                        if (item.isPlaceholder) {
+                          setEditingPlaceholderLog(item);
+                          setPlaceholderMealType(item.mealType);
+                        } else {
+                          setEditingFoodLog(item);
+                        }
                       }}
                       className="min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer"
                     >
                       {/* 左側：品名與份量熱量副標 */}
                       <div className="flex-1 min-w-0 pr-3 select-none">
-                        <div className="truncate text-foreground font-medium text-sm">
-                          {item.foodName}
+                        <div className="truncate text-foreground font-medium text-sm flex items-center gap-1.5">
+                          {item.isPlaceholder && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-blue-500 bg-blue-500/10 border border-blue-500/20 shrink-0 leading-none">
+                              ⚡ {t('diet.placeholder.badge', '快速粗估')}
+                            </span>
+                          )}
+                          {item.isAsPlanned && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 shrink-0 leading-none">
+                              ⚡ {t('diet.asPlanned.badgeLong', '正常飲食配額')}
+                            </span>
+                          )}
+                          <span className="truncate">{item.foodName}</span>
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                          <span>
-                            {formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}
-                          </span>
-                          <span className="text-border">·</span>
-                          <span
-                            className={cn(
-                              isLowCalorie &&
-                                'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
-                              isHighCalorie &&
-                                'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
-                            )}
-                          >
-                            {formatEnergy(item.calories || 0, energyUnit).formatted}
-                          </span>
+                          {item.isPlaceholder || item.isAsPlanned ? (
+                            <>
+                              <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
+                              <span className="text-border">·</span>
+                              <span>
+                                {Math.round(item.carbs || 0)}C {Math.round(item.protein || 0)}P {Math.round(item.fat || 0)}F
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span>
+                                {formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}
+                              </span>
+                              <span className="text-border">·</span>
+                              <span
+                                className={cn(
+                                  isLowCalorie &&
+                                    'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
+                                  isHighCalorie &&
+                                    'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
+                                )}
+                              >
+                                {formatEnergy(item.calories || 0, energyUnit).formatted}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -554,8 +676,30 @@ export default function Diet() {
                 })}
               </div>
             ) : (
-              <div className="py-6 text-center text-xs font-mono text-muted-foreground/60">
-                {t('diet.noFoodLogs', '無記錄')}
+              /* 形態 B：餐別空狀態卡片按鈕 */
+              <div className="py-5 px-3 flex flex-wrap items-center justify-center gap-2.5 text-xs font-mono select-none">
+                <span className="text-muted-foreground/60">
+                  {t('diet.noFoodLogs', '無記錄')}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddForMeal(type)}
+                    className="h-6 px-2.5 rounded-full border border-border bg-card hover:bg-hover text-muted-foreground hover:text-foreground text-2xs font-medium flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="size-3" />
+                    <span>{t('diet.recordFood', '記錄食材')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleLogAsPlanned(type, mealBudget)}
+                    className="h-6 px-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 font-mono text-2xs font-semibold flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Zap className="size-3 fill-emerald-500/20" />
+                    <span>{t('diet.asPlanned.emptyBtn', '算我正常吃 ({{calories}}k)', { calories: mealBudget.calories })}</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -579,6 +723,33 @@ export default function Diet() {
         log={editingFoodLog}
         onSave={handleSaveFoodLog}
         onDelete={handleDeleteFoodLog}
+      />
+
+      {/* 快速粗估 / 營養佔位符 Dialog */}
+      <QuickPlaceholderDialog
+        open={Boolean(placeholderMealType)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPlaceholderMealType(null);
+            setEditingPlaceholderLog(null);
+          }
+        }}
+        targetMealType={placeholderMealType || 'lunch'}
+        targetDate={selectedDate}
+        initialData={
+          editingPlaceholderLog
+            ? {
+                id: editingPlaceholderLog.id,
+                foodName: editingPlaceholderLog.foodName,
+                calories: editingPlaceholderLog.calories,
+                carbs: editingPlaceholderLog.carbs,
+                protein: editingPlaceholderLog.protein,
+                fat: editingPlaceholderLog.fat,
+              }
+            : null
+        }
+        onConfirm={handleConfirmPlaceholder}
+        onDelete={editingPlaceholderLog ? handleDeletePlaceholder : undefined}
       />
 
       {/* 菜餚組合記錄編輯管理 Dialog (菜餚方案 1) */}
@@ -662,6 +833,16 @@ export default function Diet() {
           }}
         />
       )}
+
+      {/* 複製餐點 Dialog (方案 A Precision Modal) */}
+      <CopyMealDialog
+        open={!!copyMealType}
+        onOpenChange={(open) => {
+          if (!open) setCopyMealType(null);
+        }}
+        targetMealType={copyMealType || 'lunch'}
+        targetDate={selectedDate}
+      />
     </div>
   );
 

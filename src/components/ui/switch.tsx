@@ -42,7 +42,7 @@ const Switch = React.forwardRef<React.ElementRef<typeof SwitchPrimitive.Root>, S
         <SwitchPrimitive.Thumb
           data-slot="switch-thumb"
           className={cn(
-            "pointer-events-none block size-3.5 rounded-full transition-transform ring-0 shadow-xs",
+            "pointer-events-none block size-3.5 rounded-full transition-transform ring-0 shadow-none",
             // 滑塊位移與色彩
             isChecked
               ? "translate-x-4.5 bg-background dark:bg-black"

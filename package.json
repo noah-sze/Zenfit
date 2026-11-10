@@ -8,9 +8,9 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "oxlint .",
-    "lint:design": "node scripts/lint-design.mjs",
+    "lint:design": "node .agents/scripts/lint-design.mjs",
     "test": "vitest run",
-    "check:all": "oxlint . && node scripts/lint-design.mjs && tsc -b && vitest run && vite build",
+    "check:all": "oxlint . && node .agents/scripts/lint-design.mjs && tsc -b && vitest run && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

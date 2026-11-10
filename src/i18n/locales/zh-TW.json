@@ -49,7 +49,21 @@
       "confirmRestoreItem": "確認恢復「{{name}}」？",
       "times": "次",
       "selectedDate": "選定日期",
-      "recent": "最近"
+      "recent": "最近",
+      "none": "無"
+    },
+    "calendar": {
+      "monthYearFormat": "yyyy 年 M 月",
+      "close": "關閉",
+      "weekdays": {
+        "sun": "日",
+        "mon": "一",
+        "tue": "二",
+        "wed": "三",
+        "thu": "四",
+        "fri": "五",
+        "sat": "六"
+      }
     },
     "nav": {
       "dashboard": "總覽",
@@ -75,6 +89,65 @@
     },
     "diet": {
       "title": "飲食日記",
+      "actionMenu": {
+        "searchTitle": "記錄食材 / 食譜",
+        "searchDesc": "搜尋單品食材或自訂食譜",
+        "copyTitle": "複製餐點",
+        "copyTag": "省時",
+        "copyDesc": "套用昨日或歷史餐點",
+        "copyComingSoon": "複製餐點功能即將推出",
+        "placeholderTitle": "快速估算",
+        "placeholderTag": "佔位",
+        "placeholderDesc": "粗估卡路里或自訂三大元素"
+      },
+      "recordFood": "記錄食材",
+      "placeholder": {
+        "title": "快速估算",
+        "namePlaceholder": "備註（如外食火鍋，選填）",
+        "defaultName": "快速估算",
+        "badge": "快速估算",
+        "modeCalories": "純熱量 (kcal)",
+        "modeMacros": "三大元素 (C/P/F)",
+        "tapToEdit": "點擊修改",
+        "presetLight": "輕食",
+        "presetRegular": "常規",
+        "presetSocial": "聚餐",
+        "presetFeast": "大餐",
+        "presetParty": "應酬",
+        "successToast": "已記錄估算"
+      },
+      "asPlanned": {
+        "actionTitle": "算我正常吃",
+        "badge": "極速",
+        "badgeLong": "正常飲食配額",
+        "actionDesc": "套用 {{meal}} 配額 · {{calories}} kcal",
+        "emptyBtn": "算我正常吃 ({{calories}}k)",
+        "defaultName": "{{meal}} 配額",
+        "successToast": "已記錄配額"
+      },
+      "copyMeal": {
+        "title": "複製餐點",
+        "lastTime": "上一次",
+        "manualSelect": "手動選擇",
+        "selectDateTitle": "選擇日期",
+        "source": "來源：",
+        "change": "更換",
+        "yesterday": "昨日 ({{date}})",
+        "yesterdayShort": "昨日",
+        "dayBefore": "前天 ({{date}})",
+        "dayBeforeShort": "前天",
+        "otherDate": "其他日期",
+        "empty": "該餐別無歷史記錄",
+        "emptyHint": "請選擇其他日期",
+        "emptyHintManual": "請點擊手動選擇有記錄的日期",
+        "selectedCount": "已選 {{count}} 項食材",
+        "totalCalories": "總計 {{calories}}",
+        "summary": "已選 {{count}} 項食材 · 總計 {{calories}}",
+        "confirm": "確認複製",
+        "copyAll": "一鍵複製全餐 ({{count}} 項 · {{calories}})",
+        "copySelected": "複製選取 ({{count}} 項 · {{calories}})",
+        "successToast": "已複製 {{count}} 項餐點至 {{meal}}"
+      },
       "ingredientsTab": "食材",
       "recipesTab": "食譜",
       "itemsUnit": "項單品",

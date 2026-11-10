@@ -1,4 +1,4 @@
-import type { FoodWeightUnit, FoodVolumeUnit } from '@/types';
+import type { FoodWeightUnit, FoodVolumeUnit, MealType } from '@/types';
 import { OZ_TO_G_RATIO, FL_OZ_TO_ML_RATIO } from './unitMath';
 
 export type NutritionDisplayMode = 'serving' | 'per100g';
@@ -274,6 +274,51 @@ export function calculateFoodLogNutrients(
     protein: scaled.protein,
     carbs: scaled.carbs,
     fat: scaled.fat,
+  };
+}
+
+export const MEAL_RATIOS: Record<MealType, number> = {
+  breakfast: 0.25,
+  lunch: 0.35,
+  dinner: 0.30,
+  snack: 0.10,
+};
+
+export interface MealBudgetResult {
+  calories: number;
+  carbs: number;
+  protein: number;
+  fat: number;
+}
+
+/**
+ * 依據餐別標準比例分配配額：
+ * - 早餐 (breakfast)：25%
+ * - 午餐 (lunch)：35%
+ * - 晚餐 (dinner)：30%
+ * - 點心 (snack)：10%
+ * 純數學無副作用函數，100% 防護邊界與 NaN
+ */
+export function calculateMealBudget(
+  mealType: MealType,
+  targetMacros: {
+    calories?: number;
+    carbsGrams?: number;
+    proteinGrams?: number;
+    fatGrams?: number;
+  }
+): MealBudgetResult {
+  const ratio = MEAL_RATIOS[mealType] ?? 0.25;
+  const safeCalories = Math.max(0, typeof targetMacros?.calories === 'number' && !isNaN(targetMacros.calories) ? targetMacros.calories : 0);
+  const safeCarbs = Math.max(0, typeof targetMacros?.carbsGrams === 'number' && !isNaN(targetMacros.carbsGrams) ? targetMacros.carbsGrams : 0);
+  const safeProtein = Math.max(0, typeof targetMacros?.proteinGrams === 'number' && !isNaN(targetMacros.proteinGrams) ? targetMacros.proteinGrams : 0);
+  const safeFat = Math.max(0, typeof targetMacros?.fatGrams === 'number' && !isNaN(targetMacros.fatGrams) ? targetMacros.fatGrams : 0);
+
+  return {
+    calories: Math.round(safeCalories * ratio),
+    carbs: Math.round(safeCarbs * ratio),
+    protein: Math.round(safeProtein * ratio),
+    fat: Math.round(safeFat * ratio),
   };
 }
 

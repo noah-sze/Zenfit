@@ -58,7 +58,14 @@ export interface FoodLog {
   id: string;
   date: string; // YYYY-MM-DD
   mealType: MealType;
-  foodId?: string;
+  foodId?: string; // 若為自訂粗估/佔位條目，此處為 undefined
+  foodName?: string; // 自訂佔位條目或配額名稱（如 "快速粗估"、"外食火鍋"、"正常飲食配額"）
+  calories?: number; // 粗估直接指定的熱量
+  carbs?: number; // 粗估直接指定的碳水（g）
+  protein?: number; // 粗估直接指定的蛋白質（g）
+  fat?: number; // 粗估直接指定的脂肪（g）
+  isPlaceholder?: boolean; // 標記為佔位粗估
+  isAsPlanned?: boolean; // 標記為算我正常吃配額
   quantity: number;
   unit: string;
   bundleId?: string; // 所屬菜餚 ID (Recipe ID)

@@ -49,7 +49,21 @@
       "confirmRestoreItem": "Restore \"{{name}}\"?",
       "times": "times",
       "selectedDate": "Selected Date",
-      "recent": "Recent"
+      "recent": "Recent",
+      "none": "None"
+    },
+    "calendar": {
+      "monthYearFormat": "MMMM yyyy",
+      "close": "Close",
+      "weekdays": {
+        "sun": "Su",
+        "mon": "Mo",
+        "tue": "Tu",
+        "wed": "We",
+        "thu": "Th",
+        "fri": "Fr",
+        "sat": "Sa"
+      }
     },
     "nav": {
       "dashboard": "Overview",
@@ -75,6 +89,65 @@
     },
     "diet": {
       "title": "Diet Log",
+      "actionMenu": {
+        "searchTitle": "Log Food / Recipe",
+        "searchDesc": "Search single ingredients or custom recipes",
+        "copyTitle": "Copy Meal",
+        "copyTag": "Fast",
+        "copyDesc": "Apply from yesterday or past meals",
+        "copyComingSoon": "Copy meal feature coming soon",
+        "placeholderTitle": "Quick Estimate",
+        "placeholderTag": "Estimate",
+        "placeholderDesc": "Estimate calories or custom macros"
+      },
+      "recordFood": "Record Food",
+      "placeholder": {
+        "title": "Quick Estimate",
+        "namePlaceholder": "Note (e.g., dining out, optional)",
+        "defaultName": "Quick Estimate",
+        "badge": "Quick Estimate",
+        "modeCalories": "Calories (kcal)",
+        "modeMacros": "Macros (C/P/F)",
+        "tapToEdit": "Tap to edit",
+        "presetLight": "Light",
+        "presetRegular": "Regular",
+        "presetSocial": "Social",
+        "presetFeast": "Feast",
+        "presetParty": "Party",
+        "successToast": "Estimate logged"
+      },
+      "asPlanned": {
+        "actionTitle": "Log as Planned",
+        "badge": "Quick",
+        "badgeLong": "Planned Budget",
+        "actionDesc": "Apply {{meal}} budget · {{calories}} kcal",
+        "emptyBtn": "Eat as Planned ({{calories}}k)",
+        "defaultName": "{{meal}} Budget",
+        "successToast": "Budget logged"
+      },
+      "copyMeal": {
+        "title": "Copy Meal",
+        "lastTime": "Previous",
+        "manualSelect": "Manual",
+        "selectDateTitle": "Select Date",
+        "source": "Source: ",
+        "change": "Change",
+        "yesterday": "Yesterday ({{date}})",
+        "yesterdayShort": "Yesterday",
+        "dayBefore": "Day Before ({{date}})",
+        "dayBeforeShort": "Day Before",
+        "otherDate": "Other Date",
+        "empty": "No records for this meal",
+        "emptyHint": "Please select another date",
+        "emptyHintManual": "Please manually select a date with records",
+        "selectedCount": "{{count}} selected",
+        "totalCalories": "Total {{calories}}",
+        "summary": "{{count}} selected · Total {{calories}}",
+        "confirm": "Confirm Copy",
+        "copyAll": "Copy All ({{count}} · {{calories}})",
+        "copySelected": "Copy Selected ({{count}} · {{calories}})",
+        "successToast": "Copied {{count}} items to {{meal}}"
+      },
       "ingredientsTab": "Ingredients",
       "recipesTab": "Recipes",
       "itemsUnit": "items",

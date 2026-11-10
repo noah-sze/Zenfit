@@ -495,6 +495,103 @@
 }
 
 /* ==================================================================== */
+/* 測量儀線性標尺與滑塊 (Linear Precision Stepper & Slider)              */
+/* ==================================================================== */
+.precision-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+
+.precision-slider:focus {
+  outline: none;
+}
+
+/* Track styles - 6px subtle muted track with 1px border */
+.precision-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.precision-slider::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+/* Thumb styles - 18px circle with 2px card-colored ring border */
+.precision-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--foreground);
+  border: 2px solid var(--card);
+  box-shadow: none;
+  margin-top: -6px;
+  transition: transform 0.12s ease;
+  cursor: grab;
+}
+
+.precision-slider:hover::-webkit-slider-thumb,
+.precision-slider:active::-webkit-slider-thumb {
+  transform: scale(1.1);
+  cursor: grabbing;
+}
+
+.precision-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--foreground);
+  border: 2px solid var(--card);
+  box-shadow: none;
+  transition: transform 0.12s ease;
+  cursor: grab;
+}
+
+.precision-slider:hover::-moz-range-thumb,
+.precision-slider:active::-moz-range-thumb {
+  transform: scale(1.1);
+  cursor: grabbing;
+}
+
+/* Semantic Macro Thumb Variants */
+.precision-slider-carbs::-webkit-slider-thumb {
+  background: var(--carbs);
+}
+.precision-slider-carbs::-moz-range-thumb {
+  background: var(--carbs);
+}
+
+.precision-slider-protein::-webkit-slider-thumb {
+  background: var(--protein);
+}
+.precision-slider-protein::-moz-range-thumb {
+  background: var(--protein);
+}
+
+.precision-slider-fat::-webkit-slider-thumb {
+  background: var(--fat);
+}
+.precision-slider-fat::-moz-range-thumb {
+  background: var(--fat);
+}
+
+/* ==================================================================== */
 /* Resend 頂級動態主題美學 (Resend Dynamic Aesthetic Toolkit: Light & Dark) */
 /* ==================================================================== */
 

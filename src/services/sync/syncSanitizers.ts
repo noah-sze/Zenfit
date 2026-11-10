@@ -52,6 +52,18 @@ export function sanitizeFoodLog(log: any): FoodLog {
 
   if (log.foodId) sanitized.foodId = mapLegacyIdToUuid(String(log.foodId));
   if (log.bundleId) sanitized.bundleId = mapLegacyIdToUuid(String(log.bundleId));
+
+  // 粗估/佔位條目或正常飲食配額（無關聯 foodId 或顯式標記為 isPlaceholder / isAsPlanned）
+  if (log.isPlaceholder || log.isAsPlanned || (!log.foodId && (log.calories !== undefined || log.foodName !== undefined))) {
+    if (log.isPlaceholder) sanitized.isPlaceholder = true;
+    if (log.isAsPlanned) sanitized.isAsPlanned = true;
+    if (log.foodName) sanitized.foodName = String(log.foodName);
+    if (typeof log.calories === 'number' && !isNaN(log.calories)) sanitized.calories = log.calories;
+    if (typeof log.carbs === 'number' && !isNaN(log.carbs)) sanitized.carbs = log.carbs;
+    if (typeof log.protein === 'number' && !isNaN(log.protein)) sanitized.protein = log.protein;
+    if (typeof log.fat === 'number' && !isNaN(log.fat)) sanitized.fat = log.fat;
+  }
+
   if (log.rev !== undefined) sanitized.rev = Number(log.rev);
 
   return sanitized;

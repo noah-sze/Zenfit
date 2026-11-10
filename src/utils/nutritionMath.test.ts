@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { calculateScaledNutrition, scaleNutritionFromBasis, calculateFoodLogNutrients } from './nutritionMath';
+import {
+  calculateScaledNutrition,
+  scaleNutritionFromBasis,
+  calculateFoodLogNutrients,
+  calculateMealBudget,
+  MEAL_RATIOS,
+} from './nutritionMath';
 
 describe('nutritionMath - calculateScaledNutrition', () => {
   it('正確返回「每份」模式之原始數值', () => {
@@ -451,6 +457,80 @@ describe('nutritionMath - calculateFoodLogNutrients', () => {
     expect(res.protein).toBe(46.5);
     expect(res.carbs).toBe(0);
     expect(res.fat).toBe(5.4);
+  });
+});
+
+describe('nutritionMath - calculateMealBudget', () => {
+  const target = {
+    calories: 2000,
+    carbsGrams: 200,
+    proteinGrams: 150,
+    fatGrams: 67,
+  };
+
+  it('標準餐別比例常數應正確定義（25%, 35%, 30%, 10%）', () => {
+    expect(MEAL_RATIOS.breakfast).toBe(0.25);
+    expect(MEAL_RATIOS.lunch).toBe(0.35);
+    expect(MEAL_RATIOS.dinner).toBe(0.30);
+    expect(MEAL_RATIOS.snack).toBe(0.10);
+    expect(
+      MEAL_RATIOS.breakfast + MEAL_RATIOS.lunch + MEAL_RATIOS.dinner + MEAL_RATIOS.snack
+    ).toBeCloseTo(1.0);
+  });
+
+  it('早餐依 25% 配額精確分配', () => {
+    const res = calculateMealBudget('breakfast', target);
+    expect(res).toEqual({
+      calories: 500, // 2000 * 0.25
+      carbs: 50,     // 200 * 0.25
+      protein: 38,   // 150 * 0.25 = 37.5 -> 38
+      fat: 17,       // 67 * 0.25 = 16.75 -> 17
+    });
+  });
+
+  it('午餐依 35% 配額精確分配', () => {
+    const res = calculateMealBudget('lunch', target);
+    expect(res).toEqual({
+      calories: 700, // 2000 * 0.35
+      carbs: 70,     // 200 * 0.35
+      protein: 53,   // 150 * 0.35 = 52.5 -> 53
+      fat: 23,       // 67 * 0.35 = 23.45 -> 23
+    });
+  });
+
+  it('晚餐依 30% 配額精確分配', () => {
+    const res = calculateMealBudget('dinner', target);
+    expect(res).toEqual({
+      calories: 600, // 2000 * 0.30
+      carbs: 60,     // 200 * 0.30
+      protein: 45,   // 150 * 0.30 = 45
+      fat: 20,       // 67 * 0.30 = 20.1 -> 20
+    });
+  });
+
+  it('點心依 10% 配額精確分配', () => {
+    const res = calculateMealBudget('snack', target);
+    expect(res).toEqual({
+      calories: 200, // 2000 * 0.10
+      carbs: 20,     // 200 * 0.10
+      protein: 15,   // 150 * 0.10 = 15
+      fat: 7,        // 67 * 0.10 = 6.7 -> 7
+    });
+  });
+
+  it('邊界防護：遇到 undefined, NaN 或負數時安全回傳 0', () => {
+    const res = calculateMealBudget('breakfast', {
+      calories: NaN,
+      carbsGrams: -100,
+      proteinGrams: undefined,
+      fatGrams: 0,
+    });
+    expect(res).toEqual({
+      calories: 0,
+      carbs: 0,
+      protein: 0,
+      fat: 0,
+    });
   });
 });
 

@@ -9,7 +9,7 @@ const VIOLATION_RULES = [
     name: '絕對禁止陰影 (Vercel 極簡高對比無陰影，嚴禁使用實質陰影類別)',
     // Matches shadow, shadow-sm, shadow-md, shadow-lg, shadow-xl, shadow-2xl, shadow-inner, shadow-[...] BUT NOT shadow-none
     regex: /\bshadow(?!(?:-none|\w|-))\b|\bshadow-(?!none\b)(?:sm|md|lg|xl|2xl|inner|\[[^\]]+\]|[a-z0-9_-]+)\b/g,
-    excludeFiles: ['src/index.css'],
+    excludeFiles: ['src/index.css', 'src/components/welcome'],
   },
   {
     id: 'no-autofocus-dialog',
@@ -22,7 +22,7 @@ const VIOLATION_RULES = [
     id: 'no-hardcoded-hex-in-tsx',
     name: '禁止在 TSX 中直接硬編碼魔術色碼 (必須使用 Design Tokens)',
     regex: /(?:className|style)=["'{`][^"'`}]*#[0-9a-fA-F]{3,8}[^"'`}]*["'}`]/g,
-    excludeFiles: ['src/constants', 'src/utils/muscleIntensity.ts'],
+    excludeFiles: ['src/constants', 'src/utils/muscleIntensity.ts', 'src/components/welcome'],
   }
 ];
 

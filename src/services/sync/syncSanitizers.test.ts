@@ -123,6 +123,74 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
       expect((cleaned as any).fat).toBeUndefined();
       expect((cleaned as any).notes).toBeUndefined();
     });
+
+    it('完整保留快速粗估與算我正常吃配額的自訂名稱與營養素欄位', () => {
+      const placeholderLog = {
+        id: 'p-1',
+        date: '2026-11-10',
+        mealType: 'lunch',
+        foodName: '外食火鍋',
+        calories: 850,
+        carbs: 60,
+        protein: 45,
+        fat: 35,
+        isPlaceholder: true,
+        quantity: 1,
+        unit: '份',
+        createdAt: 2000,
+        updatedAt: 2000,
+      };
+
+      const cleaned = sanitizeFoodLog(placeholderLog);
+      expect(cleaned).toEqual({
+        id: 'p-1',
+        date: '2026-11-10',
+        mealType: 'lunch',
+        foodName: '外食火鍋',
+        calories: 850,
+        carbs: 60,
+        protein: 45,
+        fat: 35,
+        isPlaceholder: true,
+        quantity: 1,
+        unit: '份',
+        createdAt: 2000,
+        updatedAt: 2000,
+      });
+
+      const asPlannedLog = {
+        id: 'plan-1',
+        date: '2026-11-10',
+        mealType: 'breakfast',
+        foodName: '早餐目標配額',
+        calories: 500,
+        carbs: 50,
+        protein: 38,
+        fat: 17,
+        isAsPlanned: true,
+        quantity: 1,
+        unit: '份',
+        createdAt: 2000,
+        updatedAt: 2000,
+      };
+
+      const cleanedPlanned = sanitizeFoodLog(asPlannedLog);
+      expect(cleanedPlanned).toEqual({
+        id: 'plan-1',
+        date: '2026-11-10',
+        mealType: 'breakfast',
+        foodName: '早餐目標配額',
+        calories: 500,
+        carbs: 50,
+        protein: 38,
+        fat: 17,
+        isAsPlanned: true,
+        quantity: 1,
+        unit: '份',
+        createdAt: 2000,
+        updatedAt: 2000,
+      });
+    });
   });
 
   describe('sanitizeWorkoutLog', () => {

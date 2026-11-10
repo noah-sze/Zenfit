@@ -19,7 +19,17 @@ export interface EditFoodLogDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   log: HydratedFoodLog | null;
-  onSave: (id: string, updates: { quantity: number }) => Promise<void>;
+  onSave: (
+    id: string,
+    updates: {
+      quantity: number;
+      calories?: number;
+      carbs?: number;
+      protein?: number;
+      fat?: number;
+      foodName?: string;
+    }
+  ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -142,6 +152,14 @@ export function EditFoodLogDialog({
     try {
       await onSave(log.id, {
         quantity,
+        ...(log.isPlaceholder || log.isAsPlanned || !log.foodId
+          ? {
+              calories: currentMacros.calories,
+              carbs: currentMacros.carbs,
+              protein: currentMacros.protein,
+              fat: currentMacros.fat,
+            }
+          : {}),
       });
       triggerHaptic('success');
       onOpenChange(false);

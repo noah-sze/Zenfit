@@ -34,7 +34,7 @@
     `Phase 1 (data-architect)` $\rightarrow$ `Phase 2 (core-engineer)` $\rightarrow$ `Phase 3 (copy-specialist)` $\rightarrow$ `Phase 4 (Quality Gate: qa-engineer + ui-tester)`。
 
 ### 機制二：自動化設計規範掃描 (Design Token Linter)
-- **工具實裝**：專案已配置 `scripts/lint-design.mjs` 與指令 `npm run lint:design`（及全域檢查 `npm run check:all`）。
+- **工具實裝**：專案已配置 `.agents/scripts/lint-design.mjs` 與指令 `npm run lint:design`（及全域檢查 `npm run check:all`）。
 - **巡檢規範**：
   1. 絕對禁止實質陰影：嚴禁 `shadow-*`（僅允許 `shadow-none`）。
   2. 絕對禁止隨意魔術色碼：嚴禁在 TSX 標籤中硬編碼 hex 色碼，一律使用全域 Design Tokens。
@@ -78,3 +78,31 @@
   - 生產打包 (`vite build`)：Pass
 - **待確認事項**：（無，或具體問題）
 ```
+
+---
+
+## 5. 缺陷除錯標準作業規範 (Bug Triage & Resolution Protocol)
+
+### 核心原則一：拒絕上下游割裂（No Context-Loss Principle）
+- **禁止生硬切分「定位根因」與「制定修復方案」**：
+  定位出根本原因的專家腦中已具備完整的調用鏈、資料流與邊界值上下文。強制將「定位」與「修復方案」拆派給不同成員會造成嚴重的 Context 交接損耗與理解偏差。
+- **閉環調查與修復**：
+  由專責模組工程師一氣呵成完成「調查重現 $\rightarrow$ 定位根因 $\rightarrow$ 提出修復建議 $\rightarrow$ 編寫修復代碼與單元測試」。
+
+### 核心原則二：領域專責指派矩陣（Domain Bug Matrix）
+遇到各類 Bug 時，主管依據缺陷所屬領域精確指派專責人員：
+1. **純演算法 / 數據層（換算、高亮判定、Dexie 資料庫）** $\rightarrow$ 指派 `data-architect`
+2. **UI 組件 / 狀態 / 互動（搜尋穿透、Dialog 狀態、頁面效能）** $\rightarrow$ 指派 `core-engineer`
+3. **視覺 / 設計規範（陰影、Token 色碼、排版擠壓）** $\rightarrow$ 指派 `product-designer` + `core-engineer`
+4. **文案 / 多語言（繁簡轉換、多語言別名、i18n）** $\rightarrow$ 指派 `copy-specialist`
+5. **未知跨層 / 神經痛（畫面崩潰、全域錯誤）** $\rightarrow$ 先由 `qa-engineer` 定位最小重現路徑 (Minimal Repro) 後分派至相應模組
+
+### 核心原則三：獨立把關與防禦性驗證（Independent Quality Gate）
+- **修復者不得自我驗收**：開發者存在固有盲區，修復完成後必須交由獨立角色把關。
+- **邏輯驗收**：由 `qa-engineer` 執行 `npm test`（全域零迴歸測試）與 `npm run build`。
+- **視覺驗收**：由 `ui-tester` 執行 `npm run lint:design`（規範檢查）與視覺邊界防擠壓檢驗。
+
+### 核心原則四：主管職責紅線（Lead Golden Rule）
+- **主管絕不親自動手修改業務代碼**。
+- 主管職責為：精確解讀 Noah 需求 $\rightarrow$ 派發專責成員 $\rightarrow$ 調度排程與解除阻礙 $\rightarrow$ 組織獨立驗收 $\rightarrow$ 呈交結構化交付報告。
+

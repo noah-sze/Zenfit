@@ -16,20 +16,19 @@ export function useFoodLogs(date: string) {
 
       const hydratedLogs: HydratedFoodLog[] = rawEntries.map((log) => {
         const food = log.foodId ? foodMap.get(log.foodId) : undefined;
-        const raw = log as any;
-        // 若有對應食材實體，依據真理源動態推算營養素；無實體時回退歷史快照或保底 0
+        // 若有對應食材實體，依據真理源動態推算營養素；無實體時回退粗估/配額快照或保底 0
         const computedNutrients = food
           ? calculateFoodLogNutrients(food, log.quantity, log.unit)
           : {
-              calories: raw.calories || 0,
-              protein: raw.protein || 0,
-              carbs: raw.carbs || 0,
-              fat: raw.fat || 0,
+              calories: log.calories || 0,
+              protein: log.protein || 0,
+              carbs: log.carbs || 0,
+              fat: log.fat || 0,
             };
 
         const displayName = food
           ? formatFoodDisplayName(food)
-          : (raw.foodName || '未知食材');
+          : (log.foodName || '未知食材');
 
         return {
           ...log,
@@ -104,9 +103,80 @@ export function useFoodLogs(date: string) {
       date: targetDate,
       mealType: data.mealType,
       foodId: data.foodId,
+      foodName: data.foodName,
+      calories: data.calories,
+      carbs: data.carbs,
+      protein: data.protein,
+      fat: data.fat,
+      isPlaceholder: data.isPlaceholder,
+      isAsPlanned: data.isAsPlanned,
       quantity: data.quantity,
       unit: data.unit,
       bundleId: data.bundleId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    dailyLog.entries.push(newEntry);
+    dailyLog.updatedAt = now;
+    await db.daily_diet_logs.put(dailyLog);
+    return newLogId;
+  };
+
+  const addQuickPlaceholder = async (data: {
+    mealType: MealType;
+    foodName?: string;
+    calories: number;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+    date?: string;
+  }) => {
+    const targetDate = data.date || date;
+    const dailyLog = await getOrCreateDailyLog(targetDate);
+    const now = Date.now();
+    const newLogId = uuidv4();
+    const newEntry: FoodLog = {
+      id: newLogId,
+      date: targetDate,
+      mealType: data.mealType,
+      foodName: data.foodName?.trim() || '快速粗估',
+      calories: Math.round(data.calories),
+      carbs: data.carbs !== undefined ? Math.round(data.carbs * 10) / 10 : undefined,
+      protein: data.protein !== undefined ? Math.round(data.protein * 10) / 10 : undefined,
+      fat: data.fat !== undefined ? Math.round(data.fat * 10) / 10 : undefined,
+      isPlaceholder: true,
+      quantity: 1,
+      unit: '份',
+      createdAt: now,
+      updatedAt: now,
+    };
+    dailyLog.entries.push(newEntry);
+    dailyLog.updatedAt = now;
+    await db.daily_diet_logs.put(dailyLog);
+    return newLogId;
+  };
+
+  const addAsPlannedMeal = async (
+    mealType: MealType,
+    budget: { calories: number; carbs: number; protein: number; fat: number },
+    options?: { date?: string; foodName?: string }
+  ) => {
+    const targetDate = options?.date || date;
+    const dailyLog = await getOrCreateDailyLog(targetDate);
+    const now = Date.now();
+    const newLogId = uuidv4();
+    const newEntry: FoodLog = {
+      id: newLogId,
+      date: targetDate,
+      mealType,
+      foodName: options?.foodName,
+      calories: Math.round(budget.calories),
+      carbs: Math.round(budget.carbs * 10) / 10,
+      protein: Math.round(budget.protein * 10) / 10,
+      fat: Math.round(budget.fat * 10) / 10,
+      isAsPlanned: true,
+      quantity: 1,
+      unit: '份',
       createdAt: now,
       updatedAt: now,
     };
@@ -212,6 +282,8 @@ export function useFoodLogs(date: string) {
     mealGroups,
     isLoading: queryResult === undefined,
     addFoodLog,
+    addQuickPlaceholder,
+    addAsPlannedMeal,
     addFoodLogBundle,
     updateFoodLog,
     updateFoodLogBundle,

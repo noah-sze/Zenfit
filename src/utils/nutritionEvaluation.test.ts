@@ -111,6 +111,26 @@ describe('evaluateNutritionalHighlight', () => {
     expect(res.highlights.calories).toBe(false);
   });
 
+  it('四季寶 · 花生醬 (調味品分類但實質高熱量高脂高蛋白)：不應被微量調料防護誤攔截，應正確高亮熱量、蛋白與脂肪', () => {
+    const res = evaluateNutritionalHighlight({
+      calories: 122,
+      protein: 5,
+      carbs: 3.2,
+      fat: 9.8,
+      servingSize: 20,
+      servingUnit: 'g',
+      category: 'condiment',
+    });
+
+    // 換算至 100g: 610 kcal (>=400), 25g 蛋白 (>=10), 49g 脂肪 (>=10 且 fatPct=73% >=35%)
+    expect(res.labels).toContain('high-calorie');
+    expect(res.labels).toContain('high-protein');
+    expect(res.labels).toContain('fat-source');
+    expect(res.highlights.protein).toBe(true);
+    expect(res.highlights.fat).toBe(true);
+    expect(res.highlights.carbs).toBe(false);
+  });
+
   it('食用植物油：應精確識別為脂質來源與高熱量，不應被誤判為高蛋白或高碳水', () => {
     const res = evaluateNutritionalHighlight({
       calories: 90,

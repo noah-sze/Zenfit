@@ -146,6 +146,7 @@ export function FoodRecipeBrowser({
     presetFoods,
     archivedCustomFoods,
     archivedPresetFoods,
+    isLoading: isFoodsLoading,
   } = useFoods();
 
   const isManage = interactiveMode === 'manage';
@@ -156,7 +157,7 @@ export function FoodRecipeBrowser({
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
   // 提取最近記錄
-  const { recentFoodIds, recentRecipeIds } = useRecentFoods();
+  const { recentFoodIds, recentRecipeIds, isLoading: isRecentLoading } = useRecentFoods();
   const recentFoodIdSet = useMemo(() => new Set(recentFoodIds), [recentFoodIds]);
   const recentRecipeIdSet = useMemo(() => new Set(recentRecipeIds), [recentRecipeIds]);
 
@@ -241,6 +242,19 @@ export function FoodRecipeBrowser({
   const recentFoodsCount = useMemo(() => {
     return tabBaseFoods.filter((f) => recentFoodIdSet.has(f.id)).length;
   }, [tabBaseFoods, recentFoodIdSet]);
+
+  // 初次載入/打開定位決策：Dialog 模式下若最近為空且當前仍為 recent，自動定位至 'all'（useRef 確保後續手動切換不受影響）
+  const initialFoodCategoryResolvedRef = useRef(false);
+  useEffect(() => {
+    if (isManage) return;
+    if (initialFoodCategoryResolvedRef.current) return;
+    if (isRecentLoading || isFoodsLoading) return;
+
+    initialFoodCategoryResolvedRef.current = true;
+    if (recentFoodsCount === 0 && localCategory === 'recent') {
+      setLocalCategory('all');
+    }
+  }, [isManage, isRecentLoading, isFoodsLoading, recentFoodsCount, localCategory]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<'recent' | 'all' | FoodCategory, number> = {
@@ -419,6 +433,7 @@ export function FoodRecipeBrowser({
     archivedCustomRecipes,
     archivedPresetRecipes,
     getRecipeMacros,
+    isLoading: isRecipesLoading,
   } = useRecipes();
 
   const [localRecipeSearchQuery, setLocalRecipeSearchQuery] = useState('');
@@ -482,6 +497,19 @@ export function FoodRecipeBrowser({
   const recentRecipesCount = useMemo(() => {
     return tabBaseRecipes.filter((r) => recentRecipeIdSet.has(r.id)).length;
   }, [tabBaseRecipes, recentRecipeIdSet]);
+
+  // 初次載入/打開定位決策：Dialog 模式下若食譜最近為空且當前仍為 recent，自動定位至 'all'（useRef 確保後續手動切換不受影響）
+  const initialRecipeCategoryResolvedRef = useRef(false);
+  useEffect(() => {
+    if (isManage) return;
+    if (initialRecipeCategoryResolvedRef.current) return;
+    if (isRecentLoading || isRecipesLoading) return;
+
+    initialRecipeCategoryResolvedRef.current = true;
+    if (recentRecipesCount === 0 && selectedRecipeCategory === 'recent') {
+      setSelectedRecipeCategory('all');
+    }
+  }, [isManage, isRecentLoading, isRecipesLoading, recentRecipesCount, selectedRecipeCategory]);
 
   // 針對 tabBaseRecipes 建立 O(1) 營養特徵標籤快取 Map
   const recipeNutritionTagMap = useMemo(() => {
@@ -643,44 +671,56 @@ export function FoodRecipeBrowser({
             aria-selected={viewTab === 'foods'}
             onClick={() => handleTabChange('foods')}
             className={cn(
-              'px-3 rounded-xl text-left cursor-pointer transition-all flex flex-col outline-none',
+              'px-3 cursor-pointer transition-all outline-none',
               isManage
-                ? 'py-2.5 sm:py-3 justify-between h-[66px]'
-                : 'h-10 justify-center',
+                ? 'h-[66px] rounded-xl flex flex-col justify-between py-2.5 sm:py-3 text-left'
+                : 'h-10 rounded-lg flex items-center justify-center',
               viewTab === 'foods'
-                ? 'border border-foreground bg-muted/30 shadow-none'
+                ? isManage
+                  ? 'border border-foreground bg-muted/30 shadow-none'
+                  : 'bg-foreground text-background border border-foreground'
                 : 'border border-border hover:border-foreground/40 bg-card text-muted-foreground'
             )}
           >
-            <div className="flex items-center justify-between text-xs w-full">
-              <span
-                className={cn(
-                  'font-medium',
-                  viewTab === 'foods' ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
+            {isManage ? (
+              <>
+                <div className="flex items-center justify-between text-xs w-full">
+                  <span
+                    className={cn(
+                      'font-medium',
+                      viewTab === 'foods'
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {t('diet.ingredientsTab', '食材')}
+                  </span>
+                  <span
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full transition-colors',
+                      viewTab === 'foods'
+                        ? 'bg-foreground'
+                        : 'bg-transparent'
+                    )}
+                  />
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={cn(
+                      'text-xl font-bold tracking-tight',
+                      viewTab === 'foods' ? 'text-foreground' : 'text-muted-foreground'
+                    )}
+                  >
+                    {totalActiveFoodsCount}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {t('diet.itemsUnit', '項單品')}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center text-xs font-medium">
                 {t('diet.ingredientsTab', '食材')}
-              </span>
-              <span
-                className={cn(
-                  'w-1.5 h-1.5 rounded-full transition-colors',
-                  viewTab === 'foods' ? 'bg-foreground' : 'bg-transparent'
-                )}
-              />
-            </div>
-            {isManage && (
-              <div className="flex items-baseline gap-1.5">
-                <span
-                  className={cn(
-                    'text-xl font-bold tracking-tight',
-                    viewTab === 'foods' ? 'text-foreground' : 'text-muted-foreground'
-                  )}
-                >
-                  {totalActiveFoodsCount}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {t('diet.itemsUnit', '項單品')}
-                </span>
               </div>
             )}
           </button>
@@ -692,44 +732,56 @@ export function FoodRecipeBrowser({
             aria-selected={viewTab === 'recipes'}
             onClick={() => handleTabChange('recipes')}
             className={cn(
-              'px-3 rounded-xl text-left cursor-pointer transition-all flex flex-col outline-none',
+              'px-3 cursor-pointer transition-all outline-none',
               isManage
-                ? 'py-2.5 sm:py-3 justify-between h-[66px]'
-                : 'h-10 justify-center',
+                ? 'h-[66px] rounded-xl flex flex-col justify-between py-2.5 sm:py-3 text-left'
+                : 'h-10 rounded-lg flex items-center justify-center',
               viewTab === 'recipes'
-                ? 'border border-foreground bg-muted/30 shadow-none'
+                ? isManage
+                  ? 'border border-foreground bg-muted/30 shadow-none'
+                  : 'bg-foreground text-background border border-foreground'
                 : 'border border-border hover:border-foreground/40 bg-card text-muted-foreground'
             )}
           >
-            <div className="flex items-center justify-between text-xs w-full">
-              <span
-                className={cn(
-                  'font-medium',
-                  viewTab === 'recipes' ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
+            {isManage ? (
+              <>
+                <div className="flex items-center justify-between text-xs w-full">
+                  <span
+                    className={cn(
+                      'font-medium',
+                      viewTab === 'recipes'
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {t('diet.recipesTab', '食譜')}
+                  </span>
+                  <span
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full transition-colors',
+                      viewTab === 'recipes'
+                        ? 'bg-foreground'
+                        : 'bg-transparent'
+                    )}
+                  />
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={cn(
+                      'text-xl font-bold tracking-tight',
+                      viewTab === 'recipes' ? 'text-foreground' : 'text-muted-foreground'
+                    )}
+                  >
+                    {totalActiveRecipes.length}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {t('diet.recipesUnit', '道配方')}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center text-xs font-medium">
                 {t('diet.recipesTab', '食譜')}
-              </span>
-              <span
-                className={cn(
-                  'w-1.5 h-1.5 rounded-full transition-colors',
-                  viewTab === 'recipes' ? 'bg-foreground' : 'bg-transparent'
-                )}
-              />
-            </div>
-            {isManage && (
-              <div className="flex items-baseline gap-1.5">
-                <span
-                  className={cn(
-                    'text-xl font-bold tracking-tight',
-                    viewTab === 'recipes' ? 'text-foreground' : 'text-muted-foreground'
-                  )}
-                >
-                  {totalActiveRecipes.length}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {t('diet.recipesUnit', '道配方')}
-                </span>
               </div>
             )}
           </button>

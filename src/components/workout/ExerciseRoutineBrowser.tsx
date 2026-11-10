@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, ChevronRight, X } from 'lucide-react';
 import { useExercises } from '@/hooks/useExercises';
@@ -48,7 +48,7 @@ export function ExerciseRoutineBrowser({
   const { t } = useTranslation();
 
   // 動作庫資料
-  const { activeExercises } = useExercises();
+  const { activeExercises, isLoading: isExercisesLoading } = useExercises();
   const { getEquipmentDisplayName } = useEquipments();
 
   // 組合庫資料
@@ -87,7 +87,7 @@ export function ExerciseRoutineBrowser({
   };
 
   // 最近訓練動作提取
-  const { recentExerciseIds, recentRoutineIds } = useRecentExercises();
+  const { recentExerciseIds, recentRoutineIds, isLoading: isRecentLoading } = useRecentExercises();
   const recentExerciseIdSet = useMemo(() => new Set(recentExerciseIds), [recentExerciseIds]);
 
 
@@ -110,6 +110,18 @@ export function ExerciseRoutineBrowser({
   // 動作過濾狀態
   const [exerciseSearchQuery, setExerciseSearchQuery] = useState('');
   const [selectedMuscleFilter, setSelectedMuscleFilter] = useState<string>('recent');
+
+  // 初次載入/打開定位決策：若動作最近記錄為空且當前仍為 recent，自動定位至 'all'（useRef 確保後續手動切換不受影響）
+  const initialMuscleFilterResolvedRef = useRef(false);
+  useEffect(() => {
+    if (initialMuscleFilterResolvedRef.current) return;
+    if (isRecentLoading || isExercisesLoading) return;
+
+    initialMuscleFilterResolvedRef.current = true;
+    if (recentExercisesCount === 0 && selectedMuscleFilter === 'recent') {
+      setSelectedMuscleFilter('all');
+    }
+  }, [isRecentLoading, isExercisesLoading, recentExercisesCount, selectedMuscleFilter]);
 
   const filteredExercises = useMemo(() => {
     let list = activeExercises;

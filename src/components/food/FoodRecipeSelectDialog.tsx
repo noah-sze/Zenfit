@@ -93,7 +93,7 @@ export function FoodRecipeSelectDialog({
         overlayClassName={zIndexClass}
         className={cn(
           zIndexClass,
-          'w-[350px] max-w-[calc(100vw-24px)] sm:w-[350px] sm:max-w-[350px] h-[85vh] sm:h-[80vh] flex flex-col p-4 sm:p-5 bg-card border border-border text-card-foreground overflow-hidden select-none shadow-none font-mono text-xs'
+          'w-[400px] max-w-[calc(100vw-24px)] sm:w-[400px] sm:max-w-[400px] h-[85vh] sm:h-[80vh] flex flex-col p-4 sm:p-5 bg-card border border-border text-card-foreground overflow-hidden select-none shadow-none font-mono text-xs'
         )}
         initialFocus={false}
       >
