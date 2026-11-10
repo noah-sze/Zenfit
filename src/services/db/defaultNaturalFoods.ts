@@ -416,6 +416,9 @@ export const NATURAL_FOOD_IDS = {
   yangjiaomi_melon: 'faf2a503-75d2-5938-8db6-fe25b8503543',
   chinese_torreya_xiangfei: 'dc520d93-f2d0-51b4-a743-b938c923d611',
   xinjiang_almond_badanmu: '93ca380d-127f-55cb-bc40-d85557321eba',
+  beef_generic: '11d49f21-2471-5849-8022-a0b23eec59c8',
+  pork_generic: 'cb4f0650-b4b8-5374-ac2b-4edee562f618',
+  lamb_generic: '73eb2eaa-2e12-5a82-beaf-8a33917c117a',
 } as const;
 
 export type NaturalFoodKey = keyof typeof NATURAL_FOOD_IDS;
@@ -830,4 +833,7 @@ export const DEFAULT_NATURAL_FOODS: Omit<FoodItem, 'createdAt' | 'updatedAt'>[] 
   { id: NATURAL_FOOD_IDS.yangjiaomi_melon, name: '羊角蜜甜瓜', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 32, carbs: 7.8, protein: 0.8, fat: 0.1, fiber: 0.8, isCustom: false, isArchived: false },
   { id: NATURAL_FOOD_IDS.chinese_torreya_xiangfei, name: '香榧', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 673, carbs: 13.5, protein: 12.5, fat: 68.0, fiber: 7.5, isCustom: false, isArchived: false },
   { id: NATURAL_FOOD_IDS.xinjiang_almond_badanmu, name: '巴旦木', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 590, carbs: 21.0, protein: 21.5, fat: 51.0, fiber: 11.8, isCustom: false, isArchived: false },
+  { id: NATURAL_FOOD_IDS.beef_generic, name: '牛肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 176, carbs: 0.0, protein: 20.0, fat: 10.0, fiber: 0.0, isCustom: false, isArchived: false },
+  { id: NATURAL_FOOD_IDS.pork_generic, name: '豬肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 172, carbs: 0.0, protein: 20.5, fat: 10.0, fiber: 0.0, isCustom: false, isArchived: false },
+  { id: NATURAL_FOOD_IDS.lamb_generic, name: '羊肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 170, carbs: 0.0, protein: 20.0, fat: 10.0, fiber: 0.0, isCustom: false, isArchived: false },
 ];

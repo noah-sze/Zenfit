@@ -11,6 +11,7 @@ import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBad
 import { sortMuscleEntries } from '@/utils/muscleIntensity';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { matchesMultilingual } from '@/utils/multilingualSearch';
 import type { Exercise, WorkoutRoutine, DetailedMuscle } from '@/types';
 
 export type ExerciseSelectMode = 'all' | 'exercises' | 'routines';
@@ -112,34 +113,38 @@ export function ExerciseRoutineBrowser({
 
   const filteredExercises = useMemo(() => {
     let list = activeExercises;
+    const isSearching = Boolean(exerciseSearchQuery.trim());
 
-    // 1. 部位過濾 / 最近過濾
-    if (selectedMuscleFilter === 'recent') {
-      list = list.filter((ex) => recentExerciseIdSet.has(ex.id));
-    } else if (selectedMuscleFilter !== 'all') {
-      const targetGroup = MAJOR_MUSCLE_GROUPS.find((g) => g.id === selectedMuscleFilter);
-      if (targetGroup) {
-        list = list.filter((ex) => {
-          if (!ex.targetMuscles) return false;
-          return Object.keys(ex.targetMuscles).some((m) =>
-            targetGroup.detailedMuscles.includes(m as DetailedMuscle)
-          );
-        });
+    // 1. 部位過濾 / 最近過濾 (僅在非搜尋狀態下套用)
+    if (!isSearching) {
+      if (selectedMuscleFilter === 'recent') {
+        list = list.filter((ex) => recentExerciseIdSet.has(ex.id));
+      } else if (selectedMuscleFilter !== 'all') {
+        const targetGroup = MAJOR_MUSCLE_GROUPS.find((g) => g.id === selectedMuscleFilter);
+        if (targetGroup) {
+          list = list.filter((ex) => {
+            if (!ex.targetMuscles) return false;
+            return Object.keys(ex.targetMuscles).some((m) =>
+              targetGroup.detailedMuscles.includes(m as DetailedMuscle)
+            );
+          });
+        }
       }
     }
 
-    // 2. 搜尋字串過濾
-    const query = exerciseSearchQuery.trim().toLowerCase();
-    if (query) {
-      list = list.filter(
-        (ex) =>
-          ex.name.toLowerCase().includes(query) ||
-          (ex.notes && ex.notes.toLowerCase().includes(query))
+    // 2. 搜尋字串過濾：跳過部位與最近過濾，全局檢索動作名稱與備註
+    if (isSearching) {
+      list = list.filter((ex) =>
+        matchesMultilingual(
+          exerciseSearchQuery,
+          { id: ex.id, name: ex.name, notes: ex.notes },
+          'exercise'
+        )
       );
     }
 
-    // 3. 排序：若為「最近」，嚴格依據最後訓練時間順序（從新到舊）！
-    if (selectedMuscleFilter === 'recent') {
+    // 3. 排序：僅在 !isSearching && selectedMuscleFilter === 'recent' 時套用最近時間排序
+    if (!isSearching && selectedMuscleFilter === 'recent') {
       return list.slice().sort((a, b) => {
         const orderA = recentExerciseOrderMap.get(a.id) ?? 999999;
         const orderB = recentExerciseOrderMap.get(b.id) ?? 999999;
@@ -155,12 +160,14 @@ export function ExerciseRoutineBrowser({
 
   const filteredRoutines = useMemo(() => {
     let list = activeRoutines;
-    const query = routineSearchQuery.trim().toLowerCase();
-    if (query) {
-      list = list.filter(
-        (r) =>
-          r.name.toLowerCase().includes(query) ||
-          (r.notes && r.notes.toLowerCase().includes(query))
+    const isSearching = Boolean(routineSearchQuery.trim());
+    if (isSearching) {
+      list = list.filter((r) =>
+        matchesMultilingual(
+          routineSearchQuery,
+          { id: r.id, name: r.name, notes: r.notes },
+          'exercise'
+        )
       );
     }
     if (recentRoutineIds.length > 0) {
@@ -388,7 +395,9 @@ export function ExerciseRoutineBrowser({
           >
             {filteredExercises.length === 0 ? (
               <div className="py-8 text-center text-xs font-mono text-muted-foreground">
-                {selectedMuscleFilter === 'recent'
+                {exerciseSearchQuery.trim()
+                  ? t('common.noResults', '無搜尋結果')
+                  : selectedMuscleFilter === 'recent'
                   ? t('workout.noRecentExercises', '無最近記錄')
                   : t('workout.noExercises', '無動作')}
               </div>

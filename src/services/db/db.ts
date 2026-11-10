@@ -1099,6 +1099,27 @@ export class ZenfitDatabase extends Dexie {
         }
       }
     });
+
+    this.version(21).upgrade(async (tx) => {
+      // 升級至 21：擴充基礎通用中性肉品數據（牛肉、豬肉、羊肉，生重基準 1:9 肥瘦比）
+      const now = Date.now();
+      const foodsTable = tx.table('foods');
+      const existingFoods = await foodsTable.toArray();
+      const existingIds = new Set(existingFoods.map((f: FoodItem) => f.id));
+      const existingNames = new Set(existingFoods.map((f: FoodItem) => f.name?.trim()));
+
+      for (const food of DEFAULT_NATURAL_FOODS) {
+        if (!existingIds.has(food.id) && !existingNames.has(food.name.trim())) {
+          await foodsTable.add({
+            ...food,
+            createdAt: now,
+            updatedAt: now,
+          });
+          existingIds.add(food.id);
+          existingNames.add(food.name.trim());
+        }
+      }
+    });
   }
 
   async seedDefaultData() {

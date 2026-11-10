@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { DEFAULT_NATURAL_FOODS, NATURAL_FOOD_IDS } from './defaultNaturalFoods';
 
 describe('DEFAULT_NATURAL_FOODS 精密客觀測量儀審計', () => {
-  it('必須包含全部 409 項雙權威驗證的天然原型食材', () => {
-    expect(DEFAULT_NATURAL_FOODS.length).toBe(409);
-    expect(Object.keys(NATURAL_FOOD_IDS).length).toBe(409);
+  it('必須包含全部 412 項雙權威驗證的天然原型食材', () => {
+    expect(DEFAULT_NATURAL_FOODS.length).toBe(412);
+    expect(Object.keys(NATURAL_FOOD_IDS).length).toBe(412);
   });
 
   it('每一項食材 ID 均需符合確定性 UUID 格式且無重複', () => {

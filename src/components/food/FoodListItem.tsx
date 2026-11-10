@@ -95,11 +95,6 @@ export const FoodListItem = React.memo(function FoodListItem({
           <span className="font-medium text-foreground text-sm tracking-tight truncate">
             {formatFoodDisplayName(food)}
           </span>
-          {food.brand && (
-            <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded shrink-0">
-              {food.brand}
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">

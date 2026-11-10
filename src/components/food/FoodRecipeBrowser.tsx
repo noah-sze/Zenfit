@@ -19,6 +19,7 @@ import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { matchesMultilingual } from '@/utils/multilingualSearch';
 import { useBrowserStateStore, type FoodSortOption } from '@/store/useBrowserStateStore';
 import { useAppStore } from '@/store/useAppStore';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
@@ -289,11 +290,14 @@ export function FoodRecipeBrowser({
 
   const filteredFoods = useMemo(() => {
     let list = tabBaseFoods;
+    const isSearching = Boolean(foodSearchQuery.trim());
 
-    if (selectedCategory === 'recent') {
-      list = list.filter((food) => recentFoodIdSet.has(food.id));
-    } else if (selectedCategory !== 'all') {
-      list = list.filter((food) => (food.category || 'natural') === selectedCategory);
+    if (!isSearching) {
+      if (selectedCategory === 'recent') {
+        list = list.filter((food) => recentFoodIdSet.has(food.id));
+      } else if (selectedCategory !== 'all') {
+        list = list.filter((food) => (food.category || 'natural') === selectedCategory);
+      }
     }
 
     if (selectedNutritionTag !== 'all') {
@@ -303,13 +307,14 @@ export function FoodRecipeBrowser({
       });
     }
 
-    if (foodSearchQuery.trim()) {
-      const q = foodSearchQuery.trim().toLowerCase();
-      list = list.filter((food) => {
-        const nameMatch = food.name.toLowerCase().includes(q);
-        const brandMatch = food.brand ? food.brand.toLowerCase().includes(q) : false;
-        return nameMatch || brandMatch;
-      });
+    if (isSearching) {
+      list = list.filter((food) =>
+        matchesMultilingual(
+          foodSearchQuery,
+          { id: food.id, name: food.name, brand: food.brand },
+          'food'
+        )
+      );
     }
 
     // 預先對列表項目計算對應當前 displayMode 的營養數值，避免在 sort O(N log N) 比較中重複多次計算
@@ -343,7 +348,7 @@ export function FoodRecipeBrowser({
           }
         }
       } else {
-        if (selectedCategory === 'recent') {
+        if (!isSearching && selectedCategory === 'recent') {
           const orderA = recentFoodOrderMap.get(a.id) ?? 999999;
           const orderB = recentFoodOrderMap.get(b.id) ?? 999999;
           if (orderA !== orderB) return orderA - orderB;
@@ -516,8 +521,9 @@ export function FoodRecipeBrowser({
 
   const filteredRecipes = useMemo(() => {
     let list = tabBaseRecipes;
+    const isSearching = Boolean(recipeSearchQuery.trim());
 
-    if (selectedRecipeCategory === 'recent') {
+    if (!isSearching && selectedRecipeCategory === 'recent') {
       list = list.filter((r) => recentRecipeIdSet.has(r.id));
     }
 
@@ -528,9 +534,14 @@ export function FoodRecipeBrowser({
       });
     }
 
-    if (recipeSearchQuery.trim()) {
-      const q = recipeSearchQuery.trim().toLowerCase();
-      list = list.filter((recipe) => recipe.name.toLowerCase().includes(q));
+    if (isSearching) {
+      list = list.filter((recipe) =>
+        matchesMultilingual(
+          recipeSearchQuery,
+          { id: recipe.id, name: recipe.name },
+          'food'
+        )
+      );
     }
 
     return list.slice().sort((a, b) => {
@@ -555,7 +566,7 @@ export function FoodRecipeBrowser({
           if (Math.abs(diff) > 0.001) return diff;
         }
       } else {
-        if (selectedRecipeCategory === 'recent') {
+        if (!isSearching && selectedRecipeCategory === 'recent') {
           const orderA = recentRecipeOrderMap.get(a.id) ?? 999999;
           const orderB = recentRecipeOrderMap.get(b.id) ?? 999999;
           if (orderA !== orderB) return orderA - orderB;
@@ -1086,7 +1097,9 @@ export function FoodRecipeBrowser({
             <div className="divide-y divide-border overflow-y-auto flex-1 min-h-0">
               {filteredFoods.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
-                  {showFoodArchived
+                  {foodSearchQuery.trim()
+                    ? t('common.noResults', '無搜尋結果')
+                    : showFoodArchived
                     ? t('settings.noArchivedFoods')
                     : selectedCategory === 'recent'
                     ? t('diet.noRecentFoods', '無最近記錄')
@@ -1434,7 +1447,9 @@ export function FoodRecipeBrowser({
             <div className="divide-y divide-border overflow-y-auto flex-1 min-h-0">
               {filteredRecipes.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
-                  {showRecipeArchived
+                  {recipeSearchQuery.trim()
+                    ? t('common.noResults', '無搜尋結果')
+                    : showRecipeArchived
                     ? t('settings.noArchivedRecipes')
                     : selectedRecipeCategory === 'recent'
                     ? t('diet.noRecentFoods', '無最近記錄')

@@ -17,6 +17,7 @@ import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { sortMuscleEntries } from '@/utils/muscleIntensity';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { matchesMultilingual } from '@/utils/multilingualSearch';
 import type { Exercise, WorkoutRoutine, Equipment, DetailedMuscle } from '@/types';
 import { AdaptiveMuscleBadgeGroup } from '@/components/workout/AdaptiveMuscleBadgeGroup';
 import { EquipmentBadge } from '@/components/workout/EquipmentBadge';
@@ -159,27 +160,35 @@ export function WorkoutManagementBrowser({
 
   // 動作篩選結果
   const filteredExercises = useMemo(() => {
-    const q = exerciseSearchQuery.toLowerCase().trim();
+    const isSearching = Boolean(exerciseSearchQuery.trim());
     return exerciseBaseList
       .filter((item) => {
-        // 器械快篩
-        if (selectedEquipment !== 'all' && item.equipment !== selectedEquipment) {
-          return false;
-        }
-        // 肌群快篩
-        if (selectedMuscleGroup !== 'all') {
-          const group = MAJOR_MUSCLE_GROUPS.find((g) => g.id === selectedMuscleGroup);
-          if (group) {
-            const muscles = Object.keys(item.targetMuscles || {}) as DetailedMuscle[];
-            const matches = muscles.some((m) => group.detailedMuscles.includes(m));
-            if (!matches) return false;
+        // 僅在非搜尋時套用器械與肌群快篩
+        if (!isSearching) {
+          // 器械快篩
+          if (selectedEquipment !== 'all' && item.equipment !== selectedEquipment) {
+            return false;
           }
-        }
-        // 關鍵字搜尋
-        if (q) {
-          const matchName = item.name.toLowerCase().includes(q);
-          const matchNotes = item.notes?.toLowerCase().includes(q);
-          if (!matchName && !matchNotes) return false;
+          // 肌群快篩
+          if (selectedMuscleGroup !== 'all') {
+            const group = MAJOR_MUSCLE_GROUPS.find((g) => g.id === selectedMuscleGroup);
+            if (group) {
+              const muscles = Object.keys(item.targetMuscles || {}) as DetailedMuscle[];
+              const matches = muscles.some((m) => group.detailedMuscles.includes(m));
+              if (!matches) return false;
+            }
+          }
+        } else {
+          // 搜尋時跳過器械與肌群過濾，在當前 active/archived 基礎池上進行全局搜尋（匹配 name 與 notes）
+          if (
+            !matchesMultilingual(
+              exerciseSearchQuery,
+              { id: item.id, name: item.name, notes: item.notes },
+              'exercise'
+            )
+          ) {
+            return false;
+          }
         }
         return true;
       })
@@ -202,13 +211,19 @@ export function WorkoutManagementBrowser({
   const routineBaseList = showRoutineArchived ? archivedRoutines : activeRoutines;
 
   const filteredRoutines = useMemo(() => {
-    const q = routineSearchQuery.toLowerCase().trim();
+    const isSearching = Boolean(routineSearchQuery.trim());
     return routineBaseList
       .filter((r) => {
-        if (q) {
-          const matchName = r.name.toLowerCase().includes(q);
-          const matchNotes = r.notes?.toLowerCase().includes(q);
-          if (!matchName && !matchNotes) return false;
+        if (isSearching) {
+          if (
+            !matchesMultilingual(
+              routineSearchQuery,
+              { id: r.id, name: r.name, notes: r.notes },
+              'exercise'
+            )
+          ) {
+            return false;
+          }
         }
         return true;
       })
@@ -231,13 +246,20 @@ export function WorkoutManagementBrowser({
   const equipmentBaseList = showEquipmentArchived ? archivedEquipments : activeEquipments;
 
   const filteredEquipments = useMemo(() => {
-    const q = equipmentSearchQuery.toLowerCase().trim();
+    const isSearching = Boolean(equipmentSearchQuery.trim());
     return equipmentBaseList
       .filter((eq) => {
-        if (q) {
-          const displayName = getEquipmentDisplayName(eq.id, t).toLowerCase();
-          const matchName = displayName.includes(q) || eq.name.toLowerCase().includes(q);
-          if (!matchName) return false;
+        if (isSearching) {
+          const displayName = getEquipmentDisplayName(eq.id, t);
+          const matchDisplay = matchesMultilingual(equipmentSearchQuery, {
+            id: eq.id,
+            name: displayName,
+          });
+          const matchRaw = matchesMultilingual(equipmentSearchQuery, {
+            id: eq.id,
+            name: eq.name,
+          });
+          if (!matchDisplay && !matchRaw) return false;
         }
         return true;
       })
@@ -604,7 +626,9 @@ export function WorkoutManagementBrowser({
             <div className="divide-y divide-border overflow-y-auto flex-1 min-h-0">
               {filteredExercises.length === 0 ? (
                 <div className="p-8 text-center text-sm font-mono text-muted-foreground">
-                  {showExerciseArchived
+                  {exerciseSearchQuery.trim()
+                    ? t('common.noResults', '無搜尋結果')
+                    : showExerciseArchived
                     ? t('settings.noArchivedItems', '無已歸檔項目')
                     : t('workout.noExercises', '無動作')}
                 </div>
