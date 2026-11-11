@@ -5,7 +5,7 @@ import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
-import { ChevronRight, Plus, Zap } from 'lucide-react';
+import { ChevronRight, Zap } from 'lucide-react';
 import type { MealType, HydratedFoodLog, FoodItem, FoodRecipe } from '@/types';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
@@ -23,7 +23,10 @@ import { EditRecipeLogDialog } from '@/components/diet/EditRecipeLogDialog';
 import { MealEnergyPopover } from '@/components/diet/MealEnergyPopover';
 import { MealAddActionPopover } from '@/components/diet/MealAddActionPopover';
 import { CopyMealDialog } from '@/components/diet/CopyMealDialog';
-import { QuickPlaceholderDialog } from '@/components/diet/QuickPlaceholderDialog';
+import {
+  QuickPlaceholderDialog,
+  resolvePlaceholderDisplayName,
+} from '@/components/diet/QuickPlaceholderDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
 import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
@@ -620,26 +623,26 @@ export default function Diet() {
                       <div className="flex-1 min-w-0 pr-3 select-none">
                         <div className="truncate text-foreground font-medium text-sm flex items-center gap-1.5">
                           {item.isPlaceholder && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-blue-500 bg-blue-500/10 border border-blue-500/20 shrink-0 leading-none">
-                              ⚡ {t('diet.placeholder.badge', '快速粗估')}
+                            <span className="px-1.5 py-0.5 rounded-md border border-border bg-muted/60 text-muted-foreground text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
+                              <Zap className="size-2.5 stroke-[2.2]" />
+                              <span>{t('diet.placeholder.badge', '估算')}</span>
                             </span>
                           )}
                           {item.isAsPlanned && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 shrink-0 leading-none">
-                              ⚡ {t('diet.asPlanned.badgeLong', '正常飲食配額')}
+                            <span className="px-1.5 py-0.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
+                              <Zap className="size-2.5 stroke-[2.2]" />
+                              <span>{t('diet.asPlanned.badgeLong', '正常飲食配額')}</span>
                             </span>
                           )}
-                          <span className="truncate">{item.foodName}</span>
+                          <span className="truncate">
+                            {item.isPlaceholder
+                              ? resolvePlaceholderDisplayName(item, t)
+                              : item.foodName}
+                          </span>
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
                           {item.isPlaceholder || item.isAsPlanned ? (
-                            <>
-                              <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
-                              <span className="text-border">·</span>
-                              <span>
-                                {Math.round(item.carbs || 0)}C {Math.round(item.protein || 0)}P {Math.round(item.fat || 0)}F
-                              </span>
-                            </>
+                            <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
                           ) : (
                             <>
                               <span>
@@ -676,30 +679,8 @@ export default function Diet() {
                 })}
               </div>
             ) : (
-              /* 形態 B：餐別空狀態卡片按鈕 */
-              <div className="py-5 px-3 flex flex-wrap items-center justify-center gap-2.5 text-xs font-mono select-none">
-                <span className="text-muted-foreground/60">
-                  {t('diet.noFoodLogs', '無記錄')}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAddForMeal(type)}
-                    className="h-6 px-2.5 rounded-full border border-border bg-card hover:bg-hover text-muted-foreground hover:text-foreground text-2xs font-medium flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                  >
-                    <Plus className="size-3" />
-                    <span>{t('diet.recordFood', '記錄食材')}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleLogAsPlanned(type, mealBudget)}
-                    className="h-6 px-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 font-mono text-2xs font-semibold flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                  >
-                    <Zap className="size-3 fill-emerald-500/20" />
-                    <span>{t('diet.asPlanned.emptyBtn', '算我正常吃 ({{calories}}k)', { calories: mealBudget.calories })}</span>
-                  </button>
-                </div>
+              <div className="py-6 text-center text-xs font-mono text-muted-foreground/60 select-none">
+                {t('diet.noFoodLogs', '無記錄')}
               </div>
             )}
           </div>

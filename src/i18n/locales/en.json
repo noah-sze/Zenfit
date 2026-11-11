@@ -103,9 +103,9 @@
       "recordFood": "Record Food",
       "placeholder": {
         "title": "Quick Estimate",
-        "namePlaceholder": "Note (e.g., dining out, optional)",
+        "namePlaceholder": "Note",
         "defaultName": "Quick Estimate",
-        "badge": "Quick Estimate",
+        "badge": "Est.",
         "modeCalories": "Calories (kcal)",
         "modeMacros": "Macros (C/P/F)",
         "tapToEdit": "Tap to edit",
@@ -114,6 +114,16 @@
         "presetSocial": "Social",
         "presetFeast": "Feast",
         "presetParty": "Party",
+        "scenarioBalanced": "Balanced",
+        "scenarioBento": "Bento",
+        "scenarioFastfood": "Fast Food",
+        "scenarioHotpot": "Hot Pot",
+        "scenarioBbq": "BBQ",
+        "scenarioSushi": "Sushi",
+        "scenarioPizza": "Pizza",
+        "scenarioSalad": "Salad",
+        "scenarioParty": "Party",
+        "scenarioDessert": "Dessert",
         "successToast": "Estimate logged"
       },
       "asPlanned": {

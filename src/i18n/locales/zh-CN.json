@@ -103,9 +103,9 @@
       "recordFood": "记录食材",
       "placeholder": {
         "title": "快速估算",
-        "namePlaceholder": "备注（如外食火锅，选填）",
+        "namePlaceholder": "备注",
         "defaultName": "快速估算",
-        "badge": "快速估算",
+        "badge": "估算",
         "modeCalories": "纯热量 (kcal)",
         "modeMacros": "三大元素 (C/P/F)",
         "tapToEdit": "点击修改",
@@ -114,6 +114,16 @@
         "presetSocial": "聚餐",
         "presetFeast": "大餐",
         "presetParty": "应酬",
+        "scenarioBalanced": "常规",
+        "scenarioBento": "便当",
+        "scenarioFastfood": "快餐",
+        "scenarioHotpot": "火锅",
+        "scenarioBbq": "烧肉",
+        "scenarioSushi": "寿司",
+        "scenarioPizza": "披萨",
+        "scenarioSalad": "轻食",
+        "scenarioParty": "酒局",
+        "scenarioDessert": "甜点",
         "successToast": "已记录估算"
       },
       "asPlanned": {

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit 快速估算外食場景宏量建模與 300px Precision Dialog 原型</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            border: 'var(--border)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+            hover: 'var(--hover)',
+            carbs: 'var(--carbs)',
+            protein: 'var(--protein)',
+            fat: 'var(--fat)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Zenfit Vercel High-Contrast Design Tokens */
+    :root {
+      --background: #ffffff;
+      --foreground: #09090b;
+      --card: #ffffff;
+      --border: #e4e4e7;
+      --muted: #f4f4f5;
+      --muted-foreground: #71717a;
+      --hover: rgba(0, 0, 0, 0.04);
+      --carbs: #d97706;   /* 琥珀金 (Carbs) */
+      --protein: #0284c7; /* 湛藍 (Protein) */
+      --fat: #9333ea;     /* 晶紫 (Fat) */
+    }
+
+    .dark {
+      --background: #09090b;
+      --foreground: #fafafa;
+      --card: #09090b;
+      --border: #27272a;
+      --muted: #18181b;
+      --muted-foreground: #a1a1aa;
+      --hover: rgba(255, 255, 255, 0.06);
+      --carbs: #f59e0b;
+      --protein: #38bdf8;
+      --fat: #c084fc;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 隱藏滾動條但保持滾動能力 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-zinc-100 dark:bg-zinc-950 text-foreground min-h-screen py-8 px-4 transition-colors duration-200">
+
+  <!-- 頂部架構控制面板 -->
+  <header class="max-w-5xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-zinc-200 dark:bg-zinc-800 text-foreground border border-border">RFC-UI-042</span>
+        <h1 class="text-lg font-bold tracking-tight">Zenfit 快速估算外食場景宏量建模與 300px 規格驗證</h1>
+      </div>
+      <p class="text-xs text-muted-foreground mt-1">
+        設計哲學依據：外食與聚餐場景打破理想自律 macroSplit，建立客觀外食宏量供能比模型
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- 視圖切換器 -->
+      <div class="flex items-center bg-zinc-200 dark:bg-zinc-900 p-1 rounded-lg border border-border text-xs font-mono">
+        <button id="view-mode-comparison" onclick="setViewMode('comparison')" class="px-3 py-1 rounded font-medium transition-all bg-card text-foreground shadow-none">
+          三方案對比
+        </button>
+        <button id="view-mode-recommended" onclick="setViewMode('recommended')" class="px-3 py-1 rounded font-medium transition-all text-muted-foreground hover:text-foreground">
+          推薦方案 (方案 3)
+        </button>
+      </div>
+
+      <!-- 淺色/深色主題切換 -->
+      <button onclick="toggleTheme()" class="h-8 px-3 rounded-lg border border-border bg-card hover:bg-hover text-xs font-mono flex items-center gap-1.5 transition-colors">
+        <span id="theme-label">☀️ 淺色</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主展示區塊 -->
+  <main class="max-w-5xl mx-auto">
+    <!-- 方案展示網格 -->
+    <div id="showcase-container" class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start justify-items-center">
+
+      <!-- ==================== 方案 1：橫向滑動藥丸列 ==================== -->
+      <div id="proposal-1-card" class="flex flex-col items-center gap-3 w-full max-w-[320px]">
+        <div class="flex items-center justify-between w-[300px] text-xs font-mono">
+          <span class="px-2 py-0.5 rounded-full border border-border bg-muted/60 text-muted-foreground text-[11px]">
+            方案 1 · 捲動藥丸列
+          </span>
+          <span class="text-2xs text-muted-foreground font-mono">空間利用高 / 需橫向滾動</span>
+        </div>
+
+        <!-- 300px Precision Dialog 容器 -->
+        <div class="w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] p-4 pb-5 bg-card border border-border shadow-none font-mono text-xs select-none rounded-xl flex flex-col">
+          <!-- 標準標題列 -->
+          <div class="h-7 flex items-center justify-between w-full mb-1">
+            <button class="w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors" title="取消">✕</button>
+            <span class="text-xs font-bold tracking-tight text-foreground font-sans">快速估算</span>
+            <button onclick="simulateSave('方案 1')" class="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center font-bold hover:opacity-90 transition-opacity" title="儲存">✓</button>
+          </div>
+
+          <!-- Hero 讀數區 -->
+          <div class="py-4 flex flex-col items-center justify-center border-b border-border/50">
+            <div class="flex items-baseline justify-center gap-1.5 text-foreground cursor-pointer group" onclick="openKeypadModal(1)">
+              <span id="p1-calories-hero" class="text-4xl font-mono font-extrabold tracking-tight group-hover:opacity-80 transition-opacity">500</span>
+              <span class="text-xs font-mono font-medium text-muted-foreground">kcal</span>
+            </div>
+            <!-- 微型宏量彩色比例條 -->
+            <div class="w-full h-1.5 rounded-full bg-muted overflow-hidden flex my-2 border border-border/40">
+              <div id="p1-bar-carbs" class="bg-amber-500 h-full transition-all duration-200" style="width: 45%;"></div>
+              <div id="p1-bar-protein" class="bg-sky-500 h-full transition-all duration-200" style="width: 25%;"></div>
+              <div id="p1-bar-fat" class="bg-purple-500 h-full transition-all duration-200" style="width: 30%;"></div>
+            </div>
+            <!-- C · P · F 讀數 (嚴格固定 C-P-F 順序) -->
+            <div class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 font-medium">
+              <span class="text-amber-600 dark:text-amber-400 font-mono">碳 <span id="p1-carbs-val">56</span>g</span>
+              <span class="text-border">·</span>
+              <span class="text-sky-600 dark:text-sky-400 font-mono">蛋 <span id="p1-protein-val">31</span>g</span>
+              <span class="text-border">·</span>
+              <span class="text-purple-600 dark:text-purple-400 font-mono">脂 <span id="p1-fat-val">17</span>g</span>
+            </div>
+          </div>
+
+          <!-- 操作區塊 -->
+          <div class="flex flex-col space-y-3 pt-3">
+            <!-- 方案 1 特色：單行橫向滾動藥丸列 -->
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>外食情境</span>
+                <span class="text-2xs opacity-70">← 橫向滑動 →</span>
+              </div>
+              <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5" id="p1-scenario-track">
+                <!-- 動態注入 5 個場景 pill -->
+              </div>
+            </div>
+
+            <!-- 熱量 4 檔情境階梯 -->
+            <div class="grid grid-cols-4 gap-1.5" id="p1-presets-grid"></div>
+
+            <!-- 微調步進器 -->
+            <div class="grid grid-cols-4 gap-1.5" id="p1-steps-grid"></div>
+
+            <!-- 智慧備註輸入框 -->
+            <input type="text" id="p1-note-input" placeholder="備註（如外食便當，選填）" class="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-foreground transition-colors font-sans" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 方案 2：情境優先雙行格狀矩陣 ==================== -->
+      <div id="proposal-2-card" class="flex flex-col items-center gap-3 w-full max-w-[320px]">
+        <div class="flex items-center justify-between w-[300px] text-xs font-mono">
+          <span class="px-2 py-0.5 rounded-full border border-border bg-muted/60 text-muted-foreground text-[11px]">
+            方案 2 · 全貌格狀矩陣
+          </span>
+          <span class="text-2xs text-muted-foreground font-mono">無滑動 / 垂直佔比略大</span>
+        </div>
+
+        <!-- 300px Precision Dialog 容器 -->
+        <div class="w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] p-4 pb-5 bg-card border border-border shadow-none font-mono text-xs select-none rounded-xl flex flex-col">
+          <!-- 標準標題列 -->
+          <div class="h-7 flex items-center justify-between w-full mb-1">
+            <button class="w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors" title="取消">✕</button>
+            <span class="text-xs font-bold tracking-tight text-foreground font-sans">快速估算</span>
+            <button onclick="simulateSave('方案 2')" class="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center font-bold hover:opacity-90 transition-opacity" title="儲存">✓</button>
+          </div>
+
+          <!-- Hero 讀數區 -->
+          <div class="py-4 flex flex-col items-center justify-center border-b border-border/50">
+            <div class="flex items-baseline justify-center gap-1.5 text-foreground cursor-pointer group" onclick="openKeypadModal(2)">
+              <span id="p2-calories-hero" class="text-4xl font-mono font-extrabold tracking-tight group-hover:opacity-80 transition-opacity">500</span>
+              <span class="text-xs font-mono font-medium text-muted-foreground">kcal</span>
+            </div>
+            <!-- 微型宏量彩色比例條 -->
+            <div class="w-full h-1.5 rounded-full bg-muted overflow-hidden flex my-2 border border-border/40">
+              <div id="p2-bar-carbs" class="bg-amber-500 h-full transition-all duration-200" style="width: 45%;"></div>
+              <div id="p2-bar-protein" class="bg-sky-500 h-full transition-all duration-200" style="width: 25%;"></div>
+              <div id="p2-bar-fat" class="bg-purple-500 h-full transition-all duration-200" style="width: 30%;"></div>
+            </div>
+            <!-- C · P · F 讀數 (嚴格固定 C-P-F 順序) -->
+            <div class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 font-medium">
+              <span class="text-amber-600 dark:text-amber-400 font-mono">碳 <span id="p2-carbs-val">56</span>g</span>
+              <span class="text-border">·</span>
+              <span class="text-sky-600 dark:text-sky-400 font-mono">蛋 <span id="p2-protein-val">31</span>g</span>
+              <span class="text-border">·</span>
+              <span class="text-purple-600 dark:text-purple-400 font-mono">脂 <span id="p2-fat-val">17</span>g</span>
+            </div>
+          </div>
+
+          <!-- 操作區塊 -->
+          <div class="flex flex-col space-y-3 pt-3">
+            <!-- 方案 2 特色：雙行 3+2 佈局網格 -->
+            <div class="flex flex-col gap-1">
+              <div class="text-[10px] text-muted-foreground">外食情境選擇</div>
+              <div class="grid grid-cols-3 gap-1.5" id="p2-scenario-top-grid">
+                <!-- 常規、中餐、快餐 -->
+              </div>
+              <div class="grid grid-cols-2 gap-1.5" id="p2-scenario-bottom-grid">
+                <!-- 火鍋、輕食 -->
+              </div>
+            </div>
+
+            <!-- 熱量 4 檔情境階梯 -->
+            <div class="grid grid-cols-4 gap-1.5" id="p2-presets-grid"></div>
+
+            <!-- 微調步進器 -->
+            <div class="grid grid-cols-4 gap-1.5" id="p2-steps-grid"></div>
+
+            <!-- 智慧備註輸入框 -->
+            <input type="text" id="p2-note-input" placeholder="備註（如外食便當，選填）" class="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-foreground transition-colors font-sans" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 方案 3：雙軌聯動微型分段器 (推薦方案) ==================== -->
+      <div id="proposal-3-card" class="flex flex-col items-center gap-3 w-full max-w-[320px]">
+        <div class="flex items-center justify-between w-[300px] text-xs font-mono">
+          <span class="px-2 py-0.5 rounded-full border border-foreground bg-foreground text-background font-semibold text-[11px] flex items-center gap-1">
+            ★ 方案 3 · 雙軌聯動微型分段器 (推薦)
+          </span>
+          <span class="text-2xs text-foreground font-mono font-bold">完美秩序 / 零抖動</span>
+        </div>
+
+        <!-- 300px Precision Dialog 容器 -->
+        <div class="w-[300px] max-w-[calc(100vw-24px)] sm:w-[300px] sm:max-w-[300px] p-4 pb-5 bg-card border-2 border-foreground dark:border-zinc-300 shadow-none font-mono text-xs select-none rounded-xl flex flex-col relative">
+          <!-- 推薦標記光標 -->
+          <div class="absolute -top-2.5 right-4 bg-foreground text-background text-[9px] font-mono px-1.5 py-0.2 rounded font-bold uppercase tracking-wider">
+            RECOMMENDED
+          </div>
+
+          <!-- 標準標題列 (h-7, 28px) -->
+          <div class="h-7 flex items-center justify-between w-full mb-1">
+            <button class="w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors" title="取消">✕</button>
+            <span class="text-xs font-bold tracking-tight text-foreground font-sans">快速估算</span>
+            <button onclick="simulateSave('方案 3')" class="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center font-bold hover:opacity-90 transition-opacity" title="儲存">✓</button>
+          </div>
+
+          <!-- Hero 讀數區 (高度固定，無晃動) -->
+          <div class="py-3 flex flex-col items-center justify-center border-b border-border/50">
+            <div class="flex items-baseline justify-center gap-1.5 text-foreground cursor-pointer group" onclick="openKeypadModal(3)">
+              <span id="p3-calories-hero" class="text-4xl font-mono font-extrabold tracking-tight group-hover:opacity-80 transition-opacity">500</span>
+              <span class="text-xs font-mono font-medium text-muted-foreground">kcal</span>
+            </div>
+
+            <!-- 微型宏量彩色比例條 (精確幾何供能佔比) -->
+            <div class="w-full h-1.5 rounded-full bg-muted overflow-hidden flex my-2 border border-border/40">
+              <div id="p3-bar-carbs" class="bg-amber-500 h-full transition-all duration-200" style="width: 45%;"></div>
+              <div id="p3-bar-protein" class="bg-sky-500 h-full transition-all duration-200" style="width: 25%;"></div>
+              <div id="p3-bar-fat" class="bg-purple-500 h-full transition-all duration-200" style="width: 30%;"></div>
+            </div>
+
+            <!-- C · P · F 讀數 (嚴格遵守 C-P-F 順序與 4/4/9 物理常數) -->
+            <div class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 font-medium">
+              <span class="text-amber-600 dark:text-amber-400 font-mono font-semibold">碳 <span id="p3-carbs-val">56</span>g</span>
+              <span class="text-border">·</span>
+              <span class="text-sky-600 dark:text-sky-400 font-mono font-semibold">蛋 <span id="p3-protein-val">31</span>g</span>
+              <span class="text-border">·</span>
+              <span class="text-purple-600 dark:text-purple-400 font-mono font-semibold">脂 <span id="p3-fat-val">17</span>g</span>
+            </div>
+          </div>
+
+          <!-- 操作區塊 (維持嚴格 space-y-3 垂直律動) -->
+          <div class="flex flex-col space-y-3 pt-3">
+            <!-- 方案 3 核心亮點：5 欄等寬緊湊分段控制器 (Segmented Control) -->
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span class="font-medium">外食宏量模型</span>
+                <span id="p3-ratio-indicator" class="font-mono text-foreground font-semibold">45 / 25 / 30 %</span>
+              </div>
+              <div class="grid grid-cols-5 gap-1 p-0.5 rounded-lg border border-border bg-muted/30" id="p3-scenario-segmented">
+                <!-- 常規、中餐、快餐、火鍋、輕食 5 等分按鈕 -->
+              </div>
+            </div>
+
+            <!-- 熱量 4 檔情境階梯 -->
+            <div class="grid grid-cols-4 gap-1.5" id="p3-presets-grid"></div>
+
+            <!-- 微調步進器 (h-7) -->
+            <div class="grid grid-cols-4 gap-1.5" id="p3-steps-grid"></div>
+
+            <!-- 智慧備註輸入框 (自動建議 + 觸碰鎖定) -->
+            <div class="relative">
+              <input type="text" id="p3-note-input" oninput="onNoteInputTouched(3)" placeholder="備註（如外食便當，選填）" class="w-full h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-foreground transition-colors font-sans" />
+              <button id="p3-note-clear" onclick="clearNote(3)" class="hidden absolute right-2 top-2 text-muted-foreground hover:text-foreground text-xs">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 方案詳細評估矩陣 & 營養學模型白皮書 -->
+    <section class="mt-12 border-t border-border pt-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold tracking-tight uppercase font-mono text-foreground">
+          外食宏量數據建模 (Macro Models) 規格白皮書
+        </h2>
+        <span class="text-xs font-mono text-muted-foreground">基於 WHO / AMDR / 外食餐飲實證調查</span>
+      </div>
+
+      <!-- 宏量供能比規格對照表 -->
+      <div class="overflow-x-auto rounded-lg border border-border bg-card mb-8">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-muted/50 border-b border-border text-muted-foreground">
+            <tr>
+              <th class="py-2.5 px-3">情境類別</th>
+              <th class="py-2.5 px-3">供能比 (C / P / F)</th>
+              <th class="py-2.5 px-3">500 kcal 換算</th>
+              <th class="py-2.5 px-3">800 kcal 換算</th>
+              <th class="py-2.5 px-3">核心特徵與營養學客觀依據</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr class="hover:bg-hover">
+              <td class="py-2.5 px-3 font-semibold text-foreground">常規均衡 (通用)</td>
+              <td class="py-2.5 px-3 font-semibold"><span class="text-amber-500">45%</span> / <span class="text-sky-500">25%</span> / <span class="text-purple-500">30%</span></td>
+              <td class="py-2.5 px-3">碳 56g · 蛋 31g · 脂 17g</td>
+              <td class="py-2.5 px-3">碳 90g · 蛋 50g · 脂 27g</td>
+              <td class="py-2.5 px-3 text-muted-foreground font-sans">
+                符合各國膳食營養素參考攝入量（DRIs）。適用於定食、家常菜、一般營養相對均衡之複合正餐。
+              </td>
+            </tr>
+            <tr class="hover:bg-hover">
+              <td class="py-2.5 px-3 font-semibold text-foreground">日常中餐 / 便當</td>
+              <td class="py-2.5 px-3 font-semibold"><span class="text-amber-500">55%</span> / <span class="text-sky-500">15%</span> / <span class="text-purple-500">30%</span></td>
+              <td class="py-2.5 px-3">碳 69g · 蛋 19g · 脂 17g</td>
+              <td class="py-2.5 px-3">碳 110g · 蛋 30g · 脂 27g</td>
+              <td class="py-2.5 px-3 text-muted-foreground font-sans">
+                高碳中油。大份量白米飯/麵食（體積佔 50%+），主菜裹粉排骨或滷肉，熱油快炒配菜，碳水與油脂為主要熱量源。
+              </td>
+            </tr>
+            <tr class="hover:bg-hover">
+              <td class="py-2.5 px-3 font-semibold text-foreground">美式快餐 / 炸雞漢堡</td>
+              <td class="py-2.5 px-3 font-semibold"><span class="text-amber-500">40%</span> / <span class="text-sky-500">15%</span> / <span class="text-purple-500">45%</span></td>
+              <td class="py-2.5 px-3">碳 50g · 蛋 19g · 脂 25g</td>
+              <td class="py-2.5 px-3">碳 80g · 蛋 30g · 脂 40g</td>
+              <td class="py-2.5 px-3 text-muted-foreground font-sans">
+                高脂高碳。油炸薯條、美乃滋醬料與起司帶來極高油脂供能（45%），精緻漢堡包與含糖飲品貢獻主要碳水。
+              </td>
+            </tr>
+            <tr class="hover:bg-hover">
+              <td class="py-2.5 px-3 font-semibold text-foreground">火鍋烤肉 / 燒肉</td>
+              <td class="py-2.5 px-3 font-semibold"><span class="text-amber-500">15%</span> / <span class="text-sky-500">40%</span> / <span class="text-purple-500">45%</span></td>
+              <td class="py-2.5 px-3">碳 19g · 蛋 50g · 脂 25g</td>
+              <td class="py-2.5 px-3">碳 30g · 蛋 80g · 脂 40g</td>
+              <td class="py-2.5 px-3 text-muted-foreground font-sans">
+                高蛋白高脂低碳。大量肉類及海鮮攝取（蛋白質 40%），雪花牛/五花肉脂質與沙茶醬油脂（45%），極低主食碳水（15%）。
+              </td>
+            </tr>
+            <tr class="hover:bg-hover">
+              <td class="py-2.5 px-3 font-semibold text-foreground">輕食沙拉 / 溫沙拉</td>
+              <td class="py-2.5 px-3 font-semibold"><span class="text-amber-500">45%</span> / <span class="text-sky-500">40%</span> / <span class="text-purple-500">15%</span></td>
+              <td class="py-2.5 px-3">碳 56g · 蛋 50g · 脂 8g</td>
+              <td class="py-2.5 px-3">碳 90g · 蛋 80g · 脂 13g</td>
+              <td class="py-2.5 px-3 text-muted-foreground font-sans">
+                高蛋白低脂。以去皮舒肥雞胸、豆腐、水煮蛋為主（蛋白質高達 40%），複合粗糧（紫米/地瓜），極少烹調油（油脂 15%）。
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 3 種 UI 佈局方案深層對比分析 -->
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold tracking-tight uppercase font-mono text-foreground">
+          300px Precision Dialog 方案決策矩陣 (Design Decision Matrix)
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="p-4 rounded-xl border border-border bg-card flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-foreground">方案 1：橫向滑動藥丸列</span>
+            <span class="text-2xs font-mono px-1.5 py-0.5 rounded bg-muted">Pill Track</span>
+          </div>
+          <p class="text-xs text-muted-foreground font-sans leading-relaxed">
+            <strong>優勢：</strong>垂直佔比最緊湊，未來擴充「生魚壽司」、「酒吧應酬」等情境時無邊界限制。<br>
+            <strong>劣勢：</strong>在 268px 可用寬度下，第 4 與第 5 項必定被卡片右邊緣截斷，使用者必須使用滑動手勢才能發現，違背 Zenfit「全盤掌控、即時感知」的儀表哲學。
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-border bg-card flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-foreground">方案 2：全貌格狀矩陣</span>
+            <span class="text-2xs font-mono px-1.5 py-0.5 rounded bg-muted">Grid Matrix</span>
+          </div>
+          <p class="text-xs text-muted-foreground font-sans leading-relaxed">
+            <strong>優勢：</strong>5 種場景 100% 視覺展現，單手點擊直接到達，不需要橫向滑動手勢。<br>
+            <strong>劣勢：</strong>雙行排布（上 3 下 2）佔用了過多垂直高度（約多出 34px），使微調按鈕與備註輸入框垂直擠壓，視覺上缺乏層次純粹感。
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl border-2 border-foreground dark:border-zinc-300 bg-card flex flex-col gap-2 relative">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-foreground">方案 3：雙軌聯動微型分段器 (推薦)</span>
+            <span class="text-2xs font-mono px-1.5 py-0.5 rounded bg-foreground text-background font-bold">BEST CHOICE</span>
+          </div>
+          <p class="text-xs text-muted-foreground font-sans leading-relaxed">
+            <strong>優勢：</strong>5 欄等寬緊湊分段控制器（Segmented Control）單行整合，每個按鈕寬度 ~51px 剛好容納 2 個漢字；高度僅 26px，節奏俐落緊湊；點擊切換時宏量彩色標尺與 C/P/F 克數 0ms 聯動，總體彈窗高度絕對固定，完全達到防抖動與單手盲操最高水準。
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 模擬數字小鍵盤 Dialog (平級兄弟節點) -->
+  <div id="keypad-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px] hidden">
+    <div class="w-[280px] p-4 rounded-xl bg-card border border-border shadow-none font-mono text-xs flex flex-col gap-3">
+      <div class="flex items-center justify-between pb-2 border-b border-border">
+        <span class="font-bold">自訂熱量輸入 (kcal)</span>
+        <button onclick="closeKeypadModal()" class="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground">✕</button>
+      </div>
+      <div class="text-3xl font-extrabold text-center py-2 bg-muted/40 rounded-lg border border-border" id="keypad-display">500</div>
+      <div class="grid grid-cols-3 gap-1.5 font-bold text-sm">
+        <button onclick="keypadPress('1')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">1</button>
+        <button onclick="keypadPress('2')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">2</button>
+        <button onclick="keypadPress('3')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">3</button>
+        <button onclick="keypadPress('4')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">4</button>
+        <button onclick="keypadPress('5')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">5</button>
+        <button onclick="keypadPress('6')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">6</button>
+        <button onclick="keypadPress('7')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">7</button>
+        <button onclick="keypadPress('8')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">8</button>
+        <button onclick="keypadPress('9')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">9</button>
+        <button onclick="keypadPress('C')" class="h-10 rounded-lg bg-muted text-muted-foreground border border-border hover:bg-hover active:scale-95 transition-all text-xs">清除</button>
+        <button onclick="keypadPress('0')" class="h-10 rounded-lg bg-card border border-border hover:bg-hover active:scale-95 transition-all">0</button>
+        <button onclick="keypadConfirm()" class="h-10 rounded-lg bg-foreground text-background font-bold hover:opacity-90 active:scale-95 transition-all text-xs">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模擬儲存成功 Toast 提示 (Zenfit 極簡規範 2-4 字) -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-mono font-medium shadow-none opacity-0 pointer-events-none transition-all duration-200 z-50">
+    已儲存
+  </div>
+
+  <!-- JavaScript 核心狀態與互動邏輯 -->
+  <script>
+    // 5 大外食宏量模型定義 (百分比供能比，嚴格確保總和 100%)
+    const SCENARIOS = {
+      balanced: {
+        id: 'balanced',
+        name: '常規',
+        fullName: '常規均衡',
+        suggestNote: '外食正餐',
+        ratios: { carbs: 0.45, protein: 0.25, fat: 0.30 }, // 45 / 25 / 30
+      },
+      bento: {
+        id: 'bento',
+        name: '便當',
+        fullName: '日常中餐/便當',
+        suggestNote: '外食便當',
+        ratios: { carbs: 0.55, protein: 0.15, fat: 0.30 }, // 55 / 15 / 30
+      },
+      fastfood: {
+        id: 'fastfood',
+        name: '快餐',
+        fullName: '美式快餐/炸物',
+        suggestNote: '美式快餐',
+        ratios: { carbs: 0.40, protein: 0.15, fat: 0.45 }, // 40 / 15 / 45
+      },
+      hotpot: {
+        id: 'hotpot',
+        name: '火鍋',
+        fullName: '火鍋烤肉/聚餐',
+        suggestNote: '外食火鍋烤肉',
+        ratios: { carbs: 0.15, protein: 0.40, fat: 0.45 }, // 15 / 40 / 45
+      },
+      salad: {
+        id: 'salad',
+        name: '輕食',
+        fullName: '輕食沙拉/水煮',
+        suggestNote: '輕食沙拉',
+        ratios: { carbs: 0.45, protein: 0.40, fat: 0.15 }, // 45 / 40 / 15
+      }
+    };
+
+    const PRESETS = [
+      { kcal: 300, label: '輕食' },
+      { kcal: 500, label: '常規' },
+      { kcal: 800, label: '大餐' },
+      { kcal: 1200, label: '應酬' },
+    ];
+
+    const STEPS = [-100, -50, 50, 100];
+
+    // 三個方案各自獨立狀態
+    const state = {
+      1: { calories: 500, scenario: 'balanced', note: '', isNoteTouched: false },
+      2: { calories: 500, scenario: 'balanced', note: '', isNoteTouched: false },
+      3: { calories: 500, scenario: 'balanced', note: '', isNoteTouched: false },
+    };
+
+    // 鍵盤暫存
+    let activeKeypadProposal = 3;
+    let keypadBuffer = '500';
+
+    // 核心純函數：熱量與供能比計算克數 (遵守 4/4/9 物理常數與 C-P-F 順序)
+    function calculateMacros(calories, ratio) {
+      const carbs = Math.round((calories * ratio.carbs) / 4);
+      const protein = Math.round((calories * ratio.protein) / 4);
+      const fat = Math.round((calories * ratio.fat) / 9);
+      return { carbs, protein, fat };
+    }
+
+    // 更新特定方案的 UI 讀數與比例條
+    function renderProposal(pId) {
+      const s = state[pId];
+      const scenario = SCENARIOS[s.scenario];
+      const macros = calculateMacros(s.calories, scenario.ratios);
+
+      // 1. 更新 Hero 數字
+      document.getElementById(`p${pId}-calories-hero`).innerText = s.calories;
+
+      // 2. 更新 C · P · F 克數
+      document.getElementById(`p${pId}-carbs-val`).innerText = macros.carbs;
+      document.getElementById(`p${pId}-protein-val`).innerText = macros.protein;
+      document.getElementById(`p${pId}-fat-val`).innerText = macros.fat;
+
+      // 3. 更新彩色比例條長度
+      document.getElementById(`p${pId}-bar-carbs`).style.width = `${Math.round(scenario.ratios.carbs * 100)}%`;
+      document.getElementById(`p${pId}-bar-protein`).style.width = `${Math.round(scenario.ratios.protein * 100)}%`;
+      document.getElementById(`p${pId}-bar-fat`).style.width = `${Math.round(scenario.ratios.fat * 100)}%`;
+
+      // 4. 更新熱量階梯選中狀態
+      renderPresetButtons(pId);
+
+      // 5. 更新備註
+      const noteInput = document.getElementById(`p${pId}-note-input`);
+      if (!s.isNoteTouched) {
+        noteInput.value = scenario.suggestNote;
+      }
+
+      // 方案 3 專用比例指示器文字
+      if (pId === 3) {
+        document.getElementById('p3-ratio-indicator').innerText = 
+          `${Math.round(scenario.ratios.carbs * 100)} / ${Math.round(scenario.ratios.protein * 100)} / ${Math.round(scenario.ratios.fat * 100)} %`;
+      }
+    }
+
+    // 切換情境
+    function setScenario(pId, scenarioKey) {
+      state[pId].scenario = scenarioKey;
+      if (!state[pId].isNoteTouched) {
+        state[pId].note = SCENARIOS[scenarioKey].suggestNote;
+      }
+      renderProposal(pId);
+      renderScenarioControls(pId);
+    }
+
+    // 切換預設熱量階梯
+    function setPreset(pId, kcal) {
+      state[pId].calories = kcal;
+      renderProposal(pId);
+    }
+
+    // 微調熱量
+    function stepCalories(pId, delta) {
+      state[pId].calories = Math.max(50, Math.min(3500, state[pId].calories + delta));
+      renderProposal(pId);
+    }
+
+    // 使用者手動編輯備註
+    function onNoteInputTouched(pId) {
+      const noteInput = document.getElementById(`p${pId}-note-input`);
+      state[pId].note = noteInput.value;
+      state[pId].isNoteTouched = true;
+      const clearBtn = document.getElementById(`p${pId}-note-clear`);
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', noteInput.value.length === 0);
+      }
+    }
+
+    function clearNote(pId) {
+      state[pId].note = '';
+      state[pId].isNoteTouched = false;
+      document.getElementById(`p${pId}-note-input`).value = '';
+      document.getElementById(`p${pId}-note-clear`).classList.add('hidden');
+    }
+
+    // 渲染階梯按鈕
+    function renderPresetButtons(pId) {
+      const container = document.getElementById(`p${pId}-presets-grid`);
+      if (!container) return;
+      container.innerHTML = '';
+      PRESETS.forEach(p => {
+        const isSelected = state[pId].calories === p.kcal;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => setPreset(pId, p.kcal);
+        btn.className = `py-1.5 px-1 rounded-lg border font-mono text-xs flex flex-col items-center justify-center transition-colors cursor-pointer select-none shadow-none ${
+          isSelected 
+            ? 'border-foreground bg-foreground text-background font-semibold' 
+            : 'border-border bg-card text-muted-foreground hover:text-foreground hover:bg-hover'
+        }`;
+        btn.innerHTML = `
+          <span class="font-bold leading-tight">${p.kcal}</span>
+          <span class="text-[10px] leading-tight opacity-80">${p.label}</span>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    // 渲染微調步進器
+    function renderStepButtons(pId) {
+      const container = document.getElementById(`p${pId}-steps-grid`);
+      if (!container) return;
+      container.innerHTML = '';
+      STEPS.forEach(step => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => stepCalories(pId, step);
+        btn.className = 'h-7 rounded-md border border-border bg-muted/40 hover:bg-hover active:scale-95 text-xs font-mono font-semibold text-foreground flex items-center justify-center transition-all cursor-pointer shadow-none select-none';
+        btn.innerText = step > 0 ? `+${step}` : `${step}`;
+        container.appendChild(btn);
+      });
+    }
+
+    // 渲染不同方案的場景選擇器
+    function renderScenarioControls(pId) {
+      const current = state[pId].scenario;
+
+      if (pId === 1) {
+        // 方案 1：橫向滑動藥丸
+        const track = document.getElementById('p1-scenario-track');
+        track.innerHTML = '';
+        Object.keys(SCENARIOS).forEach(key => {
+          const sc = SCENARIOS[key];
+          const isSelected = current === key;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => setScenario(1, key);
+          btn.className = `px-2.5 py-1 rounded-full border text-xs whitespace-nowrap transition-colors cursor-pointer font-sans ${
+            isSelected 
+              ? 'border-foreground bg-foreground text-background font-semibold' 
+              : 'border-border bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-hover'
+          }`;
+          btn.innerText = sc.name;
+          track.appendChild(btn);
+        });
+      }
+
+      if (pId === 2) {
+        // 方案 2：雙行 3+2 矩陣
+        const topGrid = document.getElementById('p2-scenario-top-grid');
+        const bottomGrid = document.getElementById('p2-scenario-bottom-grid');
+        topGrid.innerHTML = '';
+        bottomGrid.innerHTML = '';
+
+        const keys = Object.keys(SCENARIOS);
+        keys.slice(0, 3).forEach(key => {
+          const sc = SCENARIOS[key];
+          const isSelected = current === key;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => setScenario(2, key);
+          btn.className = `py-1.5 px-2 rounded-lg border text-xs font-sans transition-colors cursor-pointer text-center ${
+            isSelected 
+              ? 'border-foreground bg-foreground text-background font-semibold' 
+              : 'border-border bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-hover'
+          }`;
+          btn.innerText = sc.name;
+          topGrid.appendChild(btn);
+        });
+
+        keys.slice(3).forEach(key => {
+          const sc = SCENARIOS[key];
+          const isSelected = current === key;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => setScenario(2, key);
+          btn.className = `py-1.5 px-2 rounded-lg border text-xs font-sans transition-colors cursor-pointer text-center ${
+            isSelected 
+              ? 'border-foreground bg-foreground text-background font-semibold' 
+              : 'border-border bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-hover'
+          }`;
+          btn.innerText = sc.name;
+          bottomGrid.appendChild(btn);
+        });
+      }
+
+      if (pId === 3) {
+        // 方案 3：5 欄等寬極簡 Segmented Control (推薦)
+        const segmented = document.getElementById('p3-scenario-segmented');
+        segmented.innerHTML = '';
+        Object.keys(SCENARIOS).forEach(key => {
+          const sc = SCENARIOS[key];
+          const isSelected = current === key;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => setScenario(3, key);
+          btn.className = `h-6 rounded-md text-xs font-sans font-medium transition-all cursor-pointer flex items-center justify-center select-none ${
+            isSelected 
+              ? 'bg-foreground text-background font-semibold shadow-none' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-hover'
+          }`;
+          btn.innerText = sc.name;
+          segmented.appendChild(btn);
+        });
+      }
+    }
+
+    // 鍵盤模擬操作
+    function openKeypadModal(pId) {
+      activeKeypadProposal = pId;
+      keypadBuffer = `${state[pId].calories}`;
+      document.getElementById('keypad-display').innerText = keypadBuffer;
+      document.getElementById('keypad-modal').classList.remove('hidden');
+    }
+
+    function closeKeypadModal() {
+      document.getElementById('keypad-modal').classList.add('hidden');
+    }
+
+    function keypadPress(key) {
+      if (key === 'C') {
+        keypadBuffer = '0';
+      } else {
+        if (keypadBuffer === '0') keypadBuffer = '';
+        if (keypadBuffer.length < 5) keypadBuffer += key;
+      }
+      document.getElementById('keypad-display').innerText = keypadBuffer || '0';
+    }
+
+    function keypadConfirm() {
+      const val = parseInt(keypadBuffer, 10);
+      if (!isNaN(val) && val > 0) {
+        state[activeKeypadProposal].calories = Math.min(4000, val);
+        renderProposal(activeKeypadProposal);
+      }
+      closeKeypadModal();
+    }
+
+    // 模擬儲存 Toast
+    function simulateSave(proposalName) {
+      const toast = document.getElementById('toast');
+      toast.innerText = '已儲存估算';
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 1500);
+    }
+
+    // 切換明暗主題
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      document.getElementById('theme-label').innerText = isDark ? '🌙 深色' : '☀️ 淺色';
+    }
+
+    // 切換展示模式 (全部 vs 僅推薦)
+    function setViewMode(mode) {
+      const p1 = document.getElementById('proposal-1-card');
+      const p2 = document.getElementById('proposal-2-card');
+      const p3 = document.getElementById('proposal-3-card');
+      const container = document.getElementById('showcase-container');
+      const btnComp = document.getElementById('view-mode-comparison');
+      const btnRec = document.getElementById('view-mode-recommended');
+
+      if (mode === 'recommended') {
+        p1.classList.add('hidden');
+        p2.classList.add('hidden');
+        p3.classList.remove('hidden');
+        container.className = 'flex justify-center items-center';
+        btnRec.className = 'px-3 py-1 rounded font-medium transition-all bg-card text-foreground shadow-none';
+        btnComp.className = 'px-3 py-1 rounded font-medium transition-all text-muted-foreground hover:text-foreground';
+      } else {
+        p1.classList.remove('hidden');
+        p2.classList.remove('hidden');
+        p3.classList.remove('hidden');
+        container.className = 'grid grid-cols-1 md:grid-cols-3 gap-8 items-start justify-items-center';
+        btnComp.className = 'px-3 py-1 rounded font-medium transition-all bg-card text-foreground shadow-none';
+        btnRec.className = 'px-3 py-1 rounded font-medium transition-all text-muted-foreground hover:text-foreground';
+      }
+    }
+
+    // 初始化渲染
+    function init() {
+      [1, 2, 3].forEach(pId => {
+        renderStepButtons(pId);
+        renderScenarioControls(pId);
+        renderProposal(pId);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
