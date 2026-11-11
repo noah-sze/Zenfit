@@ -7,3 +7,6 @@ export * from './ExerciseSelectDialog';
 export * from './RoutineSelectDialog';
 export * from './WorkoutRecoveryDashboard';
 export * from './WorkoutManagementBrowser';
+export * from './WorkoutAddActionPopover';
+export * from './CopyWorkoutDialog';
+export * from './CopyWorkoutDatePickerDialog';

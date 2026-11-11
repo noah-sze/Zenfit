@@ -13,6 +13,7 @@ import {
 } from '@/components/workout/ExerciseRoutineBrowser';
 import type { Exercise, WorkoutRoutine } from '@/types';
 import { cn } from '@/lib/utils';
+import { triggerHaptic } from '@/lib/haptics';
 
 export type { ExerciseSelectMode };
 
@@ -23,7 +24,7 @@ export interface ExerciseSelectDialogProps {
   onOpenChange: (open: boolean) => void;
   /**
    * 選擇模式：
-   * - 'all': 同時支援動作與組合（提供頂部 Indicator Tab 切換）
+   * - 'all': 同時支援動作與組合（提供頂部 Tab 切換）
    * - 'exercises': 僅選擇動作（隱藏頂部 Tab）
    * - 'routines': 僅選擇組合（隱藏頂部 Tab）
    * @default 'all'
@@ -66,10 +67,10 @@ export function ExerciseSelectDialog({
 
   const defaultTitle =
     mode === 'exercises'
-      ? t('workout.selectExercise', '選擇動作')
+      ? t('workout.exercises', '動作')
       : mode === 'routines'
-      ? t('workout.selectRoutine', '選擇訓練組合')
-      : t('workout.selectExerciseOrRoutine', '選擇動作或組合');
+      ? t('workout.routines', '訓練組合')
+      : t('common.select', '選擇');
 
   const resolvedTitle = title || defaultTitle;
   const zIndexClass = `z-[${zIndex}]`;
@@ -78,6 +79,7 @@ export function ExerciseSelectDialog({
     item: Exercise | WorkoutRoutine,
     type: 'exercise' | 'routine'
   ) => {
+    triggerHaptic('selection');
     onSelect(item, type);
     if (autoCloseOnSelect) {
       onOpenChange(false);
@@ -91,11 +93,11 @@ export function ExerciseSelectDialog({
         overlayClassName={zIndexClass}
         className={cn(
           zIndexClass,
-          'w-[350px] max-w-[calc(100vw-24px)] sm:w-[350px] sm:max-w-[350px] h-[85vh] sm:h-[80vh] flex flex-col p-4 sm:p-5 bg-card border border-border text-card-foreground overflow-hidden select-none shadow-none font-mono text-xs'
+          'w-[400px] max-w-[calc(100vw-24px)] sm:w-[400px] sm:max-w-[400px] h-[85vh] sm:h-[80vh] flex flex-col p-4 sm:p-5 bg-card border border-border text-card-foreground overflow-hidden select-none shadow-none font-mono text-xs'
         )}
         initialFocus={false}
       >
-        {/* 彈窗標頭 (左側 ✕ 圓形取消膠囊，中間標題置中，無底欄) */}
+        {/* 彈窗標頭 (復刻食物選擇彈窗) */}
         <DialogHeader className="p-0 pb-2 shrink-0">
           <div className="flex items-center justify-between w-full h-7">
             {/* 左側純圖標：取消 (✕) */}
@@ -127,6 +129,7 @@ export function ExerciseSelectDialog({
           <ExerciseRoutineBrowser
             key={mode}
             mode={mode}
+            interactiveMode="select"
             disabledIds={disabledIds}
             isItemDisabled={isItemDisabled}
             onItemClick={handleItemSelect}

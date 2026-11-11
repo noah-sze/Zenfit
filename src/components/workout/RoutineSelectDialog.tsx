@@ -1,12 +1,5 @@
 import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ChevronRight } from 'lucide-react';
-import {
-  Dialog,
-  PrecisionDialogContent,
-} from '@/components/ui/dialog';
-import { useRoutines } from '@/hooks/useRoutines';
-import { triggerHaptic } from '@/lib/haptics';
+import { ExerciseSelectDialog } from '@/components/workout/ExerciseSelectDialog';
 import type { WorkoutRoutine } from '@/types';
 
 export interface RoutineSelectDialogProps {
@@ -14,6 +7,10 @@ export interface RoutineSelectDialogProps {
   onOpenChange: (open: boolean) => void;
   onSelect: (routine: WorkoutRoutine) => void;
   zIndex?: number;
+  title?: string;
+  autoCloseOnSelect?: boolean;
+  disabledIds?: string[];
+  isItemDisabled?: (routine: WorkoutRoutine) => boolean;
 }
 
 export const RoutineSelectDialog = memo(function RoutineSelectDialog({
@@ -21,56 +18,30 @@ export const RoutineSelectDialog = memo(function RoutineSelectDialog({
   onOpenChange,
   onSelect,
   zIndex = 70,
+  title,
+  autoCloseOnSelect = true,
+  disabledIds,
+  isItemDisabled,
 }: RoutineSelectDialogProps) {
-  const { t } = useTranslation();
-  const { activeRoutines } = useRoutines();
-
-  const handleSelect = (routine: WorkoutRoutine) => {
-    triggerHaptic('selection');
-    onSelect(routine);
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <PrecisionDialogContent
-        title={t('workout.selectRoutine', '選擇訓練組合')}
-        onClose={() => onOpenChange(false)}
-        className={zIndex ? `z-[${zIndex}]` : undefined}
-      >
-        <div className="pt-3.5 space-y-3 font-mono text-xs select-none">
-          <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-            {activeRoutines.length === 0 ? (
-              <div className="py-8 text-center text-xs font-mono text-muted-foreground">
-                {t('workout.noRoutines', '無組合')}
-              </div>
-            ) : (
-              activeRoutines.map((routine) => {
-                return (
-                  <div
-                    key={routine.id}
-                    onClick={() => handleSelect(routine)}
-                    className="min-h-12 py-2 px-3 sm:px-4 flex items-center justify-between gap-3 bg-card hover:bg-hover transition-colors cursor-pointer"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-foreground truncate">
-                        {routine.name}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                        <span>
-                          {routine.exercises.length} {t('common.items', '項')}
-                        </span>
-                      </div>
-                    </div>
-
-                    <ChevronRight className="size-3.5 text-muted-foreground/60 shrink-0" />
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </PrecisionDialogContent>
-    </Dialog>
+    <ExerciseSelectDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      mode="routines"
+      title={title}
+      zIndex={zIndex}
+      autoCloseOnSelect={autoCloseOnSelect}
+      disabledIds={disabledIds}
+      isItemDisabled={
+        isItemDisabled
+          ? (item, type) => (type === 'routine' ? isItemDisabled(item as WorkoutRoutine) : false)
+          : undefined
+      }
+      onSelect={(item, type) => {
+        if (type === 'routine') {
+          onSelect(item as WorkoutRoutine);
+        }
+      }}
+    />
   );
 });

@@ -16,8 +16,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { Plus, Dumbbell, ChevronRight } from 'lucide-react';
 import { HoldToDeleteIconButton } from '@/components/ui/HoldToDeleteIconButton';
 import { cn } from '@/lib/utils';
-import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
-import { ExerciseSelectDialog, type ExerciseSelectMode } from '@/components/workout/ExerciseSelectDialog';
+import {
+  WorkoutRecoveryDashboard,
+  WorkoutAddActionPopover,
+  ExerciseSelectDialog,
+  CopyWorkoutDialog,
+  type ExerciseSelectMode,
+} from '@/components/workout';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import type {
   WorkoutSet,
@@ -58,6 +63,7 @@ export default function Workout() {
 
   // 彈窗狀態
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
+  const [isCopyWorkoutOpen, setIsCopyWorkoutOpen] = useState(false);
   const [activeWorkoutIdForAdd, setActiveWorkoutIdForAdd] = useState<string | null>(null);
   const [exercisePickerMode, setExercisePickerMode] = useState<ExerciseSelectMode>('all');
 
@@ -204,6 +210,10 @@ export default function Workout() {
     }
     setIsExercisePickerOpen(true);
   };
+
+  const handleCopyWorkout = useCallback(() => {
+    setIsCopyWorkoutOpen(true);
+  }, []);
 
   const handleSelectExercise = async (exercise: Exercise) => {
     try {
@@ -696,25 +706,11 @@ export default function Workout() {
               return renderExerciseTable(workout, workout.exercises[0], 0);
             })}
 
-          {/* 列表底部操作：方案 C 雙觸發分割卡 (與上方卡片間距完全由父容器 space-y-4 統一度量) */}
-          <div className="w-full h-10 rounded-lg border border-border bg-card grid grid-cols-2 divide-x divide-border font-mono text-xs overflow-hidden select-none shadow-none">
-            <button
-              type="button"
-              onClick={() => handleOpenAddExercise(undefined, 'exercises')}
-              className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
-            >
-              <Plus className="size-3.5 text-muted-foreground" />
-              <span>{t('workout.addSingleExercise', '新增單個動作')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleOpenAddExercise(undefined, 'routines')}
-              className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
-            >
-              <Plus className="size-3.5 text-muted-foreground" />
-              <span>{t('workout.addRoutineWorkout', '新增組合動作')}</span>
-            </button>
-          </div>
+          {/* 列表底部操作 */}
+          <WorkoutAddActionPopover
+            onOpenAddExercise={() => handleOpenAddExercise(undefined, 'all')}
+            onOpenCopyWorkout={handleCopyWorkout}
+          />
         </>
       ) : (
         /* 當日無訓練記錄時的客觀極簡空狀態 (對標客觀測量儀哲學) */
@@ -731,24 +727,19 @@ export default function Workout() {
             </div>
           </div>
           <div className="max-w-xs mx-auto">
-            <div className="w-full h-9 rounded-lg border border-border bg-card grid grid-cols-2 divide-x divide-border font-mono text-xs overflow-hidden select-none shadow-none">
-              <button
-                type="button"
-                onClick={() => handleOpenAddExercise(undefined, 'exercises')}
-                className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
-              >
-                <Plus className="size-3.5 text-muted-foreground" />
-                <span>{t('workout.addSingleExercise', '新增單個動作')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOpenAddExercise(undefined, 'routines')}
-                className="flex items-center justify-center gap-1.5 hover:bg-hover text-foreground transition-colors cursor-pointer active:bg-hover"
-              >
-                <Plus className="size-3.5 text-muted-foreground" />
-                <span>{t('workout.addRoutineWorkout', '新增組合動作')}</span>
-              </button>
-            </div>
+            <WorkoutAddActionPopover
+              onOpenAddExercise={() => handleOpenAddExercise(undefined, 'all')}
+              onOpenCopyWorkout={handleCopyWorkout}
+              trigger={
+                <button
+                  type="button"
+                  className="w-full h-9 rounded-lg border border-border bg-card hover:bg-hover text-foreground font-mono text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none active:bg-hover shadow-none"
+                >
+                  <Plus className="size-3.5 text-muted-foreground" />
+                  <span>{t('workout.addExerciseOrRoutine', '新增動作或組合')}</span>
+                </button>
+              }
+            />
           </div>
         </div>
       )}
@@ -760,7 +751,10 @@ export default function Workout() {
       {/* 1. 動作/組合挑選器 */}
       <ExerciseSelectDialog
         open={isExercisePickerOpen}
-        onOpenChange={setIsExercisePickerOpen}
+        onOpenChange={(open) => {
+          setIsExercisePickerOpen(open);
+          if (!open) setActiveWorkoutIdForAdd(null);
+        }}
         mode={activeWorkoutIdForAdd ? 'exercises' : exercisePickerMode}
         disabledIds={disabledIds}
         isItemDisabled={isItemDisabled}
@@ -802,6 +796,13 @@ export default function Workout() {
           />
         );
       })()}
+
+      {/* 3. 複製訓練 Dialog (平級 Flat Sibling Portal) */}
+      <CopyWorkoutDialog
+        open={isCopyWorkoutOpen}
+        onOpenChange={setIsCopyWorkoutOpen}
+        targetDate={selectedDate}
+      />
     </div>
   );
 }
