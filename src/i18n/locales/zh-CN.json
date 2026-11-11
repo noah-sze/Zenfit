@@ -127,13 +127,13 @@
         "successToast": "已记录估算"
       },
       "asPlanned": {
-        "actionTitle": "算我正常吃",
-        "badge": "极速",
-        "badgeLong": "正常饮食配额",
-        "actionDesc": "套用 {{meal}} 配额 · {{calories}} kcal",
-        "emptyBtn": "算我正常吃 ({{calories}}k)",
-        "defaultName": "{{meal}} 配额",
-        "successToast": "已记录配额"
+        "actionTitle": "历史均值",
+        "badge": "配额",
+        "badgeLong": "配额",
+        "actionDesc": "套用过去{{meal}}的平均值 · {{calories}} kcal",
+        "emptyBtn": "历史均值 ({{calories}}k)",
+        "defaultName": "历史均值",
+        "successToast": "已记录历史均值"
       },
       "copyMeal": {
         "title": "复制餐点",

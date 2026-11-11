@@ -31,9 +31,8 @@ import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog
 import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
-import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { formatFoodDisplayName, resolveAsPlannedDisplayName } from '@/utils/foodNaming';
 import { calculateMealBudget } from '@/utils/nutritionMath';
-import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
@@ -232,9 +231,7 @@ export default function Diet() {
         proteinGrams: targetMacros.proteinGrams,
         fatGrams: targetMacros.fatGrams,
       });
-    const foodName = t('diet.asPlanned.defaultName', '{{meal}} 配額', {
-      meal: t(`diet.${mealType}`),
-    });
+    const foodName = t('diet.asPlanned.defaultName', '歷史均值');
     await addAsPlannedMeal(mealType, budget, {
       foodName,
     });
@@ -329,21 +326,23 @@ export default function Diet() {
   // 確認新增單品食材
   const handleConfirmAddFood = async (val: number, unit?: string) => {
     if (!selectedFoodForAdd || !targetMealTypeForAdd) return;
-    const finalQuantity = val > 0 ? val : (selectedFoodForAdd.servingSize || 100);
-    const finalUnit = unit || selectedFoodForAdd.servingUnit || foodWeightUnit;
+    const foodToAdd = selectedFoodForAdd;
+    const mealType = targetMealTypeForAdd;
+    const finalQuantity = val > 0 ? val : (foodToAdd.servingSize || 100);
+    const finalUnit = unit || foodToAdd.servingUnit || foodWeightUnit;
+
+    // 立即同步關閉彈窗，0 延遲消失，絕不等待 DB I/O
+    setSelectedFoodForAdd(null);
+    setIsSelectDialogOpen(false);
+    triggerHaptic('success');
 
     await addFoodLog({
       date: selectedDate,
-      mealType: targetMealTypeForAdd,
-      foodId: selectedFoodForAdd.id,
+      mealType,
+      foodId: foodToAdd.id,
       quantity: finalQuantity,
       unit: finalUnit,
     });
-
-    triggerHaptic('success');
-    toast.show(t('common.saved', '已儲存'));
-    setSelectedFoodForAdd(null);
-    setIsSelectDialogOpen(false);
   };
 
   // 取消新增單品食材 (保留選擇彈窗開啟，方便返回)
@@ -629,14 +628,16 @@ export default function Diet() {
                             </span>
                           )}
                           {item.isAsPlanned && (
-                            <span className="px-1.5 py-0.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
+                            <span className="px-1.5 py-0.5 rounded-md border border-border bg-muted/60 text-muted-foreground text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
                               <Zap className="size-2.5 stroke-[2.2]" />
-                              <span>{t('diet.asPlanned.badgeLong', '正常飲食配額')}</span>
+                              <span>{t('diet.asPlanned.badge', '配額')}</span>
                             </span>
                           )}
                           <span className="truncate">
                             {item.isPlaceholder
                               ? resolvePlaceholderDisplayName(item, t)
+                              : item.isAsPlanned
+                              ? resolveAsPlannedDisplayName(item, t('diet.asPlanned.defaultName', '歷史均值'))
                               : item.foodName}
                           </span>
                         </div>

@@ -190,7 +190,6 @@ export function AddQuickModal() {
       quantity: parseFloat(quantity) || (foodWeightUnit === 'oz' ? 1 : 100),
       unit: unit || foodWeightUnit,
     });
-    toast.show(t('common.saved'));
     resetFoodForm();
     closeAddModal();
   };
@@ -221,7 +220,6 @@ export function AddQuickModal() {
 
     await addFoodLogBundle(bundleId, logItems);
 
-    toast.show(t('common.saved'));
     setSelectedRecipeId('');
     setRecipeExcludedIndices([]);
     closeAddModal();

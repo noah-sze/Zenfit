@@ -127,13 +127,13 @@
         "successToast": "Estimate logged"
       },
       "asPlanned": {
-        "actionTitle": "Log as Planned",
-        "badge": "Quick",
-        "badgeLong": "Planned Budget",
-        "actionDesc": "Apply {{meal}} budget · {{calories}} kcal",
-        "emptyBtn": "Eat as Planned ({{calories}}k)",
-        "defaultName": "{{meal}} Budget",
-        "successToast": "Budget logged"
+        "actionTitle": "Past Average",
+        "badge": "Budget",
+        "badgeLong": "Budget",
+        "actionDesc": "Apply past average for {{meal}} · {{calories}} kcal",
+        "emptyBtn": "Past Average ({{calories}}k)",
+        "defaultName": "Past Average",
+        "successToast": "Past average logged"
       },
       "copyMeal": {
         "title": "Copy Meal",

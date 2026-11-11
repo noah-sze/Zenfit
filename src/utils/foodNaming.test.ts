@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatFoodDisplayName } from './foodNaming';
+import { formatFoodDisplayName, resolveAsPlannedDisplayName } from './foodNaming';
 
 describe('formatFoodDisplayName (食物名稱格式化)', () => {
   it('當無品牌時，應僅輸出食物原名', () => {
@@ -33,3 +33,35 @@ describe('formatFoodDisplayName (食物名稱格式化)', () => {
     expect(formatFoodDisplayName({})).toBe('');
   });
 });
+
+describe('resolveAsPlannedDisplayName (算我正常吃 / 歷史均值顯示名稱解析)', () => {
+  it('歷史配額標題應自動正規化為精簡預設名稱（如「歷史均值」）', () => {
+    expect(resolveAsPlannedDisplayName({ foodName: '午餐 配額' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '早餐 配額' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '晚餐 配額' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '加餐 配額' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '午餐 配额' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '正常飲食' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '正常饮食' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '算我正常吃' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '算我正常食' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '歷史均值' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '历史均值' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: 'Lunch Budget' }, 'Past Average')).toBe('Past Average');
+  });
+
+  it('空白或未設定 foodName 時應回退至預設名稱', () => {
+    expect(resolveAsPlannedDisplayName({})).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: '   ' })).toBe('歷史均值');
+    expect(resolveAsPlannedDisplayName({ foodName: null as any }, '歷史均值')).toBe('歷史均值');
+  });
+
+  it('若已有自訂具體備註，應完整保留原名稱', () => {
+    expect(resolveAsPlannedDisplayName({ foodName: '公司便當' })).toBe('公司便當');
+    expect(resolveAsPlannedDisplayName({ foodName: '媽媽煮的晚餐' })).toBe('媽媽煮的晚餐');
+    expect(resolveAsPlannedDisplayName({ foodName: '商務宴請' })).toBe('商務宴請');
+  });
+});
+
+

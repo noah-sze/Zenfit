@@ -14,6 +14,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy } from '@/utils/unitMath';
+import { resolveAsPlannedDisplayName } from '@/utils/foodNaming';
 
 export interface EditFoodLogDialogProps {
   open: boolean;
@@ -147,11 +148,11 @@ export function EditFoodLogDialog({
 
   // 送出保存
   const handleSubmit = async () => {
-    if (!log || isSubmitting || quantity <= 0) return;
+    if (!log || isSubmitting || (!log.isAsPlanned && quantity <= 0)) return;
     setIsSubmitting(true);
     try {
       await onSave(log.id, {
-        quantity,
+        quantity: quantity > 0 ? quantity : 1,
         ...(log.isPlaceholder || log.isAsPlanned || !log.foodId
           ? {
               calories: currentMacros.calories,
@@ -183,13 +184,17 @@ export function EditFoodLogDialog({
 
   if (!log) return null;
 
+  const dialogTitle = log.isAsPlanned
+    ? resolveAsPlannedDisplayName(log, t('diet.asPlanned.defaultName', '歷史均值'))
+    : log.foodName || '';
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <PrecisionDialogContent
-          title={log.foodName || ''}
+          title={dialogTitle}
           onSubmit={handleSubmit}
-          submitDisabled={isSubmitting || quantity <= 0}
+          submitDisabled={isSubmitting || (!log.isAsPlanned && quantity <= 0)}
           submitAriaLabel={t('common.save')}
           cancelAriaLabel={t('common.cancel')}
           overlayClassName="z-[70]"
@@ -255,29 +260,31 @@ export function EditFoodLogDialog({
             </div>
 
             {/* 表格卡片 (Usage List 表格行：食用份量 + 常用數字輸入框膠囊) */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
-              <div className="h-10 px-3 flex items-center justify-between bg-card">
-                <span className="text-muted-foreground text-xs font-sans">
-                  {t('diet.serving', '食用份量')}
-                </span>
+            {!log.isAsPlanned && (
+              <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+                <div className="h-10 px-3 flex items-center justify-between bg-card">
+                  <span className="text-muted-foreground text-xs font-sans">
+                    {t('diet.serving', '食用份量')}
+                  </span>
 
-                {/* Zenfit 專案常用的標準數字輸入框膠囊 */}
-                <button
-                  type="button"
-                  onClick={(e) => handleOpenKeypad(e.currentTarget)}
-                  className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
-                  title={t('diet.clickToEnter', '點擊輸入數值')}
-                >
-                  <span className="font-bold text-foreground">
-                    {formatDisplayAmount(String(quantity)) || '0'}
-                  </span>
-                  <span className="text-muted-foreground text-[11px]">
-                    {log.unit || 'g'}
-                  </span>
-                  <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                </button>
+                  {/* Zenfit 專案常用的標準數字輸入框膠囊 */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenKeypad(e.currentTarget)}
+                    className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
+                    title={t('diet.clickToEnter', '點擊輸入數值')}
+                  >
+                    <span className="font-bold text-foreground">
+                      {formatDisplayAmount(String(quantity)) || '0'}
+                    </span>
+                    <span className="text-muted-foreground text-[11px]">
+                      {log.unit || 'g'}
+                    </span>
+                    <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 底部破壞性按鈕 (長按 0.5s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
             <HoldToDeleteButton

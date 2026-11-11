@@ -12,7 +12,6 @@ import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { formatEnergy } from '@/utils/unitMath';
 import { cn, formatDisplayAmount } from '@/lib/utils';
-import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import type { FoodRecipe, FoodItem, MealType } from '@/types';
 
@@ -278,7 +277,6 @@ export function RecipeStagingDialog({
 
       await addFoodLogBundle(bundleId, logItems);
       triggerHaptic('success');
-      toast.show(t('common.saved', '已儲存'));
       onOpenChange(false);
       onSuccess?.();
     } finally {

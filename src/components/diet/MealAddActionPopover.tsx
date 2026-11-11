@@ -48,7 +48,7 @@ export function MealAddActionPopover({
     if (onLogAsPlanned) {
       onLogAsPlanned(mealType, budget);
     }
-    toast.show(t('diet.asPlanned.successToast', '已記錄配額'));
+    toast.show(t('diet.asPlanned.successToast', '已記錄歷史均值'));
   };
 
   const handleSelectSearch = () => {
@@ -137,6 +137,9 @@ export function MealAddActionPopover({
           </div>
         </button>
 
+        {/* 分割線 */}
+        <div className="h-px bg-border my-0.5" role="separator" />
+
         {/* 第 3 項：快速估算（整體顏色更淡，因為低使用場景） */}
         <button
           type="button"
@@ -173,14 +176,14 @@ export function MealAddActionPopover({
           <div className="flex-1 min-w-0 select-none">
             <div className="flex items-center gap-1.5 leading-tight">
               <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
-                {t('diet.asPlanned.actionTitle', '算我正常吃')}
+                {t('diet.asPlanned.actionTitle', '歷史均值')}
               </span>
-              <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500/70 bg-emerald-500/5 border border-emerald-500/15 leading-none">
-                {t('diet.asPlanned.badge', '極速')}
+              <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-muted-foreground bg-muted/60 border border-border leading-none">
+                {t('diet.asPlanned.badge', '配額')}
               </span>
             </div>
             <div className="text-2xs font-mono text-muted-foreground/60 leading-normal mt-0.5 truncate">
-              {t('diet.asPlanned.actionDesc', '套用 {{meal}} 配額 · {{calories}} kcal', {
+              {t('diet.asPlanned.actionDesc', '套用過去{{meal}}的平均值 · {{calories}} kcal', {
                 meal: t(`diet.${mealType}`),
                 calories: budget.calories,
               })}
