@@ -6,6 +6,7 @@ import {
   Edit2,
   Archive,
   RefreshCcw,
+  Trash2,
   Plus,
 } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
@@ -54,7 +55,7 @@ export default function RecipeDetails() {
   const confirm = useConfirm();
 
   const { allFoods, isLoading: isFoodsLoading } = useFoods();
-  const { updateRecipe, archiveRecipe, unarchiveRecipe } = useRecipes();
+  const { updateRecipe, archiveRecipe, unarchiveRecipe, deleteRecipe } = useRecipes();
   const { nutritionDisplayMode } = useAppStore();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
   const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
@@ -96,6 +97,7 @@ export default function RecipeDetails() {
   );
 
   // 刪除防護契約：有歷史記錄時不可刪除
+  const hasUsage = (relatedFoodLogs?.length ?? 0) > 0;
 
   // 菜餚標準營養素
   const standardTotals = useMemo(() => {
@@ -279,6 +281,21 @@ export default function RecipeDetails() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!recipe || hasUsage) return;
+    const ok = await confirm({
+      title: t('common.delete'),
+      description: t('common.confirmDeleteItem', { name: recipe.name }),
+      variant: 'destructive',
+    });
+    if (ok) {
+      await deleteRecipe(recipe.id);
+      triggerHaptic('warning');
+      toast.show(t('common.deleted'));
+      navigate('/settings/recipes');
+    }
+  };
+
 
   const [headerActionEl, setHeaderActionEl] = useState<HTMLElement | null>(() =>
     typeof document !== 'undefined' ? document.getElementById('subpage-header-action') : null
@@ -309,6 +326,24 @@ export default function RecipeDetails() {
       {headerActionEl &&
         createPortal(
           <div className="flex items-center gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              disabled={hasUsage}
+              className={cn(
+                "size-8 text-muted-foreground transition-colors",
+                hasUsage
+                  ? "opacity-30 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
+                  : "hover:text-destructive hover:bg-destructive-subtle cursor-pointer"
+              )}
+              title={hasUsage ? t('settings.foodHasLogsCannotDelete', '已有飲食記錄無法刪除') : t('common.delete')}
+              aria-label={t('common.delete')}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+
             <Button
               type="button"
               variant="ghost"
