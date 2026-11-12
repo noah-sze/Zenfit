@@ -975,6 +975,71 @@
       "resendSub1Part2": "肌力訓練記錄。",
       "step4Sub": "錄入基礎物理常數，系統將即時推算代謝指標。",
       "unitPreference": "單位偏好"
+    },
+    "aiExport": {
+      "triggerAriaLabel": "複製當日數據",
+      "dialogTitle": "複製當日數據",
+      "dialogDesc": "一鍵匯出結構化當日記錄，可直接貼給 AI 助手進行營養與訓練分析。",
+      "dateLabel": "日期",
+      "scopeLabel": "範圍",
+      "scope": {
+        "diet": "當日飲食數據",
+        "workout": "當日訓練數據",
+        "body": "當日身體數據",
+        "all": "當日全部數據"
+      },
+      "formatText": "純文本",
+      "formatJson": "JSON",
+      "formatImage": "圖片",
+      "copyBtn": "複製數據",
+      "copyImage": "複製圖片",
+      "shareImage": "分享圖片",
+      "downloadImage": "下載圖片",
+      "imageCopied": "已複製分享圖片到剪貼簿",
+      "imageDownloaded": "已開始下載分享圖片",
+      "imageGenerating": "正在生成圖片…",
+      "imageGenerateError": "圖片生成失敗",
+      "copiedToast": {
+        "diet": "已複製當日飲食數據",
+        "workout": "已複製當日訓練數據",
+        "body": "已複製當日身體數據",
+        "all": "已複製當日完整數據"
+      },
+      "sections": {
+        "diet": "飲食數據",
+        "workout": "訓練數據",
+        "body": "身體數據"
+      },
+      "diet": {
+        "activityLevel": "活動係數",
+        "target": "目標配額",
+        "actual": "實際攝取",
+        "calorieDiff": "熱量差值",
+        "macroSplit": "供能比",
+        "recipeTag": "食譜",
+        "estimateTag": "快速估算",
+        "asPlannedTag": "歷史均值",
+        "noLogs": "當日無飲食記錄"
+      },
+      "workout": {
+        "summary": "訓練概要",
+        "totalExercises": "{{count}} 個動作",
+        "totalSets": "{{count}} 組",
+        "totalVolume": "總容量 {{volume}} {{unit}}",
+        "routinePrefix": "課表",
+        "equipmentPrefix": "器械",
+        "primaryMuscles": "主肌群",
+        "secondaryMuscles": "協同肌群",
+        "setLine": "第 {{index}} 組: {{weight}} {{unit}} × {{reps}} 次",
+        "noLogs": "當日無訓練記錄"
+      },
+      "body": {
+        "weight": "當日體重",
+        "trendWeight": "平滑趨勢體重",
+        "bodyFat": "體脂率",
+        "circumferences": "身體圍度",
+        "noLogs": "當日無身體數據記錄"
+      }
     }
   }
 }

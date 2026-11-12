@@ -11,6 +11,7 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toast';
@@ -18,6 +19,8 @@ import { AddQuickModal } from '@/components/quickAdd/AddQuickModal';
 import { AppLockOverlay } from '@/components/security/AppLockOverlay';
 import { InitialSyncModal } from '@/components/sync/InitialSyncModal';
 import { SyncStatusPill } from '@/components/sync/SyncStatusPill';
+import { CopyDailyDataDialog } from '@/components/common/CopyDailyDataDialog';
+import { getAiExportScopeByPath } from '@/services/aiDataExport';
 import { format, addDays, subDays, parseISO, isToday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -108,6 +111,7 @@ export function AppLayout() {
 
   const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isCopyDataOpen, setIsCopyDataOpen] = useState(false);
 
   // 跨夜休眠喚醒自動校準：
   // 當 PWA 或行動端從後台切回前景時，若已跨過午夜且使用者先前停留在「今天」，自動平滑切換至新的「今天」
@@ -262,19 +266,33 @@ export function AppLayout() {
                 </button>
               </div>
 
-              {/* 右側設定入口 */}
-              <button
-                type="button"
-                onClick={() => {
-                  scrollPositionsRef.current['/settings'] = 0;
-                  navigate('/settings');
-                  triggerHaptic('light');
-                }}
-                className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg hover:bg-muted/60"
-                aria-label={t('nav.settings')}
-              >
-                <SettingsIcon className="size-5" strokeWidth={1.5} />
-              </button>
+              {/* 右側操作區：一鍵複製當日數據 + 設定入口 */}
+              <div className="flex items-center gap-0.5 -mr-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCopyDataOpen(true);
+                    triggerHaptic('light');
+                  }}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg hover:bg-muted/60"
+                  aria-label={t('aiExport.triggerAriaLabel')}
+                  title={t('aiExport.triggerAriaLabel')}
+                >
+                  <Copy className="size-4.5" strokeWidth={1.5} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    scrollPositionsRef.current['/settings'] = 0;
+                    navigate('/settings');
+                    triggerHaptic('light');
+                  }}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg hover:bg-muted/60"
+                  aria-label={t('nav.settings')}
+                >
+                  <SettingsIcon className="size-5" strokeWidth={1.5} />
+                </button>
+              </div>
             </>
           ) : (
             <div className="flex items-center justify-between w-full">
@@ -358,6 +376,12 @@ export function AppLayout() {
       <AddQuickModal />
       <AppLockOverlay />
       <InitialSyncModal />
+      <CopyDailyDataDialog
+        open={isCopyDataOpen}
+        onOpenChange={setIsCopyDataOpen}
+        date={selectedDate}
+        scope={getAiExportScopeByPath(location.pathname)}
+      />
       <Toaster />
     </div>
   );

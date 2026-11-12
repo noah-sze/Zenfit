@@ -976,6 +976,71 @@
       "resendSub1Part2": "strength logging.",
       "step4Sub": "Input baseline metrics to compute metabolic indicators.",
       "unitPreference": "Unit System"
+    },
+    "aiExport": {
+      "triggerAriaLabel": "Copy Daily Data",
+      "dialogTitle": "Copy Daily Data",
+      "dialogDesc": "Export structured daily logs for your AI assistant to analyze nutrition and workouts.",
+      "dateLabel": "Date",
+      "scopeLabel": "Scope",
+      "scope": {
+        "diet": "Daily Diet Data",
+        "workout": "Daily Workout Data",
+        "body": "Daily Body Data",
+        "all": "All Daily Data"
+      },
+      "formatText": "Plain Text",
+      "formatJson": "JSON",
+      "formatImage": "Image",
+      "copyBtn": "Copy Data",
+      "copyImage": "Copy Image",
+      "shareImage": "Share Image",
+      "downloadImage": "Download Image",
+      "imageCopied": "Image copied to clipboard",
+      "imageDownloaded": "Image download started",
+      "imageGenerating": "Generating image...",
+      "imageGenerateError": "Failed to generate image",
+      "copiedToast": {
+        "diet": "Copied daily diet data",
+        "workout": "Copied daily workout data",
+        "body": "Copied daily body data",
+        "all": "Copied all daily data"
+      },
+      "sections": {
+        "diet": "Diet Data",
+        "workout": "Workout Data",
+        "body": "Body Data"
+      },
+      "diet": {
+        "activityLevel": "Activity Level",
+        "target": "Target Quota",
+        "actual": "Actual Intake",
+        "calorieDiff": "Calorie Variance",
+        "macroSplit": "Macro Split",
+        "recipeTag": "Recipe",
+        "estimateTag": "Quick Estimate",
+        "asPlannedTag": "Past Average",
+        "noLogs": "No diet logs for this date"
+      },
+      "workout": {
+        "summary": "Workout Summary",
+        "totalExercises": "{{count}} exercises",
+        "totalSets": "{{count}} sets",
+        "totalVolume": "Total Volume {{volume}} {{unit}}",
+        "routinePrefix": "Routine",
+        "equipmentPrefix": "Equipment",
+        "primaryMuscles": "Primary Muscles",
+        "secondaryMuscles": "Secondary Muscles",
+        "setLine": "Set {{index}}: {{weight}} {{unit}} × {{reps}} reps",
+        "noLogs": "No workout logs for this date"
+      },
+      "body": {
+        "weight": "Weight",
+        "trendWeight": "Trend Weight",
+        "bodyFat": "Body Fat",
+        "circumferences": "Circumferences",
+        "noLogs": "No body metrics for this date"
+      }
     }
   }
 }

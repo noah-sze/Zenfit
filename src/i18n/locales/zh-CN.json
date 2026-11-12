@@ -975,6 +975,71 @@
       "resendSub1Part2": "肌力训练记录。",
       "step4Sub": "录入基础物理常数，系统将即时推算代谢指标。",
       "unitPreference": "单位偏好"
+    },
+    "aiExport": {
+      "triggerAriaLabel": "复制当日数据",
+      "dialogTitle": "复制当日数据",
+      "dialogDesc": "一键导出结构化当日记录，可直接发给 AI 助手进行营养与训练分析。",
+      "dateLabel": "日期",
+      "scopeLabel": "范围",
+      "scope": {
+        "diet": "当日饮食数据",
+        "workout": "当日训练数据",
+        "body": "当日身体数据",
+        "all": "当日全部数据"
+      },
+      "formatText": "纯文本",
+      "formatJson": "JSON",
+      "formatImage": "图片",
+      "copyBtn": "复制数据",
+      "copyImage": "复制图片",
+      "shareImage": "分享图片",
+      "downloadImage": "下载图片",
+      "imageCopied": "已复制分享图片到剪贴板",
+      "imageDownloaded": "已开始下载分享图片",
+      "imageGenerating": "正在生成图片…",
+      "imageGenerateError": "图片生成失败",
+      "copiedToast": {
+        "diet": "已复制当日饮食数据",
+        "workout": "已复制当日训练数据",
+        "body": "已复制当日身体数据",
+        "all": "已复制当日完整数据"
+      },
+      "sections": {
+        "diet": "饮食数据",
+        "workout": "训练数据",
+        "body": "身体数据"
+      },
+      "diet": {
+        "activityLevel": "活动系数",
+        "target": "目标配额",
+        "actual": "实际摄入",
+        "calorieDiff": "热量差值",
+        "macroSplit": "供能比",
+        "recipeTag": "食谱",
+        "estimateTag": "快速估算",
+        "asPlannedTag": "历史均值",
+        "noLogs": "当日无饮食记录"
+      },
+      "workout": {
+        "summary": "训练概要",
+        "totalExercises": "{{count}} 个动作",
+        "totalSets": "{{count}} 组",
+        "totalVolume": "总容量 {{volume}} {{unit}}",
+        "routinePrefix": "课表",
+        "equipmentPrefix": "器械",
+        "primaryMuscles": "主肌群",
+        "secondaryMuscles": "协同肌群",
+        "setLine": "第 {{index}} 组: {{weight}} {{unit}} × {{reps}} 次",
+        "noLogs": "当日无训练记录"
+      },
+      "body": {
+        "weight": "当日体重",
+        "trendWeight": "平滑趋势体重",
+        "bodyFat": "体脂率",
+        "circumferences": "身体围度",
+        "noLogs": "当日无身体数据记录"
+      }
     }
   }
 }
