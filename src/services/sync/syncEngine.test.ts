@@ -1,10 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   mergeEntities,
   mergeDietLogsByDate,
   groupFoodLogsByDate,
   groupWorkoutLogsByDate,
   groupBodyMetricsByDate,
+  getSyncErrorReasonKey,
+  formatSyncErrorMessage,
+  executeSync,
 } from './syncEngine';
 import {
   getDropboxAppKey,
@@ -14,9 +17,12 @@ import {
   commitStagingTokens,
   clearStagingTokens,
   clearDropboxTokens,
+  setStoredTokens,
   isDropboxConnected,
   type DropboxTokens,
 } from './dropboxAuth';
+import i18n from '@/i18n/config';
+import { toast } from '@/components/ui/toast';
 import type { FoodLog, WorkoutLog, BodyMetric, DailyDietLog } from '@/types';
 
 class LocalStorageMock {
@@ -387,3 +393,119 @@ describe('dropboxAuth', () => {
     expect(isDropboxConnected()).toBe(false);
   });
 });
+
+describe('syncErrorReason & Toast handling', () => {
+  beforeEach(() => {
+    const mockStorage = new LocalStorageMock();
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: mockStorage,
+      writable: true,
+      configurable: true,
+    });
+    clearDropboxTokens();
+    vi.restoreAllMocks();
+  });
+
+  it('classifies common Dropbox, network, and local errors accurately via getSyncErrorReasonKey', () => {
+    expect(
+      getSyncErrorReasonKey(
+        new Error('NETWORK_TIMEOUT: Request to https://api.dropboxapi.com timed out after 12000ms')
+      )
+    ).toBe('timeout');
+    const abortErr = new Error('The operation was aborted');
+    abortErr.name = 'AbortError';
+    expect(getSyncErrorReasonKey(abortErr)).toBe('timeout');
+
+    expect(getSyncErrorReasonKey(new TypeError('Failed to fetch'))).toBe('network');
+    expect(getSyncErrorReasonKey('ERR_INTERNET_DISCONNECTED')).toBe('network');
+    expect(getSyncErrorReasonKey('Load failed')).toBe('network');
+
+    expect(
+      getSyncErrorReasonKey(
+        new Error(
+          'Failed to upload file /nutrition/logs/2026-11-12.json (401): {"error_summary": "expired_access_token/..."}'
+        )
+      )
+    ).toBe('auth');
+    expect(getSyncErrorReasonKey(new Error('Dropbox not authenticated'))).toBe('auth');
+    expect(getSyncErrorReasonKey('Dropbox not connected')).toBe('auth');
+    expect(
+      getSyncErrorReasonKey('PKCE verification failed: Code verifier missing from session.')
+    ).toBe('auth');
+    expect(getSyncErrorReasonKey('Dropbox token exchange failed (400): invalid_grant')).toBe(
+      'auth'
+    );
+
+    expect(
+      getSyncErrorReasonKey(
+        new Error('Failed to upload file /foods.json (507): {"error_summary": "insufficient_space"}')
+      )
+    ).toBe('quota');
+
+    expect(
+      getSyncErrorReasonKey(
+        new Error(
+          'Failed to upload file /foods.json (429): {"error_summary": "too_many_write_operations"}'
+        )
+      )
+    ).toBe('rate_limit');
+
+    expect(
+      getSyncErrorReasonKey(
+        new Error('DROPBOX_CONFLICT: File /nutrition/foods.json has a newer version on remote')
+      )
+    ).toBe('conflict');
+
+    expect(getSyncErrorReasonKey(new Error('Failed to list folder (503): Service Unavailable'))).toBe(
+      'server'
+    );
+    expect(getSyncErrorReasonKey(new Error('Failed to list folder (500): internal_error'))).toBe(
+      'server'
+    );
+
+    expect(
+      getSyncErrorReasonKey(
+        new Error('Failed to list folder (403): {"error_summary": "insufficient_permissions"}')
+      )
+    ).toBe('permission');
+
+    expect(getSyncErrorReasonKey(new Error('Unexpected database glitch'))).toBe('unknown');
+  });
+
+  it('formats error messages in zh-TW, zh-CN, and en via formatSyncErrorMessage', async () => {
+    const authErr = new Error('Failed to upload (401): expired_access_token');
+    const timeoutErr = new Error('NETWORK_TIMEOUT: timed out after 12000ms');
+
+    await i18n.changeLanguage('zh-TW');
+    expect(formatSyncErrorMessage(authErr)).toBe('授權憑證已過期或失效，請重新連線');
+    expect(formatSyncErrorMessage(timeoutErr)).toBe('連線逾時，請檢查網路環境');
+
+    await i18n.changeLanguage('zh-CN');
+    expect(formatSyncErrorMessage(authErr)).toBe('授权凭证已过期或失效，请重新连接');
+    expect(formatSyncErrorMessage(timeoutErr)).toBe('连接超时，请检查网络环境');
+
+    await i18n.changeLanguage('en');
+    expect(formatSyncErrorMessage(authErr)).toBe('Authorization expired, please reconnect');
+    expect(formatSyncErrorMessage(timeoutErr)).toBe('Connection timed out');
+
+    await i18n.changeLanguage('zh-TW');
+  });
+
+  it('triggers localized toast when executeSync fails with network or API error', async () => {
+    await i18n.changeLanguage('zh-TW');
+    const toastSpy = vi.spyOn(toast, 'show');
+
+    setStoredTokens({
+      access_token: 'valid_token',
+      expires_in: 14400,
+      expires_at: Date.now() + 14400 * 1000,
+    });
+
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const res = await executeSync('auto');
+    expect(res.success).toBe(false);
+    expect(toastSpy).toHaveBeenCalledWith('Dropbox 同步失敗：網路連線不穩定，無法連接伺服器');
+  });
+});
+

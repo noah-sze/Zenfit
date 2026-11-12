@@ -1,4 +1,167 @@
+import type { TFunction } from 'i18next';
+import i18n from '@/i18n/config';
 import { getValidAccessToken } from './dropboxAuth';
+
+export type SyncErrorReasonKey =
+  | 'timeout'
+  | 'network'
+  | 'auth'
+  | 'quota'
+  | 'rate_limit'
+  | 'conflict'
+  | 'server'
+  | 'permission'
+  | 'unknown';
+
+const SYNC_ERROR_I18N_MAP: Record<SyncErrorReasonKey, { key: string; defaultText: string }> = {
+  timeout: {
+    key: 'syncStatus.errors.timeout',
+    defaultText: '連線逾時，請檢查網路環境',
+  },
+  network: {
+    key: 'syncStatus.errors.network',
+    defaultText: '網路連線不穩定，無法連接伺服器',
+  },
+  auth: {
+    key: 'syncStatus.errors.auth',
+    defaultText: '授權憑證已過期或失效，請重新連線',
+  },
+  quota: {
+    key: 'syncStatus.errors.quota',
+    defaultText: 'Dropbox 儲存空間不足',
+  },
+  rate_limit: {
+    key: 'syncStatus.errors.rateLimit',
+    defaultText: '請求過於頻繁，請稍後再試',
+  },
+  conflict: {
+    key: 'syncStatus.errors.conflict',
+    defaultText: '資料版本衝突，正在重新合併',
+  },
+  server: {
+    key: 'syncStatus.errors.server',
+    defaultText: 'Dropbox 服務暫時異常，請稍後再試',
+  },
+  permission: {
+    key: 'syncStatus.errors.permission',
+    defaultText: '存取權限不足，請重新授權',
+  },
+  unknown: {
+    key: 'syncStatus.errors.unknown',
+    defaultText: '發生未知錯誤，請稍後再試',
+  },
+};
+
+/**
+ * 將常見的 Dropbox / 網路 / 本地錯誤歸類為清晰的失敗原因鍵值
+ */
+export function getSyncErrorReasonKey(error: unknown): SyncErrorReasonKey {
+  const raw =
+    error instanceof Error
+      ? `${error.name} ${error.message}`
+      : typeof error === 'string'
+        ? error
+        : String(error ?? '');
+  const lower = raw.toLowerCase();
+
+  if (
+    lower.includes('network_timeout') ||
+    lower.includes('aborterror') ||
+    lower.includes('timed out') ||
+    lower.includes('timeout')
+  ) {
+    return 'timeout';
+  }
+
+  if (
+    lower.includes('dropbox_conflict') ||
+    /\b409\b/.test(lower) ||
+    lower.includes('conflict')
+  ) {
+    return 'conflict';
+  }
+
+  if (
+    /\b401\b/.test(lower) ||
+    lower.includes('invalid_access_token') ||
+    lower.includes('expired_access_token') ||
+    lower.includes('invalid_grant') ||
+    lower.includes('not authenticated') ||
+    lower.includes('dropbox not connected') ||
+    lower.includes('token exchange failed') ||
+    lower.includes('pkce verification failed') ||
+    lower.includes('unauthorized')
+  ) {
+    return 'auth';
+  }
+
+  if (
+    /\b403\b/.test(lower) ||
+    lower.includes('insufficient_permissions') ||
+    lower.includes('access_denied') ||
+    lower.includes('forbidden')
+  ) {
+    return 'permission';
+  }
+
+  if (
+    /\b507\b/.test(lower) ||
+    lower.includes('insufficient_space') ||
+    lower.includes('quota')
+  ) {
+    return 'quota';
+  }
+
+  if (
+    /\b429\b/.test(lower) ||
+    lower.includes('too_many_requests') ||
+    lower.includes('too_many_write_operations') ||
+    lower.includes('rate_limit') ||
+    lower.includes('rate limit')
+  ) {
+    return 'rate_limit';
+  }
+
+  if (
+    /\b(500|502|503|504)\b/.test(lower) ||
+    lower.includes('internal_error') ||
+    lower.includes('bad gateway') ||
+    lower.includes('service unavailable') ||
+    lower.includes('gateway timeout')
+  ) {
+    return 'server';
+  }
+
+  if (
+    lower.includes('failed to fetch') ||
+    lower.includes('networkerror') ||
+    lower.includes('network request failed') ||
+    lower.includes('load failed') ||
+    lower.includes('err_internet_disconnected') ||
+    lower.includes('err_network') ||
+    lower.includes('offline') ||
+    (typeof navigator !== 'undefined' && navigator.onLine === false)
+  ) {
+    return 'network';
+  }
+
+  return 'unknown';
+}
+
+/**
+ * 將同步錯誤轉換為多語系友善失敗原因說明
+ */
+export function formatSyncErrorMessage(
+  error: unknown,
+  t?: TFunction | ((key: string, defaultValue?: string) => string)
+): string {
+  const reasonKey = getSyncErrorReasonKey(error);
+  const { key, defaultText } = SYNC_ERROR_I18N_MAP[reasonKey];
+  if (t) {
+    return (t as (k: string, def?: string) => string)(key, defaultText);
+  }
+  return i18n.t(key, defaultText);
+}
 
 export interface DropboxFileMetadata {
   name: string;

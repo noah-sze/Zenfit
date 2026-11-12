@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
 import { useNetworkStatus, checkConnectivity } from '@/hooks/useNetworkStatus';
 import { useDropboxSync } from '@/hooks/useDropboxSync';
+import { formatSyncErrorMessage } from '@/services/sync/syncEngine';
 import { toast } from '@/components/ui/toast';
 import {
   Dialog,
@@ -109,7 +110,7 @@ export function SyncStatusPill() {
         return t('syncStatus.connectDialogTitle');
       case 'failed':
         return lastSyncError
-          ? `${t('syncStatus.failed')}: ${lastSyncError}`
+          ? `${t('syncStatus.failed')}: ${formatSyncErrorMessage(lastSyncError, t)}`
           : t('syncStatus.retryAction');
       case 'synced':
       case 'connected':

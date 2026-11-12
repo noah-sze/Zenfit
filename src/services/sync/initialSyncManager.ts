@@ -33,6 +33,8 @@ import {
   exchangeCodeForTokensOnly,
   type DropboxTokens,
 } from './dropboxAuth';
+import i18n from '@/i18n/config';
+import { toast } from '@/components/ui/toast';
 import {
   mergeEntities,
   mergeDietLogsByDate,
@@ -43,6 +45,7 @@ import {
   getCachedRevs,
   getPushedTimes,
   setPushedTimes,
+  formatSyncErrorMessage,
   type SyncManifest,
 } from './syncEngine';
 
@@ -196,8 +199,10 @@ export async function startInitialSync(code: string): Promise<void> {
     await inspectRemote();
   } catch (err: unknown) {
     console.error('Initial sync auth failed:', err);
+    const reason = formatSyncErrorMessage(err);
+    toast.show(i18n.t('syncStatus.authFailedToast', { reason }));
     emitState({
-      error: err instanceof Error ? err.message : 'Authentication failed',
+      error: reason,
       progressPercent: 0,
     });
   }
@@ -246,8 +251,10 @@ async function inspectRemote(): Promise<void> {
     await determineStrategy(localCount, remoteCount);
   } catch (err: unknown) {
     console.error('Inspect remote failed:', err);
+    const reason = formatSyncErrorMessage(err);
+    toast.show(i18n.t('syncStatus.syncFailedToast', { reason }));
     emitState({
-      error: err instanceof Error ? err.message : 'Failed to inspect remote data',
+      error: reason,
     });
   }
 }
@@ -402,8 +409,10 @@ async function executeDownloadQueue(): Promise<void> {
     await executeAtomicCommit();
   } catch (err: unknown) {
     console.error('Download queue error:', err);
+    const reason = formatSyncErrorMessage(err);
+    toast.show(i18n.t('syncStatus.syncFailedToast', { reason }));
     emitState({
-      error: err instanceof Error ? err.message : 'Download error',
+      error: reason,
     });
   }
 }
@@ -588,9 +597,11 @@ async function executeAtomicCommit(): Promise<void> {
   } catch (err: unknown) {
     console.error('Commit failed:', err);
     clearStagingTokens();
+    const reason = formatSyncErrorMessage(err);
+    toast.show(i18n.t('syncStatus.syncFailedToast', { reason }));
     emitState({
       isApplying: false,
-      error: err instanceof Error ? err.message : 'Database commit failed',
+      error: reason,
     });
   }
 }

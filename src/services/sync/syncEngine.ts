@@ -13,10 +13,15 @@ import type {
   UserBaseInfo,
 } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import i18n from '@/i18n/config';
+import { toast } from '@/components/ui/toast';
 import {
   listRemoteFolder,
   downloadJsonFile,
   uploadJsonFile,
+  getSyncErrorReasonKey,
+  formatSyncErrorMessage,
+  type SyncErrorReasonKey,
   type DropboxFileMetadata,
 } from './dropboxClient';
 import {
@@ -28,6 +33,8 @@ import {
   sanitizeUserBaseInfo,
 } from './syncSanitizers';
 import { isDropboxConnected } from './dropboxAuth';
+
+export { getSyncErrorReasonKey, formatSyncErrorMessage, type SyncErrorReasonKey };
 
 const LAST_SYNC_KEY = 'zenfit_dropbox_last_sync';
 const CACHED_REVS_KEY = 'zenfit_dropbox_cached_revs';
@@ -577,6 +584,10 @@ export async function executeSync(
         lastSyncError: errMsg,
         justSynced: false,
       });
+      if (!errMsg.includes('Sync already in progress')) {
+        const reason = formatSyncErrorMessage(error);
+        toast.show(i18n.t('syncStatus.syncFailedToast', { reason }));
+      }
       return {
         success: false,
         timestamp: new Date().toISOString(),
@@ -1290,12 +1301,28 @@ export async function executeSync(
       console.warn('Dropbox concurrency conflict detected! Queuing automatic re-merge...');
       hasPendingSyncRequest = true;
       pendingSyncMode = 'auto';
+      updateSyncEngineStatus({
+        isSyncing: false,
+        lastSyncError: errMsg,
+        justSynced: false,
+      });
+      toast.show(i18n.t('syncStatus.errors.conflict'));
+      return {
+        success: false,
+        timestamp: new Date().toISOString(),
+        error: errMsg,
+        actionTaken: 'up_to_date',
+      };
     }
     updateSyncEngineStatus({
       isSyncing: false,
       lastSyncError: errMsg,
       justSynced: false,
     });
+    if (!errMsg.includes('Sync already in progress')) {
+      const reason = formatSyncErrorMessage(error);
+      toast.show(i18n.t('syncStatus.syncFailedToast', { reason }));
+    }
     return {
       success: false,
       timestamp: new Date().toISOString(),

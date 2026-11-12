@@ -12,6 +12,7 @@ import {
   onSyncEngineStatusChange,
   getSyncEngineStatus,
   updateSyncEngineStatus,
+  formatSyncErrorMessage,
   type SyncEngineStatus,
   type SyncResult,
 } from '@/services/sync/syncEngine';
@@ -132,8 +133,8 @@ export function useDropboxSync() {
       await initiateDropboxAuth();
     } catch (err: unknown) {
       console.error('Failed to initiate Dropbox auth:', err);
-      const msg = err instanceof Error ? err.message : '未知錯誤';
-      toast.show('無法發起授權：' + msg);
+      const reason = formatSyncErrorMessage(err, t);
+      toast.show(t('syncStatus.authFailedToast', { reason }));
     }
   }, [t]);
 
@@ -155,21 +156,23 @@ export function useDropboxSync() {
       }
 
       if (!isOnline) {
-        toast.show('離線中');
+        toast.show(t('syncStatus.offlineToast'));
         return { success: false, timestamp: new Date().toISOString(), actionTaken: 'up_to_date' };
       }
 
       try {
         const result = await executeSync(mode);
         if (result.success) {
-          toast.show('同步完成');
-        } else {
-          toast.show('同步未完成：' + (result.error || '請重試'));
+          toast.show(t('syncStatus.syncSuccessToast'));
+        } else if (result.error === 'Dropbox not connected') {
+          const reason = formatSyncErrorMessage(result.error, t);
+          toast.show(t('syncStatus.syncFailedToast', { reason }));
         }
         return result;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : '請重試';
-        toast.show('同步未完成：' + msg);
+        const msg = err instanceof Error ? err.message : 'Unknown sync error';
+        const reason = formatSyncErrorMessage(err, t);
+        toast.show(t('syncStatus.syncFailedToast', { reason }));
         return {
           success: false,
           timestamp: new Date().toISOString(),
@@ -178,7 +181,7 @@ export function useDropboxSync() {
         };
       }
     },
-    [syncState.isSyncing, isOnline]
+    [syncState.isSyncing, isOnline, t]
   );
 
   return {
