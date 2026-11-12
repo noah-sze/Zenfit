@@ -45,6 +45,12 @@ export interface FoodFormDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: FoodItem | null;
   onSubmit: (data: FoodFormData) => Promise<void> | void;
+  /** 自訂遮罩層級類名 (例如 'z-[80]') */
+  overlayClassName?: string;
+  /** 自訂彈窗本體類名 */
+  className?: string;
+  /** 自訂彈窗層級數值 (例如 80) */
+  zIndex?: number;
 }
 
 let measurementContext: CanvasRenderingContext2D | null = null;
@@ -72,6 +78,9 @@ export function FoodFormDialog({
   onOpenChange,
   initialData,
   onSubmit,
+  overlayClassName,
+  className,
+  zIndex,
 }: FoodFormDialogProps) {
   const { t } = useTranslation();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
@@ -565,8 +574,8 @@ export function FoodFormDialog({
           submitDisabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
           submitAriaLabel={isEdit ? t('common.save') : t('common.add')}
           cancelAriaLabel={t('common.cancel')}
-          overlayClassName="z-[70]"
-          className="z-[70]"
+          overlayClassName={overlayClassName || (zIndex ? `z-[${zIndex}]` : "z-[70]")}
+          className={cn(zIndex ? `z-[${zIndex}]` : "z-[70]", className)}
         >
 
           <form id={formId} onSubmit={handleSubmit} className="space-y-3.5 pt-3.5 pb-0">
@@ -820,6 +829,7 @@ export function FoodFormDialog({
         onOpenChange={(isOpen) => {
           if (!isOpen) setKeypadConfig(null);
         }}
+        zIndex={zIndex ? zIndex + 10 : 80}
         anchorEl={keypadConfig.anchorEl}
         title={keypadConfig.title}
         value={keypadConfig.value}

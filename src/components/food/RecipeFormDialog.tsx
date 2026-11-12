@@ -20,7 +20,7 @@ import {
   mlToFlOz,
 } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
-import { formatDisplayAmount } from '@/lib/utils';
+import { cn, formatDisplayAmount } from '@/lib/utils';
 import { ChevronRight, Plus } from 'lucide-react';
 
 export type RecipeFormData = Omit<
@@ -33,6 +33,12 @@ export interface RecipeFormDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: FoodRecipe | null;
   onSubmit: (data: RecipeFormData) => Promise<void> | void;
+  /** 自訂遮罩層級類名 (例如 'z-[80]') */
+  overlayClassName?: string;
+  /** 自訂彈窗本體類名 */
+  className?: string;
+  /** 自訂彈窗層級數值 (例如 80) */
+  zIndex?: number;
 }
 
 interface FormIngredientRow {
@@ -56,6 +62,9 @@ export function RecipeFormDialog({
   onOpenChange,
   initialData,
   onSubmit,
+  overlayClassName,
+  className,
+  zIndex,
 }: RecipeFormDialogProps) {
   const { t } = useTranslation();
   const { allFoods } = useFoods();
@@ -350,8 +359,8 @@ export function RecipeFormDialog({
           submitDisabled={!name.trim() || ingredients.length === 0 || isSubmitting}
           submitAriaLabel={isEdit ? t('common.save') : t('common.add')}
           cancelAriaLabel={t('common.cancel')}
-          overlayClassName="z-[70]"
-          className="z-[70] flex flex-col max-h-[85vh] overflow-hidden"
+          overlayClassName={overlayClassName || (zIndex ? `z-[${zIndex}]` : "z-[70]")}
+          className={cn(zIndex ? `z-[${zIndex}]` : "z-[70]", "flex flex-col max-h-[85vh] overflow-hidden", className)}
           initialFocus={false}
         >
 
@@ -546,6 +555,7 @@ export function RecipeFormDialog({
           allowDecimals={true}
           maxDecimals={2}
           anchorEl={keypadConfig.anchorEl}
+          zIndex={zIndex ? zIndex + 10 : 80}
           onDelete={ingredients.length > 1 ? () => {
             const idx = keypadConfig.index;
             setKeypadConfig(null);
@@ -557,15 +567,18 @@ export function RecipeFormDialog({
         />
       )}
 
-      {/* 次級食材選擇器 (平鋪兄弟節點聲明，層級 zIndex={80}) */}
-      <FoodRecipeSelectDialog
-        open={isPickerOpen}
-        onOpenChange={setIsPickerOpen}
-        mode="foods"
-        zIndex={80}
-        disabledIds={disabledFoodIds}
-        onSelect={handleSelectFood}
-      />
+      {/* 次級食材選擇器 (平鋪兄弟節點聲明，層級高於父彈窗，條件掛載且停用巢狀新增以杜絕組件遞迴) */}
+      {isPickerOpen && (
+        <FoodRecipeSelectDialog
+          open={isPickerOpen}
+          onOpenChange={setIsPickerOpen}
+          mode="foods"
+          zIndex={zIndex ? zIndex + 10 : 80}
+          disabledIds={disabledFoodIds}
+          onSelect={handleSelectFood}
+          allowAdd={false}
+        />
+      )}
     </>
   );
 }

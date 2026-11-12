@@ -54,6 +54,9 @@ export interface ResponsiveNumericKeypadProps {
   /** 自定義鍵盤正上方上下文預覽行渲染插槽 (若未提供則預設渲染標準高亮 Usage List 行) */
   renderContextRow?: (value: string, unit: string) => React.ReactNode
 
+  /** 自訂彈窗層級（預設 80） */
+  zIndex?: number
+
   className?: string
 }
 
@@ -101,6 +104,7 @@ export function ResponsiveNumericKeypad({
   deleteText,
   onLiveChange,
   renderContextRow,
+  zIndex,
   className,
 }: ResponsiveNumericKeypadProps) {
   const { t } = useTranslation()
@@ -398,13 +402,18 @@ export function ResponsiveNumericKeypad({
 
   const displayVal = formatDisplayAmount(internalValue, { preserveEmpty: true })
 
+  const zIndexClass = zIndex ? `z-[${zIndex}]` : 'z-[80]'
+  const relativeZIndexClass = zIndex ? `z-[${zIndex + 1}]` : 'z-[81]'
+  const dropdownPositionerClass = zIndex ? `z-[${zIndex + 15}]` : 'z-[95]'
+  const dropdownBackdropClass = zIndex ? `z-[${zIndex + 10}]` : 'z-[90]'
+
   const btnBaseClass =
     "h-10 text-base font-mono font-medium rounded-lg bg-muted/60 text-foreground hover:bg-muted border border-border/40 active:bg-foreground active:text-background active:border-foreground transition-transform duration-75 active:scale-[0.95] select-none cursor-pointer flex items-center justify-center shadow-none outline-none"
 
   // 方案 1: 全端統一渲染一體化精密卡片 (Unified Precision Modal, 寬度 350px 對齊 Dialog)
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] pointer-events-auto flex flex-col justify-end touch-none select-none overscroll-none"
+      className={cn("fixed inset-0 pointer-events-auto flex flex-col justify-end touch-none select-none overscroll-none", zIndexClass)}
       onTouchMove={(e) => e.preventDefault()}
     >
       {/* 半透明毛玻璃遮罩層：點擊安全回滾放棄並收起 */}
@@ -415,7 +424,7 @@ export function ResponsiveNumericKeypad({
       />
 
       {/* 懸浮容器 (全屏水平居中，最大寬度 350px，底部懸浮留白) */}
-      <div className="relative z-[81] pointer-events-auto w-full max-w-[350px] mx-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))] mb-3 sm:mb-6 flex flex-col gap-2">
+      <div className={cn("relative pointer-events-auto w-full max-w-[350px] mx-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))] mb-3 sm:mb-6 flex flex-col gap-2", relativeZIndexClass)}>
         {/* 上方獨立長按刪除卡片 (可用時顯示，不可用時隱藏) */}
         {onDelete && (
           <div
@@ -483,9 +492,9 @@ export function ResponsiveNumericKeypad({
                   </SelectTrigger>
                   <SelectContent
                     align="end"
-                    positionerClassName="z-[95]"
-                    backdropClassName="z-[90]"
-                    className="min-w-20 z-[95] p-1 font-mono text-xs"
+                    positionerClassName={dropdownPositionerClass}
+                    backdropClassName={dropdownBackdropClass}
+                    className={cn("min-w-20 p-1 font-mono text-xs", dropdownPositionerClass)}
                   >
                     {allowedUnits.map((u) => (
                       <SelectItem key={u} value={u}>

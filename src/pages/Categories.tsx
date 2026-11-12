@@ -174,6 +174,8 @@ export default function Categories({ isDetailOpen = false }: CategoriesProps) {
         onUnarchiveFood={handleUnarchiveFood}
         onDeleteRecipe={handleDeleteRecipe}
         onUnarchiveRecipe={handleUnarchiveRecipe}
+        onAddFood={() => setIsAddFoodOpen(true)}
+        onAddRecipe={handleOpenAddRecipe}
       />
 
       {/* ========================================================================= */}

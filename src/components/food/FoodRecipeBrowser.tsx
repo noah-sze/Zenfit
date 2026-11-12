@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, ChevronDown, X, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Search, ChevronDown, X, SlidersHorizontal, ArrowUpDown, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -46,6 +46,12 @@ export interface FoodRecipeBrowserProps {
   isItemDisabled?: (item: FoodItem | FoodRecipe, type: 'food' | 'recipe') => boolean;
   /** 當前在選擇模式下被選中的項目 ID */
   selectedId?: string;
+  /** 新增食材回調 (若提供則在食材工具列右側顯示「新增」按鈕) */
+  onAddFood?: () => void;
+  /** 新增食譜回調 (若提供則在食譜工具列右側顯示「新增」按鈕) */
+  onAddRecipe?: () => void;
+  /** 整合的新增回調 (根據當前 Tab 自動派發) */
+  onAdd?: (type: 'food' | 'recipe') => void;
   /** 歸檔管理操作回調 */
   onDeleteFood?: (food: FoodItem) => void;
   onUnarchiveFood?: (food: FoodItem) => void;
@@ -67,6 +73,9 @@ export function FoodRecipeBrowser({
   disabledIds,
   isItemDisabled,
   selectedId,
+  onAddFood,
+  onAddRecipe,
+  onAdd,
   onDeleteFood: _onDeleteFood,
   onUnarchiveFood: _onUnarchiveFood,
   onDeleteRecipe: _onDeleteRecipe,
@@ -1128,6 +1137,27 @@ export function FoodRecipeBrowser({
                 </button>
               )}
             </div>
+
+            {/* 新增食材按鈕 (靠右對齊，精確匹配過濾列高度與膠囊風格) */}
+            {(onAddFood || onAdd) && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  if (onAddFood) {
+                    onAddFood();
+                  } else if (onAdd) {
+                    onAdd('food');
+                  }
+                }}
+                className="ml-auto inline-flex items-center gap-1 py-1 px-2.5 rounded-full text-xs font-mono border border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border transition-all cursor-pointer shrink-0 active:scale-95"
+                title={t('common.add', '新增')}
+                aria-label={t('common.add', '新增')}
+              >
+                <Plus className="size-3" />
+                <span>{t('common.add', '新增')}</span>
+              </button>
+            )}
           </div>
 
           {/* 食材清單容器 */}
@@ -1478,6 +1508,27 @@ export function FoodRecipeBrowser({
                 </button>
               )}
             </div>
+
+            {/* 新增食譜按鈕 (靠右對齊，精確匹配過濾列高度與膠囊風格) */}
+            {(onAddRecipe || onAdd) && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  if (onAddRecipe) {
+                    onAddRecipe();
+                  } else if (onAdd) {
+                    onAdd('recipe');
+                  }
+                }}
+                className="ml-auto inline-flex items-center gap-1 py-1 px-2.5 rounded-full text-xs font-mono border border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground hover:border-border transition-all cursor-pointer shrink-0 active:scale-95"
+                title={t('common.add', '新增')}
+                aria-label={t('common.add', '新增')}
+              >
+                <Plus className="size-3" />
+                <span>{t('common.add', '新增')}</span>
+              </button>
+            )}
           </div>
 
           {/* 食譜清單容器 */}
