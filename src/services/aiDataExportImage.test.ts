@@ -142,6 +142,7 @@ describe('aiDataExportImage', () => {
       save: vi.fn(),
       restore: vi.fn(),
       scale: vi.fn(),
+      translate: vi.fn(),
       clip: vi.fn(),
       fillStyle: '',
       strokeStyle: '',
@@ -184,7 +185,7 @@ describe('aiDataExportImage', () => {
 
   describe('Design Token Palettes', () => {
     it('defines accurate macro colors for dark mode', () => {
-      expect(DARK_PALETTE.canvasBg).toBe('#09090b');
+      expect(DARK_PALETTE.canvasBg).toBe('#000000');
       expect(DARK_PALETTE.calories).toBe('#f43f5e');
       expect(DARK_PALETTE.carbs).toBe('#f59e0b');
       expect(DARK_PALETTE.protein).toBe('#38bdf8');
@@ -192,7 +193,7 @@ describe('aiDataExportImage', () => {
     });
 
     it('defines accurate macro colors for light mode', () => {
-      expect(LIGHT_PALETTE.canvasBg).toBe('#f4f4f5');
+      expect(LIGHT_PALETTE.canvasBg).toBe('#ffffff');
       expect(LIGHT_PALETTE.calories).toBe('#e11d48');
       expect(LIGHT_PALETTE.carbs).toBe('#d97706');
       expect(LIGHT_PALETTE.protein).toBe('#0284c7');
@@ -260,6 +261,149 @@ describe('aiDataExportImage', () => {
       };
 
       const canvas = renderDailyExportToCanvas(surplusPayload);
+      expect(canvas.width).toBeGreaterThan(0);
+      expect(canvas.height).toBeGreaterThan(0);
+    });
+
+    it('renders realistic diet snapshot matching real App UI fidelity with highlights', () => {
+      const realisticPayload: DailyExportPayload = {
+        date: '2026-11-12',
+        scope: 'diet',
+        diet: {
+          activityLevel: 1.2,
+          activityLabel: '久坐辦公',
+          macroSplit: { carbs: 40, protein: 30, fat: 30 },
+          target: {
+            calories: 2003,
+            energyUnit: 'kcal',
+            carbs: 200,
+            protein: 150,
+            fat: 67,
+          },
+          actual: {
+            calories: 1265,
+            energyUnit: 'kcal',
+            carbs: 107,
+            protein: 70,
+            fat: 60,
+          },
+          calorieDiff: 738,
+          meals: [
+            {
+              mealType: 'breakfast',
+              mealLabel: '早餐',
+              calories: 397,
+              carbs: 36.2,
+              protein: 20.4,
+              fat: 16.5,
+              items: [
+                {
+                  type: 'food',
+                  name: '北大荒 · 純豆漿粉',
+                  amount: '20g',
+                  calories: 88,
+                  carbs: 2.1,
+                  protein: 8,
+                  fat: 4.6,
+                },
+                {
+                  type: 'food',
+                  name: '穗格氏 · 鋼切燕麥',
+                  amount: '60g',
+                  calories: 237,
+                  carbs: 33.7,
+                  protein: 6.1,
+                  fat: 7.1,
+                },
+                {
+                  type: 'food',
+                  name: '雞蛋',
+                  amount: '50g',
+                  calories: 72,
+                  carbs: 0.4,
+                  protein: 6.3,
+                  fat: 4.8,
+                },
+              ],
+            },
+            {
+              mealType: 'lunch',
+              mealLabel: '午餐',
+              calories: 693,
+              carbs: 65.4,
+              protein: 38.8,
+              fat: 30.5,
+              items: [
+                {
+                  type: 'food',
+                  name: '義大利麵',
+                  amount: '80g',
+                  calories: 286,
+                  carbs: 58.4,
+                  protein: 10,
+                  fat: 1.2,
+                },
+                {
+                  type: 'food',
+                  name: '食用植物油',
+                  amount: '20g',
+                  calories: 180,
+                  carbs: 0,
+                  protein: 0,
+                  fat: 20,
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const canvas = renderDailyExportToCanvas(realisticPayload);
+      expect(canvas.width).toBeGreaterThan(0);
+      expect(canvas.height).toBeGreaterThan(0);
+    });
+
+    it('renders workout hero card with body recovery heat map and 3-column stats', () => {
+      const workoutPayload: DailyExportPayload = {
+        date: '2026-04-17',
+        scope: 'workout',
+        workout: {
+          summary: {
+            totalExercises: 3,
+            totalSets: 9,
+            totalVolume: 5200,
+            weightUnit: 'kg',
+          },
+          recovery: {
+            recoveringCount: 4,
+            intensityMap: {
+              upper_chest: 85,
+              front_delts: 80,
+              triceps: 60,
+              biceps: 45,
+            },
+          },
+          sessions: [
+            {
+              routineTitle: '上肢胸肩推日',
+              exercises: [
+                {
+                  name: '上斜啞鈴臥推',
+                  equipment: '啞鈴',
+                  primaryMuscles: ['上胸'],
+                  secondaryMuscles: ['三角肌前束', '三頭肌'],
+                  sets: [
+                    { setNumber: 1, weight: 32, reps: 10, unit: 'kg' },
+                    { setNumber: 2, weight: 34, reps: 8, unit: 'kg', rpe: 8.5 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const canvas = renderDailyExportToCanvas(workoutPayload);
       expect(canvas.width).toBeGreaterThan(0);
       expect(canvas.height).toBeGreaterThan(0);
     });

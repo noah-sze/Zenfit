@@ -36,6 +36,7 @@ import {
 } from '@/utils/weightMath';
 import { normalizeMuscleRole, sortMuscleEntries } from '@/utils/muscleIntensity';
 import { PREDEFINED_EQUIPMENT_DEFINITIONS } from '@/constants/muscles';
+import type { BodyRecoverySummary } from '@/utils/recoveryMath';
 
 export type AiExportScope = 'diet' | 'workout' | 'body' | 'all';
 export type AiExportFormat = 'text' | 'json' | 'image';
@@ -143,6 +144,10 @@ export interface ExportWorkoutSection {
     weightUnit: BodyWeightUnit;
   };
   sessions: ExportWorkoutSession[];
+  recovery?: {
+    recoveringCount: number;
+    intensityMap: Partial<Record<DetailedMuscle, number>>;
+  };
 }
 
 export interface ExportBodyCircumference {
@@ -196,6 +201,7 @@ export interface BuildDailyExportInput {
   exercises?: Exercise[];
   routines?: Array<WorkoutRoutine & { title?: string }>;
   equipments?: Equipment[];
+  recoverySummary?: BodyRecoverySummary | null;
   // Body inputs
   bodyMetric?: Partial<BodyMetric> | null;
   allBodyMetrics?: BodyMetric[];
@@ -566,6 +572,40 @@ function buildWorkoutSection(
   const displayTotalVolume =
     weightUnit === 'lbs' ? kgToLbs(totalVolumeKg, 0) : roundTo(totalVolumeKg, 1);
 
+  // 肌肉恢復/熱力統計 (優先使用全域恢復模型，若無則由當日動作即時推算)
+  let recovery: ExportWorkoutSection['recovery'] = undefined;
+  if (input.recoverySummary) {
+    recovery = {
+      recoveringCount: input.recoverySummary.recoveringCount,
+      intensityMap: input.recoverySummary.intensityMap,
+    };
+  } else {
+    const intensityMap: Partial<Record<DetailedMuscle, number>> = {};
+    let recoveringCount = 0;
+    for (const w of input.workoutLogs || []) {
+      for (const group of w.exercises || []) {
+        const ex = exerciseMap.get(group.exerciseId);
+        if (ex?.targetMuscles) {
+          for (const [m, role] of Object.entries(ex.targetMuscles) as [
+            DetailedMuscle,
+            MuscleRole | number,
+          ][]) {
+            const normalized = normalizeMuscleRole(role);
+            const val = normalized === 'primary' ? 85 : 45;
+            if (!intensityMap[m] || (intensityMap[m] as number) < val) {
+              if (!intensityMap[m]) recoveringCount += 1;
+              intensityMap[m] = val;
+            }
+          }
+        }
+      }
+    }
+    recovery = {
+      recoveringCount,
+      intensityMap,
+    };
+  }
+
   return {
     summary: {
       totalExercises,
@@ -574,6 +614,7 @@ function buildWorkoutSection(
       weightUnit,
     },
     sessions,
+    recovery,
   };
 }
 

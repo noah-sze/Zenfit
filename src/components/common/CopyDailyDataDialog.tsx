@@ -15,6 +15,7 @@ import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
+import { useBodyRecovery } from '@/hooks/useBodyRecovery';
 import { useBodyMetrics } from '@/hooks/useBodyMetrics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import {
@@ -53,7 +54,7 @@ export function CopyDailyDataDialog({
   scope,
 }: CopyDailyDataDialogProps) {
   const { t } = useTranslation();
-  const [format, setFormat] = useState<AiExportFormat>('text');
+  const [format, setFormat] = useState<AiExportFormat>('image');
   const [copied, setCopied] = useState(false);
   const [imageCopied, setImageCopied] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -74,6 +75,7 @@ export function CopyDailyDataDialog({
   const { allExercises } = useExercises();
   const { allRoutines } = useRoutines();
   const { equipments } = useEquipments();
+  const { recoverySummary } = useBodyRecovery(date);
   const { metricToday, currentTrendWeight } = useBodyMetrics(date);
 
   const exportInput = useMemo(
@@ -90,6 +92,7 @@ export function CopyDailyDataDialog({
       exercises: allExercises,
       routines: allRoutines,
       equipments,
+      recoverySummary,
       bodyMetric: metricToday,
       trendWeightKg: currentTrendWeight,
     }),
@@ -106,6 +109,7 @@ export function CopyDailyDataDialog({
       allExercises,
       allRoutines,
       equipments,
+      recoverySummary,
       metricToday,
       currentTrendWeight,
     ]
@@ -200,11 +204,34 @@ export function CopyDailyDataDialog({
     }
   };
 
-  // 系統原生分享 (支援時喚起原生分享選單，否則下載 PNG)
+  // 保存圖片至本地 (下載 PNG 檔案)
+  const handleSaveImage = async () => {
+    if (isCapturing) return;
+    setIsCapturing(true);
+    const filename = `zenfit-${date}-${scope}.png`;
+
+    try {
+      const blob = await generateDailyExportImageBlob(payload, {
+        theme: isDark ? 'dark' : 'light',
+        dpr: 2,
+      });
+
+      downloadBlob(blob, filename);
+      triggerHaptic('success');
+      toast.show(t('aiExport.imageSaved', '已保存'));
+    } catch (err) {
+      console.error('Failed to save image:', err);
+      toast.show(t('aiExport.imageGenerateError'));
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  // 系統原生分享 (支援時喚起原生分享選單，否則下載保存 PNG)
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  const handleShareOrDownloadImage = async () => {
+  const handleShareImage = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
     const filename = `zenfit-${date}-${scope}.png`;
@@ -223,6 +250,7 @@ export function CopyDailyDataDialog({
               title: `Zenfit ${date}`,
               files: [file],
             });
+            triggerHaptic('success');
             return;
           }
         } catch (err) {
@@ -231,9 +259,10 @@ export function CopyDailyDataDialog({
       }
 
       downloadBlob(blob, filename);
-      toast.show(t('aiExport.imageDownloaded'));
+      triggerHaptic('success');
+      toast.show(t('aiExport.imageSaved', '已保存'));
     } catch (err) {
-      console.error('Failed to share/download image:', err);
+      console.error('Failed to share image:', err);
       toast.show(t('aiExport.imageGenerateError'));
     } finally {
       setIsCapturing(false);
@@ -247,12 +276,7 @@ export function CopyDailyDataDialog({
         onClose={() => onOpenChange(false)}
         cancelAriaLabel={t('common.close')}
         overlayClassName="z-[70]"
-        className={cn(
-          'z-[70] transition-all duration-150',
-          format === 'image'
-            ? 'w-[360px] sm:w-[460px] sm:max-w-[460px]'
-            : 'w-[320px] sm:w-[320px] sm:max-w-[320px]'
-        )}
+        className="z-[70] w-[320px] max-w-[calc(100vw-24px)] sm:w-[320px] sm:max-w-[320px]"
       >
         <div className="pt-3 space-y-3 font-mono text-xs select-none">
           {/* 說明文字 */}
@@ -268,8 +292,23 @@ export function CopyDailyDataDialog({
             </span>
           </div>
 
-          {/* 格式切換器 (3 頁籤: 純文本 | JSON | 圖片) */}
+          {/* 格式切換器 (3 頁籤: 圖片 | 純文本 | JSON) */}
           <div className="grid grid-cols-3 p-0.5 rounded-lg bg-muted border border-border">
+            <button
+              type="button"
+              onClick={() => {
+                setFormat('image');
+                triggerHaptic('selection');
+              }}
+              className={cn(
+                'h-7 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer',
+                format === 'image'
+                  ? 'bg-card text-foreground border border-border/80'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t('aiExport.formatImage')}
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -300,53 +339,39 @@ export function CopyDailyDataDialog({
             >
               {t('aiExport.formatJson')}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setFormat('image');
-                triggerHaptic('selection');
-              }}
-              className={cn(
-                'h-7 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer',
-                format === 'image'
-                  ? 'bg-card text-foreground border border-border/80'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {t('aiExport.formatImage')}
-            </button>
           </div>
 
-          {/* 預覽區域 */}
+          {/* 預覽區域 (高度鎖死 240px，上下滾動，圖片嚴格保持原始比例不變形，永不撐大 Dialog) */}
           {format === 'image' ? (
-            <div className="max-h-[360px] overflow-y-auto rounded-lg border border-border bg-muted/20 p-2 flex justify-center">
+            <div className="h-[240px] overflow-y-auto overflow-x-hidden rounded-lg border border-border bg-muted/20 p-2 overscroll-contain">
               {previewImageDataUrl ? (
                 <img
                   src={previewImageDataUrl}
                   alt={`Zenfit ${date} Share`}
-                  className="w-full h-auto rounded shadow-none select-none pointer-events-none"
+                  className="block w-full h-auto rounded shadow-none select-none pointer-events-none"
                 />
               ) : (
-                <div className="py-12 flex items-center justify-center text-muted-foreground text-xs font-mono">
+                <div className="h-full flex items-center justify-center text-muted-foreground text-xs font-mono">
                   <Loader2 className="size-4 animate-spin mr-2" />
                   <span>{t('aiExport.imageGenerating')}</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-foreground">
+            <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-foreground overscroll-contain">
               {previewContent}
             </div>
           )}
 
-          {/* 底部操作按鈕 */}
+          {/* 底部操作按鈕：複製 | 保存 | 分享 */}
           {format === 'image' ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-1.5">
+              {/* 複製 */}
               <Button
                 type="button"
                 disabled={isCapturing}
                 onClick={handleCopyImage}
-                className="h-9 rounded-lg bg-foreground text-background font-mono text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer gap-1.5"
+                className="h-9 px-2 rounded-lg bg-foreground text-background font-mono text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer gap-1"
               >
                 {isCapturing ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -355,26 +380,39 @@ export function CopyDailyDataDialog({
                 ) : (
                   <Copy className="size-3.5 stroke-[2]" />
                 )}
-                <span>{isCapturing ? t('aiExport.imageGenerating') : t('aiExport.copyImage')}</span>
+                <span>{t('aiExport.copyImage')}</span>
               </Button>
 
+              {/* 保存 */}
               <Button
                 type="button"
                 disabled={isCapturing}
-                onClick={handleShareOrDownloadImage}
+                onClick={handleSaveImage}
                 variant="outline"
-                className="h-9 rounded-lg border-border bg-card text-foreground font-mono text-xs font-medium hover:bg-muted active:scale-[0.98] transition-all cursor-pointer gap-1.5"
+                className="h-9 px-2 rounded-lg border-border bg-card text-foreground font-mono text-xs font-medium hover:bg-muted active:scale-[0.98] transition-all cursor-pointer gap-1"
               >
                 {isCapturing ? (
                   <Loader2 className="size-3.5 animate-spin" />
-                ) : canNativeShare ? (
-                  <Share2 className="size-3.5 stroke-[2]" />
                 ) : (
                   <Download className="size-3.5 stroke-[2]" />
                 )}
-                <span>
-                  {canNativeShare ? t('aiExport.shareImage') : t('aiExport.downloadImage')}
-                </span>
+                <span>{t('aiExport.saveImage')}</span>
+              </Button>
+
+              {/* 分享 */}
+              <Button
+                type="button"
+                disabled={isCapturing}
+                onClick={handleShareImage}
+                variant="outline"
+                className="h-9 px-2 rounded-lg border-border bg-card text-foreground font-mono text-xs font-medium hover:bg-muted active:scale-[0.98] transition-all cursor-pointer gap-1"
+              >
+                {isCapturing ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Share2 className="size-3.5 stroke-[2]" />
+                )}
+                <span>{t('aiExport.shareImage')}</span>
               </Button>
             </div>
           ) : (
