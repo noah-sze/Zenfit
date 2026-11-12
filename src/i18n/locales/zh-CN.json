@@ -156,7 +156,7 @@
         "confirm": "确认复制",
         "copyAll": "一键复制全餐 ({{count}} 项 · {{calories}})",
         "copySelected": "复制选取 ({{count}} 项 · {{calories}})",
-        "successToast": "已复制 {{count}} 项餐点至 {{meal}}"
+        "successToast": "已复制 {{count}} 项餐点至{{meal}}"
       },
       "ingredientsTab": "食材",
       "recipesTab": "食谱",
