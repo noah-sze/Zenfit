@@ -154,6 +154,7 @@ function DialogContent({
 
 export interface DialogPrecisionHeaderProps {
   title: React.ReactNode
+  onTitleClick?: () => void
   onClose?: () => void
   onSubmit?: () => void
   submitDisabled?: boolean
@@ -167,11 +168,12 @@ export interface DialogPrecisionHeaderProps {
 /**
  * Zenfit 標準精密彈窗標頭 (Precision Header Variant D)
  * - 左側：純圖標取消圓鈕 (✕)
- * - 中間：客觀純品名/標題 (截斷保護)
+ * - 中間：客觀純品名/標題 (截斷保護，支援可選膠囊點擊導航)
  * - 右側：純圖標提交圓鈕 (✓) 或自訂按鈕（支援 onClick 或 form submit）
  */
 function DialogPrecisionHeader({
   title,
+  onTitleClick,
   onClose,
   onSubmit,
   submitDisabled = false,
@@ -212,7 +214,17 @@ function DialogPrecisionHeader({
 
         {/* 中間純標題 */}
         <DialogTitle className="text-foreground text-sm font-semibold tracking-tight font-sans flex items-center justify-center flex-1 truncate px-2">
-          <span className="truncate">{title}</span>
+          {onTitleClick ? (
+            <button
+              type="button"
+              onClick={onTitleClick}
+              className="max-w-full truncate px-2 py-0.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none active:scale-95"
+            >
+              {title}
+            </button>
+          ) : (
+            <span className="truncate">{title}</span>
+          )}
         </DialogTitle>
 
         {/* 右側純圖標：提交 (✓) 或自訂插槽 */}
@@ -240,6 +252,7 @@ function DialogPrecisionHeader({
 
 export interface PrecisionDialogContentProps extends Omit<DialogContentProps, 'size' | 'title'> {
   title?: React.ReactNode
+  onTitleClick?: () => void
   onClose?: () => void
   onSubmit?: () => void
   submitDisabled?: boolean
@@ -256,6 +269,7 @@ export interface PrecisionDialogContentProps extends Omit<DialogContentProps, 's
  */
 function PrecisionDialogContent({
   title,
+  onTitleClick,
   onClose,
   onSubmit,
   submitDisabled,
@@ -276,6 +290,7 @@ function PrecisionDialogContent({
       {title !== undefined && (
         <DialogPrecisionHeader
           title={title}
+          onTitleClick={onTitleClick}
           onClose={onClose}
           onSubmit={onSubmit}
           submitDisabled={submitDisabled}

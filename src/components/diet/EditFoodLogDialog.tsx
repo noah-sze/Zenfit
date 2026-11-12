@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import {
   Dialog,
@@ -44,6 +45,7 @@ export function EditFoodLogDialog({
   onDelete,
 }: EditFoodLogDialogProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { energyUnit } = useUnitPreferences();
 
   // 本地狀態：用量與基準食材資訊
@@ -195,12 +197,21 @@ export function EditFoodLogDialog({
   if (!log) return null;
 
   const dialogTitle = log ? resolveFoodLogTitle(log, t, baseFood) : '';
+  const canNavigateToFood = !isSystemEntry && Boolean(log.foodId && baseFood);
+
+  const handleTitleClick = () => {
+    if (!canNavigateToFood || !log.foodId) return;
+    triggerHaptic('selection');
+    onOpenChange(false);
+    navigate(`/settings/foods/${log.foodId}`);
+  };
 
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <PrecisionDialogContent
           title={dialogTitle}
+          onTitleClick={canNavigateToFood ? handleTitleClick : undefined}
           onSubmit={handleSubmit}
           submitDisabled={isSubmitting || (!isSystemEntry && quantity <= 0)}
           submitAriaLabel={t('common.save')}

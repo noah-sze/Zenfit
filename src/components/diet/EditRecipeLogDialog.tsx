@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronRight } from 'lucide-react';
 import {
   Dialog,
@@ -56,9 +57,11 @@ export function EditRecipeLogDialog({
   onDeleteBundle,
 }: EditRecipeLogDialogProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
 
   const [ingredients, setIngredients] = useState<EditableRecipeIngredient[]>([]);
+  const [hasRecipeInDb, setHasRecipeInDb] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 次級鍵盤與食物選擇器狀態
@@ -74,6 +77,17 @@ export function EditRecipeLogDialog({
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
+
+  // 檢查 bundleId 是否存在對應的食譜於資料庫中
+  useEffect(() => {
+    if (open && bundleId) {
+      db.recipes.get(bundleId).then((recipe) => {
+        setHasRecipeInDb(Boolean(recipe));
+      });
+    } else {
+      setHasRecipeInDb(false);
+    }
+  }, [open, bundleId]);
 
   // 初始化食材清單與拉取關聯 FoodItem 基準資料
   useEffect(() => {
@@ -323,11 +337,19 @@ export function EditRecipeLogDialog({
 
   if (!bundleId) return null;
 
+  const handleTitleClick = () => {
+    if (!hasRecipeInDb || !bundleId) return;
+    triggerHaptic('selection');
+    onOpenChange(false);
+    navigate(`/settings/recipes/${bundleId}`);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <PrecisionDialogContent
           title={bundleTitle}
+          onTitleClick={hasRecipeInDb ? handleTitleClick : undefined}
           onSubmit={handleSubmit}
           submitDisabled={isSubmitting || ingredients.length === 0}
           submitAriaLabel={t('common.save')}
