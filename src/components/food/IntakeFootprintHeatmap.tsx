@@ -130,7 +130,7 @@ export function IntakeFootprintHeatmap({
     if (node) {
       const rect = node.getBoundingClientRect();
       if (rect.width > 0) {
-        onContainerWidthChange?.(rect.width);
+        onContainerWidthChange?.(Math.round(rect.width));
       }
       // 確保瀏覽器完成排版後滾動至最右端（今天）
       requestAnimationFrame(() => {
@@ -141,7 +141,7 @@ export function IntakeFootprintHeatmap({
 
       const ro = new ResizeObserver((entries) => {
         for (const entry of entries) {
-          const width = entry.contentRect.width;
+          const width = Math.round(entry.contentRect.width);
           if (width > 0) {
             onContainerWidthChange?.(width);
             requestAnimationFrame(() => {

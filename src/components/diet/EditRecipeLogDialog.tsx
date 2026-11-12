@@ -17,6 +17,9 @@ import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy } from '@/utils/unitMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { getInMemoryFoodsCache, prewarmFoodsCache } from '@/hooks/useFoods';
+import { getInMemoryRecipesCache, prewarmRecipesCache } from '@/hooks/useRecipes';
+import { prewarmDailyDietLogsCache } from '@/hooks/useFoodLogs';
 
 export interface EditableRecipeIngredient {
   id: string; // 唯一列識別碼
@@ -61,7 +64,10 @@ export function EditRecipeLogDialog({
   const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
 
   const [ingredients, setIngredients] = useState<EditableRecipeIngredient[]>([]);
-  const [hasRecipeInDb, setHasRecipeInDb] = useState(false);
+  const [hasRecipeInDb, setHasRecipeInDb] = useState(() => {
+    if (!bundleId) return false;
+    return Boolean(getInMemoryRecipesCache()?.some((r) => r.id === bundleId));
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 次級鍵盤與食物選擇器狀態
@@ -78,11 +84,19 @@ export function EditRecipeLogDialog({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
 
-  // 檢查 bundleId 是否存在對應的食譜於資料庫中
+  // 檢查 bundleId 是否存在對應的食譜於資料庫中，並預熱詳情頁所需快取
   useEffect(() => {
     if (open && bundleId) {
+      void prewarmRecipesCache();
+      void prewarmFoodsCache();
+      void prewarmDailyDietLogsCache();
+
+      const cachedHas = getInMemoryRecipesCache()?.some((r) => r.id === bundleId);
+      if (cachedHas) {
+        setHasRecipeInDb(true);
+      }
       db.recipes.get(bundleId).then((recipe) => {
-        setHasRecipeInDb(Boolean(recipe));
+        setHasRecipeInDb(Boolean(recipe || cachedHas));
       });
     } else {
       setHasRecipeInDb(false);
@@ -92,6 +106,8 @@ export function EditRecipeLogDialog({
   // 初始化食材清單與拉取關聯 FoodItem 基準資料
   useEffect(() => {
     if (open && logs.length > 0) {
+      const cachedFoods = getInMemoryFoodsCache();
+      const cachedFoodMap = cachedFoods ? new Map(cachedFoods.map((f) => [f.id, f])) : null;
       const initRows: EditableRecipeIngredient[] = logs.map((log) => {
         const qty = log.quantity ?? 100;
         return {
@@ -101,6 +117,7 @@ export function EditRecipeLogDialog({
           foodName: log.foodName || '未知食材',
           quantity: qty,
           unit: log.unit || 'g',
+          baseFood: log.foodId && cachedFoodMap ? cachedFoodMap.get(log.foodId) || null : null,
           baseRatio: qty > 0 ? {
             calories: (log.calories || 0) / qty,
             carbs: (log.carbs || 0) / qty,

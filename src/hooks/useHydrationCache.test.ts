@@ -17,13 +17,31 @@ import {
   clearExercisesCache,
   prewarmExercisesCache,
 } from './useExercises';
-import type { FoodItem, FoodRecipe, Exercise } from '@/types';
+import {
+  getInMemoryDailyDietLogsCache,
+  setInMemoryDailyDietLogsCache,
+  clearDailyDietLogsCache,
+} from './useFoodLogs';
+import {
+  getInMemoryRoutinesCache,
+  setInMemoryRoutinesCache,
+  clearRoutinesCache,
+} from './useRoutines';
+import {
+  getInMemoryWorkoutLogsCache,
+  setInMemoryWorkoutLogsCache,
+  clearWorkoutLogsCache,
+} from './useWorkoutLogs';
+import type { FoodItem, FoodRecipe, Exercise, DailyDietLog, WorkoutRoutine, WorkoutLog } from '@/types';
 
 describe('In-Memory Hydration Cache (即時記憶體注水架構)', () => {
   beforeEach(() => {
     clearFoodsCache();
     clearRecipesCache();
     clearExercisesCache();
+    clearDailyDietLogsCache();
+    clearRoutinesCache();
+    clearWorkoutLogsCache();
   });
 
   describe('useFoods 食材快取', () => {
@@ -200,6 +218,59 @@ describe('In-Memory Hydration Cache (即時記憶體注水架構)', () => {
 
       const result = await prewarmExercisesCache();
       expect(result).toBe(mockExercises);
+    });
+  });
+
+  describe('useFoodLogs / useRoutines / useWorkoutLogs 擴充快取', () => {
+    it('setInMemoryDailyDietLogsCache 應能即時寫入與清空', () => {
+      expect(getInMemoryDailyDietLogsCache()).toBeNull();
+      const mockLogs: DailyDietLog[] = [
+        {
+          id: 'd-1',
+          date: '2026-11-12',
+          meta: { activityLevel: 1.55, macroSplit: { carbs: 40, protein: 30, fat: 30 } },
+          entries: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ];
+      setInMemoryDailyDietLogsCache(mockLogs);
+      expect(getInMemoryDailyDietLogsCache()).toEqual(mockLogs);
+      clearDailyDietLogsCache();
+      expect(getInMemoryDailyDietLogsCache()).toBeNull();
+    });
+
+    it('setInMemoryRoutinesCache 與 setInMemoryWorkoutLogsCache 應能即時寫入與清空', () => {
+      expect(getInMemoryRoutinesCache()).toBeNull();
+      expect(getInMemoryWorkoutLogsCache()).toBeNull();
+      const mockRoutines: WorkoutRoutine[] = [
+        {
+          id: 'r-1',
+          name: '推力日',
+          exercises: [],
+          isCustom: true,
+          isArchived: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ];
+      const mockWorkouts: WorkoutLog[] = [
+        {
+          id: 'w-1',
+          date: '2026-11-12',
+          exercises: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ];
+      setInMemoryRoutinesCache(mockRoutines);
+      setInMemoryWorkoutLogsCache(mockWorkouts);
+      expect(getInMemoryRoutinesCache()).toEqual(mockRoutines);
+      expect(getInMemoryWorkoutLogsCache()).toEqual(mockWorkouts);
+      clearRoutinesCache();
+      clearWorkoutLogsCache();
+      expect(getInMemoryRoutinesCache()).toBeNull();
+      expect(getInMemoryWorkoutLogsCache()).toBeNull();
     });
   });
 });

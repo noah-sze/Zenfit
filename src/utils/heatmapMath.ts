@@ -1,4 +1,4 @@
-import { subDays, format } from 'date-fns';
+import { subDays } from 'date-fns';
 import { calculateE1RM } from './workoutMath';
 
 export type OverviewPeriod = '1w' | '30d' | '3m' | '6m' | '1y' | 'all';
@@ -22,6 +22,21 @@ export interface MinimalLog {
 
 export const TARGET_CELL_SIZE = 14;
 export const MATRIX_GAP = 2.5;
+
+/**
+ * 預估熱點圖容器初始寬度，消除首次掛載時 0 -> 實際寬度造成的 ResizeObserver 二次重繪抖動
+ */
+export function getInitialMatrixContainerWidth(): number {
+  if (typeof window === 'undefined' || !window.innerWidth) return 0;
+  return Math.max(0, Math.min(window.innerWidth - 64, 510));
+}
+
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 /**
  * 依據概覽週期取得對應天數
@@ -99,7 +114,7 @@ export function calculateFootprintData(params: {
   periodMaxGrams: number;
 } {
   const { logs, overviewPeriod, totalWeeks, now = new Date() } = params;
-  const todayStr = format(now, 'yyyy-MM-dd');
+  const todayStr = formatLocalDate(now);
   const totalDays = Math.max(1, totalWeeks * 7);
 
   const logMap = new Map<string, { count: number; grams: number; calories: number }>();
@@ -114,54 +129,50 @@ export function calculateFootprintData(params: {
   }
 
   let maxDailyGramsInPeriod = 0;
+  const days: HeatmapDay[] = new Array(totalDays);
+  const rawGramsList: number[] = new Array(totalDays);
+
   for (let i = totalDays - 1; i >= 0; i--) {
+    const idx = totalDays - 1 - i;
     const d = subDays(now, i);
-    const dateStr = format(d, 'yyyy-MM-dd');
+    const dateStr = formatLocalDate(d);
     const dayData = logMap.get(dateStr);
-    if (dayData && dayData.grams > maxDailyGramsInPeriod) {
-      maxDailyGramsInPeriod = dayData.grams;
+    const rawGrams = dayData ? dayData.grams : 0;
+    if (rawGrams > maxDailyGramsInPeriod) {
+      maxDailyGramsInPeriod = rawGrams;
     }
+    rawGramsList[idx] = rawGrams;
+
+    days[idx] = {
+      date: dateStr,
+      count: dayData ? dayData.count : 0,
+      grams: dayData ? Math.round(dayData.grams) : 0,
+      calories: dayData ? Math.round(dayData.calories) : 0,
+      level: 0,
+      isWithinPast30Days: false,
+      isMonthMarker: d.getDate() === 1,
+      month: d.getMonth() + 1,
+    };
   }
 
-  const days: HeatmapDay[] = [];
-
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const d = subDays(now, i);
-    const dateStr = format(d, 'yyyy-MM-dd');
-    const dayData = logMap.get(dateStr) || { count: 0, grams: 0, calories: 0 };
-    const isMonthMarker = d.getDate() === 1;
-    const month = d.getMonth() + 1;
-
-    let level = 0;
-    if (dayData.grams > 0) {
-      if (maxDailyGramsInPeriod > 0) {
-        const ratio = dayData.grams / maxDailyGramsInPeriod;
-        if (ratio <= 0.25) level = 1;
-        else if (ratio <= 0.5) level = 2;
-        else if (ratio <= 0.75) level = 3;
-        else level = 4;
-      } else {
-        level = 1;
+  if (maxDailyGramsInPeriod > 0) {
+    for (let idx = 0; idx < totalDays; idx++) {
+      const rawGrams = rawGramsList[idx];
+      if (rawGrams > 0) {
+        const ratio = rawGrams / maxDailyGramsInPeriod;
+        if (ratio <= 0.25) days[idx].level = 1;
+        else if (ratio <= 0.5) days[idx].level = 2;
+        else if (ratio <= 0.75) days[idx].level = 3;
+        else days[idx].level = 4;
       }
     }
-
-    days.push({
-      date: dateStr,
-      count: dayData.count,
-      grams: Math.round(dayData.grams),
-      calories: Math.round(dayData.calories),
-      level,
-      isWithinPast30Days: false,
-      isMonthMarker,
-      month,
-    });
   }
 
   const periodDaysCount = getPeriodDaysCount(overviewPeriod);
   const startDateStr =
     periodDaysCount === Infinity
       ? ''
-      : format(subDays(now, periodDaysCount - 1), 'yyyy-MM-dd');
+      : formatLocalDate(subDays(now, periodDaysCount - 1));
 
   let pCal = 0;
   let pCount = 0;
@@ -208,7 +219,7 @@ export function calculateExerciseFootprintData(params: {
   lifetimeVolume: number;
 } {
   const { logs, overviewPeriod, totalWeeks, now = new Date() } = params;
-  const todayStr = format(now, 'yyyy-MM-dd');
+  const todayStr = formatLocalDate(now);
   const totalDays = Math.max(1, totalWeeks * 7);
 
   // 匯總每天的組數、容量與單日最佳 e1RM
@@ -246,62 +257,60 @@ export function calculateExerciseFootprintData(params: {
     });
   }
 
-  // 找出近 totalDays 內最大單日容量與組數，用於微型熱點圖等級分階
+  // 單次遍歷建立天數清單並找出近 totalDays 內最大單日容量與組數
   let maxDailyVol = 0;
   let maxDailySets = 0;
+  const days: HeatmapDay[] = new Array(totalDays);
+  const rawVolList: number[] = new Array(totalDays);
+
   for (let i = totalDays - 1; i >= 0; i--) {
+    const idx = totalDays - 1 - i;
     const d = subDays(now, i);
-    const dateStr = format(d, 'yyyy-MM-dd');
+    const dateStr = formatLocalDate(d);
     const dayData = dayStatsMap.get(dateStr);
-    if (dayData) {
-      if (dayData.volume > maxDailyVol) {
-        maxDailyVol = dayData.volume;
-      }
-      if (dayData.count > maxDailySets) {
-        maxDailySets = dayData.count;
-      }
+    const rawVol = dayData ? dayData.volume : 0;
+    const count = dayData ? dayData.count : 0;
+
+    if (rawVol > maxDailyVol) {
+      maxDailyVol = rawVol;
     }
+    if (count > maxDailySets) {
+      maxDailySets = count;
+    }
+    rawVolList[idx] = rawVol;
+
+    days[idx] = {
+      date: dateStr,
+      count,
+      grams: dayData ? Math.round(dayData.volume * 10) / 10 : 0,
+      calories: dayData ? Math.round(dayData.bestE1RM * 10) / 10 : 0,
+      level: 0,
+      isWithinPast30Days: false,
+      isMonthMarker: d.getDate() === 1,
+      month: d.getMonth() + 1,
+    };
   }
 
-  const days: HeatmapDay[] = [];
-
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const d = subDays(now, i);
-    const dateStr = format(d, 'yyyy-MM-dd');
-    const dayData = dayStatsMap.get(dateStr) || { count: 0, volume: 0, bestE1RM: 0 };
-    const isMonthMarker = d.getDate() === 1;
-    const month = d.getMonth() + 1;
-
-    let level = 0;
-    if (dayData.count > 0) {
-      if (maxDailyVol > 0 && dayData.volume > 0) {
-        const ratio = dayData.volume / maxDailyVol;
+  for (let idx = 0; idx < totalDays; idx++) {
+    const count = days[idx].count;
+    if (count > 0) {
+      const rawVol = rawVolList[idx];
+      let level = 1;
+      if (maxDailyVol > 0 && rawVol > 0) {
+        const ratio = rawVol / maxDailyVol;
         if (ratio <= 0.25) level = 1;
         else if (ratio <= 0.5) level = 2;
         else if (ratio <= 0.75) level = 3;
         else level = 4;
       } else if (maxDailySets > 0) {
-        // 自重無負重訓練 (volume = 0)
-        const ratio = dayData.count / maxDailySets;
+        const ratio = count / maxDailySets;
         if (ratio <= 0.25) level = 1;
         else if (ratio <= 0.5) level = 2;
         else if (ratio <= 0.75) level = 3;
         else level = 4;
-      } else {
-        level = 1;
       }
+      days[idx].level = level;
     }
-
-    days.push({
-      date: dateStr,
-      count: dayData.count,
-      grams: Math.round(dayData.volume * 10) / 10,
-      calories: Math.round(dayData.bestE1RM * 10) / 10,
-      level,
-      isWithinPast30Days: false,
-      isMonthMarker,
-      month,
-    });
   }
 
   // 計算指定週期內的數據 (1w / 30d / 3m / 6m / 1y / all)
@@ -309,7 +318,7 @@ export function calculateExerciseFootprintData(params: {
   const startDateStr =
     periodDaysCount === Infinity
       ? ''
-      : format(subDays(now, periodDaysCount - 1), 'yyyy-MM-dd');
+      : formatLocalDate(subDays(now, periodDaysCount - 1));
 
   let periodBestE1RM = 0;
   let periodSets = 0;

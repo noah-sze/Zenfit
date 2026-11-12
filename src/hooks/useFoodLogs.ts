@@ -5,6 +5,49 @@ import { v4 as uuidv4 } from 'uuid';
 import { calculateFoodLogNutrients } from '@/utils/nutritionMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { ensureDailyDietMeta } from './useDietPlan';
+import { setInMemoryFoodsCache } from './useFoods';
+
+/**
+ * 模組級每日飲食日誌記憶體注水快取 (In-Memory Hydration Cache)
+ * 解決從 /diet 跳轉至食材/菜餚詳情頁時等待 db.daily_diet_logs.toArray() 異步查詢造成的熱點圖與統計數據二次跳動問題
+ */
+let inMemoryDailyDietLogsCache: DailyDietLog[] | null = null;
+
+export function getInMemoryDailyDietLogsCache(): DailyDietLog[] | null {
+  return inMemoryDailyDietLogsCache;
+}
+
+export function setInMemoryDailyDietLogsCache(logs: DailyDietLog[]): void {
+  inMemoryDailyDietLogsCache = logs;
+}
+
+export function clearDailyDietLogsCache(): void {
+  inMemoryDailyDietLogsCache = null;
+}
+
+function upsertInMemoryDailyDietLog(log: DailyDietLog): void {
+  if (!inMemoryDailyDietLogsCache) return;
+  const idx = inMemoryDailyDietLogsCache.findIndex((d) => d.id === log.id || d.date === log.date);
+  if (idx !== -1) {
+    const next = [...inMemoryDailyDietLogsCache];
+    next[idx] = log;
+    inMemoryDailyDietLogsCache = next;
+  } else {
+    inMemoryDailyDietLogsCache = [...inMemoryDailyDietLogsCache, log];
+  }
+}
+
+export async function prewarmDailyDietLogsCache(): Promise<DailyDietLog[]> {
+  if (inMemoryDailyDietLogsCache !== null) return inMemoryDailyDietLogsCache;
+  try {
+    if (typeof indexedDB === 'undefined') return [];
+    const logs = await db.daily_diet_logs.toArray();
+    inMemoryDailyDietLogsCache = logs;
+    return logs;
+  } catch {
+    return [];
+  }
+}
 
 export function useFoodLogs(date: string) {
   const queryResult = useLiveQuery(
@@ -12,6 +55,12 @@ export function useFoodLogs(date: string) {
       const dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
       const rawEntries = dailyLog?.entries || [];
       const allFoods = await db.foods.toArray();
+      setInMemoryFoodsCache(allFoods);
+      if (inMemoryDailyDietLogsCache === null) {
+        void prewarmDailyDietLogsCache();
+      } else if (dailyLog) {
+        upsertInMemoryDailyDietLog(dailyLog);
+      }
       const foodMap = new Map(allFoods.map((f) => [f.id, f]));
 
       const hydratedLogs: HydratedFoodLog[] = rawEntries.map((log) => {
@@ -140,6 +189,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries.push(newEntry);
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
     return newLogId;
   };
 
@@ -182,6 +232,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries.push(newEntry);
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
     return newLogId;
   };
 
@@ -228,6 +279,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries.push(newEntry);
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
     return newLogId;
   };
 
@@ -253,6 +305,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries.push(...newEntries);
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
     return newEntries;
   };
 
@@ -279,6 +332,7 @@ export function useFoodLogs(date: string) {
     };
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
   };
 
   const deleteFoodLog = async (id: string) => {
@@ -300,6 +354,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries = dailyLog.entries.filter((e) => e.id !== id);
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
   };
 
   const deleteFoodLogBundle = async (bundleId: string) => {
@@ -309,6 +364,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries = dailyLog.entries.filter((e) => e.bundleId !== bundleId);
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
   };
 
   const updateFoodLogBundle = async (
@@ -340,6 +396,7 @@ export function useFoodLogs(date: string) {
     dailyLog.entries = [...otherEntries, ...updatedEntries];
     dailyLog.updatedAt = now;
     await db.daily_diet_logs.put(dailyLog);
+    upsertInMemoryDailyDietLog(dailyLog);
   };
 
   return {

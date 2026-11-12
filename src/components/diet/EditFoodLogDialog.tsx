@@ -16,6 +16,9 @@ import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy } from '@/utils/unitMath';
 import { resolveFoodLogTitle } from '@/utils/foodNaming';
+import { getInMemoryFoodsCache, prewarmFoodsCache } from '@/hooks/useFoods';
+import { prewarmRecipesCache } from '@/hooks/useRecipes';
+import { prewarmDailyDietLogsCache } from '@/hooks/useFoodLogs';
 
 export interface EditFoodLogDialogProps {
   open: boolean;
@@ -50,7 +53,10 @@ export function EditFoodLogDialog({
 
   // 本地狀態：用量與基準食材資訊
   const [quantity, setQuantity] = useState<number>(log?.quantity || 100);
-  const [baseFood, setBaseFood] = useState<FoodItem | null>(null);
+  const [baseFood, setBaseFood] = useState<FoodItem | null>(() => {
+    if (!log?.foodId) return null;
+    return getInMemoryFoodsCache()?.find((f) => f.id === log.foodId) ?? null;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 數字鍵盤狀態
@@ -59,18 +65,26 @@ export function EditFoodLogDialog({
   const initialQuantityRef = useRef<number>(quantity);
   const isKeypadConfirmedRef = useRef(false);
 
-  // 當 log 變更時同步初始狀態與查詢原食物實體
+  // 當 log 變更時同步初始狀態與查詢原食物實體，並預熱詳情頁所需快取
   useEffect(() => {
     if (log && open) {
       const safeQty = log.quantity ?? 100;
       setQuantity(safeQty);
       initialQuantityRef.current = safeQty;
 
+      void prewarmFoodsCache();
+      void prewarmRecipesCache();
+      void prewarmDailyDietLogsCache();
+
       if (log.foodId) {
+        const cached = getInMemoryFoodsCache()?.find((f) => f.id === log.foodId);
+        if (cached) {
+          setBaseFood(cached);
+        }
         db.foods.get(log.foodId).then((food) => {
           if (food) {
             setBaseFood(food);
-          } else {
+          } else if (!cached) {
             setBaseFood(null);
           }
         });

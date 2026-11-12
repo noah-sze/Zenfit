@@ -14,6 +14,10 @@ import {
 import { db } from '@/services/db/db';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
+import {
+  getInMemoryWorkoutLogsCache,
+  setInMemoryWorkoutLogsCache,
+} from '@/hooks/useWorkoutLogs';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { convertBodyWeight } from '@/utils/unitMath';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
@@ -42,6 +46,7 @@ import {
   type OverviewPeriod,
   calculateTotalWeeks,
   calculateExerciseFootprintData,
+  getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import { IntakeFootprintHeatmap } from '@/components/food/IntakeFootprintHeatmap';
 
@@ -70,23 +75,32 @@ export default function RoutineDetails() {
     return getRoutineFactSummary(routine, exerciseMap);
   }, [routine, exerciseMap]);
 
-  // 取得匹配此組合的所有歷史日誌 (以名稱或筆記標籤關聯)
-  const workoutLogs = useLiveQuery(
+  // 取得所有訓練日誌（具備記憶體快取第 0 幀同步注水）
+  const liveWorkoutLogs = useLiveQuery(
     async () => {
-      if (!id || !routine) return [];
-      const logs = await db.workout_logs.toArray();
-      return logs.filter((log) => log.routineId === id);
+      const result = await db.workout_logs.toArray();
+      setInMemoryWorkoutLogsCache(result);
+      return result;
     },
-    [id]
+    []
   );
+  const allWorkoutLogs = liveWorkoutLogs ?? getInMemoryWorkoutLogsCache();
+
+  // 取得匹配此組合的所有歷史日誌
+  const workoutLogs = useMemo(() => {
+    if (!id || !routine || !allWorkoutLogs) return [];
+    return allWorkoutLogs.filter((log) => log.routineId === id);
+  }, [allWorkoutLogs, id, routine]);
 
   // 刪除防護契約：有歷史日誌時不可刪除
-  const hasWorkoutLogs = (workoutLogs?.length ?? 0) > 0;
+  const hasWorkoutLogs = workoutLogs.length > 0;
   const hasUsage = hasWorkoutLogs;
 
   // 概覽週期與矩陣容器寬度狀態
   const [overviewPeriod] = useState<OverviewPeriod>('30d');
-  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
+  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(
+    getInitialMatrixContainerWidth
+  );
 
   // 提取此組合在各日誌中的所有組數與數據
   const routineDayLogs = useMemo(() => {

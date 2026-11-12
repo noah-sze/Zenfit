@@ -2,24 +2,55 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import type { WorkoutRoutine, Exercise } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { getInMemoryExercisesCache, setInMemoryExercisesCache } from './useExercises';
+
+let inMemoryRoutinesCache: WorkoutRoutine[] | null = null;
+
+export function getInMemoryRoutinesCache(): WorkoutRoutine[] | null {
+  return inMemoryRoutinesCache;
+}
+
+export function setInMemoryRoutinesCache(routines: WorkoutRoutine[]): void {
+  inMemoryRoutinesCache = routines;
+}
+
+export function clearRoutinesCache(): void {
+  inMemoryRoutinesCache = null;
+}
+
+export async function prewarmRoutinesCache(): Promise<WorkoutRoutine[]> {
+  if (inMemoryRoutinesCache !== null) return inMemoryRoutinesCache;
+  try {
+    if (typeof indexedDB === 'undefined') return [];
+    const routines = await db.routines.toArray();
+    inMemoryRoutinesCache = routines;
+    return routines;
+  } catch {
+    return [];
+  }
+}
 
 export function useRoutines(searchQuery = '') {
   const allRoutinesList = useLiveQuery(
     async () => {
-      return await db.routines.toArray();
+      const result = await db.routines.toArray();
+      inMemoryRoutinesCache = result;
+      return result;
     },
     []
   );
 
   const allExercisesList = useLiveQuery(
     async () => {
-      return await db.exercises.toArray();
+      const result = await db.exercises.toArray();
+      setInMemoryExercisesCache(result);
+      return result;
     },
     []
   );
 
-  const allRoutines = allRoutinesList || [];
-  const allExercises = allExercisesList || [];
+  const allRoutines = allRoutinesList ?? inMemoryRoutinesCache ?? [];
+  const allExercises = allExercisesList ?? getInMemoryExercisesCache() ?? [];
 
   const exerciseMap = new Map<string, Exercise>();
   allExercises.forEach((ex) => {
@@ -102,7 +133,7 @@ export function useRoutines(searchQuery = '') {
     archivedCustomRoutines,
     archivedPresetRoutines,
     exerciseMap,
-    isLoading: allRoutinesList === undefined,
+    isLoading: allRoutinesList === undefined && inMemoryRoutinesCache === null,
     addRoutine,
     updateRoutine,
     archiveRoutine,

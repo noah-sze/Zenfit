@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import Categories from './Categories';
 import CategoryDetails from './CategoryDetails';
@@ -9,8 +9,9 @@ import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 /**
  * 食物與菜餚管理模組 - 視圖堆疊保活容器 (View Stack Container)
  * 解決進出詳情頁時列表被銷毀重建導致的異步查詢延遲與滾動屏閃跳動問題
- * 1. 底層列表 (Categories) 恆定保活，DOM 節點與滾動座標一分一毫都不會變動
- * 2. 頂層詳情 (CategoryDetails / RecipeDetails) 作為全屏覆蓋層渲染，獨立滾動
+ * 1. 底層列表 (Categories) 按需掛載並恆定保活，DOM 節點與滾動座標一分一毫都不會變動
+ * 2. 若從外部路由（如 /diet）直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
+ * 3. 頂層詳情 (CategoryDetails / RecipeDetails) 作為全屏覆蓋層渲染，獨立滾動
  */
 export default function FoodsPage() {
   const location = useLocation();
@@ -28,6 +29,17 @@ export default function FoodsPage() {
 
   const isDetailOpen = isFoodDetail || isRecipeDetail;
 
+  const [hasVisitedList, setHasVisitedList] = useState(!isDetailOpen);
+
+  useEffect(() => {
+    if (!isDetailOpen && !hasVisitedList) {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setHasVisitedList(true);
+    }
+  }, [isDetailOpen, hasVisitedList]);
+
+  const shouldMountList = !isDetailOpen || hasVisitedList;
+
   // 模組退出銷毀合約：當使用者真正退出食物管理模組（如返回 /settings）時，徹底銷毀其狀態
   useEffect(() => {
     return () => {
@@ -37,10 +49,12 @@ export default function FoodsPage() {
 
   return (
     <div className="relative w-full">
-      {/* 底層列表頁：恆定保活，0 卸載、0 重新查詢、0 滾動計算 */}
-      <div className={cn(isDetailOpen && 'pointer-events-none select-none')}>
-        <Categories isDetailOpen={isDetailOpen} />
-      </div>
+      {/* 底層列表頁：訪問過列表後恆定保活，0 卸載、0 重新查詢、0 滾動計算 */}
+      {shouldMountList && (
+        <div className={cn(isDetailOpen && 'pointer-events-none select-none')}>
+          <Categories isDetailOpen={isDetailOpen} />
+        </div>
+      )}
 
       {/* 頂層詳情頁：覆蓋於列表頁上方，擁有獨立全屏滾動上下文 */}
       {isDetailOpen && (

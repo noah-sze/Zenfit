@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
 import { useRecipes } from '@/hooks/useRecipes';
+import {
+  getInMemoryDailyDietLogsCache,
+  setInMemoryDailyDietLogsCache,
+} from '@/hooks/useFoodLogs';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import { Button } from '@/components/ui/button';
@@ -42,6 +46,7 @@ import {
   type OverviewPeriod,
   calculateTotalWeeks,
   calculateFootprintData,
+  getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import {
   OverviewPeriodSelector,
@@ -55,20 +60,26 @@ export default function RecipeDetails() {
   const confirm = useConfirm();
 
   const { allFoods, isLoading: isFoodsLoading } = useFoods();
-  const { updateRecipe, archiveRecipe, unarchiveRecipe, deleteRecipe } = useRecipes();
+  const {
+    allRecipes,
+    isLoading: isRecipesLoading,
+    updateRecipe,
+    archiveRecipe,
+    unarchiveRecipe,
+    deleteRecipe,
+  } = useRecipes();
   const { nutritionDisplayMode } = useAppStore();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
   const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
-  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
-
-  // 響應式取得特定菜餚資料
-  const recipe = useLiveQuery(
-    async () => {
-      if (!id) return null;
-      return (await db.recipes.get(id)) || null;
-    },
-    [id]
+  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(
+    getInitialMatrixContainerWidth
   );
+
+  // 同步從記憶體快取取得特定菜餚資料（0ms 第 0 幀秒開）
+  const recipe = useMemo(() => {
+    if (!id) return null;
+    return allRecipes.find((r) => r.id === id) ?? null;
+  }, [allRecipes, id]);
 
   // 構建 foodMap 供純函數計算引用
   const foodMap = useMemo(() => {
@@ -77,27 +88,34 @@ export default function RecipeDetails() {
     return map;
   }, [allFoods]);
 
-  // 取得此菜餚的所有歷史飲食記錄 (透過 bundleId 關聯正規化)
-  const relatedFoodLogs = useLiveQuery(
+  // 取得每日飲食日誌（具備記憶體快取第 0 幀同步注水）
+  const liveDailyLogs = useLiveQuery(
     async () => {
-      if (!recipe) return [];
-      const dailyLogs = await db.daily_diet_logs.toArray();
-      const logs: FoodLog[] = [];
-      for (const daily of dailyLogs) {
-        for (const entry of daily.entries) {
-          if (entry.bundleId === recipe.id) {
-            logs.push({ ...entry, date: daily.date });
-          }
+      const result = await db.daily_diet_logs.toArray();
+      setInMemoryDailyDietLogsCache(result);
+      return result;
+    },
+    []
+  );
+  const dailyLogs = liveDailyLogs ?? getInMemoryDailyDietLogsCache();
+
+  // 取得此菜餚的所有歷史飲食記錄 (透過 bundleId 關聯正規化)
+  const relatedFoodLogs = useMemo(() => {
+    if (!recipe || !dailyLogs) return [];
+    const logs: FoodLog[] = [];
+    for (const daily of dailyLogs) {
+      for (const entry of daily.entries) {
+        if (entry.bundleId === recipe.id) {
+          logs.push({ ...entry, date: daily.date });
         }
       }
+    }
 
-      return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    },
-    [recipe?.id]
-  );
+    return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  }, [dailyLogs, recipe]);
 
   // 刪除防護契約：有歷史記錄時不可刪除
-  const hasUsage = (relatedFoodLogs?.length ?? 0) > 0;
+  const hasUsage = relatedFoodLogs.length > 0;
 
   // 菜餚標準營養素
   const standardTotals = useMemo(() => {
@@ -308,16 +326,20 @@ export default function RecipeDetails() {
     }
   }, [headerActionEl]);
 
-  if (recipe === null) {
+  if (!id) {
     return <Navigate to="/settings/recipes" replace />;
   }
 
-  if (!recipe || !standardTotals) {
+  if (isRecipesLoading || isFoodsLoading) {
     return (
       <div className="p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}
       </div>
     );
+  }
+
+  if (!recipe || !standardTotals) {
+    return <Navigate to="/settings/recipes" replace />;
   }
 
   return (

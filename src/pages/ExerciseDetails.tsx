@@ -15,6 +15,10 @@ import { db } from '@/services/db/db';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
+import {
+  getInMemoryWorkoutLogsCache,
+  setInMemoryWorkoutLogsCache,
+} from '@/hooks/useWorkoutLogs';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { useConfirm } from '@/components/ui/confirm-dialog';
@@ -40,6 +44,7 @@ import {
   type OverviewPeriod,
   calculateTotalWeeks,
   calculateExerciseFootprintData,
+  getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import {
   OverviewPeriodSelector,
@@ -77,32 +82,40 @@ export default function ExerciseDetails() {
     return allRoutines.filter((r) => r.exercises.some((item) => item.exerciseId === id));
   }, [allRoutines, id]);
 
-  // 取得包含此動作的所有歷史日誌
-  const workoutLogs = useLiveQuery(
+  // 取得所有訓練日誌（具備記憶體快取第 0 幀同步注水）
+  const liveWorkoutLogs = useLiveQuery(
     async () => {
-      if (!id || !exercise) return [];
-      const logs = await db.workout_logs.toArray();
-      // 篩選出包含此動作的日誌（優先依據 exerciseId 純 ID 關聯，向下相容歷史快照）
-      return logs.filter((log) =>
-        log.exercises.some(
-          (ex) =>
-            ex.exerciseId === id ||
-            (typeof (ex as any).exerciseName === 'string' &&
-              (ex as any).exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase())
-        )
-      );
+      const result = await db.workout_logs.toArray();
+      setInMemoryWorkoutLogsCache(result);
+      return result;
     },
-    [id, exercise?.name]
+    []
   );
+  const allWorkoutLogs = liveWorkoutLogs ?? getInMemoryWorkoutLogsCache();
+
+  // 取得包含此動作的所有歷史日誌
+  const workoutLogs = useMemo(() => {
+    if (!id || !exercise || !allWorkoutLogs) return [];
+    return allWorkoutLogs.filter((log) =>
+      log.exercises.some(
+        (ex) =>
+          ex.exerciseId === id ||
+          (typeof (ex as any).exerciseName === 'string' &&
+            (ex as any).exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase())
+      )
+    );
+  }, [allWorkoutLogs, id, exercise]);
 
   // 刪除防護契約：有歷史記錄或被組合引用時不可刪除
-  const hasWorkoutLogs = (workoutLogs?.length ?? 0) > 0;
+  const hasWorkoutLogs = workoutLogs.length > 0;
   const hasRoutines = (relatedRoutines?.length ?? 0) > 0;
   const hasUsage = hasWorkoutLogs || hasRoutines;
 
   // 概覽週期與矩陣容器寬度狀態
   const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
-  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
+  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(
+    getInitialMatrixContainerWidth
+  );
 
   // 提取動作在各日誌中的已記錄組數與數據
   const exerciseDayLogs = useMemo(() => {

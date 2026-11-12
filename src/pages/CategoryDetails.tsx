@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
+import { useRecipes } from '@/hooks/useRecipes';
+import {
+  getInMemoryDailyDietLogsCache,
+  setInMemoryDailyDietLogsCache,
+} from '@/hooks/useFoodLogs';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import { Button } from '@/components/ui/button';
@@ -24,6 +29,7 @@ import {
   type OverviewPeriod,
   calculateTotalWeeks,
   calculateFootprintData,
+  getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import {
   OverviewPeriodSelector,
@@ -36,6 +42,7 @@ export default function CategoryDetails() {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood, deleteFood } = useFoods();
+  const { allRecipes } = useRecipes();
   const { nutritionDisplayMode } = useAppStore();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
   const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('30d');
@@ -99,35 +106,38 @@ export default function CategoryDetails() {
     setIsEditOpen(false);
   };
 
-  // 取得此食物所有的歷史飲食記錄
-  const foodLogs = useLiveQuery(
+  // 取得每日飲食日誌（具備記憶體快取第 0 幀同步注水）
+  const liveDailyLogs = useLiveQuery(
     async () => {
-      if (!id || !food) return [];
-      const dailyLogs = await db.daily_diet_logs.toArray();
-      const logs: FoodLog[] = [];
-      for (const daily of dailyLogs) {
-        for (const entry of daily.entries) {
-          if (entry.foodId === id) {
-            logs.push({ ...entry, date: daily.date });
-          }
+      const result = await db.daily_diet_logs.toArray();
+      setInMemoryDailyDietLogsCache(result);
+      return result;
+    },
+    []
+  );
+  const dailyLogs = liveDailyLogs ?? getInMemoryDailyDietLogsCache();
+
+  // 取得此食物所有的歷史飲食記錄
+  const foodLogs = useMemo(() => {
+    if (!id || !food || !dailyLogs) return [];
+    const logs: FoodLog[] = [];
+    for (const daily of dailyLogs) {
+      for (const entry of daily.entries) {
+        if (entry.foodId === id) {
+          logs.push({ ...entry, date: daily.date });
         }
       }
-      return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    },
-    [id]
-  );
-  // 檢查此食材是否被菜餚組合引用
-  const referencingRecipesCount = useLiveQuery(
-    async () => {
-      if (!id || !food) return 0;
-      return await db.recipes
-        .filter((r) => r.ingredients.some((ing) => ing.foodId === id))
-        .count();
-    },
-    [id]
-  );
+    }
+    return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  }, [dailyLogs, id, food]);
 
-  const hasUsage = (foodLogs?.length ?? 0) > 0 || (referencingRecipesCount ?? 0) > 0;
+  // 檢查此食材是否被菜餚組合引用（直接從記憶體快取 allRecipes 同步計算，0 IndexedDB 查詢）
+  const referencingRecipesCount = useMemo(() => {
+    if (!id) return 0;
+    return allRecipes.filter((r) => r.ingredients.some((ing) => ing.foodId === id)).length;
+  }, [allRecipes, id]);
+
+  const hasUsage = foodLogs.length > 0 || referencingRecipesCount > 0;
 
   const handleToggleArchive = async () => {
     if (!food) return;
@@ -181,7 +191,9 @@ export default function CategoryDetails() {
   };
 
 
-  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(0);
+  const [matrixContainerWidth, setMatrixContainerWidth] = useState<number>(
+    getInitialMatrixContainerWidth
+  );
 
   const totalWeeks = useMemo(() => {
     return calculateTotalWeeks({

@@ -3,6 +3,34 @@ import { db } from '@/services/db/db';
 import type { HydratedWorkoutLog, WorkoutExerciseGroup, WorkoutLog, WorkoutSet } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { triggerHaptic } from '@/lib/haptics';
+import { setInMemoryExercisesCache } from './useExercises';
+import { setInMemoryRoutinesCache } from './useRoutines';
+
+let inMemoryWorkoutLogsCache: WorkoutLog[] | null = null;
+
+export function getInMemoryWorkoutLogsCache(): WorkoutLog[] | null {
+  return inMemoryWorkoutLogsCache;
+}
+
+export function setInMemoryWorkoutLogsCache(logs: WorkoutLog[]): void {
+  inMemoryWorkoutLogsCache = logs;
+}
+
+export function clearWorkoutLogsCache(): void {
+  inMemoryWorkoutLogsCache = null;
+}
+
+export async function prewarmWorkoutLogsCache(): Promise<WorkoutLog[]> {
+  if (inMemoryWorkoutLogsCache !== null) return inMemoryWorkoutLogsCache;
+  try {
+    if (typeof indexedDB === 'undefined') return [];
+    const logs = await db.workout_logs.toArray();
+    inMemoryWorkoutLogsCache = logs;
+    return logs;
+  } catch {
+    return [];
+  }
+}
 
 export function useWorkoutLogs(date?: string) {
   const workouts = useLiveQuery(
@@ -12,9 +40,14 @@ export function useWorkoutLogs(date?: string) {
         : await db.workout_logs.orderBy('date').reverse().limit(30).toArray();
 
       const allExercises = await db.exercises.toArray();
+      setInMemoryExercisesCache(allExercises);
       const exerciseMap = new Map(allExercises.map((e) => [e.id, e]));
       const allRoutines = await db.routines.toArray();
+      setInMemoryRoutinesCache(allRoutines);
       const routineMap = new Map(allRoutines.map((r) => [r.id, r]));
+      if (inMemoryWorkoutLogsCache === null) {
+        void prewarmWorkoutLogsCache();
+      }
 
       const hydrated: HydratedWorkoutLog[] = rawWorkouts.map((w) => {
         const routine = w.routineId ? routineMap.get(w.routineId) : undefined;
