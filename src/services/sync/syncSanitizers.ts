@@ -1,4 +1,4 @@
-import type { FoodRecipe, FoodLog, DailyDietLog, WorkoutLog, WorkoutRoutine, UserBaseInfo } from '@/types';
+import type { FoodRecipe, FoodLog, FoodLogEntryType, DailyDietLog, WorkoutLog, WorkoutRoutine, UserBaseInfo } from '@/types';
 import { LEGACY_ID_TO_UUID_MAP, PRIMARY_USER_ID } from '@/services/db/defaultData';
 
 export function mapLegacyIdToUuid(id?: string): string {
@@ -37,27 +37,79 @@ export function sanitizeRecipe(recipe: any): FoodRecipe {
 }
 
 /**
- * 清洗飲食日誌：只保留物理事實，剔除食物名稱與營養素快照，並自動遷移引用 foodId 至 UUID
+ * 清洗飲食日誌：只保留物理事實與系統原型，剔除食物名稱與靜態營養素快照，並自動遷移引用 foodId 至 UUID
  */
 export function sanitizeFoodLog(log: any): FoodLog {
+  let entryType: FoodLogEntryType = 'item';
+  if (log.entryType === 'as_planned' || log.isAsPlanned) {
+    entryType = 'as_planned';
+  } else if (
+    log.entryType === 'estimate' ||
+    log.isPlaceholder ||
+    (!log.foodId && (log.scenario || log.customTitle || log.calories !== undefined))
+  ) {
+    entryType = 'estimate';
+  }
+
   const sanitized: FoodLog = {
     id: String(log.id || ''),
     date: String(log.date || ''),
     mealType: log.mealType || 'snack',
-    quantity: Number(log.quantity) || 0,
-    unit: String(log.unit || 'g'),
+    entryType,
     createdAt: Number(log.createdAt) || Date.now(),
     updatedAt: Number(log.updatedAt) || Date.now(),
   };
 
-  if (log.foodId) sanitized.foodId = mapLegacyIdToUuid(String(log.foodId));
-  if (log.bundleId) sanitized.bundleId = mapLegacyIdToUuid(String(log.bundleId));
-
-  // 粗估/佔位條目或正常飲食配額（無關聯 foodId 或顯式標記為 isPlaceholder / isAsPlanned）
-  if (log.isPlaceholder || log.isAsPlanned || (!log.foodId && (log.calories !== undefined || log.foodName !== undefined))) {
-    if (log.isPlaceholder) sanitized.isPlaceholder = true;
-    if (log.isAsPlanned) sanitized.isAsPlanned = true;
-    if (log.foodName) sanitized.foodName = String(log.foodName);
+  if (entryType === 'item') {
+    if (log.foodId) sanitized.foodId = mapLegacyIdToUuid(String(log.foodId));
+    sanitized.quantity = Number(log.quantity) || 0;
+    sanitized.unit = String(log.unit || 'g');
+    if (log.bundleId) sanitized.bundleId = mapLegacyIdToUuid(String(log.bundleId));
+  } else if (entryType === 'as_planned') {
+    sanitized.isAsPlanned = true;
+    if (log.customTitle?.trim()) {
+      sanitized.customTitle = String(log.customTitle).trim();
+    } else if (log.foodName?.trim()) {
+      const rawName = String(log.foodName).trim();
+      const isGeneric =
+        rawName.endsWith('配額') ||
+        rawName.endsWith('配额') ||
+        rawName.endsWith('Budget') ||
+        rawName === '正常飲食' ||
+        rawName === '正常饮食' ||
+        rawName === 'Regular Diet' ||
+        rawName === '算我正常吃' ||
+        rawName === '算我正常食' ||
+        rawName === '歷史均值' ||
+        rawName === '历史均值' ||
+        rawName === 'Past Average' ||
+        rawName === 'Historical Average';
+      if (!isGeneric) {
+        sanitized.customTitle = rawName;
+      }
+    }
+    if (typeof log.calories === 'number' && !isNaN(log.calories)) sanitized.calories = log.calories;
+    if (typeof log.carbs === 'number' && !isNaN(log.carbs)) sanitized.carbs = log.carbs;
+    if (typeof log.protein === 'number' && !isNaN(log.protein)) sanitized.protein = log.protein;
+    if (typeof log.fat === 'number' && !isNaN(log.fat)) sanitized.fat = log.fat;
+  } else if (entryType === 'estimate') {
+    sanitized.isPlaceholder = true;
+    if (log.scenario) {
+      sanitized.scenario = String(log.scenario);
+    }
+    if (log.customTitle?.trim()) {
+      sanitized.customTitle = String(log.customTitle).trim();
+    } else if (log.foodName?.trim()) {
+      const rawName = String(log.foodName).trim();
+      const isGeneric =
+        rawName === '快速估算' ||
+        rawName === '快速粗估' ||
+        rawName === 'Quick Estimate' ||
+        rawName === '常規';
+      if (!isGeneric) {
+        sanitized.customTitle = rawName;
+      }
+    }
     if (typeof log.calories === 'number' && !isNaN(log.calories)) sanitized.calories = log.calories;
     if (typeof log.carbs === 'number' && !isNaN(log.carbs)) sanitized.carbs = log.carbs;
     if (typeof log.protein === 'number' && !isNaN(log.protein)) sanitized.protein = log.protein;

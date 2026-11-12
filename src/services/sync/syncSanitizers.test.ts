@@ -109,6 +109,7 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
         id: 'log-1',
         date: '2026-11-06',
         mealType: 'breakfast',
+        entryType: 'item',
         foodId: DEFAULT_FOOD_IDS.chicken_breast,
         quantity: 150,
         unit: 'g',
@@ -124,12 +125,13 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
       expect((cleaned as any).notes).toBeUndefined();
     });
 
-    it('完整保留快速粗估與算我正常吃配額的自訂名稱與營養素欄位', () => {
+    it('完整支援系統分類條目原型 (System Entry Archetype) 並徹底移除虛構的 quantity 與 unit', () => {
       const placeholderLog = {
         id: 'p-1',
         date: '2026-11-10',
         mealType: 'lunch',
-        foodName: '外食火鍋',
+        scenario: 'hotpot',
+        customTitle: '海底撈',
         calories: 850,
         carbs: 60,
         protein: 45,
@@ -146,23 +148,25 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
         id: 'p-1',
         date: '2026-11-10',
         mealType: 'lunch',
-        foodName: '外食火鍋',
+        entryType: 'estimate',
+        scenario: 'hotpot',
+        customTitle: '海底撈',
         calories: 850,
         carbs: 60,
         protein: 45,
         fat: 35,
         isPlaceholder: true,
-        quantity: 1,
-        unit: '份',
         createdAt: 2000,
         updatedAt: 2000,
       });
+      expect(cleaned.quantity).toBeUndefined();
+      expect(cleaned.unit).toBeUndefined();
 
       const asPlannedLog = {
         id: 'plan-1',
         date: '2026-11-10',
         mealType: 'breakfast',
-        foodName: '早餐目標配額',
+        customTitle: '媽媽煮的早餐',
         calories: 500,
         carbs: 50,
         protein: 38,
@@ -179,17 +183,18 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
         id: 'plan-1',
         date: '2026-11-10',
         mealType: 'breakfast',
-        foodName: '早餐目標配額',
+        entryType: 'as_planned',
+        customTitle: '媽媽煮的早餐',
         calories: 500,
         carbs: 50,
         protein: 38,
         fat: 17,
         isAsPlanned: true,
-        quantity: 1,
-        unit: '份',
         createdAt: 2000,
         updatedAt: 2000,
       });
+      expect(cleanedPlanned.quantity).toBeUndefined();
+      expect(cleanedPlanned.unit).toBeUndefined();
     });
   });
 
@@ -314,6 +319,7 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
         id: 'e1',
         date: '',
         mealType: 'breakfast',
+        entryType: 'item',
         foodId: DEFAULT_FOOD_IDS.chicken_breast,
         bundleId: DEFAULT_RECIPE_IDS.chicken_rice_box,
         quantity: 150,

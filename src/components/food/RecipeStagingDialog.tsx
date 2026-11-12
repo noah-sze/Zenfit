@@ -62,6 +62,7 @@ export function RecipeStagingDialog({
     anchorEl?: HTMLElement | null;
   } | null>(null);
   const initialKeypadValueRef = useRef<number>(0);
+  const isKeypadConfirmedRef = useRef(false);
 
   // 追加或替換食材選擇器開關
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -207,6 +208,7 @@ export function RecipeStagingDialog({
     if (!item) return;
 
     initialKeypadValueRef.current = item.quantity;
+    isKeypadConfirmedRef.current = false;
     setKeypadConfig({
       index,
       title: item.foodName,
@@ -230,6 +232,7 @@ export function RecipeStagingDialog({
 
   // 鍵盤確認
   const handleKeypadConfirm = (val: number, unit?: string) => {
+    isKeypadConfirmedRef.current = true;
     if (!keypadConfig) return;
     const { index } = keypadConfig;
     setIngredients((prev) =>
@@ -242,6 +245,7 @@ export function RecipeStagingDialog({
 
   // 鍵盤取消
   const handleKeypadCancel = () => {
+    if (isKeypadConfirmedRef.current) return;
     if (!keypadConfig) return;
     const { index } = keypadConfig;
     const fallbackVal = initialKeypadValueRef.current;
@@ -421,7 +425,13 @@ export function RecipeStagingDialog({
         <NumericKeypadDialog
           open={!!keypadConfig}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setKeypadConfig(null);
+              }
+            }
           }}
           title={keypadConfig.title}
           value={keypadConfig.value}

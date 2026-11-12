@@ -14,7 +14,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy } from '@/utils/unitMath';
-import { resolveAsPlannedDisplayName } from '@/utils/foodNaming';
+import { resolveFoodLogTitle } from '@/utils/foodNaming';
 
 export interface EditFoodLogDialogProps {
   open: boolean;
@@ -23,12 +23,14 @@ export interface EditFoodLogDialogProps {
   onSave: (
     id: string,
     updates: {
-      quantity: number;
+      quantity?: number;
       calories?: number;
       carbs?: number;
       protein?: number;
       fat?: number;
       foodName?: string;
+      scenario?: string;
+      customTitle?: string;
     }
   ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -53,12 +55,14 @@ export function EditFoodLogDialog({
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
   const anchorElRef = useRef<HTMLElement | null>(null);
   const initialQuantityRef = useRef<number>(quantity);
+  const isKeypadConfirmedRef = useRef(false);
 
   // 當 log 變更時同步初始狀態與查詢原食物實體
   useEffect(() => {
     if (log && open) {
-      setQuantity(log.quantity);
-      initialQuantityRef.current = log.quantity;
+      const safeQty = log.quantity ?? 100;
+      setQuantity(safeQty);
+      initialQuantityRef.current = safeQty;
 
       if (log.foodId) {
         db.foods.get(log.foodId).then((food) => {
@@ -118,6 +122,7 @@ export function EditFoodLogDialog({
     triggerHaptic('selection');
     anchorElRef.current = el;
     initialQuantityRef.current = quantity;
+    isKeypadConfirmedRef.current = false;
     setIsKeypadOpen(true);
   };
 
@@ -128,12 +133,14 @@ export function EditFoodLogDialog({
 
   // 數字鍵盤確認
   const handleKeypadConfirm = useCallback((val: number) => {
+    isKeypadConfirmedRef.current = true;
     setQuantity(val > 0 ? val : 1);
     setIsKeypadOpen(false);
   }, []);
 
   // 數字鍵盤取消
   const handleKeypadCancel = useCallback(() => {
+    if (isKeypadConfirmedRef.current) return;
     setQuantity(initialQuantityRef.current);
     setIsKeypadOpen(false);
   }, []);
@@ -146,21 +153,24 @@ export function EditFoodLogDialog({
     onOpenChange(nextOpen);
   };
 
+  const isSystemEntry = Boolean(
+    log?.entryType === 'as_planned' ||
+    log?.entryType === 'estimate' ||
+    log?.isAsPlanned ||
+    log?.isPlaceholder
+  );
+
   // 送出保存
   const handleSubmit = async () => {
-    if (!log || isSubmitting || (!log.isAsPlanned && quantity <= 0)) return;
+    if (!log || isSubmitting || (!isSystemEntry && quantity <= 0)) return;
     setIsSubmitting(true);
     try {
       await onSave(log.id, {
-        quantity: quantity > 0 ? quantity : 1,
-        ...(log.isPlaceholder || log.isAsPlanned || !log.foodId
-          ? {
-              calories: currentMacros.calories,
-              carbs: currentMacros.carbs,
-              protein: currentMacros.protein,
-              fat: currentMacros.fat,
-            }
-          : {}),
+        ...(isSystemEntry ? {} : { quantity: quantity > 0 ? quantity : 1 }),
+        calories: currentMacros.calories,
+        carbs: currentMacros.carbs,
+        protein: currentMacros.protein,
+        fat: currentMacros.fat,
       });
       triggerHaptic('success');
       onOpenChange(false);
@@ -184,9 +194,7 @@ export function EditFoodLogDialog({
 
   if (!log) return null;
 
-  const dialogTitle = log.isAsPlanned
-    ? resolveAsPlannedDisplayName(log, t('diet.asPlanned.defaultName', '歷史均值'))
-    : log.foodName || '';
+  const dialogTitle = log ? resolveFoodLogTitle(log, t, baseFood) : '';
 
   return (
     <>
@@ -194,7 +202,7 @@ export function EditFoodLogDialog({
         <PrecisionDialogContent
           title={dialogTitle}
           onSubmit={handleSubmit}
-          submitDisabled={isSubmitting || (!log.isAsPlanned && quantity <= 0)}
+          submitDisabled={isSubmitting || (!isSystemEntry && quantity <= 0)}
           submitAriaLabel={t('common.save')}
           cancelAriaLabel={t('common.cancel')}
           overlayClassName="z-[70]"
@@ -220,7 +228,7 @@ export function EditFoodLogDialog({
                 {/* 碳水化合物 */}
                 <div className="px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
-                    {t('diet.macroMicro.carbs', '碳')}
+                    {t('diet.macroMicro.carbs', '碳水')}
                   </span>
                   <div className="font-mono text-xs font-medium text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{currentMacros.carbs}</span>
@@ -260,7 +268,7 @@ export function EditFoodLogDialog({
             </div>
 
             {/* 表格卡片 (Usage List 表格行：食用份量 + 常用數字輸入框膠囊) */}
-            {!log.isAsPlanned && (
+            {!isSystemEntry && (
               <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
                 <div className="h-10 px-3 flex items-center justify-between bg-card">
                   <span className="text-muted-foreground text-xs font-sans">
@@ -301,9 +309,15 @@ export function EditFoodLogDialog({
         <NumericKeypadDialog
           open={isKeypadOpen}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setIsKeypadOpen(false);
+              }
+            }
           }}
-          title={log.foodName || ''}
+          title={dialogTitle}
           value={initialQuantityRef.current}
           unit={log.unit || 'g'}
           allowDecimals={true}

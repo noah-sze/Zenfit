@@ -82,6 +82,7 @@ export function RecipeFormDialog({
   // 數字鍵盤狀態
   const [keypadConfig, setKeypadConfig] = useState<KeypadConfig | null>(null);
   const initialKeypadValueRef = useRef<string>('');
+  const isKeypadConfirmedRef = useRef(false);
 
   // 初始化或編輯回填
   useEffect(() => {
@@ -243,6 +244,7 @@ export function RecipeFormDialog({
     if (!row) return;
 
     initialKeypadValueRef.current = row.quantity;
+    isKeypadConfirmedRef.current = false;
     setKeypadConfig({
       index,
       foodName: row.foodName,
@@ -266,6 +268,7 @@ export function RecipeFormDialog({
 
   // 數字鍵盤確認
   const handleKeypadConfirm = (val: number) => {
+    isKeypadConfirmedRef.current = true;
     if (!keypadConfig) return;
     setIngredients((prev) =>
       prev.map((row, idx) =>
@@ -279,6 +282,7 @@ export function RecipeFormDialog({
 
   // 數字鍵盤取消回滾
   const handleKeypadCancel = () => {
+    if (isKeypadConfirmedRef.current) return;
     if (!keypadConfig) return;
     const prevVal = initialKeypadValueRef.current;
     setIngredients((prev) =>
@@ -528,7 +532,13 @@ export function RecipeFormDialog({
         <NumericKeypadDialog
           open={!!keypadConfig}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setKeypadConfig(null);
+              }
+            }
           }}
           title={keypadConfig.foodName}
           value={keypadConfig.value}

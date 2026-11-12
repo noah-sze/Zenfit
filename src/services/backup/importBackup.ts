@@ -124,6 +124,7 @@ export function sanitizeBodyMetric(raw: any): BodyMetric {
     ...(raw.waistCm !== undefined ? { waistCm: Number(raw.waistCm) } : {}),
     ...(raw.hipsCm !== undefined ? { hipsCm: Number(raw.hipsCm) } : {}),
     ...(raw.chestCm !== undefined ? { chestCm: Number(raw.chestCm) } : {}),
+    ...(raw.shouldersCm !== undefined ? { shouldersCm: Number(raw.shouldersCm) } : {}),
     ...(raw.armsCm !== undefined ? { armsCm: Number(raw.armsCm) } : {}),
     ...(raw.thighsCm !== undefined ? { thighsCm: Number(raw.thighsCm) } : {}),
     ...(raw.calvesCm !== undefined ? { calvesCm: Number(raw.calvesCm) } : {}),

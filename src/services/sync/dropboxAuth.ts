@@ -328,13 +328,13 @@ export async function exchangeCodeForTokensOnly(code: string): Promise<DropboxTo
 /**
  * 自動檢查並刷新過期 Access Token (無感續約)
  */
-export async function getValidAccessToken(): Promise<string | null> {
+export async function getValidAccessToken(forceRefresh = false): Promise<string | null> {
   const tokens = stagingTokens || getStoredTokens();
   if (!tokens) return null;
 
   // 距離過期大於 5 分鐘，直接使用現存 access_token
   const isExpiringSoon = Date.now() > tokens.expires_at - 5 * 60 * 1000;
-  if (!isExpiringSoon && tokens.access_token) {
+  if (!isExpiringSoon && !forceRefresh && tokens.access_token) {
     return tokens.access_token;
   }
 

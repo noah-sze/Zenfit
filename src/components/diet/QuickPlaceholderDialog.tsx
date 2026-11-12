@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import {
   Dialog,
   PrecisionDialogContent,
@@ -11,6 +10,21 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import type { MealType } from '@/types';
+import {
+  type DiningScenarioId,
+  type DiningScenario,
+  DINING_SCENARIOS,
+  inferDiningScenario,
+  resolvePlaceholderDisplayName,
+} from '@/utils/foodNaming';
+
+export {
+  type DiningScenarioId,
+  type DiningScenario,
+  DINING_SCENARIOS,
+  inferDiningScenario,
+  resolvePlaceholderDisplayName,
+};
 
 export interface QuickPlaceholderDialogProps {
   open: boolean;
@@ -18,14 +32,18 @@ export interface QuickPlaceholderDialogProps {
   targetMealType: MealType;
   targetDate: string;
   onConfirm: (data: {
-    foodName: string;
+    scenario: DiningScenarioId;
+    customTitle?: string;
     calories: number;
     carbs?: number;
     protein?: number;
     fat?: number;
+    foodName?: string;
   }) => Promise<void>;
   initialData?: {
     id?: string;
+    scenario?: string;
+    customTitle?: string;
     foodName?: string;
     calories?: number;
     carbs?: number;
@@ -35,92 +53,6 @@ export interface QuickPlaceholderDialogProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
-export type DiningScenarioId =
-  | 'balanced'
-  | 'bento'
-  | 'fastfood'
-  | 'hotpot'
-  | 'bbq'
-  | 'sushi'
-  | 'pizza'
-  | 'salad'
-  | 'party'
-  | 'dessert';
-
-export interface DiningScenario {
-  id: DiningScenarioId;
-  nameKey: string;
-  defaultName: string;
-  ratios: {
-    carbs: number;   // 4 kcal/g
-    protein: number; // 4 kcal/g
-    fat: number;     // 9 kcal/g
-  };
-}
-
-export const DINING_SCENARIOS: Record<DiningScenarioId, DiningScenario> = {
-  balanced: {
-    id: 'balanced',
-    nameKey: 'diet.placeholder.scenarioBalanced',
-    defaultName: '常規',
-    ratios: { carbs: 0.45, protein: 0.25, fat: 0.30 },
-  },
-  bento: {
-    id: 'bento',
-    nameKey: 'diet.placeholder.scenarioBento',
-    defaultName: '便當',
-    ratios: { carbs: 0.55, protein: 0.15, fat: 0.30 },
-  },
-  fastfood: {
-    id: 'fastfood',
-    nameKey: 'diet.placeholder.scenarioFastfood',
-    defaultName: '快餐',
-    ratios: { carbs: 0.40, protein: 0.15, fat: 0.45 },
-  },
-  hotpot: {
-    id: 'hotpot',
-    nameKey: 'diet.placeholder.scenarioHotpot',
-    defaultName: '火鍋',
-    ratios: { carbs: 0.10, protein: 0.25, fat: 0.65 },
-  },
-  bbq: {
-    id: 'bbq',
-    nameKey: 'diet.placeholder.scenarioBbq',
-    defaultName: '燒肉',
-    ratios: { carbs: 0.10, protein: 0.35, fat: 0.55 },
-  },
-  sushi: {
-    id: 'sushi',
-    nameKey: 'diet.placeholder.scenarioSushi',
-    defaultName: '壽司',
-    ratios: { carbs: 0.60, protein: 0.25, fat: 0.15 },
-  },
-  pizza: {
-    id: 'pizza',
-    nameKey: 'diet.placeholder.scenarioPizza',
-    defaultName: '披薩',
-    ratios: { carbs: 0.50, protein: 0.15, fat: 0.35 },
-  },
-  salad: {
-    id: 'salad',
-    nameKey: 'diet.placeholder.scenarioSalad',
-    defaultName: '輕食',
-    ratios: { carbs: 0.45, protein: 0.40, fat: 0.15 },
-  },
-  party: {
-    id: 'party',
-    nameKey: 'diet.placeholder.scenarioParty',
-    defaultName: '酒局',
-    ratios: { carbs: 0.50, protein: 0.10, fat: 0.40 },
-  },
-  dessert: {
-    id: 'dessert',
-    nameKey: 'diet.placeholder.scenarioDessert',
-    defaultName: '甜點',
-    ratios: { carbs: 0.65, protein: 0.05, fat: 0.30 },
-  },
-};
-
 const PRESET_CALORIES = [
   { kcal: 300, labelKey: 'diet.placeholder.presetLight', defaultLabel: '輕食' },
   { kcal: 500, labelKey: 'diet.placeholder.presetRegular', defaultLabel: '常規' },
@@ -129,91 +61,6 @@ const PRESET_CALORIES = [
 ];
 
 const STEP_OPTIONS = [-100, -50, 50, 100];
-
-/**
- * 依據宏量供能比推斷最接近的外食情境
- */
-export function inferDiningScenario(
-  _calories?: number,
-  carbs?: number,
-  protein?: number,
-  fat?: number
-): DiningScenario {
-  const cKcal = (carbs || 0) * 4;
-  const pKcal = (protein || 0) * 4;
-  const fKcal = (fat || 0) * 9;
-  const total = cKcal + pKcal + fKcal;
-
-  if (total <= 0) {
-    return DINING_SCENARIOS.balanced;
-  }
-
-  const cRatio = cKcal / total;
-  const pRatio = pKcal / total;
-  const fRatio = fKcal / total;
-
-  let bestScenario = DINING_SCENARIOS.balanced;
-  let minDiff = Infinity;
-
-  for (const sc of Object.values(DINING_SCENARIOS)) {
-    const diff =
-      Math.pow(cRatio - sc.ratios.carbs, 2) +
-      Math.pow(pRatio - sc.ratios.protein, 2) +
-      Math.pow(fRatio - sc.ratios.fat, 2);
-    if (diff < minDiff) {
-      minDiff = diff;
-      bestScenario = sc;
-    }
-  }
-
-  return bestScenario;
-}
-
-/**
- * 解析飲食佔位條目的標題顯示名稱：
- * 針對「快速估算」或「快速粗估」舊條目自動推斷情境（如「火鍋」），若為自訂備註（如「海底撈」）則保留原名稱
- */
-export function resolvePlaceholderDisplayName(
-  item: {
-    foodName?: string;
-    calories?: number;
-    carbs?: number;
-    protein?: number;
-    fat?: number;
-  },
-  t: TFunction
-): string {
-  const rawName = item.foodName?.trim() || '';
-  const isLegacy =
-    !rawName ||
-    rawName === '快速估算' ||
-    rawName === '快速粗估' ||
-    rawName === 'Quick Estimate' ||
-    rawName === t('diet.placeholder.title', '快速估算') ||
-    rawName === t('diet.placeholder.defaultName', '快速估算');
-
-  if (isLegacy) {
-    const scenario = inferDiningScenario(
-      item.calories || 0,
-      item.carbs,
-      item.protein,
-      item.fat
-    );
-    return t(scenario.nameKey, scenario.defaultName);
-  }
-
-  const matchingScenario = Object.values(DINING_SCENARIOS).find(
-    (sc) =>
-      sc.id === rawName ||
-      sc.defaultName === rawName ||
-      t(sc.nameKey, sc.defaultName) === rawName
-  );
-  if (matchingScenario) {
-    return t(matchingScenario.nameKey, matchingScenario.defaultName);
-  }
-
-  return rawName;
-}
 
 export function QuickPlaceholderDialog({
   open,
@@ -227,6 +74,7 @@ export function QuickPlaceholderDialog({
   const { t } = useTranslation();
 
   const [scenario, setScenario] = useState<DiningScenarioId>('balanced');
+  const [customTitle, setCustomTitle] = useState('');
   const [calories, setCalories] = useState(500);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -244,16 +92,28 @@ export function QuickPlaceholderDialog({
   useEffect(() => {
     if (open) {
       if (initialData) {
-        const rawName = initialData.foodName?.trim() || '';
-        const matchingScenario = Object.values(DINING_SCENARIOS).find(
-          (sc) =>
-            sc.id === rawName ||
-            sc.defaultName === rawName ||
-            t(sc.nameKey, sc.defaultName) === rawName
-        );
+        if (initialData.scenario && DINING_SCENARIOS[initialData.scenario as DiningScenarioId]) {
+          setScenario(initialData.scenario as DiningScenarioId);
+        } else if (initialData.foodName) {
+          const rawName = initialData.foodName.trim();
+          const matchingScenario = Object.values(DINING_SCENARIOS).find(
+            (sc) =>
+              sc.id === rawName ||
+              sc.defaultName === rawName ||
+              t(sc.nameKey, sc.defaultName) === rawName
+          );
 
-        if (matchingScenario) {
-          setScenario(matchingScenario.id);
+          if (matchingScenario) {
+            setScenario(matchingScenario.id);
+          } else {
+            const inferred = inferDiningScenario(
+              initialData.calories ?? 500,
+              initialData.carbs,
+              initialData.protein,
+              initialData.fat
+            );
+            setScenario(inferred.id);
+          }
         } else {
           const inferred = inferDiningScenario(
             initialData.calories ?? 500,
@@ -263,9 +123,33 @@ export function QuickPlaceholderDialog({
           );
           setScenario(inferred.id);
         }
+
+        if (initialData.customTitle?.trim()) {
+          setCustomTitle(initialData.customTitle.trim());
+        } else if (initialData.foodName) {
+          const rawName = initialData.foodName.trim();
+          const isGeneric =
+            !rawName ||
+            rawName === '快速估算' ||
+            rawName === '快速粗估' ||
+            rawName === 'Quick Estimate' ||
+            rawName === t('diet.placeholder.title', '快速估算') ||
+            rawName === t('diet.placeholder.defaultName', '快速估算') ||
+            Object.values(DINING_SCENARIOS).some(
+              (sc) =>
+                sc.id === rawName ||
+                sc.defaultName === rawName ||
+                t(sc.nameKey, sc.defaultName) === rawName
+            );
+          setCustomTitle(isGeneric ? '' : rawName);
+        } else {
+          setCustomTitle('');
+        }
+
         setCalories(initialData.calories ?? 500);
       } else {
         setScenario('balanced');
+        setCustomTitle('');
         setCalories(500);
       }
       setKeypadOpen(false);
@@ -287,9 +171,12 @@ export function QuickPlaceholderDialog({
     if (isSubmitting || calories <= 0) return;
     setIsSubmitting(true);
     try {
-      const finalName = t(selectedScenario.nameKey, selectedScenario.defaultName);
+      const finalCustomTitle = customTitle.trim() || undefined;
+      const defaultLocalizedName = t(selectedScenario.nameKey, selectedScenario.defaultName);
       await onConfirm({
-        foodName: finalName,
+        scenario,
+        customTitle: finalCustomTitle,
+        foodName: finalCustomTitle || defaultLocalizedName,
         calories: Math.round(calories),
         carbs,
         protein,
@@ -431,6 +318,15 @@ export function QuickPlaceholderDialog({
                   </button>
                 ))}
               </div>
+
+              {/* 自訂標題/備註輸入框 */}
+              <input
+                type="text"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                placeholder={t('diet.placeholder.namePlaceholder', '備註')}
+                className="w-full h-8 px-3 rounded-lg border border-border bg-background text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-foreground shadow-none"
+              />
 
               {/* 編輯模式長按刪除按鈕 */}
               {initialData?.id && onDelete && (

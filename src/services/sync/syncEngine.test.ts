@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   mergeEntities,
+  mergeDietLogsByDate,
   groupFoodLogsByDate,
   groupWorkoutLogsByDate,
   groupBodyMetricsByDate,
@@ -16,7 +17,7 @@ import {
   isDropboxConnected,
   type DropboxTokens,
 } from './dropboxAuth';
-import type { FoodLog, WorkoutLog, BodyMetric } from '@/types';
+import type { FoodLog, WorkoutLog, BodyMetric, DailyDietLog } from '@/types';
 
 class LocalStorageMock {
   private store: Record<string, string> = {};
@@ -91,6 +92,162 @@ describe('syncEngine', () => {
       const remoteOlder = [{ id: 'item1', name: 'RemoteOlder', updatedAt: 3000 }];
       const result2 = mergeEntities(localNewer, remoteOlder);
       expect(result2.merged[0].name).toBe('LocalNewer');
+      expect(result2.hasLocalChanges).toBe(false);
+      expect(result2.hasRemoteChanges).toBe(true);
+    });
+  });
+
+  describe('mergeDietLogsByDate algorithm', () => {
+    it('returns empty list when both local and remote are empty', () => {
+      const result = mergeDietLogsByDate([], []);
+      expect(result.merged).toEqual([]);
+      expect(result.hasLocalChanges).toBe(false);
+      expect(result.hasRemoteChanges).toBe(false);
+    });
+
+    it('merges remote-only items and marks hasLocalChanges', () => {
+      const remote: DailyDietLog[] = [
+        {
+          id: 'remote-1',
+          date: '2026-11-10',
+          meta: { activityLevel: 1.55, macroSplit: { carbs: 40, protein: 30, fat: 30 } },
+          entries: [],
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ];
+      const result = mergeDietLogsByDate([], remote);
+      expect(result.merged).toEqual(remote);
+      expect(result.hasLocalChanges).toBe(true);
+      expect(result.hasRemoteChanges).toBe(false);
+    });
+
+    it('keeps local-only items and marks hasRemoteChanges', () => {
+      const local: DailyDietLog[] = [
+        {
+          id: 'local-1',
+          date: '2026-11-10',
+          meta: { activityLevel: 1.55, macroSplit: { carbs: 40, protein: 30, fat: 30 } },
+          entries: [],
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ];
+      const result = mergeDietLogsByDate(local, []);
+      expect(result.merged).toEqual(local);
+      expect(result.hasLocalChanges).toBe(false);
+      expect(result.hasRemoteChanges).toBe(true);
+    });
+
+    it('merges same date with different ids by preserving local id and deduplicating', () => {
+      const local: DailyDietLog[] = [
+        {
+          id: 'local-id-preserve',
+          date: '2026-11-11',
+          meta: { activityLevel: 1.55, macroSplit: { carbs: 40, protein: 30, fat: 30 } },
+          entries: [],
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ];
+      const remote: DailyDietLog[] = [
+        {
+          id: 'remote-different-id',
+          date: '2026-11-11',
+          meta: { activityLevel: 1.725, macroSplit: { carbs: 50, protein: 25, fat: 25 } },
+          entries: [],
+          createdAt: 1000,
+          updatedAt: 2000, // remote is newer
+        },
+      ];
+
+      const result = mergeDietLogsByDate(local, remote);
+      // 必須去重且只保留一筆
+      expect(result.merged).toHaveLength(1);
+      // 關鍵：必須保留本地 id 避免 Dexie &date 唯一約束衝突
+      expect(result.merged[0].id).toBe('local-id-preserve');
+      expect(result.merged[0].date).toBe('2026-11-11');
+      expect(result.merged[0].meta.activityLevel).toBe(1.725);
+      expect(result.hasLocalChanges).toBe(true);
+      expect(result.hasRemoteChanges).toBe(false);
+    });
+
+    it('prioritizes higher rev regardless of timestamp', () => {
+      const local: DailyDietLog[] = [
+        {
+          id: 'local-id',
+          date: '2026-11-11',
+          meta: { activityLevel: 1.55, macroSplit: { carbs: 40, protein: 30, fat: 30 } },
+          entries: [],
+          rev: 1,
+          createdAt: 1000,
+          updatedAt: 9999, // newer timestamp, but lower rev
+        },
+      ];
+      const remote: DailyDietLog[] = [
+        {
+          id: 'remote-id',
+          date: '2026-11-11',
+          meta: { activityLevel: 1.9, macroSplit: { carbs: 50, protein: 25, fat: 25 } },
+          entries: [],
+          rev: 2, // higher rev wins
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ];
+
+      const result = mergeDietLogsByDate(local, remote);
+      expect(result.merged).toHaveLength(1);
+      expect(result.merged[0].id).toBe('local-id');
+      expect(result.merged[0].meta.activityLevel).toBe(1.9);
+      expect(result.hasLocalChanges).toBe(true);
+      expect(result.hasRemoteChanges).toBe(false);
+
+      // 反向：本地 rev 較高
+      const local2: DailyDietLog[] = [{ ...local[0], rev: 3, updatedAt: 1000 }];
+      const remote2: DailyDietLog[] = [{ ...remote[0], rev: 2, updatedAt: 9999 }];
+      const result2 = mergeDietLogsByDate(local2, remote2);
+      expect(result2.merged[0].id).toBe('local-id');
+      expect(result2.merged[0].meta.activityLevel).toBe(1.55);
+      expect(result2.hasLocalChanges).toBe(false);
+      expect(result2.hasRemoteChanges).toBe(true);
+    });
+
+    it('resolves by updatedAt when rev is equal or undefined', () => {
+      const local: DailyDietLog[] = [
+        {
+          id: 'local-id',
+          date: '2026-11-11',
+          meta: { activityLevel: 1.55, macroSplit: { carbs: 40, protein: 30, fat: 30 } },
+          entries: [],
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ];
+      const remote: DailyDietLog[] = [
+        {
+          id: 'remote-id',
+          date: '2026-11-11',
+          meta: { activityLevel: 1.9, macroSplit: { carbs: 50, protein: 25, fat: 25 } },
+          entries: [],
+          createdAt: 1000,
+          updatedAt: 3000, // remote is newer
+        },
+      ];
+
+      const result = mergeDietLogsByDate(local, remote);
+      expect(result.merged).toHaveLength(1);
+      expect(result.merged[0].id).toBe('local-id');
+      expect(result.merged[0].meta.activityLevel).toBe(1.9);
+      expect(result.hasLocalChanges).toBe(true);
+      expect(result.hasRemoteChanges).toBe(false);
+
+      // 本地 timestamp 較新
+      const localNewer: DailyDietLog[] = [{ ...local[0], updatedAt: 5000 }];
+      const remoteOlder: DailyDietLog[] = [{ ...remote[0], updatedAt: 3000 }];
+      const result2 = mergeDietLogsByDate(localNewer, remoteOlder);
+      expect(result2.merged[0].id).toBe('local-id');
+      expect(result2.merged[0].meta.activityLevel).toBe(1.55);
       expect(result2.hasLocalChanges).toBe(false);
       expect(result2.hasRemoteChanges).toBe(true);
     });

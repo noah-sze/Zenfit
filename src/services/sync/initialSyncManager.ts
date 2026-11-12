@@ -35,6 +35,8 @@ import {
 } from './dropboxAuth';
 import {
   mergeEntities,
+  mergeDietLogsByDate,
+  getNormalizedTimestamp,
   uploadAllLocalData,
   setLastSyncTime,
   setCachedRevs,
@@ -461,7 +463,22 @@ async function executeAtomicCommit(): Promise<void> {
           if (staged.profiles.length) await db.user_profile.bulkPut(staged.profiles);
           if (staged.foods.length) await db.foods.bulkPut(staged.foods);
           if (staged.recipes.length) await db.recipes.bulkPut(staged.recipes);
-          if (staged.dailyDietLogs.length) await db.daily_diet_logs.bulkPut(staged.dailyDietLogs);
+          if (staged.dailyDietLogs.length) {
+            const dedupedDietMap = new Map<string, DailyDietLog>();
+            for (const log of staged.dailyDietLogs) {
+              const existing = dedupedDietMap.get(log.date);
+              if (!existing) {
+                dedupedDietMap.set(log.date, log);
+              } else {
+                const existingTime = getNormalizedTimestamp(existing.updatedAt);
+                const logTime = getNormalizedTimestamp(log.updatedAt);
+                if (logTime >= existingTime) {
+                  dedupedDietMap.set(log.date, log);
+                }
+              }
+            }
+            await db.daily_diet_logs.bulkPut(Array.from(dedupedDietMap.values()));
+          }
           if (staged.exercises.length) await db.exercises.bulkPut(staged.exercises);
           if (staged.equipments.length) await db.equipments.bulkPut(staged.equipments);
           if (staged.routines.length) await db.routines.bulkPut(staged.routines);
@@ -515,7 +532,7 @@ async function executeAtomicCommit(): Promise<void> {
           const mProf = mergeEntities(localProfiles, staged.profiles);
           const mFood = mergeEntities(localFoods, staged.foods);
           const mRecipe = mergeEntities(localRecipes, staged.recipes);
-          const mDiet = mergeEntities(localDietLogs, staged.dailyDietLogs);
+          const mDiet = mergeDietLogsByDate(localDietLogs, staged.dailyDietLogs);
           const mEx = mergeEntities(localExercises, staged.exercises);
           const mEq = mergeEntities(localEquipments, staged.equipments);
           const mRoutine = mergeEntities(localRoutines, staged.routines);

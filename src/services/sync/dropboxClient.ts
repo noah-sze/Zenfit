@@ -43,6 +43,31 @@ export async function fetchWithTimeout(
   }
 }
 
+/**
+ * 具有自動 401 Token 刷新與重試機制的 Dropbox Fetch 呼叫封裝
+ * 若遇到 401 Unauthorized，自動呼叫 getValidAccessToken(true) 刷新憑證並重試一次
+ */
+async function fetchDropboxWithAuth(
+  url: string,
+  optionsFactory: (token: string) => RequestInit,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<Response> {
+  let token = await getValidAccessToken();
+  if (!token) throw new Error('Dropbox not authenticated');
+
+  let response = await fetchWithTimeout(url, optionsFactory(token), timeoutMs);
+
+  if (response.status === 401) {
+    const refreshedToken = await getValidAccessToken(true);
+    if (refreshedToken) {
+      token = refreshedToken;
+      response = await fetchWithTimeout(url, optionsFactory(token), timeoutMs);
+    }
+  }
+
+  return response;
+}
+
 interface DropboxListFolderEntry {
   '.tag': string;
   name: string;
@@ -66,8 +91,8 @@ interface DropboxListFolderResponse {
  * 單次呼叫即可感知所有檔案的遠端版本變動
  */
 export async function listRemoteFolder(folderPath = ''): Promise<DropboxFileMetadata[]> {
-  const token = await getValidAccessToken();
-  if (!token) throw new Error('Dropbox not authenticated');
+  const initialToken = await getValidAccessToken();
+  if (!initialToken) throw new Error('Dropbox not authenticated');
 
   const files: DropboxFileMetadata[] = [];
   let cursor: string | null = null;
@@ -83,14 +108,14 @@ export async function listRemoteFolder(folderPath = ''): Promise<DropboxFileMeta
         ? JSON.stringify({ cursor })
         : JSON.stringify({ path: folderPath, recursive: true, include_deleted: false });
 
-      const res: Response = await fetchWithTimeout(requestUrl, {
+      const res: Response = await fetchDropboxWithAuth(requestUrl, (token) => ({
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: requestBody,
-      });
+      }));
 
       if (res.status === 409) {
         // 目錄尚不存在（初次使用）
@@ -137,18 +162,21 @@ export async function listRemoteFolder(folderPath = ''): Promise<DropboxFileMeta
  * 從指定遠端路徑下載單一 JSON 檔案並解析
  */
 export async function downloadJsonFile<T>(filePath: string): Promise<T | null> {
-  const token = await getValidAccessToken();
-  if (!token) throw new Error('Dropbox not authenticated');
+  const initialToken = await getValidAccessToken();
+  if (!initialToken) throw new Error('Dropbox not authenticated');
 
   const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
 
-  const response = await fetchWithTimeout('https://content.dropboxapi.com/2/files/download', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Dropbox-API-Arg': JSON.stringify({ path: normalizedPath }),
-    },
-  });
+  const response = await fetchDropboxWithAuth(
+    'https://content.dropboxapi.com/2/files/download',
+    (token) => ({
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Dropbox-API-Arg': JSON.stringify({ path: normalizedPath }),
+      },
+    })
+  );
 
   if (response.status === 409) {
     // 檔案不存在
@@ -180,8 +208,8 @@ export async function uploadJsonFile<T>(
   data: T,
   expectedRev?: string
 ): Promise<string> {
-  const token = await getValidAccessToken();
-  if (!token) throw new Error('Dropbox not authenticated');
+  const initialToken = await getValidAccessToken();
+  if (!initialToken) throw new Error('Dropbox not authenticated');
 
   const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
 
@@ -194,20 +222,23 @@ export async function uploadJsonFile<T>(
     ? { '.tag': 'update', update: expectedRev }
     : 'overwrite';
 
-  const response = await fetchWithTimeout('https://content.dropboxapi.com/2/files/upload', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/octet-stream',
-      'Dropbox-API-Arg': JSON.stringify({
-        path: normalizedPath,
-        mode: uploadMode,
-        autorename: false,
-        mute: true,
-      }),
-    },
-    body: bodyBuffer,
-  });
+  const response = await fetchDropboxWithAuth(
+    'https://content.dropboxapi.com/2/files/upload',
+    (token) => ({
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/octet-stream',
+        'Dropbox-API-Arg': JSON.stringify({
+          path: normalizedPath,
+          mode: uploadMode,
+          autorename: false,
+          mute: true,
+        }),
+      },
+      body: bodyBuffer,
+    })
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -233,14 +264,14 @@ export async function deleteRemotePath(path: string): Promise<void> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
   try {
-    await fetchWithTimeout('https://api.dropboxapi.com/2/files/delete_v2', {
+    await fetchDropboxWithAuth('https://api.dropboxapi.com/2/files/delete_v2', (t) => ({
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${t}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ path: normalizedPath }),
-    });
+    }));
   } catch {
     // Ignore deletion errors for missing files
   }

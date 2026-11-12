@@ -31,6 +31,106 @@ import {
   resetDatabaseToFactory,
 } from './defaultData';
 import { DEFAULT_NATURAL_FOODS } from './defaultNaturalFoods';
+import { inferDiningScenario, DINING_SCENARIOS } from '@/utils/foodNaming';
+
+/**
+ * 平滑遷移飲食日誌條目為系統分類原型 (System Entry Archetype):
+ * 1. 若 isAsPlanned: 設 entryType = 'as_planned', 移除 quantity / unit 與通用 foodName
+ * 2. 若 isPlaceholder: 設 entryType = 'estimate', 依宏量比例推斷 scenario, 移除 quantity / unit, 若 foodName 不為預設名稱則存為 customTitle
+ */
+export function migrateDailyDietLogEntriesToArchetype(log: DailyDietLog): boolean {
+  let changed = false;
+  if (Array.isArray(log.entries)) {
+    for (const entry of log.entries) {
+      // 處理 as_planned
+      if (entry.isAsPlanned || entry.entryType === 'as_planned') {
+        if (entry.entryType !== 'as_planned') {
+          entry.entryType = 'as_planned';
+          changed = true;
+        }
+        if ('quantity' in entry) {
+          delete (entry as any).quantity;
+          changed = true;
+        }
+        if ('unit' in entry) {
+          delete (entry as any).unit;
+          changed = true;
+        }
+        const rawName = entry.foodName?.trim() || '';
+        const isGeneric =
+          !rawName ||
+          rawName.endsWith('配額') ||
+          rawName.endsWith('配额') ||
+          rawName.endsWith('Budget') ||
+          rawName === '正常飲食' ||
+          rawName === '正常饮食' ||
+          rawName === 'Regular Diet' ||
+          rawName === '算我正常吃' ||
+          rawName === '算我正常食' ||
+          rawName === '歷史均值' ||
+          rawName === '历史均值' ||
+          rawName === 'Past Average' ||
+          rawName === 'Historical Average';
+        if (isGeneric) {
+          if ('foodName' in entry) {
+            delete entry.foodName;
+            changed = true;
+          }
+        } else if (!entry.customTitle) {
+          entry.customTitle = rawName;
+          delete entry.foodName;
+          changed = true;
+        }
+      }
+      // 處理 estimate / placeholder
+      else if (entry.isPlaceholder || entry.entryType === 'estimate') {
+        if (entry.entryType !== 'estimate') {
+          entry.entryType = 'estimate';
+          changed = true;
+        }
+        if (!entry.scenario) {
+          const inferred = inferDiningScenario(
+            entry.calories || 0,
+            entry.carbs,
+            entry.protein,
+            entry.fat
+          );
+          entry.scenario = inferred.id;
+          changed = true;
+        }
+        if ('quantity' in entry) {
+          delete (entry as any).quantity;
+          changed = true;
+        }
+        if ('unit' in entry) {
+          delete (entry as any).unit;
+          changed = true;
+        }
+        const rawName = entry.foodName?.trim() || '';
+        const isGeneric =
+          !rawName ||
+          rawName === '快速估算' ||
+          rawName === '快速粗估' ||
+          rawName === 'Quick Estimate' ||
+          rawName === '常規' ||
+          Object.values(DINING_SCENARIOS).some(
+            (sc) => sc.id === rawName || sc.defaultName === rawName
+          );
+        if (isGeneric) {
+          if ('foodName' in entry) {
+            delete entry.foodName;
+            changed = true;
+          }
+        } else if (!entry.customTitle) {
+          entry.customTitle = rawName;
+          delete entry.foodName;
+          changed = true;
+        }
+      }
+    }
+  }
+  return changed;
+}
 
 export class ZenfitDatabase extends Dexie {
   foods!: Table<FoodItem>;
@@ -888,6 +988,8 @@ export class ZenfitDatabase extends Dexie {
             }
           }
         }
+        const archetypeChanged = migrateDailyDietLogEntriesToArchetype(log);
+        if (archetypeChanged) changed = true;
         if (changed) {
           await tx.table('daily_diet_logs').put(log);
         }
@@ -1117,6 +1219,18 @@ export class ZenfitDatabase extends Dexie {
           });
           existingIds.add(food.id);
           existingNames.add(food.name.trim());
+        }
+      }
+    });
+
+    this.version(22).upgrade(async (tx) => {
+      // 升級至版本 22：系統分類條目 (System Entry Archetype) 全域平滑遷移
+      // 徹底重構歷史均值 (as_planned) 與快速估算 (estimate) 的存儲架構，移除虛構 quantity 與 unit
+      const dailyLogs = await tx.table('daily_diet_logs').toArray();
+      for (const log of dailyLogs) {
+        const changed = migrateDailyDietLogEntriesToArchetype(log);
+        if (changed) {
+          await tx.table('daily_diet_logs').put(log);
         }
       }
     });

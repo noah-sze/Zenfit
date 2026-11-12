@@ -70,6 +70,7 @@ export function EditRecipeLogDialog({
     anchorEl?: HTMLElement | null;
   } | null>(null);
   const initialKeypadValueRef = useRef<number>(0);
+  const isKeypadConfirmedRef = useRef(false);
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
@@ -77,20 +78,23 @@ export function EditRecipeLogDialog({
   // 初始化食材清單與拉取關聯 FoodItem 基準資料
   useEffect(() => {
     if (open && logs.length > 0) {
-      const initRows: EditableRecipeIngredient[] = logs.map((log) => ({
-        id: log.id,
-        originalLogId: log.id,
-        foodId: log.foodId,
-        foodName: log.foodName || '未知食材',
-        quantity: log.quantity,
-        unit: log.unit || 'g',
-        baseRatio: log.quantity > 0 ? {
-          calories: (log.calories || 0) / log.quantity,
-          carbs: (log.carbs || 0) / log.quantity,
-          protein: (log.protein || 0) / log.quantity,
-          fat: (log.fat || 0) / log.quantity,
-        } : undefined,
-      }));
+      const initRows: EditableRecipeIngredient[] = logs.map((log) => {
+        const qty = log.quantity ?? 100;
+        return {
+          id: log.id,
+          originalLogId: log.id,
+          foodId: log.foodId,
+          foodName: log.foodName || '未知食材',
+          quantity: qty,
+          unit: log.unit || 'g',
+          baseRatio: qty > 0 ? {
+            calories: (log.calories || 0) / qty,
+            carbs: (log.carbs || 0) / qty,
+            protein: (log.protein || 0) / qty,
+            fat: (log.fat || 0) / qty,
+          } : undefined,
+        };
+      });
 
       // 異步拉取所有已知 foodId 的最新基準 FoodItem
       const foodIds = logs.map((l) => l.foodId).filter(Boolean) as string[];
@@ -172,6 +176,7 @@ export function EditRecipeLogDialog({
     if (!row) return;
     triggerHaptic('selection');
     initialKeypadValueRef.current = row.quantity;
+    isKeypadConfirmedRef.current = false;
     setKeypadConfig({
       index,
       title: row.foodName,
@@ -191,6 +196,7 @@ export function EditRecipeLogDialog({
   }, [keypadConfig]);
 
   const handleKeypadConfirm = useCallback((val: number) => {
+    isKeypadConfirmedRef.current = true;
     setIngredients((prev) => {
       if (!keypadConfig) return prev;
       return prev.map((row, idx) =>
@@ -201,6 +207,7 @@ export function EditRecipeLogDialog({
   }, [keypadConfig]);
 
   const handleKeypadCancel = useCallback(() => {
+    if (isKeypadConfirmedRef.current) return;
     if (!keypadConfig) return;
     const prevVal = initialKeypadValueRef.current;
     setIngredients((prev) =>
@@ -457,7 +464,13 @@ export function EditRecipeLogDialog({
         <NumericKeypadDialog
           open={!!keypadConfig}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setKeypadConfig(null);
+              }
+            }
           }}
           title={keypadConfig.title}
           value={keypadConfig.value}

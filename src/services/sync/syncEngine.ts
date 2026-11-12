@@ -157,7 +157,7 @@ export function setPushedTimes(times: Record<string, string>): void {
 /**
  * 標準化時間戳轉為數字毫秒，保證數值與 ISO 字串能準確對齊比較
  */
-function getNormalizedTimestamp(ts?: number | string): number {
+export function getNormalizedTimestamp(ts?: number | string): number {
   if (typeof ts === 'number') return ts;
   if (typeof ts === 'string' && ts) {
     const parsed = new Date(ts).getTime();
@@ -216,6 +216,70 @@ export function mergeEntities<T extends { id: string; updatedAt?: number | strin
   for (const remoteItem of remoteList) {
     if (!localMap.has(remoteItem.id)) {
       mergedMap.set(remoteItem.id, remoteItem);
+      hasLocalChanges = true;
+    }
+  }
+
+  return {
+    merged: Array.from(mergedMap.values()),
+    hasLocalChanges,
+    hasRemoteChanges,
+  };
+}
+
+/**
+ * 依日期 (date) 為單一真理源合併 DailyDietLog，支援版本號與時間戳仲裁
+ * 關鍵特性：
+ * 1. 衝突時保留本地的 id，確保符合 Dexie &date 唯一約束與既有主鍵，防止 ConstraintError
+ * 2. 優先比對 rev，其次比對 updatedAt
+ */
+export function mergeDietLogsByDate(
+  localList: DailyDietLog[],
+  remoteList: DailyDietLog[]
+): { merged: DailyDietLog[]; hasLocalChanges: boolean; hasRemoteChanges: boolean } {
+  const localMap = new Map<string, DailyDietLog>(localList.map((item) => [item.date, item]));
+  const remoteMap = new Map<string, DailyDietLog>(remoteList.map((item) => [item.date, item]));
+  const mergedMap = new Map<string, DailyDietLog>();
+
+  let hasLocalChanges = false;
+  let hasRemoteChanges = false;
+
+  for (const localItem of localList) {
+    const remoteItem = remoteMap.get(localItem.date);
+    if (!remoteItem) {
+      mergedMap.set(localItem.date, localItem);
+      hasRemoteChanges = true;
+    } else {
+      const localRev = localItem.rev || 1;
+      const remoteRev = remoteItem.rev || 1;
+      const localTime = getNormalizedTimestamp(localItem.updatedAt);
+      const remoteTime = getNormalizedTimestamp(remoteItem.updatedAt);
+
+      // 1. 優先比對版本號
+      if (remoteRev > localRev) {
+        mergedMap.set(localItem.date, { ...remoteItem, id: localItem.id });
+        hasLocalChanges = true;
+      } else if (localRev > remoteRev) {
+        mergedMap.set(localItem.date, localItem);
+        hasRemoteChanges = true;
+      } else {
+        // 2. 版本號相同時以最新時間戳裁決
+        if (remoteTime > localTime) {
+          mergedMap.set(localItem.date, { ...remoteItem, id: localItem.id });
+          hasLocalChanges = true;
+        } else if (localTime > remoteTime) {
+          mergedMap.set(localItem.date, localItem);
+          hasRemoteChanges = true;
+        } else {
+          mergedMap.set(localItem.date, localItem);
+        }
+      }
+    }
+  }
+
+  for (const remoteItem of remoteList) {
+    if (!localMap.has(remoteItem.date)) {
+      mergedMap.set(remoteItem.date, remoteItem);
       hasLocalChanges = true;
     }
   }
@@ -328,8 +392,8 @@ export async function uploadAllLocalData(
       count: dLog.entries.length,
       updatedAt: maxUpdated,
     };
-    pushedTimes[`food_log_${bucket}`] = now;
-    pushedTimes[`food_log_${bucket}_count`] = String(dLog.entries.length);
+    pushedTimes[`diet_log_${bucket}`] = now;
+    pushedTimes[`diet_log_${bucket}_count`] = String(dLog.entries.length);
   }
   const foodManifestData: BucketManifest = {
     version: 1,
@@ -642,6 +706,22 @@ export async function executeSync(
         if (chunk?.length) allBodyMetrics.push(...chunk);
       }
 
+      // 飲食分卷去重（保留最新者），避免 bulkPut 觸發 &date 唯一約束衝突
+      const dedupedDietLogsMap = new Map<string, DailyDietLog>();
+      for (const log of allDailyDietLogs) {
+        const existing = dedupedDietLogsMap.get(log.date);
+        if (!existing) {
+          dedupedDietLogsMap.set(log.date, log);
+        } else {
+          const existingTime = getNormalizedTimestamp(existing.updatedAt);
+          const logTime = getNormalizedTimestamp(log.updatedAt);
+          if (logTime >= existingTime) {
+            dedupedDietLogsMap.set(log.date, log);
+          }
+        }
+      }
+      const dedupedDailyDietLogs = Array.from(dedupedDietLogsMap.values());
+
       // 原子清空與全量覆寫寫入
       await db.transaction(
         'rw',
@@ -674,7 +754,7 @@ export async function executeSync(
           if (baseInfos?.length) await db.user_base_info.bulkPut(baseInfos.map(sanitizeUserBaseInfo));
           if (foods?.length) await db.foods.bulkPut(foods);
           if (recipes?.length) await db.recipes.bulkPut(recipes.map(sanitizeRecipe));
-          if (allDailyDietLogs.length) await db.daily_diet_logs.bulkPut(allDailyDietLogs);
+          if (dedupedDailyDietLogs.length) await db.daily_diet_logs.bulkPut(dedupedDailyDietLogs);
           if (exercises?.length) await db.exercises.bulkPut(exercises);
           if (equipments?.length) await db.equipments.bulkPut(equipments);
           if (routines?.length) await db.routines.bulkPut(routines);
@@ -759,7 +839,7 @@ export async function executeSync(
       const remoteList = (await downloadJsonFile<DietPlan[]>('/nutrition/diet_plans.json')) || [];
       for (const p of remoteList) {
         if (!p.date) continue;
-        const existing = await db.daily_diet_logs.get(p.date);
+        const existing = await db.daily_diet_logs.where('date').equals(p.date).first();
         if (existing) {
           const remoteUpdated = getNormalizedTimestamp(p.updatedAt);
           const localUpdated = getNormalizedTimestamp(existing.updatedAt);
@@ -864,7 +944,7 @@ export async function executeSync(
             remoteLog = sanitizeDailyDietLog(rawRemote);
           }
 
-          const localLog = await db.daily_diet_logs.get(bucket);
+          const localLog = await db.daily_diet_logs.where('date').equals(bucket).first();
           if (!localLog) {
             await db.daily_diet_logs.put(remoteLog);
             hasLocalModified = true;
@@ -872,7 +952,11 @@ export async function executeSync(
             const remoteUpdated = getNormalizedTimestamp(remoteLog.updatedAt);
             const localUpdated = getNormalizedTimestamp(localLog.updatedAt);
             if (remoteUpdated > localUpdated) {
-              await db.daily_diet_logs.put(remoteLog);
+              // 關鍵：保留本地的 id，確保符合 &date 唯一索引更新，避免 ConstraintError
+              await db.daily_diet_logs.put({
+                ...remoteLog,
+                id: localLog.id,
+              });
               hasLocalModified = true;
             } else if (localUpdated > remoteUpdated) {
               hasRemoteModified = true;

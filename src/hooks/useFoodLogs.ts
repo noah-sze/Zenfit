@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
-import type { DailyDietLog, FoodLog, HydratedFoodLog, MealType } from '@/types';
+import type { DailyDietLog, FoodLog, FoodLogEntryType, HydratedFoodLog, MealType } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateFoodLogNutrients } from '@/utils/nutritionMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
@@ -15,10 +15,15 @@ export function useFoodLogs(date: string) {
       const foodMap = new Map(allFoods.map((f) => [f.id, f]));
 
       const hydratedLogs: HydratedFoodLog[] = rawEntries.map((log) => {
-        const food = log.foodId ? foodMap.get(log.foodId) : undefined;
+        const isSystemEntry =
+          log.entryType === 'estimate' ||
+          log.entryType === 'as_planned' ||
+          log.isPlaceholder ||
+          log.isAsPlanned;
+        const food = (!isSystemEntry && log.foodId) ? foodMap.get(log.foodId) : undefined;
         // 若有對應食材實體，依據真理源動態推算營養素；無實體時回退粗估/配額快照或保底 0
         const computedNutrients = food
-          ? calculateFoodLogNutrients(food, log.quantity, log.unit)
+          ? calculateFoodLogNutrients(food, log.quantity || 0, log.unit || 'g')
           : {
               calories: log.calories || 0,
               protein: log.protein || 0,
@@ -28,10 +33,15 @@ export function useFoodLogs(date: string) {
 
         const displayName = food
           ? formatFoodDisplayName(food)
-          : (log.foodName || '未知食材');
+          : (log.customTitle || log.foodName || '未知食材');
+
+        const entryType: FoodLogEntryType =
+          log.entryType ||
+          (log.isAsPlanned ? 'as_planned' : log.isPlaceholder ? 'estimate' : 'item');
 
         return {
           ...log,
+          entryType,
           date,
           foodName: displayName,
           calories: computedNutrients.calories,
@@ -98,21 +108,32 @@ export function useFoodLogs(date: string) {
     const dailyLog = await getOrCreateDailyLog(targetDate);
     const now = Date.now();
     const newLogId = uuidv4();
+    const entryType: FoodLogEntryType =
+      data.entryType ||
+      (data.isAsPlanned ? 'as_planned' : data.isPlaceholder ? 'estimate' : 'item');
     const newEntry: FoodLog = {
       id: newLogId,
       date: targetDate,
       mealType: data.mealType,
+      entryType,
       foodId: data.foodId,
+      ...(entryType === 'item'
+        ? {
+            quantity: data.quantity ?? 100,
+            unit: data.unit ?? 'g',
+            ...(data.bundleId ? { bundleId: data.bundleId } : {}),
+          }
+        : {
+            ...(data.scenario ? { scenario: data.scenario } : {}),
+            ...(data.customTitle ? { customTitle: data.customTitle } : {}),
+          }),
       foodName: data.foodName,
       calories: data.calories,
       carbs: data.carbs,
       protein: data.protein,
       fat: data.fat,
-      isPlaceholder: data.isPlaceholder,
-      isAsPlanned: data.isAsPlanned,
-      quantity: data.quantity,
-      unit: data.unit,
-      bundleId: data.bundleId,
+      isPlaceholder: data.isPlaceholder ?? (entryType === 'estimate'),
+      isAsPlanned: data.isAsPlanned ?? (entryType === 'as_planned'),
       createdAt: now,
       updatedAt: now,
     };
@@ -124,6 +145,8 @@ export function useFoodLogs(date: string) {
 
   const addQuickPlaceholder = async (data: {
     mealType: MealType;
+    scenario?: string;
+    customTitle?: string;
     foodName?: string;
     calories: number;
     carbs?: number;
@@ -135,18 +158,24 @@ export function useFoodLogs(date: string) {
     const dailyLog = await getOrCreateDailyLog(targetDate);
     const now = Date.now();
     const newLogId = uuidv4();
+    const customTitle =
+      data.customTitle?.trim() ||
+      (data.foodName &&
+      !['快速估算', '快速粗估', 'Quick Estimate', '常規'].includes(data.foodName.trim())
+        ? data.foodName.trim()
+        : undefined);
     const newEntry: FoodLog = {
       id: newLogId,
       date: targetDate,
       mealType: data.mealType,
-      foodName: data.foodName?.trim() || '快速粗估',
+      entryType: 'estimate',
+      scenario: data.scenario || 'balanced',
+      ...(customTitle ? { customTitle } : {}),
       calories: Math.round(data.calories),
       carbs: data.carbs !== undefined ? Math.round(data.carbs * 10) / 10 : undefined,
       protein: data.protein !== undefined ? Math.round(data.protein * 10) / 10 : undefined,
       fat: data.fat !== undefined ? Math.round(data.fat * 10) / 10 : undefined,
       isPlaceholder: true,
-      quantity: 1,
-      unit: '份',
       createdAt: now,
       updatedAt: now,
     };
@@ -159,24 +188,40 @@ export function useFoodLogs(date: string) {
   const addAsPlannedMeal = async (
     mealType: MealType,
     budget: { calories: number; carbs: number; protein: number; fat: number },
-    options?: { date?: string; foodName?: string }
+    options?: { date?: string; foodName?: string; customTitle?: string }
   ) => {
     const targetDate = options?.date || date;
     const dailyLog = await getOrCreateDailyLog(targetDate);
     const now = Date.now();
     const newLogId = uuidv4();
+    const customTitle = options?.customTitle?.trim() || options?.foodName?.trim();
+    const isGeneric =
+      !customTitle ||
+      customTitle.endsWith('配額') ||
+      customTitle.endsWith('配额') ||
+      customTitle.endsWith('Budget') ||
+      customTitle === '正常飲食' ||
+      customTitle === '正常饮食' ||
+      customTitle === 'Regular Diet' ||
+      customTitle === '算我正常吃' ||
+      customTitle === '算我正常食' ||
+      customTitle === '歷史均值' ||
+      customTitle === '历史均值' ||
+      customTitle === 'Past Average' ||
+      customTitle === 'Historical Average';
+    const finalCustomTitle = isGeneric ? undefined : customTitle;
+
     const newEntry: FoodLog = {
       id: newLogId,
       date: targetDate,
       mealType,
-      foodName: options?.foodName,
+      entryType: 'as_planned',
+      ...(finalCustomTitle ? { customTitle: finalCustomTitle } : {}),
       calories: Math.round(budget.calories),
       carbs: Math.round(budget.carbs * 10) / 10,
       protein: Math.round(budget.protein * 10) / 10,
       fat: Math.round(budget.fat * 10) / 10,
       isAsPlanned: true,
-      quantity: 1,
-      unit: '份',
       createdAt: now,
       updatedAt: now,
     };
@@ -212,24 +257,45 @@ export function useFoodLogs(date: string) {
   };
 
   const updateFoodLog = async (id: string, updates: Partial<Omit<FoodLog, 'id' | 'createdAt'>>) => {
-    const dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
-    if (!dailyLog) return;
-    const now = Date.now();
-    const idx = dailyLog.entries.findIndex((e) => e.id === id);
-    if (idx !== -1) {
-      dailyLog.entries[idx] = {
-        ...dailyLog.entries[idx],
-        ...updates,
-        updatedAt: now,
-      };
-      dailyLog.updatedAt = now;
-      await db.daily_diet_logs.put(dailyLog);
+    let dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
+    let idx = dailyLog ? dailyLog.entries.findIndex((e) => e.id === id) : -1;
+    if (idx === -1) {
+      const allDailyLogs = await db.daily_diet_logs.toArray();
+      for (const dLog of allDailyLogs) {
+        const foundIdx = dLog.entries.findIndex((e) => e.id === id);
+        if (foundIdx !== -1) {
+          dailyLog = dLog;
+          idx = foundIdx;
+          break;
+        }
+      }
     }
+    if (!dailyLog || idx === -1) return;
+    const now = Date.now();
+    dailyLog.entries[idx] = {
+      ...dailyLog.entries[idx],
+      ...updates,
+      updatedAt: now,
+    };
+    dailyLog.updatedAt = now;
+    await db.daily_diet_logs.put(dailyLog);
   };
 
   const deleteFoodLog = async (id: string) => {
-    const dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
-    if (!dailyLog) return;
+    let dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
+    let idx = dailyLog ? dailyLog.entries.findIndex((e) => e.id === id) : -1;
+    if (idx === -1) {
+      const allDailyLogs = await db.daily_diet_logs.toArray();
+      for (const dLog of allDailyLogs) {
+        const foundIdx = dLog.entries.findIndex((e) => e.id === id);
+        if (foundIdx !== -1) {
+          dailyLog = dLog;
+          idx = foundIdx;
+          break;
+        }
+      }
+    }
+    if (!dailyLog || idx === -1) return;
     const now = Date.now();
     dailyLog.entries = dailyLog.entries.filter((e) => e.id !== id);
     dailyLog.updatedAt = now;

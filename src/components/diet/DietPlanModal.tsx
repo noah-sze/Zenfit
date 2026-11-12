@@ -60,6 +60,7 @@ export function DietPlanModal({
   const [activeKeypadKey, setActiveKeypadKey] = useState<MacroKey | null>(null);
   const anchorElRef = useRef<HTMLElement | null>(null);
   const initialValueRef = useRef<number>(0);
+  const isKeypadConfirmedRef = useRef(false);
 
   // 計算客觀生理常數 (BMR)
   const age = profile.birthDate
@@ -191,6 +192,7 @@ export function DietPlanModal({
 
     const curVal = macro === 'carbs' ? carbsPercent : macro === 'protein' ? proteinPercent : fatPercent;
     initialValueRef.current = curVal;
+    isKeypadConfirmedRef.current = false;
     setIsKeypadOpen(true);
   };
 
@@ -208,6 +210,7 @@ export function DietPlanModal({
 
   // 鍵盤確認提交
   const handleKeypadConfirm = useCallback((val: number) => {
+    isKeypadConfirmedRef.current = true;
     const clamped = Math.max(0, Math.min(100, Math.round(val)));
     if (activeKeypadKey === 'carbs') {
       setCarbsPercent(clamped);
@@ -222,6 +225,7 @@ export function DietPlanModal({
 
   // 鍵盤取消
   const handleKeypadCancel = useCallback(() => {
+    if (isKeypadConfirmedRef.current) return;
     if (activeKeypadKey === 'carbs') {
       setCarbsPercent(initialValueRef.current);
     } else if (activeKeypadKey === 'protein') {
@@ -488,7 +492,14 @@ export function DietPlanModal({
         <NumericKeypadDialog
           open={isKeypadOpen}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setIsKeypadOpen(false);
+                setActiveKeypadKey(null);
+              }
+            }
           }}
           title={getKeypadTitle(activeKeypadKey)}
           value={getKeypadCurrentValue(activeKeypadKey)}

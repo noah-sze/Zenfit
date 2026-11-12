@@ -25,13 +25,13 @@ import { MealAddActionPopover } from '@/components/diet/MealAddActionPopover';
 import { CopyMealDialog } from '@/components/diet/CopyMealDialog';
 import {
   QuickPlaceholderDialog,
-  resolvePlaceholderDisplayName,
+  type DiningScenarioId,
 } from '@/components/diet/QuickPlaceholderDialog';
 import { FoodRecipeSelectDialog } from '@/components/food/FoodRecipeSelectDialog';
 import { RecipeStagingDialog } from '@/components/food/RecipeStagingDialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
 import { calculateIngredientMacros } from '@/utils/recipeMath';
-import { formatFoodDisplayName, resolveAsPlannedDisplayName } from '@/utils/foodNaming';
+import { formatFoodDisplayName, resolveFoodLogTitle } from '@/utils/foodNaming';
 import { calculateMealBudget } from '@/utils/nutritionMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
@@ -203,12 +203,14 @@ export default function Diet() {
   const handleSaveFoodLog = async (
     id: string,
     updates: {
-      quantity: number;
+      quantity?: number;
       calories?: number;
       carbs?: number;
       protein?: number;
       fat?: number;
       foodName?: string;
+      scenario?: string;
+      customTitle?: string;
     }
   ) => {
     await updateFoodLog(id, updates);
@@ -244,14 +246,19 @@ export default function Diet() {
   };
 
   const handleConfirmPlaceholder = async (data: {
-    foodName: string;
+    scenario: DiningScenarioId;
+    customTitle?: string;
     calories: number;
     carbs?: number;
     protein?: number;
     fat?: number;
+    foodName?: string;
   }) => {
     if (editingPlaceholderLog) {
       await updateFoodLog(editingPlaceholderLog.id, {
+        entryType: 'estimate',
+        scenario: data.scenario,
+        customTitle: data.customTitle,
         foodName: data.foodName,
         calories: data.calories,
         carbs: data.carbs,
@@ -262,6 +269,8 @@ export default function Diet() {
     } else if (placeholderMealType) {
       await addQuickPlaceholder({
         mealType: placeholderMealType,
+        scenario: data.scenario,
+        customTitle: data.customTitle,
         foodName: data.foodName,
         calories: data.calories,
         carbs: data.carbs,
@@ -609,7 +618,7 @@ export default function Diet() {
                       key={item.id}
                       onClick={() => {
                         triggerHaptic('selection');
-                        if (item.isPlaceholder) {
+                        if (item.entryType === 'estimate' || item.isPlaceholder) {
                           setEditingPlaceholderLog(item);
                           setPlaceholderMealType(item.mealType);
                         } else {
@@ -621,33 +630,29 @@ export default function Diet() {
                       {/* 左側：品名與份量熱量副標 */}
                       <div className="flex-1 min-w-0 pr-3 select-none">
                         <div className="truncate text-foreground font-medium text-sm flex items-center gap-1.5">
-                          {item.isPlaceholder && (
+                          {(item.entryType === 'estimate' || item.isPlaceholder) && (
                             <span className="px-1.5 py-0.5 rounded-md border border-border bg-muted/60 text-muted-foreground text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
                               <Zap className="size-2.5 stroke-[2.2]" />
                               <span>{t('diet.placeholder.badge', '估算')}</span>
                             </span>
                           )}
-                          {item.isAsPlanned && (
+                          {(item.entryType === 'as_planned' || item.isAsPlanned) && (
                             <span className="px-1.5 py-0.5 rounded-md border border-border bg-muted/60 text-muted-foreground text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
                               <Zap className="size-2.5 stroke-[2.2]" />
                               <span>{t('diet.asPlanned.badge', '配額')}</span>
                             </span>
                           )}
                           <span className="truncate">
-                            {item.isPlaceholder
-                              ? resolvePlaceholderDisplayName(item, t)
-                              : item.isAsPlanned
-                              ? resolveAsPlannedDisplayName(item, t('diet.asPlanned.defaultName', '歷史均值'))
-                              : item.foodName}
+                            {resolveFoodLogTitle(item, t)}
                           </span>
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                          {item.isPlaceholder || item.isAsPlanned ? (
+                          {item.entryType === 'estimate' || item.entryType === 'as_planned' || item.isPlaceholder || item.isAsPlanned ? (
                             <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
                           ) : (
                             <>
                               <span>
-                                {formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}
+                                {formatFoodServing(item.quantity || 0, item.unit || 'g', foodWeightUnit, foodVolumeUnit).formatted}
                               </span>
                               <span className="text-border">·</span>
                               <span
@@ -722,6 +727,8 @@ export default function Diet() {
           editingPlaceholderLog
             ? {
                 id: editingPlaceholderLog.id,
+                scenario: editingPlaceholderLog.scenario,
+                customTitle: editingPlaceholderLog.customTitle,
                 foodName: editingPlaceholderLog.foodName,
                 calories: editingPlaceholderLog.calories,
                 carbs: editingPlaceholderLog.carbs,

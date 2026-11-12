@@ -13,7 +13,7 @@ import { ensureDailyDietMeta } from '@/hooks/useDietPlan';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy } from '@/utils/unitMath';
 import { calculateFoodLogNutrients } from '@/utils/nutritionMath';
-import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { resolveFoodLogTitle } from '@/utils/foodNaming';
 import { cn, formatDisplayAmount } from '@/lib/utils';
 import { CopyMealDatePickerDialog } from './CopyMealDatePickerDialog';
 import type { MealType, FoodLog, FoodItem } from '@/types';
@@ -96,26 +96,25 @@ export function CopyMealDialog({
     const foodMap = new Map(allFoods.map((f) => [f.id, f]));
 
     return rawEntries.map((log) => {
-      const food = log.foodId ? foodMap.get(log.foodId) : undefined;
+      const isSystem = log.entryType === 'estimate' || log.entryType === 'as_planned' || log.isPlaceholder || log.isAsPlanned;
+      const food = (!isSystem && log.foodId) ? foodMap.get(log.foodId) : undefined;
       const raw = log as unknown as { foodName?: string; calories?: number; carbs?: number; protein?: number; fat?: number };
       const computed = food
-        ? calculateFoodLogNutrients(food, log.quantity, log.unit)
+        ? calculateFoodLogNutrients(food, log.quantity || 0, log.unit || 'g')
         : {
             calories: raw.calories || 0,
             protein: raw.protein || 0,
             carbs: raw.carbs || 0,
             fat: raw.fat || 0,
           };
-      const displayName = food
-        ? formatFoodDisplayName(food)
-        : (raw.foodName || t('common.unknownFood', '未知食材'));
+      const displayName = resolveFoodLogTitle(log, t, food);
 
       return {
         ...log,
         foodName: displayName,
         calories: computed.calories,
         baseFood: food || null,
-        baseRatio: log.quantity > 0 ? {
+        baseRatio: (log.quantity && log.quantity > 0) ? {
           calories: (computed.calories || 0) / log.quantity,
           carbs: (computed.carbs || 0) / log.quantity,
           protein: (computed.protein || 0) / log.quantity,
@@ -148,6 +147,7 @@ export function CopyMealDialog({
     anchorEl?: HTMLElement | null;
   } | null>(null);
   const initialKeypadValueRef = useRef<number>(0);
+  const isKeypadConfirmedRef = useRef(false);
 
   // 重新計算單項熱量純函數
   const recalculateCalories = useCallback((item: CopyableMealItem, newQty: number): number => {
@@ -163,14 +163,15 @@ export function CopyMealDialog({
   // 打開數字鍵盤編輯用量
   const handleOpenKeypad = (index: number, anchorEl: HTMLElement) => {
     const row = items[index];
-    if (!row) return;
+    if (!row || row.quantity === undefined) return;
     triggerHaptic('selection');
     initialKeypadValueRef.current = row.quantity;
+    isKeypadConfirmedRef.current = false;
     setKeypadConfig({
       index,
       title: row.foodName,
       value: row.quantity,
-      unit: row.unit,
+      unit: row.unit || 'g',
       anchorEl,
     });
   };
@@ -191,6 +192,7 @@ export function CopyMealDialog({
   }, [keypadConfig, recalculateCalories]);
 
   const handleKeypadConfirm = useCallback((val: number) => {
+    isKeypadConfirmedRef.current = true;
     setItems((prev) => {
       if (!keypadConfig) return prev;
       return prev.map((row, idx) => {
@@ -207,6 +209,7 @@ export function CopyMealDialog({
   }, [keypadConfig, recalculateCalories]);
 
   const handleKeypadCancel = useCallback(() => {
+    if (isKeypadConfirmedRef.current) return;
     if (!keypadConfig) return;
     const prevVal = initialKeypadValueRef.current;
     setItems((prev) =>
@@ -314,10 +317,31 @@ export function CopyMealDialog({
           newBundleId = bundleIdMap.get(item.bundleId);
         }
 
+        const isSystem = item.entryType === 'estimate' || item.entryType === 'as_planned' || item.isPlaceholder || item.isAsPlanned;
+        if (isSystem) {
+          return {
+            id: uuidv4(),
+            date: targetDate,
+            mealType: targetMealType,
+            entryType: item.entryType || (item.isAsPlanned ? 'as_planned' : 'estimate'),
+            scenario: item.scenario,
+            customTitle: item.customTitle,
+            calories: item.calories,
+            carbs: item.carbs,
+            protein: item.protein,
+            fat: item.fat,
+            isPlaceholder: item.isPlaceholder,
+            isAsPlanned: item.isAsPlanned,
+            createdAt: now,
+            updatedAt: now,
+          };
+        }
+
         return {
           id: uuidv4(),
           date: targetDate,
           mealType: targetMealType,
+          entryType: 'item',
           foodId: item.foodId,
           quantity: item.quantity,
           unit: item.unit,
@@ -436,25 +460,33 @@ export function CopyMealDialog({
                           </span>
                         </div>
 
-                        {/* 右側結構：常用數字輸入框膠囊 */}
-                        <button
-                          type="button"
-                          disabled={!isSelected}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isSelected) return;
-                            handleOpenKeypad(index, e.currentTarget);
-                          }}
-                          className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0 disabled:pointer-events-none"
-                        >
-                          <span className="font-bold text-foreground">
-                            {formatDisplayAmount(String(item.quantity)) || '0'}
-                          </span>
-                          <span className="text-muted-foreground text-[11px]">
-                            {item.unit}
-                          </span>
-                          <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                        </button>
+                        {/* 右側結構：常用數字輸入框膠囊 / 系統條目熱量標籤 */}
+                        {item.entryType === 'estimate' || item.entryType === 'as_planned' || item.isPlaceholder || item.isAsPlanned ? (
+                          <div className="h-7 px-2.5 rounded-full border border-border/80 bg-muted/40 font-mono text-xs flex items-center shrink-0">
+                            <span className="font-bold text-foreground">
+                              {formatEnergy(item.calories || 0, energyUnit).formatted}
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={!isSelected}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isSelected) return;
+                              handleOpenKeypad(index, e.currentTarget);
+                            }}
+                            className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0 disabled:pointer-events-none"
+                          >
+                            <span className="font-bold text-foreground">
+                              {formatDisplayAmount(String(item.quantity)) || '0'}
+                            </span>
+                            <span className="text-muted-foreground text-[11px]">
+                              {item.unit}
+                            </span>
+                            <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -495,7 +527,13 @@ export function CopyMealDialog({
         <NumericKeypadDialog
           open={!!keypadConfig}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setKeypadConfig(null);
+              }
+            }
           }}
           title={keypadConfig.title}
           value={keypadConfig.value}

@@ -49,6 +49,8 @@ export interface FoodRecipe {
   rev?: number;
 }
 
+export type FoodLogEntryType = 'item' | 'estimate' | 'as_planned';
+
 /**
  * 飲食記錄唯一客觀事實表 (SSOT Ground Truth)
  * 只記錄物理行為事實：何時、何餐、哪種食材 ID、攝入份量與單位
@@ -58,17 +60,29 @@ export interface FoodLog {
   id: string;
   date: string; // YYYY-MM-DD
   mealType: MealType;
-  foodId?: string; // 若為自訂粗估/佔位條目，此處為 undefined
-  foodName?: string; // 自訂佔位條目或配額名稱（如 "快速粗估"、"外食火鍋"、"正常飲食配額"）
-  calories?: number; // 粗估直接指定的熱量
-  carbs?: number; // 粗估直接指定的碳水（g）
-  protein?: number; // 粗估直接指定的蛋白質（g）
-  fat?: number; // 粗估直接指定的脂肪（g）
-  isPlaceholder?: boolean; // 標記為佔位粗估
-  isAsPlanned?: boolean; // 標記為算我正常吃配額
-  quantity: number;
-  unit: string;
+  entryType?: FoodLogEntryType; // 預設為 'item'
+
+  // 實體食材 (entryType === 'item')
+  foodId?: string;
+  quantity?: number;
+  unit?: string;
   bundleId?: string; // 所屬菜餚 ID (Recipe ID)
+
+  // 系統條目 (entryType === 'estimate' | 'as_planned')
+  scenario?: string; // e.g. 'balanced', 'hotpot', 'bento' 等 DiningScenarioId
+  customTitle?: string; // 僅當使用者手動修改自訂名稱時存在
+
+  // 宏量營養素
+  calories?: number;
+  carbs?: number;
+  protein?: number;
+  fat?: number;
+
+  // 向下相容過渡標記 (可選)
+  isPlaceholder?: boolean;
+  isAsPlanned?: boolean;
+  foodName?: string;
+
   createdAt: number;
   updatedAt: number;
   rev?: number;
@@ -291,6 +305,7 @@ export interface BodyMetric {
   waistCm?: number;
   hipsCm?: number;
   chestCm?: number;
+  shouldersCm?: number; // 肩寬 (cm)
   armsCm?: number;
   thighsCm?: number;
   calvesCm?: number;

@@ -182,6 +182,7 @@ export function CopyWorkoutDialog({
     anchorEl?: HTMLElement | null;
   } | null>(null);
   const initialKeypadSetsRef = useRef<WorkoutSet[]>([]);
+  const isKeypadConfirmedRef = useRef(false);
 
   // 打開數字鍵盤編輯組數
   const handleOpenKeypad = (index: number, anchorEl: HTMLElement) => {
@@ -189,6 +190,7 @@ export function CopyWorkoutDialog({
     if (!row) return;
     triggerHaptic('selection');
     initialKeypadSetsRef.current = row.sets;
+    isKeypadConfirmedRef.current = false;
     setKeypadConfig({
       index,
       title: row.exerciseName,
@@ -213,6 +215,7 @@ export function CopyWorkoutDialog({
   }, [keypadConfig]);
 
   const handleKeypadConfirm = useCallback((val: number) => {
+    isKeypadConfirmedRef.current = true;
     setItems((prev) => {
       if (!keypadConfig) return prev;
       return prev.map((row, idx) => {
@@ -228,6 +231,7 @@ export function CopyWorkoutDialog({
   }, [keypadConfig]);
 
   const handleKeypadCancel = useCallback(() => {
+    if (isKeypadConfirmedRef.current) return;
     if (!keypadConfig) return;
     const original = initialKeypadSetsRef.current;
     setItems((prev) =>
@@ -504,7 +508,13 @@ export function CopyWorkoutDialog({
         <NumericKeypadDialog
           open={!!keypadConfig}
           onOpenChange={(kOpen) => {
-            if (!kOpen) handleKeypadCancel();
+            if (!kOpen) {
+              if (!isKeypadConfirmedRef.current) {
+                handleKeypadCancel();
+              } else {
+                setKeypadConfig(null);
+              }
+            }
           }}
           title={keypadConfig.title}
           value={keypadConfig.value}

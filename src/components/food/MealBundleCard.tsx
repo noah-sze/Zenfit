@@ -146,7 +146,7 @@ export function MealBundleCard({
                   </div>
                   <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5 mt-0.5">
                     <span>
-                      {formatFoodServing(item.quantity, item.unit, foodWeightUnit, foodVolumeUnit).formatted}
+                      {formatFoodServing(item.quantity ?? 0, item.unit ?? 'g', foodWeightUnit, foodVolumeUnit).formatted}
                     </span>
                     <span className="text-border">·</span>
                     <span
