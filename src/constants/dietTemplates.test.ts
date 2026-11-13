@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MACRO_SPLIT_TEMPLATES,
   findMatchingTemplate,
+  getTemplateDescKey,
 } from './dietTemplates';
 
 describe('MACRO_SPLIT_TEMPLATES 核心契約與數學完整性', () => {
@@ -25,6 +26,26 @@ describe('MACRO_SPLIT_TEMPLATES 核心契約與數學完整性', () => {
       'contestPrep',
       'refeed',
     ]);
+  });
+
+  it('每個預設供能比模板皆具備有效的 descKey 說明鍵值', () => {
+    for (const tpl of MACRO_SPLIT_TEMPLATES) {
+      expect(tpl.descKey).toBeDefined();
+      expect(tpl.descKey).toMatch(/^dietPlan\.[a-zA-Z]+Desc$/);
+    }
+  });
+
+  it('getTemplateDescKey 針對各預設模板與 custom 回傳正確的 i18n 鍵值', () => {
+    expect(getTemplateDescKey('balance')).toBe('dietPlan.balanceDesc');
+    expect(getTemplateDescKey('orientalHealthy')).toBe('dietPlan.orientalHealthyDesc');
+    expect(getTemplateDescKey('mediterranean')).toBe('dietPlan.mediterraneanDesc');
+    expect(getTemplateDescKey('highProtein')).toBe('dietPlan.highProteinDesc');
+    expect(getTemplateDescKey('lowCarb')).toBe('dietPlan.lowCarbDesc');
+    expect(getTemplateDescKey('keto')).toBe('dietPlan.ketoDesc');
+    expect(getTemplateDescKey('endurance')).toBe('dietPlan.enduranceDesc');
+    expect(getTemplateDescKey('contestPrep')).toBe('dietPlan.contestPrepDesc');
+    expect(getTemplateDescKey('refeed')).toBe('dietPlan.refeedDesc');
+    expect(getTemplateDescKey('custom')).toBe('dietPlan.customDesc');
   });
 
   it('findMatchingTemplate 能夠精確匹配各主流方案', () => {
