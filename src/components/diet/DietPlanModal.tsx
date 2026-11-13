@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ChevronRight, Info } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptics';
 import {
   calculateMacrosFromSplit,
@@ -473,10 +473,6 @@ export function DietPlanModal({
 
             {/* 供能比方案說明與描述卡片 */}
             <div className="rounded-lg border border-border bg-muted/20 p-3 select-none">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1">
-                <Info className="size-3.5 text-muted-foreground stroke-[2] shrink-0" />
-                <span>{getTemplateLabel(template)}</span>
-              </div>
               <p className="text-2xs text-muted-foreground leading-relaxed">
                 {t(getTemplateDescKey(template))}
               </p>
