@@ -117,17 +117,23 @@ export function useDietPlan(date: string): UseDietPlanResult {
         : profile?.age || 25;
 
       // 純函數即時動態推算：BMR ➔ TDEE (caloriesTarget) ➔ Macro Grams
+      // 特殊規格：當活動係數為 999x（放縱）時，熱量目標固定 9999 kcal，三大營養素固定 999g
+      const isBinge = resolvedActivity === 999;
       const bmr = calculateBMR(weightKg, heightCm, gender, age);
-      const computedCalories = bmr > 0 && resolvedActivity > 0
-        ? calculateTDEE(bmr, resolvedActivity)
-        : 2000;
+      const computedCalories = isBinge
+        ? 9999
+        : bmr > 0 && resolvedActivity > 0
+          ? calculateTDEE(bmr, resolvedActivity)
+          : 2000;
 
-      const computedMacros = calculateMacrosFromSplit(
-        computedCalories,
-        resolvedSplit.carbs,
-        resolvedSplit.protein,
-        resolvedSplit.fat
-      );
+      const computedMacros = isBinge
+        ? { carbsGrams: 999, proteinGrams: 999, fatGrams: 999 }
+        : calculateMacrosFromSplit(
+            computedCalories,
+            resolvedSplit.carbs,
+            resolvedSplit.protein,
+            resolvedSplit.fat
+          );
 
       const syntheticPlan: HydratedDietPlan = {
         id: exact?.id || `inherited-${date}`,

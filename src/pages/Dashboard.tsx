@@ -61,14 +61,19 @@ export default function Dashboard() {
   const { plan: dietPlan } = useDietPlan(selectedDate);
   const { totals } = useFoodLogs(selectedDate);
 
-  const targetCalories = dietPlan.caloriesTarget || 2000;
+  const isBinge = dietPlan.activityLevel === 999;
+  const targetCalories = isBinge ? 9999 : (dietPlan.caloriesTarget || 2000);
   const targetMacros = {
-    carbsGrams: dietPlan.carbsTarget || 220,
-    proteinGrams: dietPlan.proteinTarget || 140,
-    fatGrams: dietPlan.fatTarget || 60,
+    carbsGrams: isBinge ? 999 : (dietPlan.carbsTarget || 220),
+    proteinGrams: isBinge ? 999 : (dietPlan.proteinTarget || 140),
+    fatGrams: isBinge ? 999 : (dietPlan.fatTarget || 60),
   };
 
-  const calorieDiff = targetCalories - totals.calories;
+  const consumedEnergy = formatEnergy(totals.calories, energyUnit).value;
+  const targetEnergy = isBinge
+    ? (energyUnit === 'kJ' ? 99999 : 9999)
+    : formatEnergy(targetCalories, energyUnit).value;
+  const energyDiff = targetEnergy - consumedEnergy;
 
   // 3. 健身與肌群恢復狀態數據
   const { workouts } = useWorkoutLogs(selectedDate);
@@ -174,7 +179,7 @@ export default function Dashboard() {
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-1 pb-1 text-center">
             <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
-              <span>{formatEnergy(totals.calories, energyUnit).value.toLocaleString()}</span>
+              <span>{consumedEnergy.toLocaleString()}</span>
               <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
                 {energyUnit}
               </span>
@@ -183,9 +188,9 @@ export default function Dashboard() {
             {/* 客觀差額事實 */}
             <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
               <span>
-                {calorieDiff >= 0
-                  ? `${t('dietPlan.underBudget', '剩餘')} ${formatEnergy(calorieDiff, energyUnit).value.toLocaleString()} ${energyUnit}`
-                  : `${t('dietPlan.overBudget', '超出')} +${formatEnergy(Math.abs(calorieDiff), energyUnit).value.toLocaleString()} ${energyUnit}`}
+                {energyDiff >= 0
+                  ? `${t('dietPlan.underBudget', '剩餘')} ${energyDiff.toLocaleString()} ${energyUnit}`
+                  : `${t('dietPlan.overBudget', '超出')} +${Math.abs(energyDiff).toLocaleString()} ${energyUnit}`}
               </span>
             </div>
 
@@ -194,7 +199,7 @@ export default function Dashboard() {
               <div
                 className="h-full bg-foreground transition-all duration-300"
                 style={{
-                  width: `${Math.min(100, targetCalories > 0 ? (totals.calories / targetCalories) * 100 : 0)}%`,
+                  width: `${Math.min(100, targetEnergy > 0 ? (consumedEnergy / targetEnergy) * 100 : 0)}%`,
                 }}
               />
             </div>

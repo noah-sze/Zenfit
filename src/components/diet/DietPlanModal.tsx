@@ -21,6 +21,11 @@ import {
   calculateAgeFromBirth,
 } from '@/utils/weightMath';
 import type { UserProfile, MacroSplit, DietPlan } from '@/types';
+import {
+  MACRO_SPLIT_TEMPLATES,
+  findMatchingTemplate,
+  type TemplateId,
+} from '@/constants/dietTemplates';
 
 export interface DietPlanModalProps {
   isOpen: boolean;
@@ -33,7 +38,6 @@ export interface DietPlanModalProps {
 }
 
 type MacroKey = 'carbs' | 'protein' | 'fat';
-type TemplateId = 'balance' | 'highProtein' | 'lowCarb' | 'custom';
 
 export function DietPlanModal({
   isOpen,
@@ -74,12 +78,16 @@ export function DietPlanModal({
   );
 
   // 基準目標熱量 (依據 BMR 與當前活動係數動態推算 TDEE)
+  const isBinge = activityLevel === 999;
   const targetCaloriesKcal = useMemo(() => {
+    if (isBinge) {
+      return 9999;
+    }
     if (currentBMR > 0 && activityLevel > 0) {
       return calculateTDEE(currentBMR, activityLevel);
     }
     return currentPlan?.caloriesTarget || 2000;
-  }, [currentBMR, activityLevel, currentPlan?.caloriesTarget]);
+  }, [isBinge, currentBMR, activityLevel, currentPlan?.caloriesTarget]);
 
   // 初始化讀取使用者或當日既有供能比
   const prevIsOpenRef = useRef(false);
@@ -114,15 +122,7 @@ export function DietPlanModal({
       setFatPercent(split.fat);
 
       // 檢查是否符合預設模板
-      if (split.carbs === 40 && split.protein === 30 && split.fat === 30) {
-        setTemplate('balance');
-      } else if (split.carbs === 40 && split.protein === 35 && split.fat === 25) {
-        setTemplate('highProtein');
-      } else if (split.carbs === 25 && split.protein === 40 && split.fat === 35) {
-        setTemplate('lowCarb');
-      } else {
-        setTemplate('custom');
-      }
+      setTemplate(findMatchingTemplate(split));
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen, profile, currentPlan]);
@@ -133,13 +133,16 @@ export function DietPlanModal({
 
   // 動態推算即時目標克數 (C ➔ P ➔ F 順序)
   const calculatedMacros = useMemo(() => {
+    if (isBinge) {
+      return { carbsGrams: 999, proteinGrams: 999, fatGrams: 999 };
+    }
     return calculateMacrosFromSplit(
       targetCaloriesKcal,
       carbsPercent,
       proteinPercent,
       fatPercent
     );
-  }, [targetCaloriesKcal, carbsPercent, proteinPercent, fatPercent]);
+  }, [isBinge, targetCaloriesKcal, carbsPercent, proteinPercent, fatPercent]);
 
   // 供能比標尺寬度推算
   const ratioScale = ratioTotal > 100 ? 100 / ratioTotal : 1;
@@ -153,34 +156,21 @@ export function DietPlanModal({
     setTemplate(tpl);
     triggerHaptic('selection');
 
-    if (tpl === 'balance') {
-      setCarbsPercent(40);
-      setProteinPercent(30);
-      setFatPercent(30);
-    } else if (tpl === 'highProtein') {
-      setCarbsPercent(40);
-      setProteinPercent(35);
-      setFatPercent(25);
-    } else if (tpl === 'lowCarb') {
-      setCarbsPercent(25);
-      setProteinPercent(40);
-      setFatPercent(35);
+    const matched = MACRO_SPLIT_TEMPLATES.find((item) => item.id === tpl);
+    if (matched) {
+      setCarbsPercent(matched.split.carbs);
+      setProteinPercent(matched.split.protein);
+      setFatPercent(matched.split.fat);
     }
   };
 
   // 模板顯示標籤
   const getTemplateLabel = (tpl: TemplateId) => {
-    switch (tpl) {
-      case 'balance':
-        return t('dietPlan.balanceTemplate', '均衡 (40:30:30)');
-      case 'highProtein':
-        return t('dietPlan.highProteinTemplate', '高蛋白 (40:35:25)');
-      case 'lowCarb':
-        return t('dietPlan.lowCarbTemplate', '低碳 (25:40:35)');
-      case 'custom':
-      default:
-        return t('dietPlan.customTemplate', '自定義');
+    const matched = MACRO_SPLIT_TEMPLATES.find((item) => item.id === tpl);
+    if (matched) {
+      return t(matched.labelKey);
     }
+    return t('dietPlan.customTemplate', '自定義');
   };
 
   // 開啟數字鍵盤
@@ -342,15 +332,11 @@ export function DietPlanModal({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="end" className="min-w-48">
-                    <SelectItem value="balance">
-                      {t('dietPlan.balanceTemplate', '均衡 (40:30:30)')}
-                    </SelectItem>
-                    <SelectItem value="highProtein">
-                      {t('dietPlan.highProteinTemplate', '高蛋白 (40:35:25)')}
-                    </SelectItem>
-                    <SelectItem value="lowCarb">
-                      {t('dietPlan.lowCarbTemplate', '低碳 (25:40:35)')}
-                    </SelectItem>
+                    {MACRO_SPLIT_TEMPLATES.map((item) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {t(item.labelKey)}
+                      </SelectItem>
+                    ))}
                     <SelectItem value="custom">
                       {t('dietPlan.customTemplate', '自定義')}
                     </SelectItem>

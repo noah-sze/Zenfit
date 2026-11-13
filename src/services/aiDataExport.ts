@@ -228,14 +228,22 @@ function getActivityLabel(level: number, t: TFunction): string {
       return t('dietPlan.sedentaryShort', '久坐辦公');
     case 1.375:
       return t('dietPlan.lightShort', '輕度活動');
+    case 1.45:
+      return t('dietPlan.lightExerciseShort', '輕度運動');
     case 1.55:
       return t('dietPlan.moderateShort', '中度活動');
     case 1.725:
       return t('dietPlan.heavyShort', '高強度活動');
+    case 1.8:
+      return t('dietPlan.intenseExerciseShort', '高強度訓練');
     case 1.9:
       return t('dietPlan.athleteShort', '極重度活動');
+    case 2.0:
+      return t('dietPlan.extremeShort', '極限體能');
+    case 999:
+      return t('dietPlan.bingeShort', '放縱');
     default:
-      return String(level);
+      return `${level}x`;
   }
 }
 
@@ -278,23 +286,28 @@ function buildDietSection(
   const foodVolumeUnit: FoodVolumeUnit = input.unitPreferences?.foodVolume || 'ml';
 
   const activityLevel = input.dietPlan?.activityLevel ?? 1.55;
+  const isBinge = activityLevel === 999;
   const macroSplit: MacroSplit = input.dietPlan?.macroSplit ?? {
     carbs: 40,
     protein: 30,
     fat: 30,
   };
-  const rawTargetKcal = input.dietPlan?.caloriesTarget ?? 2000;
-  const computedMacros = calculateMacrosFromSplit(
-    rawTargetKcal,
-    macroSplit.carbs,
-    macroSplit.protein,
-    macroSplit.fat
-  );
+  const rawTargetKcal = isBinge ? 9999 : (input.dietPlan?.caloriesTarget ?? 2000);
+  const computedMacros = isBinge
+    ? { carbsGrams: 999, proteinGrams: 999, fatGrams: 999 }
+    : calculateMacrosFromSplit(
+        rawTargetKcal,
+        macroSplit.carbs,
+        macroSplit.protein,
+        macroSplit.fat
+      );
 
-  const targetEnergy = formatEnergy(rawTargetKcal, energyUnit).value;
-  const targetCarbs = input.dietPlan?.carbsTarget ?? computedMacros.carbsGrams;
-  const targetProtein = input.dietPlan?.proteinTarget ?? computedMacros.proteinGrams;
-  const targetFat = input.dietPlan?.fatTarget ?? computedMacros.fatGrams;
+  const targetEnergy = isBinge
+    ? (energyUnit === 'kJ' ? 99999 : 9999)
+    : formatEnergy(rawTargetKcal, energyUnit).value;
+  const targetCarbs = isBinge ? 999 : (input.dietPlan?.carbsTarget ?? computedMacros.carbsGrams);
+  const targetProtein = isBinge ? 999 : (input.dietPlan?.proteinTarget ?? computedMacros.proteinGrams);
+  const targetFat = isBinge ? 999 : (input.dietPlan?.fatTarget ?? computedMacros.fatGrams);
 
   const foodMap = new Map<string, FoodItem>(
     (input.foods || []).map((f) => [f.id, f])

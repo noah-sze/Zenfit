@@ -397,4 +397,56 @@ describe('aiDataExport', () => {
       expect(textStr).not.toContain('大腿圍');
     });
   });
+
+  describe('999x 放縱模式 (Binge Activity Level)', () => {
+    it('kcal 單位下：目標熱量固定為 9999 kcal，三大元素固定為 999g', () => {
+      const payload = buildDailyExportPayload({
+        date: '2026-04-17',
+        scope: 'diet',
+        dietPlan: {
+          id: 'binge-plan',
+          date: '2026-04-17',
+          activityLevel: 999,
+          macroSplit: { carbs: 40, protein: 30, fat: 30 },
+          createdAt: 0,
+          updatedAt: 0,
+        },
+        unitPreferences: { energy: 'kcal' },
+      });
+
+      const diet = payload.diet!;
+      expect(diet.activityLevel).toBe(999);
+      expect(diet.activityLabel).toBe('放縱');
+      expect(diet.target.calories).toBe(9999);
+      expect(diet.target.energyUnit).toBe('kcal');
+      expect(diet.target.carbs).toBe(999);
+      expect(diet.target.protein).toBe(999);
+      expect(diet.target.fat).toBe(999);
+    });
+
+    it('kJ 單位下：目標熱量固定為 99999 kJ，三大元素固定為 999g', () => {
+      const payload = buildDailyExportPayload({
+        date: '2026-04-17',
+        scope: 'diet',
+        dietPlan: {
+          id: 'binge-plan',
+          date: '2026-04-17',
+          activityLevel: 999,
+          macroSplit: { carbs: 40, protein: 30, fat: 30 },
+          createdAt: 0,
+          updatedAt: 0,
+        },
+        unitPreferences: { energy: 'kJ' },
+      });
+
+      const diet = payload.diet!;
+      expect(diet.activityLevel).toBe(999);
+      expect(diet.activityLabel).toBe('放縱');
+      expect(diet.target.calories).toBe(99999);
+      expect(diet.target.energyUnit).toBe('kJ');
+      expect(diet.target.carbs).toBe(999);
+      expect(diet.target.protein).toBe(999);
+      expect(diet.target.fat).toBe(999);
+    });
+  });
 });

@@ -17,6 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  MACRO_SPLIT_TEMPLATES,
+  findMatchingTemplate,
+} from '@/constants/dietTemplates';
 import { DietPlanModal } from '@/components/diet/DietPlanModal';
 import { EditFoodLogDialog } from '@/components/diet/EditFoodLogDialog';
 import { EditRecipeLogDialog } from '@/components/diet/EditRecipeLogDialog';
@@ -128,14 +132,19 @@ export default function Diet() {
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
   // 目標熱量與宏量營養素優先取用當日獨立之 DietPlan (由 useDietPlan 純數學即時動態推算)
+  const isBinge = currentActivity === 999 || plan.activityLevel === 999;
   const targetCalories = plan.caloriesTarget;
   const targetMacros = {
-    carbsGrams: plan.carbsTarget,
-    proteinGrams: plan.proteinTarget,
-    fatGrams: plan.fatTarget,
+    carbsGrams: isBinge ? 999 : plan.carbsTarget,
+    proteinGrams: isBinge ? 999 : plan.proteinTarget,
+    fatGrams: isBinge ? 999 : plan.fatTarget,
   };
 
-  const calorieDiff = targetCalories - totals.calories;
+  const consumedEnergy = formatEnergy(totals.calories, energyUnit).value;
+  const targetEnergy = isBinge
+    ? (energyUnit === 'kJ' ? 99999 : 9999)
+    : formatEnergy(targetCalories, energyUnit).value;
+  const energyDiff = targetEnergy - consumedEnergy;
 
   // 快捷切換活動係數（寫入當日專屬 DietPlan，由 saveDietPlan 自主處理今日後續沿用）
   const handleQuickActivityChange = async (newLevel: number) => {
@@ -145,35 +154,39 @@ export default function Diet() {
     });
   };
 
-  // 活動係數短標籤（純膠囊顯示）
+  // 活動係數短標籤（純膠囊顯示，僅顯示名稱）
   const getActivityShortLabel = (level: number) => {
     switch (level) {
       case 1.2:
         return t('dietPlan.sedentaryShort', '久坐辦公');
       case 1.375:
         return t('dietPlan.lightShort', '輕度活動');
+      case 1.45:
+        return t('dietPlan.lightExerciseShort', '輕度運動');
       case 1.55:
         return t('dietPlan.moderateShort', '中度活動');
       case 1.725:
         return t('dietPlan.heavyShort', '高強度活動');
+      case 1.8:
+        return t('dietPlan.intenseExerciseShort', '高強度訓練');
       case 1.9:
         return t('dietPlan.athleteShort', '極重度活動');
+      case 2.0:
+        return t('dietPlan.extremeShort', '極限體能');
+      case 999:
+        return t('dietPlan.bingeShort', '放縱');
       default:
-        return String(level);
+        return `${level}x`;
     }
   };
 
-  // 供能比模板短標籤（例如「均衡」、「高蛋白」、「低碳」、「自定義」）
+  // 供能比模板短標籤（例如「均衡」、「高蛋白」、「低碳」、「生酮」、「耐力」、「備賽」、「充碳」、「自定義」）
   const macroSplitTemplateLabel = useMemo(() => {
     const split = plan.macroSplit || profile.macroSplit || { carbs: 40, protein: 30, fat: 30 };
-    if (split.carbs === 40 && split.protein === 30 && split.fat === 30) {
-      return t('dietPlan.balance', '均衡');
-    }
-    if (split.carbs === 40 && split.protein === 35 && split.fat === 25) {
-      return t('dietPlan.highProtein', '高蛋白');
-    }
-    if (split.carbs === 25 && split.protein === 40 && split.fat === 35) {
-      return t('dietPlan.lowCarb', '低碳');
+    const matchedId = findMatchingTemplate(split);
+    const matched = MACRO_SPLIT_TEMPLATES.find((item) => item.id === matchedId);
+    if (matched) {
+      return t(matched.shortLabelKey);
     }
     return t('dietPlan.custom', '自定義');
   }, [plan.macroSplit, profile.macroSplit, t]);
@@ -384,9 +397,13 @@ export default function Diet() {
                 <SelectContent align="start">
                   <SelectItem value="1.2">{t('dietPlan.sedentary')}</SelectItem>
                   <SelectItem value="1.375">{t('dietPlan.light')}</SelectItem>
+                  <SelectItem value="1.45">{t('dietPlan.lightExercise')}</SelectItem>
                   <SelectItem value="1.55">{t('dietPlan.moderate')}</SelectItem>
                   <SelectItem value="1.725">{t('dietPlan.heavy')}</SelectItem>
+                  <SelectItem value="1.8">{t('dietPlan.intenseExercise')}</SelectItem>
                   <SelectItem value="1.9">{t('dietPlan.athlete')}</SelectItem>
+                  <SelectItem value="2.0">{t('dietPlan.extreme')}</SelectItem>
+                  <SelectItem value="999">{t('dietPlan.binge')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -418,7 +435,7 @@ export default function Diet() {
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-2 pb-1 text-center">
             <div className="hero-number flex items-baseline justify-center gap-1.5">
-              <span>{formatEnergy(totals.calories, energyUnit).value.toLocaleString()}</span>
+              <span>{consumedEnergy.toLocaleString()}</span>
               <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
                 {energyUnit}
               </span>
@@ -427,9 +444,9 @@ export default function Diet() {
             {/* 客觀差額事實 */}
             <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
               <span>
-                {calorieDiff >= 0
-                  ? `${t('dietPlan.underBudget')} ${formatEnergy(calorieDiff, energyUnit).value.toLocaleString()} ${energyUnit}`
-                  : `${t('dietPlan.overBudget')} +${formatEnergy(Math.abs(calorieDiff), energyUnit).value.toLocaleString()} ${energyUnit}`}
+                {energyDiff >= 0
+                  ? `${t('dietPlan.underBudget')} ${energyDiff.toLocaleString()} ${energyUnit}`
+                  : `${t('dietPlan.overBudget')} +${Math.abs(energyDiff).toLocaleString()} ${energyUnit}`}
               </span>
 
             </div>
@@ -439,7 +456,7 @@ export default function Diet() {
               <div
                 className="h-full bg-foreground transition-all duration-300"
                 style={{
-                  width: `${Math.min(100, targetCalories > 0 ? (totals.calories / targetCalories) * 100 : 0)}%`,
+                  width: `${Math.min(100, targetEnergy > 0 ? (consumedEnergy / targetEnergy) * 100 : 0)}%`,
                 }}
               />
             </div>
