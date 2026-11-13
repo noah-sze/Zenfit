@@ -42,9 +42,10 @@ import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { cn, evaluateAmountExpression } from '@/lib/utils';
-type GroupedMealEntry =
-  | { type: 'single'; log: HydratedFoodLog }
-  | { type: 'bundle'; bundleId: string; bundleTitle: string; logs: HydratedFoodLog[] };
+import {
+  sortGroupedMealEntriesByWeightDesc,
+  type GroupedMealEntry,
+} from '@/utils/dietSorting';
 
 function groupMealLogs(logs: HydratedFoodLog[], recipeMap: Map<string, FoodRecipe>): GroupedMealEntry[] {
   const result: GroupedMealEntry[] = [];
@@ -75,7 +76,7 @@ function groupMealLogs(logs: HydratedFoodLog[], recipeMap: Map<string, FoodRecip
     }
   }
 
-  return result;
+  return sortGroupedMealEntriesByWeightDesc(result);
 }
 
 export default function Diet() {

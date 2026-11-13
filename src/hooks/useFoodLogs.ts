@@ -6,6 +6,7 @@ import { calculateFoodLogNutrients } from '@/utils/nutritionMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { ensureDailyDietMeta } from './useDietPlan';
 import { setInMemoryFoodsCache } from './useFoods';
+import { sortFoodLogsByWeightDesc } from '@/utils/dietSorting';
 
 /**
  * 模組級每日飲食日誌記憶體注水快取 (In-Memory Hydration Cache)
@@ -124,10 +125,10 @@ export function useFoodLogs(date: string) {
 
   // 按餐別分組
   const mealGroups: Record<MealType, HydratedFoodLog[]> = {
-    breakfast: logs.filter((l) => l.mealType === 'breakfast'),
-    lunch: logs.filter((l) => l.mealType === 'lunch'),
-    dinner: logs.filter((l) => l.mealType === 'dinner'),
-    snack: logs.filter((l) => l.mealType === 'snack'),
+    breakfast: sortFoodLogsByWeightDesc(logs.filter((l) => l.mealType === 'breakfast')),
+    lunch: sortFoodLogsByWeightDesc(logs.filter((l) => l.mealType === 'lunch')),
+    dinner: sortFoodLogsByWeightDesc(logs.filter((l) => l.mealType === 'dinner')),
+    snack: sortFoodLogsByWeightDesc(logs.filter((l) => l.mealType === 'snack')),
   };
 
   const getOrCreateDailyLog = async (targetDate: string): Promise<DailyDietLog> => {
