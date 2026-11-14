@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { format } from 'date-fns';
+import { getInitialDateSession, recordDateSession } from '@/utils/dateSession';
 import type { NutritionDisplayMode } from '@/utils/nutritionMath';
 
 export type QuickAddType = 'food' | 'workout' | 'metric';
@@ -33,8 +33,11 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      selectedDate: format(new Date(), 'yyyy-MM-dd'),
-      setSelectedDate: (selectedDate) => set({ selectedDate }),
+      selectedDate: getInitialDateSession(),
+      setSelectedDate: (selectedDate) => {
+        recordDateSession(selectedDate);
+        set({ selectedDate });
+      },
 
       isSyncing: false,
       lastSyncTime: null,

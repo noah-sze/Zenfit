@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useSafeNavigate } from '@/hooks/useSafeNavigate';
 import { getHierarchicalFallbackPath } from '@/utils/navigation';
+import { recordDateSession, shouldResetDateOnForeground, getPhysicalToday } from '@/utils/dateSession';
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -113,27 +114,77 @@ export function AppLayout() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCopyDataOpen, setIsCopyDataOpen] = useState(false);
 
-  // 跨夜休眠喚醒自動校準：
-  // 當 PWA 或行動端從後台切回前景時，若已跨過午夜且使用者先前停留在「今天」，自動平滑切換至新的「今天」
+  // 日期會話快照與前景逾時自動返回今天：
+  // 1. 短暫切窗（< 10 分鐘）：100% 保留當前日期上下文，不強制跳轉
+  // 2. 長時間離開（>= 10 分鐘）：判定會話逾時，切回前景時自動回歸今天
+  // 3. 正在編輯或彈窗開啟中：防竄改保護鎖生效，絕對不重置日期
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const currentSelected = useAppStore.getState().selectedDate;
+    recordDateSession(selectedDate);
+  }, [selectedDate]);
 
-        // 若前次日期不是今天，但恰好是昨天（代表過夜且非歷史補記），自動平滑過渡到新的一天
-        const yesterdayStr = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-        if (currentSelected === yesterdayStr) {
-          setSelectedDate(todayStr);
-        }
+  useEffect(() => {
+    let lastActiveAt = Date.now();
+
+    const checkAndSyncDate = () => {
+      const now = Date.now();
+      const currentSelected = useAppStore.getState().selectedDate;
+      const modalOpen = useAppStore.getState().isAddModalOpen;
+      const isAnyDialogActive =
+        modalOpen ||
+        isCalendarOpen ||
+        isCopyDataOpen ||
+        (typeof document !== 'undefined' &&
+          (document.querySelector('[role="dialog"]') !== null ||
+            document.querySelector('[role="alertdialog"]') !== null ||
+            document.querySelector('div[data-state="open"]') !== null));
+
+      const shouldReset = shouldResetDateOnForeground({
+        lastActiveTimestamp: lastActiveAt,
+        isModalOpen: isAnyDialogActive,
+        currentDate: currentSelected,
+        now,
+      });
+
+      if (shouldReset) {
+        const todayStr = getPhysicalToday(new Date(now));
+        setSelectedDate(todayStr);
+      }
+
+      lastActiveAt = now;
+      recordDateSession(useAppStore.getState().selectedDate, now);
+    };
+
+    const handleVisibilityChange = () => {
+      const now = Date.now();
+      if (document.visibilityState === 'hidden') {
+        lastActiveAt = now;
+        recordDateSession(useAppStore.getState().selectedDate, now);
+      } else if (document.visibilityState === 'visible') {
+        checkAndSyncDate();
       }
     };
 
+    const handleWindowFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndSyncDate();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      lastActiveAt = Date.now();
+      recordDateSession(useAppStore.getState().selectedDate, lastActiveAt);
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('blur', handleWindowBlur);
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('blur', handleWindowBlur);
     };
-  }, [setSelectedDate]);
+  }, [setSelectedDate, isCalendarOpen, isCopyDataOpen]);
 
   const currentDateObj = parseISO(selectedDate);
 
