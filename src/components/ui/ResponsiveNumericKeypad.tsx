@@ -13,6 +13,9 @@ export interface ResponsiveNumericKeypadProps {
   /** 開啟/關閉狀態改變回調 */
   onOpenChange: (open: boolean) => void
 
+  /** 頂部資訊/說明卡片 (選填，渲染於鍵盤卡片正上方) */
+  infoCard?: React.ReactNode
+
   /** 條目刪除回調 (若提供則在鍵盤上方展示獨立長按刪除卡片，未提供則完全隱藏) */
   onDelete?: () => void
   /** 刪除卡片自定義文案 (選填，預設為「刪除」) */
@@ -43,6 +46,8 @@ export interface ResponsiveNumericKeypadProps {
   maxDecimals?: number
   /** 是否允許負數 (預設: false) */
   allowNegative?: boolean
+  /** 是否允許確認送出 0 或空值 (預設: false) */
+  allowZero?: boolean
 
   /** 確認回調 */
   onConfirm: (value: number, unit: string) => void
@@ -87,6 +92,7 @@ function getLastOperand(val: string) {
 export function ResponsiveNumericKeypad({
   open,
   onOpenChange,
+  infoCard,
   anchorEl: _anchorEl,
   valueClassName,
   titleClassName,
@@ -98,6 +104,7 @@ export function ResponsiveNumericKeypad({
   allowDecimals = true,
   maxDecimals = 2,
   allowNegative = false,
+  allowZero = false,
   onConfirm,
   onCancel,
   onDelete,
@@ -166,6 +173,17 @@ export function ResponsiveNumericKeypad({
     prevOpenRef.current = open
   }, [open, value, unit])
 
+  // 當外部主動更新 value 時（如點擊帶入參考值），同步更新內部狀態
+  const prevValueRef = React.useRef(value)
+  React.useEffect(() => {
+    if (open && prevOpenRef.current && prevValueRef.current !== value) {
+      const initNum = typeof value === 'number' ? value : parseFloat(String(value)) || 0
+      const initStr = initNum > 0 ? String(initNum) : ''
+      setInternalValue(initStr)
+    }
+    prevValueRef.current = value
+  }, [open, value])
+
   // 即時數值雙向鏡像同步：敲擊數字且數值實質改變時即時更新原位列表行
   React.useEffect(() => {
     if (!open) return
@@ -188,6 +206,19 @@ export function ResponsiveNumericKeypad({
   const isExpression = React.useMemo(() => {
     return /[+-]/.test(internalValue.replace(/^[+-]/, ''))
   }, [internalValue])
+
+  // 當前評估之有效數值
+  const currentEvaluatedNum = React.useMemo(() => {
+    if (!internalValue || internalValue === '-' || internalValue === '+') return 0
+    let finalStr = internalValue
+    if (isExpression) {
+      finalStr = evaluateAmountExpression(internalValue, allowNegative)
+    }
+    return parseFloat(finalStr) || 0
+  }, [internalValue, isExpression, allowNegative])
+
+  const isZeroOrEmpty = !internalValue || currentEvaluatedNum <= 0
+  const isConfirmDisabled = !allowZero && !isExpression && isZeroOrEmpty
 
   const handleUnitSelect = (nextU: string) => {
     triggerHaptic('selection')
@@ -333,17 +364,29 @@ export function ResponsiveNumericKeypad({
         const evaluated = evaluateAmountExpression(internalValue, allowNegative)
         setInternalValue(evaluated)
       } else {
+        if (isConfirmDisabled) {
+          triggerHaptic('warning')
+          return
+        }
         handleConfirmAction()
       }
     }
   }
 
   const handleConfirmAction = () => {
+    if (isConfirmDisabled) {
+      triggerHaptic('warning')
+      return
+    }
     let finalStr = internalValue
     if (isExpression) {
       finalStr = evaluateAmountExpression(internalValue, allowNegative)
     }
     const num = parseFloat(finalStr) || 0
+    if (!allowZero && num <= 0) {
+      triggerHaptic('warning')
+      return
+    }
     triggerHaptic('success')
     onConfirm(num, currentUnit)
     onOpenChange(false)
@@ -373,6 +416,10 @@ export function ResponsiveNumericKeypad({
 
       if (e.key === 'Enter') {
         e.preventDefault()
+        if (isConfirmDisabled) {
+          triggerHaptic('warning')
+          return
+        }
         handleConfirmAction()
       } else if (e.key === 'Escape') {
         e.preventDefault()
@@ -438,6 +485,18 @@ export function ResponsiveNumericKeypad({
               text={deleteText || t('common.delete', '刪除')}
               className="h-10 rounded-[14px] shadow-none"
             />
+          </div>
+        )}
+
+        {/* 頂部資訊/說明卡片 (選填，渲染於鍵盤卡片正上方) */}
+        {infoCard && (
+          <div
+            className="w-full shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            {infoCard}
           </div>
         )}
 
@@ -664,9 +723,11 @@ export function ResponsiveNumericKeypad({
             </button>
             <button
               type="button"
+              disabled={isConfirmDisabled}
               onClick={() => handleKey('=')}
               className={cn(
                 "h-10 rounded-lg flex items-center justify-center transition-transform duration-75 active:scale-[0.95] border cursor-pointer shadow-none select-none",
+                isConfirmDisabled && "opacity-40 cursor-not-allowed pointer-events-none active:scale-100",
                 isExpression
                   ? "bg-muted/60 text-foreground hover:bg-muted border-border/40 font-bold active:bg-foreground active:text-background active:border-foreground"
                   : "bg-primary text-primary-foreground hover:bg-primary/90 border-primary font-bold active:bg-primary/80"

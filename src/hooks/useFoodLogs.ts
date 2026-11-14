@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { calculateFoodLogNutrients } from '@/utils/nutritionMath';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { ensureDailyDietMeta } from './useDietPlan';
-import { setInMemoryFoodsCache } from './useFoods';
+import { getInMemoryFoodsCache, setInMemoryFoodsCache } from './useFoods';
 import { sortFoodLogsByWeightDesc } from '@/utils/dietSorting';
 
 /**
@@ -55,8 +55,11 @@ export function useFoodLogs(date: string) {
     async () => {
       const dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
       const rawEntries = dailyLog?.entries || [];
-      const allFoods = await db.foods.toArray();
-      setInMemoryFoodsCache(allFoods);
+      const cachedFoods = getInMemoryFoodsCache();
+      const allFoods = cachedFoods ?? (await db.foods.toArray());
+      if (!cachedFoods) {
+        setInMemoryFoodsCache(allFoods);
+      }
       if (inMemoryDailyDietLogsCache === null) {
         void prewarmDailyDietLogsCache();
       } else if (dailyLog) {

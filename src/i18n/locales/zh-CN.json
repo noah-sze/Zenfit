@@ -130,7 +130,7 @@
         "actionTitle": "历史均值",
         "badge": "配额",
         "badgeLong": "配额",
-        "actionDesc": "套用过去{{meal}}的平均值 · {{calories}} kcal",
+        "actionDesc": "套用过去{{meal}}的平均值 · {{calories}}kcal",
         "emptyBtn": "历史均值 ({{calories}}k)",
         "defaultName": "历史均值",
         "successToast": "已记录历史均值"
@@ -182,10 +182,10 @@
       "dragElevationTip": "上推增加 · 下拉降低",
       "perServing": "每份",
       "per100g": "每 100g",
-      "per1oz": "每 1 oz",
+      "per1oz": "每 1oz",
       "nutritionBenchmark": "营养基准",
       "per100gDensity": "100g 密度",
-      "per1ozDensity": "1 oz 密度",
+      "per1ozDensity": "1oz 密度",
       "unit": "单位",
       "addFood": "添加餐点",
       "customFood": "自定义食材",
@@ -572,7 +572,7 @@
       "title": "体态",
       "weight": "体重",
       "trendWeight": "平滑体重",
-      "rawWeight": "过磅体重",
+      "rawWeight": "体重",
       "recordedWeight": "记录体重",
       "weeklyRate": "7 天变动速率",
       "bodyFat": "体脂率",
@@ -586,7 +586,7 @@
         "trendWeight": {
           "title": "平滑体重",
           "formula": "7 天生理平滑 (今日 15% + 历史 85%)",
-          "desc": "单日过磅易受水分滞留、高钠饮食与胃肠残留干扰，常产生 1~2 kg 的短期浮动。以 85% 历史基底搭配 15% 当日过磅进行 7 天平滑避震，过滤日常噪音，真实呈现脂肪与肌肉组织的长期客观走向。"
+          "desc": "单日过磅易受水分滞留、高钠饮食与胃肠残留干扰，常产生 1~2kg 的短期浮动。以 85% 历史基底搭配 15% 当日过磅进行 7 天平滑避震，过滤日常噪音，真实呈现脂肪与肌肉组织的长期客观走向。"
         },
         "bmi": {
           "title": "BMI 指数",
@@ -668,9 +668,56 @@
       "trendLineExplanation": {
         "title": "平滑体重",
         "algorithm": "7 天生理平滑 (今日 15% + 历史 85%)",
-        "desc": "单日过磅易受水分滞留、高钠饮食与胃肠残留干扰，常产生 1~2 kg 的短期浮动。以 85% 历史基底搭配 15% 当日过磅进行 7 天平滑避震，过滤日常噪音，真实呈现脂肪与肌肉组织的长期客观走向。"
+        "desc": "单日过磅易受水分滞留、高钠饮食与胃肠残留干扰，常产生 1~2kg 的短期浮动。以 85% 历史基底搭配 15% 当日过磅进行 7 天平滑避震，过滤日常噪音，真实呈现脂肪与肌肉组织的长期客观走向。"
       },
-      "noSufficientData": "暂无足够时序数据"
+      "noSufficientData": "暂无足够时序数据",
+      "metricGuides": {
+        "weight": {
+          "desc": "人体全部组织与水分的总物理质量，为能量平衡与体态变化的核心基准常数。",
+          "method": "清晨空腹排便后，裸身或穿着贴身内衣，赤足立于水平硬质地面的电子秤中央测量。"
+        },
+        "bodyFat": {
+          "desc": "体内脂肪总重量占全身体重的百分比，用于评估瘦体重与体脂肪分布现况。",
+          "method": "使用生物电阻体脂仪 (BIA)、双能 X 射线吸收仪 (DEXA) 或皮褶厚度计于固定生理状态下测量。"
+        },
+        "shouldersCm": {
+          "desc": "双侧三角肌最外缘突起点之间的横向水平宽度，量化上半身骨架骨骼与肌肉宽度。",
+          "method": "自然直立放松双肩，双臂自然垂于体侧，皮尺水平绕过两侧三角肌中束最宽突出处测量。"
+        },
+        "chestCm": {
+          "desc": "胸廓与胸大肌最高处的周长，评估胸腔结构与胸背肌群发达程度。",
+          "method": "自然站立，双臂张开后放松自然下垂，皮尺水平绕经胸大肌乳头连线与背阔肌下方，正常呼吸末期读取。"
+        },
+        "waistCm": {
+          "desc": "腹部最窄处或脐部水平周长，为内脏脂肪蓄积与体态倒三角几何比例的核心指标。",
+          "method": "直立放松腹部（不缩腹、不鼓腹），皮尺水平绕过肚脐上方肋骨下缘与骨盆髂骨上脊之中间最窄处，正常呼气后测量。"
+        },
+        "hipsCm": {
+          "desc": "臀大肌向后最突出处的骨盆水平周长，用于腰臀比推算与下肢骨盆几何评估。",
+          "method": "双脚并拢自然直立，皮尺水平环绕臀部最饱满、最突出之处，确认前后等高贴平肌肤测量。"
+        },
+        "armsCm": {
+          "desc": "上臂肱二头肌与肱三头肌区域的最大水平周长，客观量化上肢肌群维度。",
+          "method": "自然下垂放松或用力屈臂收缩（保持固定基准），皮尺环绕上臂肱二头肌峰最丰满处垂直于肱骨测量。"
+        },
+        "thighsCm": {
+          "desc": "股四头肌与腘旁肌最发达处的水平周长，反映下肢主要推拉肌群质量。",
+          "method": "微张双脚均匀受力，皮尺水平环绕臀褶下方或大腿中上段最粗处，贴平皮肤且不勒紧读取。"
+        },
+        "calvesCm": {
+          "desc": "小腿腓肠肌与比目鱼肌最丰满部位的水平周长，量化小腿肌群结构。",
+          "method": "直立放松双腿，重量均匀分布，皮尺水平绕过小腿腹部最突出饱满之最大围度处测量。"
+        }
+      },
+      "keypadGuide": {
+        "current": "现时",
+        "reference": "参考值",
+        "currentValue": "现时/参考值",
+        "todayRecord": "当日记录",
+        "daysAgoReference": "来自 {{days}} 天前",
+        "profileReference": "来自基本资料",
+        "noRecord": "尚未记录"
+      }
     },
     "profileSettings": {
       "title": "基本资料",
@@ -981,7 +1028,7 @@
       "startingApp": "正在启动应用…",
       "validationHint": "请填写上方所有项目以解锁启用",
       "readyHint": "所有栏位已就绪，点击启动 Zenfit",
-      "calRemaining": "剩余 {{calories}} kcal",
+      "calRemaining": "剩余 {{calories}}kcal",
       "calBalance": "全日热量平衡",
       "carbs": "碳水",
       "protein": "蛋白",
@@ -995,7 +1042,7 @@
       "step3Sub": "可视化肌群刺激深度与每周容量分布。",
       "showcaseActivity": "轻度活动",
       "showcaseMacroTemplate": "高蛋白",
-      "showcaseDietDiff": "差额 -160 kcal",
+      "showcaseDietDiff": "差额 -160kcal",
       "showcaseTrainingDay": "训练日",
       "showcaseMuscleLoad": "肌群负荷",
       "showcaseBothViews": "前后双向",
@@ -1057,12 +1104,12 @@
         "summary": "训练概要",
         "totalExercises": "{{count}} 个动作",
         "totalSets": "{{count}} 组",
-        "totalVolume": "总容量 {{volume}} {{unit}}",
+        "totalVolume": "总容量 {{volume}}{{unit}}",
         "routinePrefix": "课表",
         "equipmentPrefix": "器械",
         "primaryMuscles": "主肌群",
         "secondaryMuscles": "协同肌群",
-        "setLine": "第 {{index}} 组: {{weight}} {{unit}} × {{reps}} 次",
+        "setLine": "第 {{index}} 组: {{weight}}{{unit}} × {{reps}} 次",
         "noLogs": "当日无训练记录"
       },
       "body": {

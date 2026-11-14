@@ -446,8 +446,8 @@ export default function Diet() {
             <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
               <span>
                 {energyDiff >= 0
-                  ? `${t('dietPlan.underBudget')} ${energyDiff.toLocaleString()} ${energyUnit}`
-                  : `${t('dietPlan.overBudget')} +${Math.abs(energyDiff).toLocaleString()} ${energyUnit}`}
+                  ? `${t('dietPlan.underBudget')} ${energyDiff.toLocaleString()}${energyUnit}`
+                  : `${t('dietPlan.overBudget')} +${Math.abs(energyDiff).toLocaleString()}${energyUnit}`}
               </span>
 
             </div>
@@ -842,14 +842,16 @@ export default function Diet() {
       )}
 
       {/* 複製餐點 Dialog (方案 A Precision Modal) */}
-      <CopyMealDialog
-        open={!!copyMealType}
-        onOpenChange={(open) => {
-          if (!open) setCopyMealType(null);
-        }}
-        targetMealType={copyMealType || 'lunch'}
-        targetDate={selectedDate}
-      />
+      {Boolean(copyMealType) && (
+        <CopyMealDialog
+          open={!!copyMealType}
+          onOpenChange={(open) => {
+            if (!open) setCopyMealType(null);
+          }}
+          targetMealType={copyMealType || 'lunch'}
+          targetDate={selectedDate}
+        />
+      )}
     </div>
   );
 

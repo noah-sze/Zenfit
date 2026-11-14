@@ -29,10 +29,11 @@ export function useUserProfile() {
   // 2. 動態讀取最新時序體重（從 body_metrics 取最新記錄）
   const latestWeightMetric = useLiveQuery(async () => {
     const latest = await db.body_metrics
-      .filter((m) => typeof m.weight === 'number' && m.weight > 0)
+      .orderBy('date')
       .reverse()
-      .sortBy('date');
-    return latest.length > 0 ? latest[latest.length - 1] : null;
+      .filter((m) => typeof m.weight === 'number' && m.weight > 0)
+      .first();
+    return latest || null;
   }, []);
 
   const currentWeightKg = latestWeightMetric?.weight || 0;

@@ -108,7 +108,7 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
                   </div>
                   {latestTrend !== null && (
                     <div className="text-xs text-muted-foreground font-mono">
-                      {latestTrend} {unit}
+                      {latestTrend}{unit}
                     </div>
                   )}
                 </div>
@@ -305,13 +305,13 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
                   {t('body.recordedWeight', '記錄體重')}：
                 </span>
                 <span className="font-mono text-foreground font-normal whitespace-nowrap text-right">
-                  {activePoint.rawWeight !== undefined ? `${activePoint.rawWeight} ${unit}` : '-'}
+                  {activePoint.rawWeight !== undefined ? `${activePoint.rawWeight}${unit}` : '-'}
                 </span>
                 <span className="text-muted-foreground whitespace-nowrap">
                   {t('body.trendWeight', '平滑體重')}：
                 </span>
                 <span className="font-mono text-foreground font-normal whitespace-nowrap text-right">
-                  {activePoint.trendWeight} {unit}
+                  {activePoint.trendWeight}{unit}
                 </span>
               </div>
             </div>

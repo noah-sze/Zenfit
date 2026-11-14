@@ -531,7 +531,7 @@ function renderCaloriesHeroCard(
     const calStrW = ctx.measureText(calStr).width;
 
     ctx.font = `400 14px ${MONO_FONT}`;
-    const unitStr = ` ${eUnit}`;
+    const unitStr = `${eUnit}`;
     const unitStrW = ctx.measureText(unitStr).width;
 
     const totalHeroW = calStrW + unitStrW;
@@ -552,10 +552,10 @@ function renderCaloriesHeroCard(
     ctx.textAlign = 'center';
     if (remainingCal >= 0) {
       ctx.fillStyle = palette.textSecondary;
-      ctx.fillText(`剩餘 ${remainingCal.toLocaleString()} ${eUnit}`, paddingX + cardWidth / 2, curY + 54);
+      ctx.fillText(`剩餘 ${remainingCal.toLocaleString()}${eUnit}`, paddingX + cardWidth / 2, curY + 54);
     } else {
       ctx.fillStyle = palette.calories;
-      ctx.fillText(`超額 +${Math.abs(remainingCal).toLocaleString()} ${eUnit}`, paddingX + cardWidth / 2, curY + 54);
+      ctx.fillText(`超額 +${Math.abs(remainingCal).toLocaleString()}${eUnit}`, paddingX + cardWidth / 2, curY + 54);
     }
 
     ctx.restore();
@@ -712,7 +712,7 @@ function renderMealCard(
 
       // 熱量 popover trigger
       const popoverX = dotX + 10;
-      const calText = `${meal.calories} kcal`;
+      const calText = `${meal.calories}kcal`;
       ctx.font = `500 12px ${MONO_FONT}`;
       ctx.fillStyle = palette.textSecondary;
       ctx.fillText(calText, popoverX, startY + 15);
@@ -908,7 +908,7 @@ function renderMealCard(
 
         const isHighCal = evalRes.labels.includes('high-calorie');
         const isLowCal = evalRes.labels.includes('low-calorie');
-        const calTag = `${item.calories} kcal`;
+        const calTag = `${item.calories}kcal`;
 
         if (isHighCal) {
           ctx.font = `500 11px ${MONO_FONT}`;
@@ -1164,7 +1164,7 @@ function renderWorkoutHeroCard(
       {
         label: '總容量',
         val: `${workout.summary.totalVolume.toLocaleString()}`,
-        unit: ` ${workout.summary.weightUnit}`,
+        unit: `${workout.summary.weightUnit}`,
       },
     ];
 
@@ -1303,7 +1303,7 @@ function renderWorkoutExercisesCard(
             ctx.textBaseline = 'middle';
             ctx.fillText(`第 ${s.setNumber} 組`, innerX + 8, curY + 9);
 
-            const detailStr = `${s.weight} ${s.unit} × ${s.reps} 次${s.rpe ? ` @ RPE ${s.rpe}` : ''}`;
+            const detailStr = `${s.weight}${s.unit} × ${s.reps} 次${s.rpe ? ` @ RPE ${s.rpe}` : ''}`;
             const detailW = ctx.measureText(detailStr).width;
             ctx.fillStyle = palette.textPrimary;
             ctx.fillText(detailStr, innerX + innerWidth - detailW - 8, curY + 9);
@@ -1390,12 +1390,12 @@ function renderBodyCard(
 
         ctx.font = `500 14px ${MONO_FONT}`;
         ctx.fillStyle = palette.textSecondary;
-        ctx.fillText(` ${body.weightUnit}`, innerX + wStrW, curY + 28);
+        ctx.fillText(`${body.weightUnit}`, innerX + wStrW, curY + 28);
 
         // 趨勢體重 / 體脂標籤
         const tags: string[] = [];
         if (body.trendWeight !== undefined) {
-          tags.push(`趨勢: ${body.trendWeight} ${body.weightUnit}`);
+          tags.push(`趨勢: ${body.trendWeight}${body.weightUnit}`);
         }
         if (body.bodyFat !== undefined) {
           tags.push(`體脂: ${body.bodyFat}%`);
@@ -1445,7 +1445,7 @@ function renderBodyCard(
         let curRowY = curY;
 
         for (const c of body.circumferences) {
-          const itemText = `${c.label} ${c.value} ${c.unit}`;
+          const itemText = `${c.label} ${c.value}${c.unit}`;
           ctx.font = `500 10px ${MONO_FONT}`;
           const itemW = ctx.measureText(itemText).width + 14;
 
@@ -1477,7 +1477,7 @@ function renderBodyCard(
       let testX = innerX;
       let rows = 1;
       for (const c of body.circumferences) {
-        const itemText = `${c.label} ${c.value} ${c.unit}`;
+        const itemText = `${c.label} ${c.value}${c.unit}`;
         const itemW = 10 * itemText.length * 0.6 + 14;
         if (testX + itemW > innerX + innerWidth && testX !== innerX) {
           testX = innerX;

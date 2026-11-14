@@ -77,7 +77,7 @@ export function CopyWorkoutDialog({
 
   // 查詢當前目標日期前，所有有訓練記錄的歷史日期 (降序排列)
   const recordedDates = useLiveQuery<string[]>(async () => {
-    if (!targetDate) return [];
+    if (!open || !targetDate) return [];
     const logs = await db.workout_logs
       .where('date')
       .below(targetDate)
@@ -91,7 +91,7 @@ export function CopyWorkoutDialog({
       }
     }
     return Array.from(dateSet);
-  }, [targetDate]);
+  }, [open, targetDate]);
 
   const lastRecordedDate = recordedDates && recordedDates.length > 0 ? recordedDates[0] : null;
 
@@ -115,7 +115,7 @@ export function CopyWorkoutDialog({
 
   // 查詢歷史日期所有訓練動作條目
   const historicalLogs = useLiveQuery<CopyableWorkoutItem[]>(async () => {
-    if (!activeHistoryDate) return [];
+    if (!open || !activeHistoryDate) return [];
     const workoutLogs = await db.workout_logs
       .where('date')
       .equals(activeHistoryDate)

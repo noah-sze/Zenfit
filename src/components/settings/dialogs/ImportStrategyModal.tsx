@@ -152,10 +152,10 @@ export function ImportStrategyModal({
               <div className="grid grid-cols-7 px-2.5 py-1.5 items-center">
                 <span className="col-span-2 text-muted-foreground">{t('profile.height', '身高')}</span>
                 <span className="col-span-2 text-center text-muted-foreground">
-                  {localBaseInfo?.heightCm ? `${localBaseInfo.heightCm} cm` : '-'}
+                  {localBaseInfo?.heightCm ? `${localBaseInfo.heightCm}cm` : '-'}
                 </span>
                 <span className="col-span-3 text-right text-muted-foreground">
-                  {backupBaseInfo?.heightCm ? `${backupBaseInfo.heightCm} cm` : '-'}
+                  {backupBaseInfo?.heightCm ? `${backupBaseInfo.heightCm}cm` : '-'}
                 </span>
               </div>
             </div>

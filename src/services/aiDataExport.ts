@@ -762,13 +762,13 @@ export function formatDailyExportAsText(
       `- ${t('aiExport.diet.activityLevel', '活動係數')}: ${d.activityLabel} (${d.activityLevel})`
     );
     lines.push(
-      `- ${t('aiExport.diet.target', '目標配額')}: ${d.target.calories} ${eUnit} (C: ${d.target.carbs}g / P: ${d.target.protein}g / F: ${d.target.fat}g | ${d.macroSplit.carbs}/${d.macroSplit.protein}/${d.macroSplit.fat})`
+      `- ${t('aiExport.diet.target', '目標配額')}: ${d.target.calories}${eUnit} (C: ${d.target.carbs}g / P: ${d.target.protein}g / F: ${d.target.fat}g | ${d.macroSplit.carbs}/${d.macroSplit.protein}/${d.macroSplit.fat})`
     );
     lines.push(
-      `- ${t('aiExport.diet.actual', '實際攝取')}: ${d.actual.calories} ${eUnit} (C: ${d.actual.carbs}g / P: ${d.actual.protein}g / F: ${d.actual.fat}g)`
+      `- ${t('aiExport.diet.actual', '實際攝取')}: ${d.actual.calories}${eUnit} (C: ${d.actual.carbs}g / P: ${d.actual.protein}g / F: ${d.actual.fat}g)`
     );
     lines.push(
-      `- ${t('aiExport.diet.calorieDiff', '熱量差值')}: ${diffSign}${d.calorieDiff} ${eUnit}`
+      `- ${t('aiExport.diet.calorieDiff', '熱量差值')}: ${diffSign}${d.calorieDiff}${eUnit}`
     );
 
     if (d.meals.length === 0) {
@@ -777,31 +777,31 @@ export function formatDailyExportAsText(
       for (const meal of d.meals) {
         lines.push('');
         lines.push(
-          `### ${meal.mealLabel} (${meal.calories} ${eUnit} | C: ${meal.carbs}g, P: ${meal.protein}g, F: ${meal.fat}g)`
+          `### ${meal.mealLabel} (${meal.calories}${eUnit} | C: ${meal.carbs}g, P: ${meal.protein}g, F: ${meal.fat}g)`
         );
         for (const item of meal.items) {
           if (item.type === 'recipe') {
             lines.push(
-              `- [${t('aiExport.diet.recipeTag', '食譜')}] ${item.name}: ${item.calories} ${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
+              `- [${t('aiExport.diet.recipeTag', '食譜')}] ${item.name}: ${item.calories}${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
             );
             for (const ing of item.ingredients) {
               const amountPart = ing.amount ? ` ${ing.amount}` : '';
               lines.push(
-                `  - ${ing.name}${amountPart}: ${ing.calories} ${eUnit} (C: ${ing.carbs}g, P: ${ing.protein}g, F: ${ing.fat}g)`
+                `  - ${ing.name}${amountPart}: ${ing.calories}${eUnit} (C: ${ing.carbs}g, P: ${ing.protein}g, F: ${ing.fat}g)`
               );
             }
           } else if (item.type === 'estimate') {
             lines.push(
-              `- [${t('aiExport.diet.estimateTag', '快速估算')}] ${item.name}: ${item.calories} ${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
+              `- [${t('aiExport.diet.estimateTag', '快速估算')}] ${item.name}: ${item.calories}${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
             );
           } else if (item.type === 'as_planned') {
             lines.push(
-              `- [${t('aiExport.diet.asPlannedTag', '歷史均值')}] ${item.name}: ${item.calories} ${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
+              `- [${t('aiExport.diet.asPlannedTag', '歷史均值')}] ${item.name}: ${item.calories}${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
             );
           } else {
             const amountPart = item.amount ? ` (${item.amount})` : '';
             lines.push(
-              `- ${item.name}${amountPart}: ${item.calories} ${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
+              `- ${item.name}${amountPart}: ${item.calories}${eUnit} (C: ${item.carbs}g, P: ${item.protein}g, F: ${item.fat}g)`
             );
           }
         }
@@ -871,11 +871,11 @@ export function formatDailyExportAsText(
       lines.push(`- ${t('aiExport.body.noLogs', '當日無身體數據記錄')}`);
     } else {
       if (b.weight !== undefined) {
-        lines.push(`- ${t('aiExport.body.weight', '當日體重')}: ${b.weight} ${b.weightUnit}`);
+        lines.push(`- ${t('aiExport.body.weight', '當日體重')}: ${b.weight}${b.weightUnit}`);
       }
       if (b.trendWeight !== undefined) {
         lines.push(
-          `- ${t('aiExport.body.trendWeight', '平滑趨勢體重')}: ${b.trendWeight} ${b.weightUnit}`
+          `- ${t('aiExport.body.trendWeight', '平滑趨勢體重')}: ${b.trendWeight}${b.weightUnit}`
         );
       }
       if (b.bodyFat !== undefined) {

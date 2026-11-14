@@ -130,7 +130,7 @@
         "actionTitle": "Past Average",
         "badge": "Budget",
         "badgeLong": "Budget",
-        "actionDesc": "Apply past average for {{meal}} · {{calories}} kcal",
+        "actionDesc": "Apply past average for {{meal}} · {{calories}}kcal",
         "emptyBtn": "Past Average ({{calories}}k)",
         "defaultName": "Past Average",
         "successToast": "Past average logged"
@@ -182,10 +182,10 @@
       "dragElevationTip": "Drag up to increase · Drag down to decrease",
       "perServing": "Per Serving",
       "per100g": "Per 100g",
-      "per1oz": "Per 1 oz",
+      "per1oz": "Per 1oz",
       "nutritionBenchmark": "Basis",
       "per100gDensity": "100g Density",
-      "per1ozDensity": "1 oz Density",
+      "per1ozDensity": "1oz Density",
       "unit": "Unit",
       "addFood": "Add Meal",
       "customFood": "Custom Ingredients",
@@ -573,7 +573,7 @@
       "title": "Body",
       "weight": "Weight",
       "trendWeight": "Smoothed Weight",
-      "rawWeight": "Scale Weight",
+      "rawWeight": "Weight",
       "recordedWeight": "Logged Weight",
       "weeklyRate": "7-Day Rate",
       "bodyFat": "Body Fat %",
@@ -587,7 +587,7 @@
         "trendWeight": {
           "title": "Smoothed Weight",
           "formula": "7-Day Smoothing (Today 15% + History 85%)",
-          "desc": "Daily scale weight fluctuates by 1~2 kg due to water retention, sodium, and digestion. By blending 85% historical baseline with 15% daily weight over a 7-day window, it filters out transient noise to objectively track true changes in fat and muscle tissue."
+          "desc": "Daily scale weight fluctuates by 1~2kg due to water retention, sodium, and digestion. By blending 85% historical baseline with 15% daily weight over a 7-day window, it filters out transient noise to objectively track true changes in fat and muscle tissue."
         },
         "bmi": {
           "title": "BMI",
@@ -669,9 +669,56 @@
       "trendLineExplanation": {
         "title": "Smoothed Weight",
         "algorithm": "7-Day Smoothing (Today 15% + History 85%)",
-        "desc": "Daily scale weight fluctuates by 1~2 kg due to water retention, sodium, and digestion. By blending 85% historical baseline with 15% daily weight over a 7-day window, it filters out transient noise to objectively track true changes in fat and muscle tissue."
+        "desc": "Daily scale weight fluctuates by 1~2kg due to water retention, sodium, and digestion. By blending 85% historical baseline with 15% daily weight over a 7-day window, it filters out transient noise to objectively track true changes in fat and muscle tissue."
       },
-      "noSufficientData": "Insufficient time-series data"
+      "noSufficientData": "Insufficient time-series data",
+      "metricGuides": {
+        "weight": {
+          "desc": "Total physical mass of all bodily tissues and fluids; the primary baseline metric for energy balance and body composition.",
+          "method": "Weigh in the morning after voiding and before eating or drinking, wearing minimal clothing, standing still on a flat, hard surface."
+        },
+        "bodyFat": {
+          "desc": "Percentage of total body weight composed of adipose tissue, reflecting lean mass versus fat distribution.",
+          "method": "Measure using BIA, DEXA scan, or calipers under consistent hydration and physiological conditions."
+        },
+        "shouldersCm": {
+          "desc": "Horizontal distance across the outermost points of the lateral deltoids, quantifying upper torso frame.",
+          "method": "Stand upright with relaxed shoulders and arms at sides; wrap a tape measure horizontally around the widest protrusion of both deltoids."
+        },
+        "chestCm": {
+          "desc": "Circumference of the thorax across the widest point of the pectoral muscles, reflecting chest frame and torso development.",
+          "method": "Stand naturally with arms relaxed at sides; place tape horizontally around the nipple line and across the shoulder blades at the end of a normal exhalation."
+        },
+        "waistCm": {
+          "desc": "Circumference at the narrowest point of the torso, serving as a primary marker for visceral fat and torso taper ratio.",
+          "method": "Stand upright with abdomen relaxed; wrap tape horizontally midway between the lowest rib and top of the iliac crest at the end of a normal exhalation."
+        },
+        "hipsCm": {
+          "desc": "Circumference around the widest part of the buttocks and pelvis, used to calculate waist-to-hip ratio and lower body structure.",
+          "method": "Stand upright with feet together; wrap tape horizontally around the maximal protrusion of the glutes, keeping tape parallel to the floor."
+        },
+        "armsCm": {
+          "desc": "Maximal circumference around the upper arm, measuring muscular development of the biceps and triceps.",
+          "method": "Measure around the peak of the biceps perpendicular to the long axis of the humerus, either relaxed or flexed (maintain consistent method)."
+        },
+        "thighsCm": {
+          "desc": "Circumference around the thickest portion of the thigh, reflecting quadriceps and hamstrings mass.",
+          "method": "Stand with feet shoulder-width apart and weight distributed evenly; wrap tape horizontally around the maximal girth of the thigh just below the gluteal fold."
+        },
+        "calvesCm": {
+          "desc": "Maximal horizontal circumference around the gastrocnemius and soleus muscles of the lower leg.",
+          "method": "Stand naturally with weight evenly distributed; wrap tape horizontally around the widest point of the calf muscle belly."
+        }
+      },
+      "keypadGuide": {
+        "current": "Current",
+        "reference": "Reference",
+        "currentValue": "Current/Ref",
+        "todayRecord": "Today's record",
+        "daysAgoReference": "From {{days}} days ago",
+        "profileReference": "From profile",
+        "noRecord": "No record"
+      }
     },
     "profileSettings": {
       "title": "Profile",
@@ -982,7 +1029,7 @@
       "startingApp": "Launching Zenfit…",
       "validationHint": "Please fill in all fields above to unlock",
       "readyHint": "All fields ready. Click to enter Zenfit",
-      "calRemaining": "{{calories}} kcal remaining",
+      "calRemaining": "{{calories}}kcal remaining",
       "calBalance": "Daily Energy Balance",
       "carbs": "Carbs",
       "protein": "Protein",
@@ -996,7 +1043,7 @@
       "step3Sub": "Visualizes muscle fatigue and weekly volume.",
       "showcaseActivity": "Light Activity",
       "showcaseMacroTemplate": "High Protein",
-      "showcaseDietDiff": "Variance -160 kcal",
+      "showcaseDietDiff": "Variance -160kcal",
       "showcaseTrainingDay": "Workout Day",
       "showcaseMuscleLoad": "Muscle Load",
       "showcaseBothViews": "Both Views",
@@ -1058,12 +1105,12 @@
         "summary": "Workout Summary",
         "totalExercises": "{{count}} exercises",
         "totalSets": "{{count}} sets",
-        "totalVolume": "Total Volume {{volume}} {{unit}}",
+        "totalVolume": "Total Volume {{volume}}{{unit}}",
         "routinePrefix": "Routine",
         "equipmentPrefix": "Equipment",
         "primaryMuscles": "Primary Muscles",
         "secondaryMuscles": "Secondary Muscles",
-        "setLine": "Set {{index}}: {{weight}} {{unit}} × {{reps}} reps",
+        "setLine": "Set {{index}}: {{weight}}{{unit}} × {{reps}} reps",
         "noLogs": "No workout logs for this date"
       },
       "body": {

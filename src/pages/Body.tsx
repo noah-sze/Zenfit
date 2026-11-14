@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays, parseISO, differenceInCalendarDays } from 'date-fns';
 import { useAppStore } from '@/store/useAppStore';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBodyMetrics } from '@/hooks/useBodyMetrics';
@@ -276,15 +276,15 @@ export default function Body() {
   const getMetricDisplayValue = (key: BodyMetricKey): string => {
     switch (key) {
       case 'trendWeight':
-        return displayTrendWeight ? `${displayTrendWeight} ${bodyWeightUnit}` : '-';
+        return displayTrendWeight ? `${displayTrendWeight}${bodyWeightUnit}` : '-';
       case 'bmi':
         return bmi > 0 ? `${bmi}` : '-';
       case 'ffmi':
         return ffmi !== null ? `${ffmi}` : '-';
       case 'leanBodyMass':
-        return displayLeanMass ? `${displayLeanMass} ${bodyWeightUnit}` : '-';
+        return displayLeanMass ? `${displayLeanMass}${bodyWeightUnit}` : '-';
       case 'fatMass':
-        return displayFatMass ? `${displayFatMass} ${bodyWeightUnit}` : '-';
+        return displayFatMass ? `${displayFatMass}${bodyWeightUnit}` : '-';
       case 'vTaperRatio':
         return vTaperRatio !== null ? `${vTaperRatio}` : '-';
       case 'whRatio':
@@ -340,7 +340,7 @@ export default function Body() {
   // ==========================================
   const handleOpenKeypad = (
     field: KeypadMetricField,
-    currentVal: number,
+    _currentVal: number,
     title: string,
     unit: string,
     anchorEl?: HTMLElement | null
@@ -349,11 +349,90 @@ export default function Body() {
     setKeypadConfig({
       field,
       title: `${selectedDate} · ${title}`,
-      value: currentVal,
+      value: 0,
       unit,
       allowDecimals: true,
       anchorEl,
     });
+  };
+
+  // 取得當前鍵盤欄位的指引說明、測量方法與現時數值/來源
+  const getFieldGuideInfo = (field: KeypadMetricField) => {
+    let displayVal: number | null = null;
+    let sourceText = '';
+    let isToday = false;
+
+    // 1. 檢查當日是否已有記錄
+    if (field === 'weight') {
+      if (hasTodayWeight && metricToday?.weight) {
+        displayVal = convertBodyWeight(metricToday.weight, 'kg', bodyWeightUnit);
+        sourceText = t('body.keypadGuide.todayRecord', '當日記錄');
+        isToday = true;
+      }
+    } else if (field === 'bodyFat') {
+      if (hasTodayBodyFat && metricToday?.bodyFat) {
+        displayVal = metricToday.bodyFat;
+        sourceText = t('body.keypadGuide.todayRecord', '當日記錄');
+        isToday = true;
+      }
+    } else {
+      const todayCircum = metricToday?.[field];
+      if (typeof todayCircum === 'number' && todayCircum > 0) {
+        displayVal = lengthUnit === 'in' ? cmToIn(todayCircum, 1) : todayCircum;
+        sourceText = t('body.keypadGuide.todayRecord', '當日記錄');
+        isToday = true;
+      }
+    }
+
+    // 2. 若當日無記錄，尋找最後歷史舊記錄
+    if (!isToday) {
+      const priorHistory = recentHistory.filter((m) => m.date < selectedDate);
+      const candidateHistory = priorHistory.length > 0
+        ? priorHistory
+        : recentHistory.filter((m) => m.date !== selectedDate);
+
+      let foundRec: BodyMetric | null = null;
+      for (const rec of candidateHistory) {
+        const val = rec[field];
+        if (typeof val === 'number' && val > 0) {
+          foundRec = rec;
+          break;
+        }
+      }
+
+      if (foundRec) {
+        const recVal = foundRec[field] as number;
+        const daysAgo = Math.max(1, differenceInCalendarDays(parseISO(selectedDate), parseISO(foundRec.date)));
+        sourceText = t('body.keypadGuide.daysAgoReference', {
+          defaultValue: '來自 {{days}} 天前',
+          days: daysAgo,
+        });
+
+        if (field === 'weight') {
+          displayVal = convertBodyWeight(recVal, 'kg', bodyWeightUnit);
+        } else if (field === 'bodyFat') {
+          displayVal = recVal;
+        } else {
+          displayVal = lengthUnit === 'in' ? cmToIn(recVal, 1) : recVal;
+        }
+      } else if (field === 'weight' && profile.currentWeightKg && profile.currentWeightKg > 0) {
+        displayVal = convertBodyWeight(profile.currentWeightKg, 'kg', bodyWeightUnit);
+        sourceText = t('body.keypadGuide.profileReference', '來自基本資料');
+      } else {
+        sourceText = t('body.keypadGuide.noRecord', '尚未記錄');
+      }
+    }
+
+    const desc = t(`body.metricGuides.${field}.desc`, '');
+    const method = t(`body.metricGuides.${field}.method`, '');
+
+    return {
+      displayVal,
+      sourceText,
+      isToday,
+      desc,
+      method,
+    };
   };
 
   const handleKeypadConfirm = async (val: number) => {
@@ -406,7 +485,7 @@ export default function Body() {
       {/* 模組 1：過磅記錄卡片 (方案 C：全圍度忽略時之一體化微膠囊嵌合結構) */}
       {/* ========================================================================= */}
       <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
-        {/* 上半部：實測過磅體重 (Hero Metric) 與 體脂率微型工藝膠囊 */}
+        {/* 上半部：實測體重 (Hero Metric) 與 體脂率微型工藝膠囊 */}
         <div className="p-4 sm:p-5 relative space-y-3">
           {/* 頂部列：中間標題「今日數據」居中，右側動作 (刪除今日記錄) */}
           <div className="relative flex items-center justify-between">
@@ -436,13 +515,13 @@ export default function Body() {
             </div>
           </div>
 
-          {/* 居中巨型數值 (點擊呼出鍵盤微調過磅體重) */}
+          {/* 居中巨型數值 (點擊呼出鍵盤微調體重) */}
           <div
             onClick={(e) =>
               handleOpenKeypad(
                 'weight',
                 heroDisplayWeight || displayTrendWeight || displayCurrentWeight || 0,
-                t('body.rawWeight', '過磅體重'),
+                t('body.rawWeight', '體重'),
                 bodyWeightUnit,
                 e.currentTarget
               )
@@ -531,7 +610,7 @@ export default function Body() {
                   </div>
                   <div
                     className={cn(
-                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      'text-sm sm:text-base font-normal truncate transition-colors',
                       hasTodayShoulders
                         ? 'text-foreground'
                         : effectiveShoulders
@@ -562,7 +641,7 @@ export default function Body() {
                   </div>
                   <div
                     className={cn(
-                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      'text-sm sm:text-base font-normal truncate transition-colors',
                       hasTodayChest
                         ? 'text-foreground'
                         : effectiveChest
@@ -593,7 +672,7 @@ export default function Body() {
                   </div>
                   <div
                     className={cn(
-                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      'text-sm sm:text-base font-normal truncate transition-colors',
                       hasTodayWaist
                         ? 'text-foreground'
                         : effectiveWaist
@@ -624,7 +703,7 @@ export default function Body() {
                   </div>
                   <div
                     className={cn(
-                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      'text-sm sm:text-base font-normal truncate transition-colors',
                       hasTodayHips
                         ? 'text-foreground'
                         : effectiveHips
@@ -660,7 +739,7 @@ export default function Body() {
                   </div>
                   <div
                     className={cn(
-                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      'text-sm sm:text-base font-normal truncate transition-colors',
                       hasTodayArms
                         ? 'text-foreground'
                         : effectiveArms
@@ -691,7 +770,7 @@ export default function Body() {
                   </div>
                   <div
                     className={cn(
-                      'text-sm sm:text-base font-bold truncate transition-colors',
+                      'text-sm sm:text-base font-normal truncate transition-colors',
                       hasTodayThighs
                         ? 'text-foreground'
                         : effectiveThighs
@@ -737,7 +816,7 @@ export default function Body() {
                   : 'text-muted-foreground/25'
             )}
           >
-            {displayTrendWeight ? `${displayTrendWeight} ${bodyWeightUnit}` : '-'}
+            {displayTrendWeight ? `${displayTrendWeight}${bodyWeightUnit}` : '-'}
           </div>
         </button>
 
@@ -811,7 +890,7 @@ export default function Body() {
                     : 'text-muted-foreground/25'
               )}
             >
-              {displayLeanMass ? `${displayLeanMass} ${bodyWeightUnit}` : '-'}
+              {displayLeanMass ? `${displayLeanMass}${bodyWeightUnit}` : '-'}
             </div>
           </button>
 
@@ -834,7 +913,7 @@ export default function Body() {
                     : 'text-muted-foreground/25'
               )}
             >
-              {displayFatMass ? `${displayFatMass} ${bodyWeightUnit}` : '-'}
+              {displayFatMass ? `${displayFatMass}${bodyWeightUnit}` : '-'}
             </div>
           </button>
         </div>
@@ -988,10 +1067,10 @@ export default function Body() {
                 {/* 1. 肩寬 */}
                 <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.shoulders', '肩寬')}</span>
-                  <span className="text-center font-normal text-foreground">{effectiveShoulders ? `${effectiveShoulders} ${lengthUnit}` : '-'}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveShoulders ? `${effectiveShoulders}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
                     {circumferenceChanges.shouldersDelta !== null
-                      ? `${circumferenceChanges.shouldersDelta > 0 ? '+' : ''}${circumferenceChanges.shouldersDelta} ${lengthUnit}`
+                      ? `${circumferenceChanges.shouldersDelta > 0 ? '+' : ''}${circumferenceChanges.shouldersDelta}${lengthUnit}`
                       : '-'}
                   </span>
                 </div>
@@ -999,10 +1078,10 @@ export default function Body() {
                 {/* 2. 胸圍 */}
                 <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.chest', '胸圍')}</span>
-                  <span className="text-center font-normal text-foreground">{effectiveChest ? `${effectiveChest} ${lengthUnit}` : '-'}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveChest ? `${effectiveChest}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
                     {circumferenceChanges.chestDelta !== null
-                      ? `${circumferenceChanges.chestDelta > 0 ? '+' : ''}${circumferenceChanges.chestDelta} ${lengthUnit}`
+                      ? `${circumferenceChanges.chestDelta > 0 ? '+' : ''}${circumferenceChanges.chestDelta}${lengthUnit}`
                       : '-'}
                   </span>
                 </div>
@@ -1010,10 +1089,10 @@ export default function Body() {
                 {/* 3. 腰圍 */}
                 <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.waist', '腰圍')}</span>
-                  <span className="text-center font-normal text-foreground">{effectiveWaist ? `${effectiveWaist} ${lengthUnit}` : '-'}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveWaist ? `${effectiveWaist}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
                     {circumferenceChanges.waistDelta !== null
-                      ? `${circumferenceChanges.waistDelta > 0 ? '+' : ''}${circumferenceChanges.waistDelta} ${lengthUnit}`
+                      ? `${circumferenceChanges.waistDelta > 0 ? '+' : ''}${circumferenceChanges.waistDelta}${lengthUnit}`
                       : '-'}
                   </span>
                 </div>
@@ -1021,10 +1100,10 @@ export default function Body() {
                 {/* 4. 臀圍 */}
                 <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.hips', '臀圍')}</span>
-                  <span className="text-center font-normal text-foreground">{effectiveHips ? `${effectiveHips} ${lengthUnit}` : '-'}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveHips ? `${effectiveHips}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
                     {circumferenceChanges.hipsDelta !== null
-                      ? `${circumferenceChanges.hipsDelta > 0 ? '+' : ''}${circumferenceChanges.hipsDelta} ${lengthUnit}`
+                      ? `${circumferenceChanges.hipsDelta > 0 ? '+' : ''}${circumferenceChanges.hipsDelta}${lengthUnit}`
                       : '-'}
                   </span>
                 </div>
@@ -1037,10 +1116,10 @@ export default function Body() {
                 {/* 手臂圍 */}
                 <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.arms', '手臂圍')}</span>
-                  <span className="text-center font-normal text-foreground">{effectiveArms ? `${effectiveArms} ${lengthUnit}` : '-'}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveArms ? `${effectiveArms}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
                     {circumferenceChanges.armsDelta !== null
-                      ? `${circumferenceChanges.armsDelta > 0 ? '+' : ''}${circumferenceChanges.armsDelta} ${lengthUnit}`
+                      ? `${circumferenceChanges.armsDelta > 0 ? '+' : ''}${circumferenceChanges.armsDelta}${lengthUnit}`
                       : '-'}
                   </span>
                 </div>
@@ -1048,10 +1127,10 @@ export default function Body() {
                 {/* 大腿圍 */}
                 <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.thighs', '大腿圍')}</span>
-                  <span className="text-center font-normal text-foreground">{effectiveThighs ? `${effectiveThighs} ${lengthUnit}` : '-'}</span>
+                  <span className="text-center font-normal text-foreground">{effectiveThighs ? `${effectiveThighs}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
                     {circumferenceChanges.thighsDelta !== null
-                      ? `${circumferenceChanges.thighsDelta > 0 ? '+' : ''}${circumferenceChanges.thighsDelta} ${lengthUnit}`
+                      ? `${circumferenceChanges.thighsDelta > 0 ? '+' : ''}${circumferenceChanges.thighsDelta}${lengthUnit}`
                       : '-'}
                   </span>
                 </div>
@@ -1064,22 +1143,74 @@ export default function Body() {
       {/* ========================================================================= */}
       {/* 次級彈窗區域：平鋪兄弟節點 (Instant Pop, 數字鍵盤微調彈窗) */}
       {/* ========================================================================= */}
-      {keypadConfig && (
-        <NumericKeypadDialog
-          open={!!keypadConfig}
-          onOpenChange={(kOpen) => {
-            if (!kOpen) setKeypadConfig(null);
-          }}
-          title={keypadConfig.title}
-          value={keypadConfig.value}
-          unit={keypadConfig.unit}
-          allowDecimals={keypadConfig.allowDecimals}
-          maxDecimals={keypadConfig.allowDecimals ? 1 : 0}
-          anchorEl={keypadConfig.anchorEl}
-          onConfirm={handleKeypadConfirm}
-          onCancel={() => setKeypadConfig(null)}
-        />
-      )}
+      {keypadConfig && (() => {
+        const guideInfo = getFieldGuideInfo(keypadConfig.field);
+        const { displayVal, sourceText, isToday, desc, method } = guideInfo;
+
+        const infoCard = (
+          <div className="w-full bg-card text-card-foreground border border-border rounded-[18px] p-3 text-xs select-none shadow-none space-y-2.5">
+            {/* 居中排版：數值更大，「當日記錄/參考值」動態顯示於數值上方 */}
+            <div className="py-1 text-center space-y-0.5">
+              {/* 上方動態標籤列（僅在有數值時展示） */}
+              {displayVal !== null && (
+                <div className="text-[11px] font-sans text-muted-foreground tracking-wide">
+                  {isToday ? (
+                    <span>{t('body.keypadGuide.todayRecord', '當日記錄')}</span>
+                  ) : (
+                    <span>{t('body.keypadGuide.reference', '參考值')} · {sourceText}</span>
+                  )}
+                </div>
+              )}
+
+              {/* 居中大數值 */}
+              {displayVal !== null ? (
+                <div className="flex items-baseline justify-center gap-1 font-mono">
+                  <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-mono">
+                    {displayVal}
+                  </span>
+                  {keypadConfig.unit && (
+                    <span className="text-xs sm:text-sm font-normal text-muted-foreground font-mono">
+                      {keypadConfig.unit}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="text-base sm:text-lg font-medium font-sans text-muted-foreground pt-0.5">
+                  {t('body.keypadGuide.noRecord', '尚未記錄')}
+                </div>
+              )}
+            </div>
+
+            {/* 項目說明與測量步驟 (純文字排版，無前綴標籤) */}
+            {(desc || method) && (
+              <div className="pt-2 border-t border-border/60 space-y-1.5 font-sans leading-relaxed text-[11px] text-muted-foreground text-left">
+                {desc && <div>{desc}</div>}
+                {method && <div>{method}</div>}
+              </div>
+            )}
+          </div>
+        );
+
+        return (
+          <NumericKeypadDialog
+            key={keypadConfig.field}
+            open={!!keypadConfig}
+            onOpenChange={(kOpen) => {
+              if (!kOpen) setKeypadConfig(null);
+            }}
+            title={keypadConfig.title}
+            value={keypadConfig.value}
+            unit={keypadConfig.unit}
+            infoCard={infoCard}
+            allowDecimals={keypadConfig.allowDecimals}
+            maxDecimals={keypadConfig.allowDecimals ? 1 : 0}
+            allowZero={false}
+            anchorEl={keypadConfig.anchorEl}
+            onConfirm={handleKeypadConfirm}
+            onCancel={() => setKeypadConfig(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

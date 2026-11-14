@@ -173,17 +173,17 @@ describe('unitMath: Precision Metric Tests', () => {
       expect(formatEnergy(389, 'kcal')).toEqual({
         value: 389,
         unit: 'kcal',
-        formatted: '389 kcal',
+        formatted: '389kcal',
       });
       expect(formatEnergy(389, 'kJ')).toEqual({
         value: 1628,
         unit: 'kJ',
-        formatted: '1,628 kJ',
+        formatted: '1,628kJ',
       });
       expect(formatEnergy(0, 'kcal')).toEqual({
         value: 0,
         unit: 'kcal',
-        formatted: '0 kcal',
+        formatted: '0kcal',
       });
     });
 

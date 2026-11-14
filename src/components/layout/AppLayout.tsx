@@ -11,7 +11,7 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
-  Copy,
+  Share2,
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toast';
@@ -278,7 +278,7 @@ export function AppLayout() {
                   aria-label={t('aiExport.triggerAriaLabel')}
                   title={t('aiExport.triggerAriaLabel')}
                 >
-                  <Copy className="size-4.5" strokeWidth={1.5} />
+                  <Share2 className="size-4.5" strokeWidth={1.5} />
                 </button>
                 <button
                   type="button"
@@ -376,12 +376,14 @@ export function AppLayout() {
       <AddQuickModal />
       <AppLockOverlay />
       <InitialSyncModal />
-      <CopyDailyDataDialog
-        open={isCopyDataOpen}
-        onOpenChange={setIsCopyDataOpen}
-        date={selectedDate}
-        scope={getAiExportScopeByPath(location.pathname)}
-      />
+      {isCopyDataOpen && (
+        <CopyDailyDataDialog
+          open={isCopyDataOpen}
+          onOpenChange={setIsCopyDataOpen}
+          date={selectedDate}
+          scope={getAiExportScopeByPath(location.pathname)}
+        />
+      )}
       <Toaster />
     </div>
   );

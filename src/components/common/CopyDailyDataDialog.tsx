@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Share2, Download, Loader2 } from 'lucide-react';
 import { Dialog, PrecisionDialogContent } from '@/components/ui/dialog';
@@ -125,18 +125,37 @@ export function CopyDailyDataDialog({
     return formatDailyExportData(exportInput, format);
   }, [exportInput, format]);
 
-  const previewImageDataUrl = useMemo(() => {
-    if (format !== 'image') return '';
-    try {
-      return generateDailyExportImageDataUrl(payload, {
-        theme: isDark ? 'dark' : 'light',
-        dpr: 2,
-      });
-    } catch (err) {
-      console.error('Failed to generate preview image data url:', err);
-      return '';
+  const [previewImageDataUrl, setPreviewImageDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (!open || format !== 'image') {
+      setPreviewImageDataUrl('');
+      return;
     }
-  }, [format, payload, isDark]);
+
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      try {
+        const url = generateDailyExportImageDataUrl(payload, {
+          theme: isDark ? 'dark' : 'light',
+          dpr: 2,
+        });
+        if (isMounted) {
+          setPreviewImageDataUrl(url);
+        }
+      } catch (err) {
+        console.error('Failed to generate preview image data url:', err);
+        if (isMounted) {
+          setPreviewImageDataUrl('');
+        }
+      }
+    }, 50);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [open, format, payload, isDark]);
 
   // 複製純文字 / JSON
   const handleCopyText = async () => {

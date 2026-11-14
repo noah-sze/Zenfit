@@ -154,13 +154,13 @@ export function formatEnergy(
   targetUnit: EnergyUnit
 ): { value: number; unit: string; formatted: string } {
   if (isNaN(kcal) || !isFinite(kcal) || kcal <= 0) {
-    return { value: 0, unit: targetUnit, formatted: `0 ${targetUnit}` };
+    return { value: 0, unit: targetUnit, formatted: `0${targetUnit}` };
   }
   const val = targetUnit === 'kJ' ? Math.round(kcal * KCAL_TO_KJ_RATIO) : Math.round(kcal);
   return {
     value: val,
     unit: targetUnit,
-    formatted: `${val.toLocaleString()} ${targetUnit}`,
+    formatted: `${val.toLocaleString()}${targetUnit}`,
   };
 }
 

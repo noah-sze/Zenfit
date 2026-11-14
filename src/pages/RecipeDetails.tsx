@@ -532,7 +532,7 @@ export default function RecipeDetails() {
           <div className="h-10 px-4 flex items-center justify-between">
             <span className="text-muted-foreground">
               {nutritionDisplayMode === 'per100g'
-                ? (foodWeightUnit === 'oz' ? t('diet.per1ozDensity', '1 oz 密度') : t('diet.per100gDensity', '100g 密度'))
+                ? (foodWeightUnit === 'oz' ? t('diet.per1ozDensity', '1oz 密度') : t('diet.per100gDensity', '100g 密度'))
                 : t('diet.unit')}
             </span>
             <span className="font-mono text-foreground font-medium">

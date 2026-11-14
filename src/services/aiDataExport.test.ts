@@ -241,6 +241,15 @@ describe('aiDataExport', () => {
       expect(textStr).toContain('卜蜂 · 舒肥雞胸肉 200g');
       expect(textStr).toContain('[快速估算] 火鍋');
       expect(textStr).toContain('[歷史均值] 歷史均值');
+      expect(textStr).toContain('目標配額: 2000kcal');
+      expect(textStr).toContain('實際攝取: 1708kcal');
+      expect(textStr).toContain('熱量差值: -292kcal');
+      expect(textStr).toContain('### 早餐 (233kcal');
+      expect(textStr).toContain('### 午餐 (525kcal');
+      expect(textStr).toContain('[食譜] 高蛋白雞肉飯: 525kcal');
+      expect(textStr).toContain('卜蜂 · 舒肥雞胸肉 200g: 330kcal');
+      expect(textStr).toContain('[快速估算] 火鍋: 750kcal');
+      expect(textStr).toContain('[歷史均值] 歷史均值: 200kcal');
     });
   });
 
@@ -329,9 +338,10 @@ describe('aiDataExport', () => {
         'text'
       );
       expect(textStr).toContain('課表: 推日課表 A');
+      expect(textStr).toContain('總容量 1150kg');
       expect(textStr).toContain('### 槓鈴臥推 (槓鈴 | 主肌群: 中下胸 | 協同肌群: 三角肌前束、肱三頭肌)');
-      expect(textStr).toContain('- 第 1 組: 80 kg × 8 次');
-      expect(textStr).toContain('- 第 2 組: 85 kg × 6 次 @ RPE 8.5');
+      expect(textStr).toContain('- 第 1 組: 80kg × 8 次');
+      expect(textStr).toContain('- 第 2 組: 85kg × 6 次 @ RPE 8.5');
       expect(textStr).not.toContain('ex-bench');
       expect(textStr).not.toContain('routine-push');
     });
@@ -389,8 +399,8 @@ describe('aiDataExport', () => {
         },
         'text'
       );
-      expect(textStr).toContain('當日體重: 71.2 kg');
-      expect(textStr).toContain('平滑趨勢體重: 71.9 kg');
+      expect(textStr).toContain('當日體重: 71.2kg');
+      expect(textStr).toContain('平滑趨勢體重: 71.9kg');
       expect(textStr).toContain('體脂率: 14.5%');
       expect(textStr).toContain('身體圍度: 胸圍 102cm · 腰圍 76.5cm · 手臂圍 38cm');
       expect(textStr).not.toContain('臀圍');

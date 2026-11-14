@@ -329,9 +329,9 @@ export function WelcomeWizard({ onComplete }: WelcomeWizardProps) {
                         <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">kcal</span>
                       </div>
 
-                      {/* 客觀差額事實 (1:1 復刻 Diet.tsx: 剩餘 160 kcal) */}
+                      {/* 客觀差額事實 (1:1 復刻 Diet.tsx: 剩餘 160kcal) */}
                       <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
-                        <span>{t('dietPlan.underBudget', '剩餘')} 160 kcal</span>
+                        <span>{t('dietPlan.underBudget', '剩餘')} 160kcal</span>
                       </div>
 
                       {/* 客觀進度標尺 (1:1 復刻 Diet.tsx: h-2 max-w-[220px] bg-track) */}
@@ -494,7 +494,7 @@ export function WelcomeWizard({ onComplete }: WelcomeWizardProps) {
                         {t('workout.totalVolume', '總容量')}
                       </div>
                       <div className="text-xs sm:text-sm font-bold text-foreground">
-                        8,450 <span className="text-[9px] font-normal text-muted-foreground">kg</span>
+                        8,450<span className="text-[9px] font-normal text-muted-foreground">kg</span>
                       </div>
                     </div>
                   </div>

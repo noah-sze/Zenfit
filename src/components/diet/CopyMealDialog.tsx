@@ -11,6 +11,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { db } from '@/services/db/db';
 import { ensureDailyDietMeta } from '@/hooks/useDietPlan';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { getInMemoryFoodsCache, setInMemoryFoodsCache } from '@/hooks/useFoods';
 import { formatEnergy } from '@/utils/unitMath';
 import { calculateFoodLogNutrients } from '@/utils/nutritionMath';
 import { resolveFoodLogTitle } from '@/utils/foodNaming';
@@ -53,7 +54,7 @@ export function CopyMealDialog({
 
   // 查詢當前目標日期前，該餐別所有有記錄的歷史日期 (降序排列)
   const recordedDates = useLiveQuery<string[]>(async () => {
-    if (!targetDate || !targetMealType) return [];
+    if (!open || !targetDate || !targetMealType) return [];
     const logs = await db.daily_diet_logs
       .where('date')
       .below(targetDate)
@@ -63,7 +64,7 @@ export function CopyMealDialog({
     return logs
       .filter((log) => log.entries && log.entries.some((e) => e.mealType === targetMealType))
       .map((log) => log.date);
-  }, [targetDate, targetMealType]);
+  }, [open, targetDate, targetMealType]);
 
   const lastRecordedDate = recordedDates && recordedDates.length > 0 ? recordedDates[0] : null;
 
@@ -87,12 +88,16 @@ export function CopyMealDialog({
 
   // 查詢歷史日期該餐別所有食材條目
   const historicalLogs = useLiveQuery<CopyableMealItem[]>(async () => {
-    if (!activeHistoryDate) return [];
+    if (!open || !activeHistoryDate) return [];
     const dailyLog = await db.daily_diet_logs.where('date').equals(activeHistoryDate).first();
     const rawEntries = (dailyLog?.entries || []).filter((e) => e.mealType === targetMealType);
     if (rawEntries.length === 0) return [];
 
-    const allFoods = await db.foods.toArray();
+    const cachedFoods = getInMemoryFoodsCache();
+    const allFoods = cachedFoods !== null ? cachedFoods : await db.foods.toArray();
+    if (cachedFoods === null) {
+      setInMemoryFoodsCache(allFoods);
+    }
     const foodMap = new Map(allFoods.map((f) => [f.id, f]));
 
     return rawEntries.map((log) => {

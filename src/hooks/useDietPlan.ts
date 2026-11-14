@@ -43,12 +43,12 @@ export async function ensureDailyDietMeta(targetDate: string): Promise<DietPlan>
     };
   }
 
-  const previous = await db.daily_diet_logs
+  const inherited = await db.daily_diet_logs
     .where('date')
     .below(targetDate)
     .reverse()
-    .sortBy('date');
-  const inherited = previous[0];
+    .filter((d) => Boolean(d.meta))
+    .first();
 
   const profile = (await db.user_profile.get(DEFAULT_USER_PROFILE_ID)) || (await db.user_profile.toCollection().first());
 
@@ -83,12 +83,12 @@ export function useDietPlan(date: string): UseDietPlanResult {
       const exact = await db.daily_diet_logs.where('date').equals(date).first();
 
       // 2. 若當天無專屬日誌頭部，查詢 date 之前手動設定的最新一筆有效記錄 (向後沿用規則)
-      const previous = await db.daily_diet_logs
+      const inherited = await db.daily_diet_logs
         .where('date')
         .below(date)
         .reverse()
-        .sortBy('date');
-      const inherited = previous[0];
+        .filter((d) => Boolean(d.meta))
+        .first();
 
       // 3. 查詢全域 Profile 與最新體態數據作為客觀計算錨點
       const baseInfo = await db.user_base_info.get(PRIMARY_USER_ID) || (await db.user_base_info.toCollection().first());

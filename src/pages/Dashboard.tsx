@@ -189,8 +189,8 @@ export default function Dashboard() {
             <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
               <span>
                 {energyDiff >= 0
-                  ? `${t('dietPlan.underBudget', '剩餘')} ${energyDiff.toLocaleString()} ${energyUnit}`
-                  : `${t('dietPlan.overBudget', '超出')} +${Math.abs(energyDiff).toLocaleString()} ${energyUnit}`}
+                  ? `${t('dietPlan.underBudget', '剩餘')} ${energyDiff.toLocaleString()}${energyUnit}`
+                  : `${t('dietPlan.overBudget', '超出')} +${Math.abs(energyDiff).toLocaleString()}${energyUnit}`}
               </span>
             </div>
 

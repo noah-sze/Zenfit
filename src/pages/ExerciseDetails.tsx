@@ -435,7 +435,7 @@ export default function ExerciseDetails() {
           totalWeeks={totalWeeks}
           onContainerWidthChange={setMatrixContainerWidth}
           getTooltipText={(day) =>
-            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} ${bodyWeightUnit}`
+            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)}${bodyWeightUnit}`
           }
           renderSelectedDetails={(day) => (
             <div className="flex items-center tabular-nums text-xs font-mono">
@@ -444,7 +444,7 @@ export default function ExerciseDetails() {
               </span>
               <span className="text-border mx-1.5 select-none">·</span>
               <span className={day.count === 0 ? "text-muted-foreground" : "text-foreground"}>
-                {convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} {bodyWeightUnit}
+                {convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)}{bodyWeightUnit}
               </span>
             </div>
           )}
@@ -626,7 +626,7 @@ export default function ExerciseDetails() {
                   {t('workout.e1rmExplanation.title')}
                 </div>
                 <div className="text-xs font-mono text-foreground tabular-nums">
-                  {convertBodyWeight(periodBestE1RM, 'kg', bodyWeightUnit, 1)} {bodyWeightUnit}
+                  {convertBodyWeight(periodBestE1RM, 'kg', bodyWeightUnit, 1)}{bodyWeightUnit}
                 </div>
               </div>
 

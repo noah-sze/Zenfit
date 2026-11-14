@@ -481,7 +481,7 @@ export default function Workout() {
               <>
                 <span className="text-border select-none shrink-0">·</span>
                 <span className="text-muted-foreground shrink-0 truncate">
-                  {Math.round(displayGroupVolume).toLocaleString()} {bodyWeightUnit}
+                  {Math.round(displayGroupVolume).toLocaleString()}{bodyWeightUnit}
                 </span>
               </>
             )}
@@ -667,7 +667,7 @@ export default function Workout() {
                           <>
                             <span className="text-border select-none shrink-0">·</span>
                             <span className="text-muted-foreground shrink-0 truncate">
-                              {Math.round(displayWorkoutVolume).toLocaleString()} {bodyWeightUnit}
+                              {Math.round(displayWorkoutVolume).toLocaleString()}{bodyWeightUnit}
                             </span>
                           </>
                         )}
@@ -798,11 +798,13 @@ export default function Workout() {
       })()}
 
       {/* 3. 複製訓練 Dialog (平級 Flat Sibling Portal) */}
-      <CopyWorkoutDialog
-        open={isCopyWorkoutOpen}
-        onOpenChange={setIsCopyWorkoutOpen}
-        targetDate={selectedDate}
-      />
+      {isCopyWorkoutOpen && (
+        <CopyWorkoutDialog
+          open={isCopyWorkoutOpen}
+          onOpenChange={setIsCopyWorkoutOpen}
+          targetDate={selectedDate}
+        />
+      )}
     </div>
   );
 }

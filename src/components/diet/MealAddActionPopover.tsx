@@ -183,7 +183,7 @@ export function MealAddActionPopover({
               </span>
             </div>
             <div className="text-2xs font-mono text-muted-foreground/60 leading-normal mt-0.5 truncate">
-              {t('diet.asPlanned.actionDesc', '套用過去{{meal}}的平均值 · {{calories}} kcal', {
+              {t('diet.asPlanned.actionDesc', '套用過去{{meal}}的平均值 · {{calories}}kcal', {
                 meal: t(`diet.${mealType}`),
                 calories: budget.calories,
               })}
