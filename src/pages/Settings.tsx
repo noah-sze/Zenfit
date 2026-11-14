@@ -674,7 +674,38 @@ export default function Settings() {
       {/* 分割線 */}
       <div className="border-t border-border/60" />
 
-      {/* 區塊 5：危險操作 */}
+      {/* 區塊 6：關於 */}
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+        <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
+            {t('settings.aboutSection')}
+          </h2>
+          <p className="text-[11px] text-muted-foreground font-mono leading-relaxed">
+            {t('settings.aboutDesc')}
+          </p>
+        </div>
+        <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+          <a
+            href="/landing.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => triggerHaptic('light')}
+            className="usage-row hover:bg-hover transition-colors group cursor-pointer"
+          >
+            <span className="text-sm font-normal text-foreground">
+              {t('settings.productIntro')}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground group-hover:text-foreground transition-colors">
+              <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </a>
+        </div>
+      </section>
+
+      {/* 分割線 */}
+      <div className="border-t border-border/60" />
+
+      {/* 區塊 7：危險操作 */}
       <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-destructive font-mono">

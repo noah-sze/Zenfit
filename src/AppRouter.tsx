@@ -5,6 +5,7 @@ import { SetupGuard } from './components/security/SetupGuard';
 
 // 全頁面靜態直載 (Static Direct Import)，徹底消除白屏延遲，實現原生 App 級 0ms 秒開
 import Dashboard from './pages/Dashboard';
+import LandingPage from './pages/LandingPage';
 import Diet from './pages/Diet';
 import Workout from './pages/Workout';
 import Body from './pages/Body';
@@ -121,6 +122,10 @@ const router = createBrowserRouter([
         element: <ProfileSettings />,
       },
     ],
+  },
+  {
+    path: '/landing',
+    element: <LandingPage />,
   },
 ]);
 

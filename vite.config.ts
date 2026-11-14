@@ -60,6 +60,10 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
+      input: {
+        main: path.resolve(import.meta.dirname, 'index.html'),
+        landing: path.resolve(import.meta.dirname, 'landing.html'),
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router-dom/')) {

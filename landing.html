@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Zenfit · 冷靜、極速、無說教的客觀鏡子</title>
+    <style>
+      :root {
+        --app-bg: #000000;
+        --app-fg: #ffffff;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --app-bg: #ffffff;
+          --app-fg: #000000;
+        }
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--app-bg);
+        color: var(--app-fg);
+      }
+      /* 隱藏滾動條但保持順暢滾動 */
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      *::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/landing.tsx"></script>
+  </body>
+</html>
