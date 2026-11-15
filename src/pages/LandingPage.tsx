@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sun, Moon, ArrowUpRight } from 'lucide-react';
-import { DashboardView, DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
+import { DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
 import {
   WorkoutRecoveryDashboard,
   WorkoutExerciseCard,
@@ -22,6 +22,7 @@ import {
 } from '@/components/body';
 import { ShareShowcaseCards } from '@/components/common/ShareShowcaseCards';
 import { SyncTopologyDiagram } from '@/components/common/SyncTopologyDiagram';
+import { HeroShowcaseDeck } from '@/components/common/HeroShowcaseDeck';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -206,42 +207,8 @@ export default function LandingPage() {
 
       
       {/* Right Column: 100% Live Real Component of App Dashboard (Single Source of Truth) */}
-      <div className="hidden lg:flex lg:col-span-7 p-4 sm:p-8 lg:p-12 bg-neutral-50 dark:bg-neutral-950 flex-col justify-center items-center transition-colors duration-200">
-        
-        {/* Window Frame Container (Precision Border, Flat, No Shadow) */}
-        <div className="w-full max-w-[330px] sm:max-w-[350px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden select-none pointer-events-none shadow-none">
-          
-          {/* Mock Window Titlebar / App Status Header */}
-          <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between font-mono text-[11px] bg-neutral-50 dark:bg-neutral-950">
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
-            </div>
-            <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
-              <span className="font-medium text-neutral-900 dark:text-neutral-100">Zenfit</span>
-              <span className="text-neutral-400 dark:text-neutral-600">/</span>
-              <span>總覽</span>
-            </div>
-            <div className="flex items-center space-x-1.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>0.12ms</span>
-            </div>
-          </div>
-
-          {/* 核心真實 React 總覽元件 (100% 複用真實代碼與模型，內容等比縮放 72%) */}
-          <div className="p-3 sm:p-3.5 bg-white dark:bg-black" style={{ zoom: 0.72 }}>
-            <DashboardView
-              {...DEMO_DASHBOARD_DATA}
-              className="pb-0"
-              onNavigateBody={() => navigate('/body')}
-              onNavigateDiet={() => navigate('/diet')}
-              onNavigateWorkout={() => navigate('/workout')}
-            />
-          </div>
-
-        </div>
-
+      <div className="hidden lg:flex lg:col-span-7 p-4 sm:p-6 lg:p-8 xl:p-12 bg-neutral-50 dark:bg-neutral-950 flex-col justify-center items-center transition-colors duration-200 overflow-hidden">
+        <HeroShowcaseDeck />
       </div>
 
     </div>
@@ -253,14 +220,14 @@ export default function LandingPage() {
       {/*  標題區塊 (單獨成行，居於上方)  */}
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 02 / 飲食度量 · EFFORTLESS NUTRITION ]
+          [ 01 / 飲食]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.15]">
           零摩擦記錄飲食。<br />
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">準確食材、一鍵複製、快速估算、滾動均值。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          記錄飲食不該是繁瑣負擔。Zenfit 針對真實生活打造零阻力記錄流：自煮時依托 420+ 種原型食材準確秤重；規律進餐時一鍵複製昨日餐點；外食聚餐時支援快速粗估；並以 7 天與 30 天滾動均值過濾日常水分與熱量波動，冷靜呈現真實能量平衡。
+          記錄飲食不該是繁瑣負擔。Zenfit 針對真實生活打造零阻力記錄流：自煮時依托 420+ 種原型食材準確秤重；規律進餐時一鍵複製昨日餐點；外食聚餐時支援快速粗估。
         </p>
       </div>
 
@@ -420,7 +387,7 @@ export default function LandingPage() {
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 03 / STRENGTH & BIOMECHANICS ]
+          [ 02 / 訓練]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
           肌力生物力學與組數表。<br />
@@ -490,15 +457,14 @@ export default function LandingPage() {
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 04 / BODY & PHYSIOLOGICAL NOISE REDUCTION ]
+          [ 03 / 體態]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          體重抗噪平滑與精密鍵盤。<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">7 日 EMA 曲線、圍度矩陣與 300px 標準彈窗。</span>
+          過濾水分波動，看懂真實體態。<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">7 天平滑曲線、身體圍度追蹤與客觀進展。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          水分滯留、鹽分攝入與胃腸內容物經常引起每日 1～2kg 的生理噪聲。
-          Zenfit 透過指數移動平均 (EMA) 算法提取真實生理組織變化斜率，並配備全站唯一的 300px 標準精密彈窗鍵盤。
+          喝水多寡與重鹹飲食，常讓單日體重上下跳動 1～2 公斤。Zenfit 自動過濾水分干擾，幫你算出身體的真實增減趨勢；同步支援胸圍、腰圍等圍度追蹤，只擺客觀事實，告別體重焦慮。
         </p>
       </div>
 
@@ -543,15 +509,14 @@ export default function LandingPage() {
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 05 / ANALYTICS & DATA SHARING ]
+          [ 04 / 分析]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          軟體內不接黑盒 AI，<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">但你隨時可以把數據分享給 AI 或朋友。</span>
+          內部零黑盒 AI，<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">外部開放自由分析。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          我們拒絕在軟體內部內建黑盒 AI 來評判你的生活。真正的分析應當建立在純數學的客觀事實之上。
-          與此同時，你的數據 100% 歸你所有：你可以一鍵複製專為 LLM 結構化優化的 Prompt，或者匯出高密度圖表，隨時與 ChatGPT、Claude 或你的教練、營養師展開深度交流。
+          我們不在軟體裡塞入未經科學驗證的 AI 評分機制。Zenfit 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。
         </p>
       </div>
 
@@ -569,14 +534,14 @@ export default function LandingPage() {
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 06 / DATA SOVEREIGNTY & UNIVERSAL PWA ]
+          [ 05 / 同步]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          本地優先、Dropbox 同步與 PWA 全平台。<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">數據完全私有化，斷網依然毫秒響應。</span>
+          數據完全歸你，斷網也能秒開記錄。<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">離線可用、個人 Dropbox 私密同步與一鍵打包匯出。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          你的身體數據不屬於任何科技巨頭的伺服器。Zenfit 全面採用本地 IndexedDB 驅動，直連個人 Dropbox 私有目錄進行多設備增量同步，亦支援本機資料夾直接鏡像與一鍵無損導出。
+          你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。
         </p>
       </div>
 
@@ -595,14 +560,14 @@ export default function LandingPage() {
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 07 / PRODUCT BOUNDARIES & PHILOSOPHY ]
+          [ 06 / 原則]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          為什麼我們不做這些功能？<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">界定產品邊界，守護不可侵犯的客觀純粹性。</span>
+          拒絕製造焦慮。<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">不搞社交、不催打卡、不給指令、不做成品黑盒。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          一個偉大產品的靈魂，往往由它「堅決不做什麼」所定義。Zenfit 拒絕隨波逐流的消費主義套路。
+          你不需要一個軟體每天催你打卡、對你說教，或是逼你跟別人比較。Zenfit 刻意拿掉所有惱人的套路：今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、安靜待命的記錄工具。
         </p>
       </div>
 
@@ -683,15 +648,15 @@ export default function LandingPage() {
     <div className="max-w-6xl mx-auto space-y-12">
       
       <div className="space-y-4 max-w-3xl">
-        <div className="text-xs text-telemetry-accent uppercase tracking-widest">
-          [ 08 / TECHNICAL SPECIFICATION & CODE STANDARDS ]
+        <div className="text-xs text-telemetry-accent uppercase tracking-widest font-mono">
+          [ 07 / 技術]
         </div>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          架構總綱與工程紀律。<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">單一真理源、無副作用純數學與極限型別約束。</span>
+          可靠，源自極致克制。<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">零外部依賴、純本地計算、永不損毀數據。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          Zenfit 的代碼庫遵循最嚴苛的軟體工程準則。全應用程式維持「一處修改，全域變動，始終統一」的架構紀律。
+          拒絕臃腫的第三方追蹤與肥大框架。Zenfit 透過無副作用純數學純函數與 100% 單元測試防線，保證你的每一次點擊都獲得毫秒級的確定性。
         </p>
       </div>
 
@@ -701,11 +666,11 @@ export default function LandingPage() {
         {/*  卡片 1  */}
         <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
           <div>
-            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">01 / 前端技術棧與高度管理</div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">01 / 前端架構與響應速度</div>
             <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
-              <div>• <strong>核心棧</strong>：React 19 + TypeScript (Strict Mode, 0 any) + Vite。</div>
-              <div>• <strong>CSS 系統</strong>：Tailwind CSS v4 + 全域 Design Tokens 變數控制。</div>
-              <div>• <strong>高度防護</strong>：全面採用「樹狀 100% 高度」，嚴禁 <code>100vh</code> 造成行動端工具列遮擋溢出。</div>
+              <div>• <strong>現代技術棧</strong>：React 19 + TypeScript 嚴格靜態型別，杜絕隱藏運行錯誤。</div>
+              <div>• <strong>毫秒級載入</strong>：純客戶端本地運行，無任何遠端等待，介面瞬時響應。</div>
+              <div>• <strong>行動端深度適配</strong>：專為手機螢幕設計的抗遮擋佈局，徹底杜絕瀏覽器工具列造成的頁面跑版與跳動。</div>
             </div>
           </div>
         </div>
@@ -713,11 +678,11 @@ export default function LandingPage() {
         {/*  卡片 2  */}
         <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
           <div>
-            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">02 / 本地資料庫與遷移紀律</div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">02 / 本地資料庫與資料防線</div>
             <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
-              <div>• <strong>資料庫引擎</strong>：Dexie.js (IndexedDB v14)，強型別資料模型。</div>
-              <div>• <strong>安全防線</strong>：結構變更強制遞增版本並編寫 <code>.upgrade()</code> 腳本，絕對禁止生產環境破壞性清庫。</div>
-              <div>• <strong>純 ID 關聯</strong>：關聯實體僅存純 ID，拒絕反正規化快照漂移。</div>
+              <div>• <strong>IndexedDB 本地引擎</strong>：資料直接保存在裝置底層，支援持久化儲存保障。</div>
+              <div>• <strong>平滑版本升級</strong>：資料庫結構升級自動平滑遷移，版本更新永不損毀或丟失歷史數據。</div>
+              <div>• <strong>純 ID 關聯設計</strong>：食材與動作採純 ID 引用，修改一處歷史全域同步，拒絕資料錯亂。</div>
             </div>
           </div>
         </div>
@@ -725,11 +690,11 @@ export default function LandingPage() {
         {/*  卡片 3  */}
         <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
           <div>
-            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">03 / 純數學演算與 100% 測試</div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">03 / 純數學公式與品質守護</div>
             <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
-              <div>• <strong>精密測量純函數</strong>：所有指標推算（e1RM、EMA 平滑、供能比）封裝於無副作用純函數。</div>
-              <div>• <strong>測試守護</strong>：Vitest 測試套件，維持 542 項單元測試 100% 通過。</div>
-              <div>• <strong>文案極簡</strong>：嚴格遵守五大極簡文案法則與中英數半形空格排版。</div>
+              <div>• <strong>透明純數學公式</strong>：e1RM 極限力量、EMA 體重抗噪平滑、供能比計算均為客觀純函數。</div>
+              <div>• <strong>540+ 項自動化測試</strong>：嚴格覆蓋所有異常邊界，維持單元測試 100% 通過。</div>
+              <div>• <strong>拒絕黑盒評分</strong>：只呈現物理事實與客觀推算，不玩主觀打分與行為干涉。</div>
             </div>
           </div>
         </div>
