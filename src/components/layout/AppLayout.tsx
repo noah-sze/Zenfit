@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
-import { useInAppNavigation, type AppMainTab } from '@/store/useInAppNavigation';
+import { useInAppNavigation, type AppMainTab, type InAppSubView } from '@/store/useInAppNavigation';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
 import {
@@ -38,6 +38,17 @@ import ProfileSettings from '@/pages/ProfileSettings';
 import FoodsPage from '@/pages/FoodsPage';
 import ExercisesPage from '@/pages/ExercisesPage';
 
+function getViewKey(tab: AppMainTab, stack: InAppSubView[]): string {
+  if (stack.length === 0) {
+    return `tab:${tab}`;
+  }
+  const current = stack[stack.length - 1];
+  // 核心契約：視圖生命週期 Key 收斂至模組級別 (Module Level)，
+  // 模組內部（如 Foods 列表 ⇄ Foods 詳情、Exercises 列表 ⇄ Exercises 詳情）其 ViewKey 恆定不變，
+  // 確保保活容器不被 React 卸載，底層列表滾動位置零丟失
+  return `sub:${current.type}`;
+}
+
 export function AppLayout() {
   const { t } = useTranslation();
   const { activeTab, setActiveTab, subViewStack, pushSubView, popSubView } = useInAppNavigation();
@@ -46,6 +57,85 @@ export function AppLayout() {
 
   // 主頁面個別滾動引用
   const mainScrollRef = useRef<HTMLElement>(null);
+  const currentViewKey = getViewKey(activeTab, subViewStack);
+
+  // 導航棧滾動生命週期合約 (Navigation Stack Scroll Lifecycle Contract)
+  const scrollPositionsRef = useRef<Record<string, number>>({});
+  const prevViewKeyRef = useRef<string>(currentViewKey);
+  const prevDepthRef = useRef<number>(subViewStack.length);
+  const isRestoringScrollRef = useRef<boolean>(false);
+
+  // 實時保存當前視圖的滾動位置
+  const handleScroll = () => {
+    if (isRestoringScrollRef.current || !mainScrollRef.current) return;
+    scrollPositionsRef.current[currentViewKey] = mainScrollRef.current.scrollTop;
+  };
+
+  useEffect(() => {
+    const prevKey = prevViewKeyRef.current;
+    const prevDepth = prevDepthRef.current;
+    const currentDepth = subViewStack.length;
+
+    if (currentViewKey !== prevKey) {
+      isRestoringScrollRef.current = true;
+
+      if (currentDepth > prevDepth) {
+        // ===== 跨模組 PUSH 操作（如 Settings -> FoodsPage） =====
+        // 1. 父模組當前最新滾動位置記錄備份
+        if (mainScrollRef.current) {
+          scrollPositionsRef.current[prevKey] = mainScrollRef.current.scrollTop;
+        }
+        // 2. 徹底銷毀即將進入之子模組任何殘留快照（保證全新打開）
+        delete scrollPositionsRef.current[currentViewKey];
+        // 3. 強制置頂重置
+        if (mainScrollRef.current) {
+          mainScrollRef.current.scrollTop = 0;
+        }
+      } else if (currentDepth < prevDepth) {
+        // ===== 跨模組 POP 操作（如 FoodsPage -> Settings） =====
+        // 1. 徹底銷毀被退出的子模組的所有滾動記憶
+        delete scrollPositionsRef.current[prevKey];
+        // 2. 還原父模組先前保存的滾動高度
+        const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
+        if (mainScrollRef.current) {
+          mainScrollRef.current.scrollTop = targetScroll;
+        }
+      } else {
+        // ===== 同級切換（如切換主 Tab） =====
+        if (mainScrollRef.current) {
+          scrollPositionsRef.current[prevKey] = mainScrollRef.current.scrollTop;
+        }
+        const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
+        if (mainScrollRef.current) {
+          mainScrollRef.current.scrollTop = targetScroll;
+        }
+      }
+
+      prevViewKeyRef.current = currentViewKey;
+      prevDepthRef.current = currentDepth;
+
+      // 在下一幀確認滾動位置（防範 DOM 渲染重排）並解鎖監聽
+      const rafId = requestAnimationFrame(() => {
+        if (currentDepth > prevDepth) {
+          if (mainScrollRef.current) {
+            mainScrollRef.current.scrollTop = 0;
+          }
+        } else if (currentDepth < prevDepth) {
+          const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
+          if (mainScrollRef.current) {
+            mainScrollRef.current.scrollTop = targetScroll;
+          }
+        }
+        isRestoringScrollRef.current = false;
+      });
+
+      return () => cancelAnimationFrame(rafId);
+    } else {
+      // ===== 模組內部導航（currentViewKey === prevKey，如 Foods 列表 ⇄ Foods 詳情） =====
+      // 僅更新深度引用，外層 mainScrollRef 保持原位不動，詳情全屏浮層獨立滾動
+      prevDepthRef.current = currentDepth;
+    }
+  }, [activeTab, subViewStack, currentViewKey]);
 
   // 虛擬歷史記錄橋接：監聽原生 popstate 實現瀏覽器後退鍵攔截
   useEffect(() => {
@@ -260,6 +350,9 @@ export function AppLayout() {
                 <button
                   type="button"
                   onClick={() => {
+                    if (mainScrollRef.current) {
+                      scrollPositionsRef.current[currentViewKey] = mainScrollRef.current.scrollTop;
+                    }
                     pushSubView({ type: 'settings' });
                     triggerHaptic('light');
                   }}
@@ -294,12 +387,13 @@ export function AppLayout() {
       {/* 核心滾動內容區 */}
       <main
         ref={mainScrollRef}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto no-scrollbar w-full"
       >
         <div className={cn("w-full max-w-xl mx-auto px-4 py-4", !isSubPage ? "pb-20" : "pb-8")}>
-          {/* 模式 A：若開啟了子視圖，渲染當前子視圖 */}
+          {/* 模式 A：若開啟了子視圖，渲染當前子視圖（綁定 key 確保每次全新打開均重置內部狀態與生命週期） */}
           {isSubPage && currentSubView && (
-            <div className="w-full animate-in fade-in-50 duration-150">
+            <div key={currentViewKey} className="w-full animate-in fade-in-50 duration-150">
               {currentSubView.type === 'settings' && <Settings />}
               {currentSubView.type === 'profile' && <ProfileSettings />}
               {currentSubView.type === 'foods' && <FoodsPage />}
@@ -345,6 +439,9 @@ export function AppLayout() {
                   type="button"
                   onClick={() => {
                     if (activeTab !== item.key) {
+                      if (mainScrollRef.current) {
+                        scrollPositionsRef.current[`tab:${activeTab}`] = mainScrollRef.current.scrollTop;
+                      }
                       setActiveTab(item.key);
                       triggerHaptic('selection');
                     } else if (mainScrollRef.current) {
