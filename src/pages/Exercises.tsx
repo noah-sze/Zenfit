@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useExercises } from '@/hooks/useExercises';
@@ -11,10 +10,9 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import type { Exercise, WorkoutRoutine, Equipment } from '@/types';
-import {
-  WorkoutManagementBrowser,
-} from '@/components/workout/WorkoutManagementBrowser';
+import { WorkoutManagementBrowser } from '@/components/workout/WorkoutManagementBrowser';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import {
   ExerciseFormDialog,
   type ExerciseFormData,
@@ -31,8 +29,8 @@ interface ExercisesProps {
 
 export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const confirm = useConfirm();
+  const { pushSubView } = useInAppNavigation();
 
   // 頂部視圖切換：動作 ➔ 組合 ➔ 器械 (純客戶端 Session 記憶狀態，不污染 URL 歷史堆疊，遵守 Rule 4)
   const { workoutBrowser, setWorkoutTab } = useBrowserStateStore();
@@ -269,11 +267,11 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
         onTabChange={setWorkoutTab}
         onExerciseClick={(exercise) => {
           setWorkoutTab('exercises');
-          navigate(`/settings/exercises/${exercise.id}`);
+          pushSubView({ type: 'exercises', id: exercise.id, mode: 'exercises' });
         }}
         onRoutineClick={(routine) => {
           setWorkoutTab('routines');
-          navigate(`/settings/routines/${routine.id}`);
+          pushSubView({ type: 'exercises', id: routine.id, mode: 'routines' });
         }}
         onEditEquipment={(equipment) => {
           setEditingEquipment(equipment);

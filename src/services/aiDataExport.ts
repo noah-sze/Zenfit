@@ -209,12 +209,22 @@ export interface BuildDailyExportInput {
 }
 
 /**
- * 依據當前頁面路由自動判定匯出範圍
+ * 依據當前活躍的主分頁自動判定匯出範圍
+ */
+export function getAiExportScopeByTab(tab: string): AiExportScope {
+  if (tab === 'diet') return 'diet';
+  if (tab === 'workout') return 'workout';
+  if (tab === 'body') return 'body';
+  return 'all';
+}
+
+/**
+ * 依據當前頁面路由或狀態自動判定匯出範圍
  */
 export function getAiExportScopeByPath(pathname: string): AiExportScope {
-  if (pathname.startsWith('/diet')) return 'diet';
-  if (pathname.startsWith('/workout')) return 'workout';
-  if (pathname.startsWith('/body')) return 'body';
+  if (pathname === 'diet' || pathname.startsWith('/app/diet') || pathname.startsWith('/diet')) return 'diet';
+  if (pathname === 'workout' || pathname.startsWith('/app/workout') || pathname.startsWith('/workout')) return 'workout';
+  if (pathname === 'body' || pathname.startsWith('/app/body') || pathname.startsWith('/body')) return 'body';
   return 'all';
 }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFoods } from '@/hooks/useFoods';
@@ -14,6 +13,7 @@ import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDia
 import { RecipeFormDialog, type RecipeFormData } from '@/components/food/RecipeFormDialog';
 import { FoodRecipeBrowser } from '@/components/food/FoodRecipeBrowser';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 
 interface CategoriesProps {
   isDetailOpen?: boolean;
@@ -21,8 +21,8 @@ interface CategoriesProps {
 
 export default function Categories({ isDetailOpen = false }: CategoriesProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const confirm = useConfirm();
+  const { pushSubView } = useInAppNavigation();
 
   // 頂部視圖切換：食材 vs 食譜 (純客戶端 Session 記憶狀態，不污染 URL，遵守 Rule 4)
   const { foodBrowser, setFoodTab } = useBrowserStateStore();
@@ -164,10 +164,10 @@ export default function Categories({ isDetailOpen = false }: CategoriesProps) {
         onItemClick={(item, type) => {
           if (type === 'food') {
             setFoodTab('foods');
-            navigate(`/settings/foods/${item.id}`);
+            pushSubView({ type: 'foods', id: item.id, mode: 'foods' });
           } else {
             setFoodTab('recipes');
-            navigate(`/settings/recipes/${item.id}`);
+            pushSubView({ type: 'foods', id: item.id, mode: 'recipes' });
           }
         }}
         onDeleteFood={handleDeleteFood}

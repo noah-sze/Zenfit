@@ -5,27 +5,36 @@ import ExerciseDetails from './ExerciseDetails';
 import RoutineDetails from './RoutineDetails';
 import { cn } from '@/lib/utils';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 
 /**
  * 動作、組合與器械管理模組 - 視圖堆疊保活容器 (View Stack Container)
  * 1. 底層列表 (Exercises) 按需掛載並恆定保活，DOM 節點與滾動座標一分一毫都不會變動
- * 2. 若從外部路由（如 /workout）直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
+ * 2. 若從外部路由直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
  * 3. 頂層詳情 (ExerciseDetails / RoutineDetails) 作為全屏覆蓋層渲染，獨立滾動
  */
 export default function ExercisesPage() {
   const location = useLocation();
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const { subViewStack } = useInAppNavigation();
+  const currentSubView = subViewStack[subViewStack.length - 1];
+
+  const inAppDetailId = currentSubView?.type === 'exercises' ? currentSubView.id : undefined;
+  const inAppDetailMode = currentSubView?.type === 'exercises' ? currentSubView.mode : undefined;
 
   const isExerciseDetail =
-    location.pathname.startsWith('/settings/exercises/') &&
-    Boolean(id) &&
-    !location.pathname.endsWith('/archived');
+    (Boolean(inAppDetailId) && inAppDetailMode !== 'routines') ||
+    (location.pathname.startsWith('/settings/exercises/') &&
+      Boolean(paramId) &&
+      !location.pathname.endsWith('/archived'));
 
   const isRoutineDetail =
-    location.pathname.startsWith('/settings/routines/') &&
-    Boolean(id) &&
-    !location.pathname.endsWith('/archived');
+    (Boolean(inAppDetailId) && inAppDetailMode === 'routines') ||
+    (location.pathname.startsWith('/settings/routines/') &&
+      Boolean(paramId) &&
+      !location.pathname.endsWith('/archived'));
 
+  const activeId = inAppDetailId || paramId;
   const isDetailOpen = isExerciseDetail || isRoutineDetail;
 
   const [hasVisitedList, setHasVisitedList] = useState(!isDetailOpen);
@@ -59,8 +68,8 @@ export default function ExercisesPage() {
       {isDetailOpen && (
         <div className="fixed inset-x-0 bottom-0 top-14 z-30 bg-background overflow-y-auto no-scrollbar">
           <div className="w-full max-w-xl mx-auto px-4 py-4 pb-8">
-            {isExerciseDetail && <ExerciseDetails />}
-            {isRoutineDetail && <RoutineDetails />}
+            {isExerciseDetail && <ExerciseDetails id={activeId} />}
+            {isRoutineDetail && <RoutineDetails id={activeId} />}
           </div>
         </div>
       )}

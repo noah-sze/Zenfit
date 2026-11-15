@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -48,12 +48,18 @@ import {
   calculateExerciseFootprintData,
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
+import { useSafeNavigate } from '@/hooks/useSafeNavigate';
 import { IntakeFootprintHeatmap } from '@/components/food/IntakeFootprintHeatmap';
 
-export default function RoutineDetails() {
-  const { id } = useParams<{ id: string }>();
+export interface RoutineDetailsProps {
+  id?: string;
+}
+
+export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {}) {
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = propId || routeId;
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const { goBack } = useSafeNavigate();
   const confirm = useConfirm();
   const { bodyWeightUnit } = useUnitPreferences();
 
@@ -220,7 +226,7 @@ export default function RoutineDetails() {
         await archiveRoutine(routine.id);
         triggerHaptic('selection');
         toast.show(t('common.saved'));
-        navigate('/settings/routines');
+        goBack();
       }
     }
   };
@@ -236,7 +242,7 @@ export default function RoutineDetails() {
       await deleteRoutine(routine.id);
       triggerHaptic('warning');
       toast.show(t('common.deleted'));
-      navigate('/settings/routines');
+      goBack();
     }
   };
 

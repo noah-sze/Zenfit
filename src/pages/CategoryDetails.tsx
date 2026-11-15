@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Navigate, useNavigate } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
@@ -31,15 +31,21 @@ import {
   calculateFootprintData,
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
+import { useSafeNavigate } from '@/hooks/useSafeNavigate';
 import {
   OverviewPeriodSelector,
   IntakeFootprintHeatmap,
 } from '@/components/food/IntakeFootprintHeatmap';
 
-export default function CategoryDetails() {
-  const { id } = useParams<{ id: string }>();
+export interface CategoryDetailsProps {
+  id?: string;
+}
+
+export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {}) {
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = propId || routeId;
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const { goBack } = useSafeNavigate();
   const confirm = useConfirm();
   const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood, deleteFood } = useFoods();
   const { allRecipes } = useRecipes();
@@ -160,7 +166,7 @@ export default function CategoryDetails() {
         await archiveFood(food.id);
         triggerHaptic('selection');
         toast.show(t('common.saved'));
-        navigate('/settings/foods');
+        goBack();
       }
     }
   };
@@ -186,7 +192,7 @@ export default function CategoryDetails() {
       }
       triggerHaptic('warning');
       toast.show(t('common.deleted'));
-      navigate('/settings/foods');
+      goBack();
     }
   };
 

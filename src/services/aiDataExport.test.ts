@@ -22,6 +22,10 @@ describe('aiDataExport', () => {
 
   describe('getAiExportScopeByPath', () => {
     it('maps core routes to their corresponding export scopes', () => {
+      expect(getAiExportScopeByPath('/app')).toBe('all');
+      expect(getAiExportScopeByPath('/app/diet')).toBe('diet');
+      expect(getAiExportScopeByPath('/app/workout')).toBe('workout');
+      expect(getAiExportScopeByPath('/app/body')).toBe('body');
       expect(getAiExportScopeByPath('/')).toBe('all');
       expect(getAiExportScopeByPath('/diet')).toBe('diet');
       expect(getAiExportScopeByPath('/workout')).toBe('workout');

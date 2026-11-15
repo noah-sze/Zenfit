@@ -5,28 +5,37 @@ import CategoryDetails from './CategoryDetails';
 import RecipeDetails from './RecipeDetails';
 import { cn } from '@/lib/utils';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 
 /**
  * 食物與菜餚管理模組 - 視圖堆疊保活容器 (View Stack Container)
  * 解決進出詳情頁時列表被銷毀重建導致的異步查詢延遲與滾動屏閃跳動問題
  * 1. 底層列表 (Categories) 按需掛載並恆定保活，DOM 節點與滾動座標一分一毫都不會變動
- * 2. 若從外部路由（如 /diet）直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
+ * 2. 若從外部路由直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
  * 3. 頂層詳情 (CategoryDetails / RecipeDetails) 作為全屏覆蓋層渲染，獨立滾動
  */
 export default function FoodsPage() {
   const location = useLocation();
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const { subViewStack } = useInAppNavigation();
+  const currentSubView = subViewStack[subViewStack.length - 1];
+
+  const inAppDetailId = currentSubView?.type === 'foods' ? currentSubView.id : undefined;
+  const inAppDetailMode = currentSubView?.type === 'foods' ? currentSubView.mode : undefined;
 
   const isFoodDetail =
-    location.pathname.startsWith('/settings/foods/') &&
-    Boolean(id) &&
-    !location.pathname.endsWith('/archived');
+    (Boolean(inAppDetailId) && inAppDetailMode !== 'recipes') ||
+    (location.pathname.startsWith('/settings/foods/') &&
+      Boolean(paramId) &&
+      !location.pathname.endsWith('/archived'));
 
   const isRecipeDetail =
-    location.pathname.startsWith('/settings/recipes/') &&
-    Boolean(id) &&
-    !location.pathname.endsWith('/archived');
+    (Boolean(inAppDetailId) && inAppDetailMode === 'recipes') ||
+    (location.pathname.startsWith('/settings/recipes/') &&
+      Boolean(paramId) &&
+      !location.pathname.endsWith('/archived'));
 
+  const activeId = inAppDetailId || paramId;
   const isDetailOpen = isFoodDetail || isRecipeDetail;
 
   const [hasVisitedList, setHasVisitedList] = useState(!isDetailOpen);
@@ -60,8 +69,8 @@ export default function FoodsPage() {
       {isDetailOpen && (
         <div className="fixed inset-x-0 bottom-0 top-14 z-30 bg-background overflow-y-auto no-scrollbar">
           <div className="w-full max-w-xl mx-auto px-4 py-4 pb-8">
-            {isFoodDetail && <CategoryDetails />}
-            {isRecipeDetail && <RecipeDetails />}
+            {isFoodDetail && <CategoryDetails id={activeId} />}
+            {isRecipeDetail && <RecipeDetails id={activeId} />}
           </div>
         </div>
       )}

@@ -26,12 +26,22 @@ import { ShareShowcaseCards } from '@/components/common/ShareShowcaseCards';
 import { SyncTopologyDiagram } from '@/components/common/SyncTopologyDiagram';
 import { HeroShowcaseDeck } from '@/components/common/HeroShowcaseDeck';
 import { WireframeGlobe } from '@/components/welcome/WireframeGlobe';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation();
+  const { profile, isLoading: isProfileLoading } = useUserProfile();
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
+
+  const handleOpenApp = () => {
+    if (!isProfileLoading && profile.isSetupCompleted) {
+      navigate('/app');
+    } else {
+      setIsSetupDialogOpen(true);
+    }
+  };
 
   const currentLang = i18n.language?.startsWith('zh-CN')
     ? 'zh-CN'
@@ -178,7 +188,7 @@ export default function LandingPage() {
 
         <button
           type="button"
-          onClick={() => setIsSetupDialogOpen(true)}
+          onClick={handleOpenApp}
           className="relative -my-[1px] h-[calc(100%+2px)] px-3.5 sm:px-0 sm:w-28 md:w-32 flex items-center justify-center space-x-1.5 bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold transition-colors cursor-pointer !border border-black dark:!border-white z-10"
         >
           <span>{t('common.openApp', '開啟應用')}</span>
@@ -923,7 +933,7 @@ export default function LandingPage() {
   <SetupProfileDialog
     open={isSetupDialogOpen}
     onOpenChange={setIsSetupDialogOpen}
-    onComplete={() => navigate('/')}
+    onComplete={() => navigate('/app')}
   />
 
   {/*  =========================================================================  */}

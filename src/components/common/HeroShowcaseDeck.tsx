@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { DashboardView, getDemoDashboardData } from '@/components/dashboard/DashboardView';
 import { DietView, getDemoDietData } from '@/components/diet/DietView';
 
@@ -11,6 +12,7 @@ import { DietView, getDemoDietData } from '@/components/diet/DietView';
  */
 export function HeroShowcaseDeck() {
   const navigate = useNavigate();
+  const { setActiveTab } = useInAppNavigation();
   const { t } = useTranslation();
   const tr = (k: string, fb?: string) => (fb !== undefined ? t(k, fb) : t(k));
 
@@ -221,9 +223,18 @@ export function HeroShowcaseDeck() {
           <DashboardView
             {...demoDashboardData}
             className="pb-0"
-            onNavigateBody={() => navigate('/body')}
-            onNavigateDiet={() => navigate('/diet')}
-            onNavigateWorkout={() => navigate('/workout')}
+            onNavigateBody={() => {
+              setActiveTab('body');
+              navigate('/app');
+            }}
+            onNavigateDiet={() => {
+              setActiveTab('diet');
+              navigate('/app');
+            }}
+            onNavigateWorkout={() => {
+              setActiveTab('workout');
+              navigate('/app');
+            }}
           />
         </div>
 

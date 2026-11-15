@@ -1,5 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+
+// 舊落地頁入口向根路徑 / 瞬時重定向 (0ms Instant Redirect)
+if (typeof window !== 'undefined' && window.location.pathname.startsWith('/landing')) {
+  window.location.replace('/');
+}
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import './index.css'

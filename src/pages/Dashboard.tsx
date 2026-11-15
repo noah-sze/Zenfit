@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDietPlan } from '@/hooks/useDietPlan';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
@@ -27,8 +27,8 @@ function getGreeting(t: TFunction, name: string): string {
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { selectedDate } = useAppStore();
+  const { setActiveTab } = useInAppNavigation();
   const { profile } = useUserProfile();
   const { energyUnit, bodyWeightUnit } = useUnitPreferences();
 
@@ -121,15 +121,15 @@ export default function Dashboard() {
       className="pb-20"
       onNavigateBody={() => {
         triggerHaptic('light');
-        navigate('/body');
+        setActiveTab('body');
       }}
       onNavigateDiet={() => {
         triggerHaptic('light');
-        navigate('/diet');
+        setActiveTab('diet');
       }}
       onNavigateWorkout={() => {
         triggerHaptic('light');
-        navigate('/workout');
+        setActiveTab('workout');
       }}
     />
   );

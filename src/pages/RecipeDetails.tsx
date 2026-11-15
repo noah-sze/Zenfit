@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
@@ -48,15 +48,23 @@ import {
   calculateFootprintData,
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
+import { useSafeNavigate } from '@/hooks/useSafeNavigate';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import {
   OverviewPeriodSelector,
   IntakeFootprintHeatmap,
 } from '@/components/food/IntakeFootprintHeatmap';
 
-export default function RecipeDetails() {
-  const { id } = useParams<{ id: string }>();
+export interface RecipeDetailsProps {
+  id?: string;
+}
+
+export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = propId || routeId;
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const { goBack } = useSafeNavigate();
+  const { pushSubView } = useInAppNavigation();
   const confirm = useConfirm();
 
   const { allFoods, isLoading: isFoodsLoading } = useFoods();
@@ -294,7 +302,7 @@ export default function RecipeDetails() {
         await archiveRecipe(recipe.id);
         triggerHaptic('selection');
         toast.show(t('common.saved'));
-        navigate('/settings/recipes');
+        goBack();
       }
     }
   };
@@ -310,7 +318,7 @@ export default function RecipeDetails() {
       await deleteRecipe(recipe.id);
       triggerHaptic('warning');
       toast.show(t('common.deleted'));
-      navigate('/settings/recipes');
+      goBack();
     }
   };
 
@@ -616,7 +624,7 @@ export default function RecipeDetails() {
                 onClick={() => {
                   if (food) {
                     triggerHaptic('selection');
-                    navigate(`/settings/foods/${food.id}`);
+                    pushSubView({ type: 'foods', id: food.id, mode: 'foods' });
                   }
                 }}
                 className="min-h-16 py-2.5 px-4 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"

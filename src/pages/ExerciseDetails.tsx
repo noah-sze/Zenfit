@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -45,10 +45,17 @@ import {
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 
-export default function ExerciseDetails() {
-  const { id } = useParams<{ id: string }>();
+import { useSafeNavigate } from '@/hooks/useSafeNavigate';
+
+export interface ExerciseDetailsProps {
+  id?: string;
+}
+
+export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {}) {
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = propId || routeId;
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const { goBack } = useSafeNavigate();
   const confirm = useConfirm();
   const { bodyWeightUnit } = useUnitPreferences();
 
@@ -202,7 +209,7 @@ export default function ExerciseDetails() {
         await archiveExercise(exercise.id);
         triggerHaptic('selection');
         toast.show(t('common.saved'));
-        navigate('/settings/exercises');
+        goBack();
       }
     }
   };
@@ -226,7 +233,7 @@ export default function ExerciseDetails() {
       }
       triggerHaptic('warning');
       toast.show(t('common.deleted'));
-      navigate('/settings/exercises');
+      goBack();
     }
   };
 

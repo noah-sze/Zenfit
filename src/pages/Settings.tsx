@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import {
   Select,
   SelectContent,
@@ -41,6 +41,7 @@ import type {
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { pushSubView } = useInAppNavigation();
   const { preferences, updatePreset, updatePreference } = useUnitPreferences();
   const { bodyPreferences, updateBodyPreference } = useBodyPreferences();
   const { profile } = useUserProfile();
@@ -232,9 +233,11 @@ export default function Settings() {
           </p>
         </div>
         <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
-          <Link
-            to="/profile"
-            onClick={() => triggerHaptic('light')}
+          <div
+            onClick={() => {
+              triggerHaptic('light');
+              pushSubView({ type: 'profile' });
+            }}
             className="usage-row hover:bg-hover transition-colors group cursor-pointer"
           >
             <span className="text-sm font-normal text-foreground">{t('settings.profile')}</span>
@@ -242,7 +245,7 @@ export default function Settings() {
               <span>{profile.name || '-'}</span>
               <ChevronRight className="size-4" />
             </div>
-          </Link>
+          </div>
         </div>
       </section>
 
@@ -558,26 +561,32 @@ export default function Settings() {
         </div>
         <div className="sm:col-span-8 border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
           {/* 飲食資料管理 */}
-          <Link
-            to="/settings/foods"
-            className="usage-row cursor-pointer group"
+          <div
+            onClick={() => {
+              triggerHaptic('light');
+              pushSubView({ type: 'foods' });
+            }}
+            className="usage-row cursor-pointer group hover:bg-hover transition-colors"
           >
             <span className="text-sm font-normal text-foreground">
               {t('settings.dietSection')}
             </span>
             <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-          </Link>
+          </div>
 
           {/* 訓練資料管理 */}
-          <Link
-            to="/settings/exercises"
-            className="usage-row cursor-pointer group"
+          <div
+            onClick={() => {
+              triggerHaptic('light');
+              pushSubView({ type: 'exercises' });
+            }}
+            className="usage-row cursor-pointer group hover:bg-hover transition-colors"
           >
             <span className="text-sm font-normal text-foreground">
               {t('settings.workoutSection')}
             </span>
             <ChevronRight className="size-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-          </Link>
+          </div>
 
           {/* 恢復預設數據 */}
           <div
