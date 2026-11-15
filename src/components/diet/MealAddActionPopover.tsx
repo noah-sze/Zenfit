@@ -4,6 +4,7 @@ import { Plus, Search, Copy, Zap, Calculator } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
+import { cn } from '@/lib/utils';
 import type { MealType } from '@/types';
 
 interface MealAddActionPopoverProps {
@@ -13,6 +14,145 @@ interface MealAddActionPopoverProps {
   onOpenCopyMeal: (mealType: MealType) => void;
   onOpenQuickPlaceholder?: (mealType: MealType) => void;
   onLogAsPlanned?: (mealType: MealType, budget: { calories: number; carbs: number; protein: number; fat: number }) => void;
+}
+
+export interface MealActionMenuContentProps {
+  mealType: MealType;
+  budget: { calories: number; carbs: number; protein: number; fat: number };
+  onSelectSearch?: () => void;
+  onSelectCopy?: () => void;
+  onSelectPlaceholder?: () => void;
+  onSelectAsPlanned?: () => void;
+  className?: string;
+}
+
+/**
+ * 飲食分流選單純視圖內容 (Single Source of Truth)
+ * 供 MealAddActionPopover 以及 LandingPage 靜態展示共同引用
+ */
+export function MealActionMenuContent({
+  mealType,
+  budget,
+  onSelectSearch,
+  onSelectCopy,
+  onSelectPlaceholder,
+  onSelectAsPlanned,
+  className,
+}: MealActionMenuContentProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      className={cn(
+        "w-64 sm:w-72 p-1.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none flex flex-col gap-1 text-left",
+        className
+      )}
+    >
+      {/* 極簡純淨表頭：僅顯示餐別名稱 */}
+      <div className="px-2 py-1 text-2xs font-mono font-medium text-muted-foreground border-b border-border">
+        {t(`diet.${mealType}`)}
+      </div>
+
+      {/* 第 1 項：記錄食材 / 食譜 */}
+      <button
+        type="button"
+        onClick={onSelectSearch}
+        className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
+      >
+        <div className="size-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-foreground group-hover:bg-muted transition-colors mt-0.5">
+          <Search className="size-3.5" />
+        </div>
+        <div className="flex-1 min-w-0 select-none">
+          <div className="flex items-center gap-1.5 leading-tight">
+            <span className="text-xs font-medium text-foreground tracking-tight">
+              {t('diet.actionMenu.searchTitle', '記錄食材 / 食譜')}
+            </span>
+          </div>
+          <div className="text-2xs text-muted-foreground leading-normal mt-0.5 truncate">
+            {t('diet.actionMenu.searchDesc', '搜尋單品食材或自訂食譜')}
+          </div>
+        </div>
+      </button>
+
+      {/* 第 2 項：複製餐點 */}
+      <button
+        type="button"
+        onClick={onSelectCopy}
+        className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
+      >
+        <div className="size-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-foreground group-hover:bg-muted transition-colors mt-0.5">
+          <Copy className="size-3.5" />
+        </div>
+        <div className="flex-1 min-w-0 select-none">
+          <div className="flex items-center gap-1.5 leading-tight">
+            <span className="text-xs font-medium text-foreground tracking-tight">
+              {t('diet.actionMenu.copyTitle', '複製餐點')}
+            </span>
+            <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 leading-none">
+              {t('diet.actionMenu.copyTag', '省時')}
+            </span>
+          </div>
+          <div className="text-2xs text-muted-foreground leading-normal mt-0.5 truncate">
+            {t('diet.actionMenu.copyDesc', '套用昨日或歷史餐點')}
+          </div>
+        </div>
+      </button>
+
+      {/* 分割線 */}
+      <div className="h-px bg-border my-0.5" role="separator" />
+
+      {/* 第 3 項：快速估算（整體顏色更淡，因為低使用場景） */}
+      <button
+        type="button"
+        onClick={onSelectPlaceholder}
+        className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
+      >
+        <div className="size-7 rounded-md bg-muted/40 text-muted-foreground/70 flex items-center justify-center shrink-0 group-hover:text-muted-foreground group-hover:bg-muted/60 transition-colors mt-0.5">
+          <Calculator className="size-3.5" />
+        </div>
+        <div className="flex-1 min-w-0 select-none">
+          <div className="flex items-center gap-1.5 leading-tight">
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
+              {t('diet.actionMenu.placeholderTitle', '快速估算')}
+            </span>
+            <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-blue-500/70 bg-blue-500/5 border border-blue-500/15 leading-none">
+              {t('diet.actionMenu.placeholderTag', '佔位')}
+            </span>
+          </div>
+          <div className="text-2xs text-muted-foreground/60 leading-normal mt-0.5 truncate">
+            {t('diet.actionMenu.placeholderDesc', '粗估卡路里或自訂三大元素')}
+          </div>
+        </div>
+      </button>
+
+      {/* 第 4 項：算我正常吃（整體顏色更淡，因為低使用場景） */}
+      <button
+        type="button"
+        onClick={onSelectAsPlanned}
+        className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
+      >
+        <div className="size-7 rounded-md bg-muted/40 text-muted-foreground/70 flex items-center justify-center shrink-0 group-hover:text-muted-foreground group-hover:bg-muted/60 transition-colors mt-0.5">
+          <Zap className="size-3.5" />
+        </div>
+        <div className="flex-1 min-w-0 select-none">
+          <div className="flex items-center gap-1.5 leading-tight">
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
+              {t('diet.asPlanned.actionTitle', '歷史均值')}
+            </span>
+            <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-muted-foreground bg-muted/60 border border-border leading-none">
+              {t('diet.asPlanned.badge', '配額')}
+            </span>
+          </div>
+          <div className="text-2xs font-mono text-muted-foreground/60 leading-normal mt-0.5 truncate">
+            {t('diet.asPlanned.actionDesc', '套用過去{{meal}}的平均值 · {{calories}}kcal', {
+              meal: t(`diet.${mealType}`),
+              calories: budget.calories,
+            })}
+          </div>
+        </div>
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -85,111 +225,16 @@ export function MealAddActionPopover({
         side="bottom"
         align="end"
         sideOffset={4}
-        className="w-64 sm:w-72 p-1.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none gap-1"
+        className="p-0 border-none bg-transparent shadow-none"
       >
-        {/* 極簡純淨表頭：僅顯示餐別名稱 */}
-        <div className="px-2 py-1 text-2xs font-mono font-medium text-muted-foreground border-b border-border">
-          {t(`diet.${mealType}`)}
-        </div>
-
-        {/* 第 1 項：記錄食材 / 食譜 */}
-        <button
-          type="button"
-          onClick={handleSelectSearch}
-          className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
-        >
-          <div className="size-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-foreground group-hover:bg-muted transition-colors mt-0.5">
-            <Search className="size-3.5" />
-          </div>
-          <div className="flex-1 min-w-0 select-none">
-            <div className="flex items-center gap-1.5 leading-tight">
-              <span className="text-xs font-medium text-foreground tracking-tight">
-                {t('diet.actionMenu.searchTitle', '記錄食材 / 食譜')}
-              </span>
-            </div>
-            <div className="text-2xs text-muted-foreground leading-normal mt-0.5 truncate">
-              {t('diet.actionMenu.searchDesc', '搜尋單品食材或自訂食譜')}
-            </div>
-          </div>
-        </button>
-
-        {/* 第 2 項：複製餐點 */}
-        <button
-          type="button"
-          onClick={handleSelectCopy}
-          className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
-        >
-          <div className="size-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-foreground group-hover:bg-muted transition-colors mt-0.5">
-            <Copy className="size-3.5" />
-          </div>
-          <div className="flex-1 min-w-0 select-none">
-            <div className="flex items-center gap-1.5 leading-tight">
-              <span className="text-xs font-medium text-foreground tracking-tight">
-                {t('diet.actionMenu.copyTitle', '複製餐點')}
-              </span>
-              <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 leading-none">
-                {t('diet.actionMenu.copyTag', '省時')}
-              </span>
-            </div>
-            <div className="text-2xs text-muted-foreground leading-normal mt-0.5 truncate">
-              {t('diet.actionMenu.copyDesc', '套用昨日或歷史餐點')}
-            </div>
-          </div>
-        </button>
-
-        {/* 分割線 */}
-        <div className="h-px bg-border my-0.5" role="separator" />
-
-        {/* 第 3 項：快速估算（整體顏色更淡，因為低使用場景） */}
-        <button
-          type="button"
-          onClick={handleSelectPlaceholder}
-          className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
-        >
-          <div className="size-7 rounded-md bg-muted/40 text-muted-foreground/70 flex items-center justify-center shrink-0 group-hover:text-muted-foreground group-hover:bg-muted/60 transition-colors mt-0.5">
-            <Calculator className="size-3.5" />
-          </div>
-          <div className="flex-1 min-w-0 select-none">
-            <div className="flex items-center gap-1.5 leading-tight">
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
-                {t('diet.actionMenu.placeholderTitle', '快速估算')}
-              </span>
-              <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-blue-500/70 bg-blue-500/5 border border-blue-500/15 leading-none">
-                {t('diet.actionMenu.placeholderTag', '佔位')}
-              </span>
-            </div>
-            <div className="text-2xs text-muted-foreground/60 leading-normal mt-0.5 truncate">
-              {t('diet.actionMenu.placeholderDesc', '粗估卡路里或自訂三大元素')}
-            </div>
-          </div>
-        </button>
-
-        {/* 第 4 項：算我正常吃（整體顏色更淡，因為低使用場景） */}
-        <button
-          type="button"
-          onClick={handleSelectAsPlanned}
-          className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
-        >
-          <div className="size-7 rounded-md bg-muted/40 text-muted-foreground/70 flex items-center justify-center shrink-0 group-hover:text-muted-foreground group-hover:bg-muted/60 transition-colors mt-0.5">
-            <Zap className="size-3.5" />
-          </div>
-          <div className="flex-1 min-w-0 select-none">
-            <div className="flex items-center gap-1.5 leading-tight">
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
-                {t('diet.asPlanned.actionTitle', '歷史均值')}
-              </span>
-              <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-muted-foreground bg-muted/60 border border-border leading-none">
-                {t('diet.asPlanned.badge', '配額')}
-              </span>
-            </div>
-            <div className="text-2xs font-mono text-muted-foreground/60 leading-normal mt-0.5 truncate">
-              {t('diet.asPlanned.actionDesc', '套用過去{{meal}}的平均值 · {{calories}}kcal', {
-                meal: t(`diet.${mealType}`),
-                calories: budget.calories,
-              })}
-            </div>
-          </div>
-        </button>
+        <MealActionMenuContent
+          mealType={mealType}
+          budget={budget}
+          onSelectSearch={handleSelectSearch}
+          onSelectCopy={handleSelectCopy}
+          onSelectPlaceholder={handleSelectPlaceholder}
+          onSelectAsPlanned={handleSelectAsPlanned}
+        />
       </PopoverContent>
     </Popover>
   );

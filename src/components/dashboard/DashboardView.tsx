@@ -264,22 +264,22 @@ export function DashboardView({
 /** 落地頁與預覽展示用的標準展示數據（單一真理源） */
 export const DEMO_DASHBOARD_DATA: DashboardViewProps = {
   greeting: '晚上好，Noah',
-  displayWeight: 64.5,
+  displayWeight: 69.0,
   bodyWeightUnit: 'kg',
   hasTodayWeight: true,
-  consumedEnergy: 1840,
+  consumedEnergy: 2350,
   energyUnit: 'kcal',
-  energyDiff: 160,
-  targetEnergy: 2000,
+  energyDiff: 150,
+  targetEnergy: 2500,
   totals: {
-    carbs: 205,
-    protein: 142,
-    fat: 52,
+    carbs: 305,
+    protein: 152,
+    fat: 58,
   },
   targetMacros: {
-    carbsGrams: 220,
-    proteinGrams: 140,
-    fatGrams: 60,
+    carbsGrams: 330,
+    proteinGrams: 155,
+    fatGrams: 62,
   },
   recoverySummary: {
     muscles: {
@@ -354,7 +354,7 @@ export const DEMO_DASHBOARD_DATA: DashboardViewProps = {
   stats: {
     exerciseCount: 3,
     setCount: 12,
-    totalVolume: 4820,
+    totalVolume: 6720,
   },
   interactive: true,
 };

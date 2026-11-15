@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Zap } from 'lucide-react';
+import { ChevronRight, Zap, Plus } from 'lucide-react';
 import type { MealType, HydratedFoodLog, FoodRecipe, EnergyUnit, FoodWeightUnit, FoodVolumeUnit } from '@/types';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
 import { MacroSquares } from '@/components/food/MacroSquares';
@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MealEnergyPopover } from '@/components/diet/MealEnergyPopover';
-import { MealAddActionPopover } from '@/components/diet/MealAddActionPopover';
+import { MealAddActionPopover, MealActionMenuContent } from '@/components/diet/MealAddActionPopover';
 import { calculateMealBudget } from '@/utils/nutritionMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
@@ -86,6 +86,8 @@ export interface DietViewProps {
   foodVolumeUnit?: FoodVolumeUnit;
   className?: string;
   interactive?: boolean;
+  expandedMealPopover?: MealType;
+  visibleMealTypes?: MealType[];
   onQuickActivityChange?: (val: number) => void;
   onOpenPlanModal?: () => void;
   onOpenAddForMeal?: (type: MealType) => void;
@@ -118,6 +120,8 @@ export function DietView({
   foodVolumeUnit = 'ml',
   className = '',
   interactive = true,
+  expandedMealPopover,
+  visibleMealTypes,
   onQuickActivityChange,
   onOpenPlanModal,
   onOpenAddForMeal,
@@ -131,7 +135,7 @@ export function DietView({
   onDeleteBundle,
 }: DietViewProps) {
   const { t } = useTranslation();
-  const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const mealTypes: MealType[] = visibleMealTypes ?? ['breakfast', 'lunch', 'dinner', 'snack'];
 
   const getActivityShortLabel = (level: number) => {
     switch (level) {
@@ -363,10 +367,18 @@ export function DietView({
           fatGrams: targetMacros.fatGrams,
         });
 
+        const isPopoverExpanded = expandedMealPopover === type;
+
         return (
-          <div key={type} className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-hidden">
+          <div
+            key={type}
+            className={cn(
+              "border border-border bg-card text-card-foreground shadow-none rounded-lg transition-all",
+              isPopoverExpanded ? "overflow-visible relative z-30" : "overflow-hidden"
+            )}
+          >
             {/* 灰底表頭橫欄 (單行 40px 高度：左側餐別名稱 + 3C-2 供能微線微箭頭 Popover，右側圓形「+」圖標按鈕) */}
-            <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0">
+            <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 relative">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-semibold text-sm tracking-tight text-foreground shrink-0">
                   {t(`diet.${type}`)}
@@ -385,20 +397,43 @@ export function DietView({
                 )}
               </div>
 
-              {interactive ? (
-                <MealAddActionPopover
-                  mealType={type}
-                  budget={mealBudget}
-                  onOpenAddFood={onOpenAddForMeal || (() => {})}
-                  onOpenCopyMeal={onOpenCopyForMeal || (() => {})}
-                  onOpenQuickPlaceholder={onOpenPlaceholderForMeal || (() => {})}
-                  onLogAsPlanned={onLogAsPlanned || (() => {})}
-                />
-              ) : (
-                <div className="text-[11px] font-mono text-muted-foreground/80">
-                  {formatEnergy(groupCalories, energyUnit).formatted}
-                </div>
-              )}
+              {/* 右側唯一標準交互為「+」按鈕 (與真實 APP 100% 一致) */}
+              <div className="relative shrink-0 flex items-center">
+                {interactive ? (
+                  <MealAddActionPopover
+                    mealType={type}
+                    budget={mealBudget}
+                    onOpenAddFood={onOpenAddForMeal || (() => {})}
+                    onOpenCopyMeal={onOpenCopyForMeal || (() => {})}
+                    onOpenQuickPlaceholder={onOpenPlaceholderForMeal || (() => {})}
+                    onLogAsPlanned={onLogAsPlanned || (() => {})}
+                  />
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={cn(
+                        "shrink-0 p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center rounded focus:outline-hidden",
+                        isPopoverExpanded && "text-foreground bg-muted ring-1 ring-border"
+                      )}
+                      aria-label={t('common.add')}
+                    >
+                      <Plus className="size-4" />
+                    </button>
+
+                    {/* 當前餐別處於展開狀態 (例如 LandingPage 演示中餐點擊後的飲食分流選單) */}
+                    {isPopoverExpanded && (
+                      <div className="absolute right-0 top-full mt-1.5 z-50">
+                        <MealActionMenuContent
+                          mealType={type}
+                          budget={mealBudget}
+                          className="bg-card text-card-foreground border border-border shadow-xl ring-1 ring-black/5 dark:ring-white/10"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* 食物條目列表 (沿用食物管理頁面 MacroSquares 矩陣) */}
@@ -519,25 +554,26 @@ export function DietView({
 
 export const DEMO_DIET_DATA: DietViewProps = {
   currentActivity: 1.55,
-  consumedEnergy: 1840,
-  targetEnergy: 2000,
-  energyDiff: 160,
+  consumedEnergy: 2051,
+  targetEnergy: 2500,
+  energyDiff: 449,
   energyUnit: 'kcal',
   totals: {
-    calories: 1840,
-    carbs: 205,
-    protein: 142,
-    fat: 52,
+    calories: 2051,
+    carbs: 252,
+    protein: 145,
+    fat: 51,
   },
   targetMacros: {
-    carbsGrams: 220,
-    proteinGrams: 140,
-    fatGrams: 60,
+    carbsGrams: 330,
+    proteinGrams: 155,
+    fatGrams: 62,
   },
-  targetCalories: 2000,
+  targetCalories: 2500,
   macroSplitTemplateLabel: '均衡',
   foodWeightUnit: 'g',
   foodVolumeUnit: 'ml',
+  visibleMealTypes: ['breakfast', 'lunch', 'dinner'],
   recipeMap: new Map([
     [
       'recipe-tomato-beef',
@@ -574,12 +610,12 @@ export const DEMO_DIET_DATA: DietViewProps = {
         date: '2026-11-14',
         foodId: 'food-oats',
         foodName: '傳統燕麥片',
-        quantity: 60,
+        quantity: 80,
         unit: 'g',
-        calories: 220,
-        protein: 8,
-        carbs: 40,
-        fat: 4,
+        calories: 293,
+        protein: 11,
+        carbs: 53,
+        fat: 5,
         createdAt: 0,
         updatedAt: 0,
       },
@@ -589,12 +625,12 @@ export const DEMO_DIET_DATA: DietViewProps = {
         date: '2026-11-14',
         foodId: 'food-egg',
         foodName: '全雞蛋',
-        quantity: 50,
+        quantity: 100,
         unit: 'g',
-        calories: 75,
-        protein: 6,
+        calories: 150,
+        protein: 13,
         carbs: 1,
-        fat: 5,
+        fat: 10,
         createdAt: 0,
         updatedAt: 0,
       },
@@ -607,10 +643,10 @@ export const DEMO_DIET_DATA: DietViewProps = {
         foodId: 'food-beef-flank',
         foodName: '牛里肌',
         bundleId: 'recipe-tomato-beef',
-        quantity: 200,
+        quantity: 180,
         unit: 'g',
-        calories: 260,
-        protein: 44,
+        calories: 234,
+        protein: 40,
         carbs: 0,
         fat: 8,
         createdAt: 0,
@@ -623,12 +659,12 @@ export const DEMO_DIET_DATA: DietViewProps = {
         foodId: 'food-brown-rice',
         foodName: '糙米',
         bundleId: 'recipe-tomato-beef',
-        quantity: 100,
+        quantity: 150,
         unit: 'g',
-        calories: 350,
-        protein: 8,
-        carbs: 75,
-        fat: 3,
+        calories: 525,
+        protein: 12,
+        carbs: 112,
+        fat: 4,
         createdAt: 0,
         updatedAt: 0,
       },
@@ -641,7 +677,7 @@ export const DEMO_DIET_DATA: DietViewProps = {
         bundleId: 'recipe-tomato-beef',
         quantity: 8,
         unit: 'g',
-        calories: 70,
+        calories: 71,
         protein: 0,
         carbs: 0,
         fat: 8,
@@ -649,25 +685,7 @@ export const DEMO_DIET_DATA: DietViewProps = {
         updatedAt: 0,
       },
     ],
-    snack: [
-      {
-        id: 'demo-log-s1',
-        mealType: 'snack',
-        date: '2026-11-14',
-        entryType: 'estimate',
-        scenario: 'cafe',
-        customTitle: '燕麥拿鐵 (大杯 · 無糖)',
-        foodName: '外食粗估',
-        quantity: 1,
-        unit: '杯',
-        calories: 230,
-        protein: 10,
-        carbs: 28,
-        fat: 8,
-        createdAt: 0,
-        updatedAt: 0,
-      },
-    ],
+    snack: [],
     dinner: [
       {
         id: 'demo-log-d1',
@@ -678,10 +696,10 @@ export const DEMO_DIET_DATA: DietViewProps = {
         foodName: '歷史均值',
         quantity: 1,
         unit: '份',
-        calories: 465,
-        protein: 35,
-        carbs: 55,
-        fat: 16,
+        calories: 583,
+        protein: 24,
+        carbs: 86,
+        fat: 14,
         createdAt: 0,
         updatedAt: 0,
       },

@@ -10,3 +10,5 @@ export * from './WorkoutManagementBrowser';
 export * from './WorkoutAddActionPopover';
 export * from './CopyWorkoutDialog';
 export * from './CopyWorkoutDatePickerDialog';
+export * from './WorkoutExerciseCard';
+export * from './ExerciseOverviewCard';

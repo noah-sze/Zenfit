@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SmoothedWeightPoint } from '@/utils/weightMath';
+import { calculateWeightTrend, type SmoothedWeightPoint } from '@/utils/weightMath';
+import type { BodyMetric } from '@/types';
 import { format, parseISO, subDays } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { OverviewPeriodSelector } from '@/components/food/IntakeFootprintHeatmap';
@@ -10,9 +11,14 @@ import { triggerHaptic } from '@/lib/haptics';
 interface WeightTrendChartProps {
   data: SmoothedWeightPoint[];
   unit?: string;
+  interactive?: boolean;
 }
 
-export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
+export function WeightTrendChart({
+  data,
+  unit = 'kg',
+  interactive = true,
+}: WeightTrendChartProps) {
   const { t } = useTranslation();
   const [range, setRange] = useState<OverviewPeriod>('30d');
   const [activePoint, setActivePoint] = useState<SmoothedWeightPoint | null>(null);
@@ -87,47 +93,54 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
       {/* 頂部列：標題、圖例與時間範圍切換膠囊 */}
       <div className="flex items-center justify-between text-xs mb-3 pb-2.5 border-b border-border">
         <div className="flex items-center gap-3">
-          <Popover>
-            <PopoverTrigger
-              className="flex items-center gap-1.5 px-2 py-0.5 -ml-1 rounded-full text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-hover active:scale-[0.98] transition-all cursor-pointer select-none focus:outline-hidden"
-              aria-label={t('body.trendWeight', '平滑體重')}
-            >
+          {interactive ? (
+            <Popover>
+              <PopoverTrigger
+                className="flex items-center gap-1.5 px-2 py-0.5 -ml-1 rounded-full text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-hover active:scale-[0.98] transition-all cursor-pointer select-none focus:outline-hidden"
+                aria-label={t('body.trendWeight', '平滑體重')}
+              >
+                <span className="size-2 rounded-full bg-foreground" />
+                <span>{t('body.trendWeight', '平滑體重')}</span>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                side="bottom"
+                sideOffset={8}
+                className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-3.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-border">
+                    <div className="text-xs font-semibold text-foreground">
+                      {t('body.trendWeight', '平滑體重')}
+                    </div>
+                    {latestTrend !== null && (
+                      <div className="text-xs text-muted-foreground font-mono">
+                        {latestTrend}{unit}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-muted-foreground font-mono flex flex-wrap items-center gap-1.5 bg-muted/50 px-2.5 py-1.5 rounded leading-relaxed">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
+                      {t('body.metricExplanations.formula', '計算公式')}:
+                    </span>
+                    <span className="text-foreground whitespace-normal break-words">
+                      {t('body.metricExplanations.trendWeight.formula', '7 天生理平滑 (今日 15% + 歷史 85%)')}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground font-sans leading-relaxed pt-0.5 break-words">
+                    {t('body.metricExplanations.trendWeight.desc')}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 -ml-1 text-xs font-mono text-muted-foreground select-none">
               <span className="size-2 rounded-full bg-foreground" />
               <span>{t('body.trendWeight', '平滑體重')}</span>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              side="bottom"
-              sideOffset={8}
-              className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-3.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between pb-2 border-b border-border">
-                  <div className="text-xs font-semibold text-foreground">
-                    {t('body.trendWeight', '平滑體重')}
-                  </div>
-                  {latestTrend !== null && (
-                    <div className="text-xs text-muted-foreground font-mono">
-                      {latestTrend}{unit}
-                    </div>
-                  )}
-                </div>
-
-                <div className="text-[11px] text-muted-foreground font-mono flex flex-wrap items-center gap-1.5 bg-muted/50 px-2.5 py-1.5 rounded leading-relaxed">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
-                    {t('body.metricExplanations.formula', '計算公式')}:
-                  </span>
-                  <span className="text-foreground whitespace-normal break-words">
-                    {t('body.metricExplanations.trendWeight.formula', '7 天生理平滑 (今日 15% + 歷史 85%)')}
-                  </span>
-                </div>
-
-                <div className="text-xs text-muted-foreground font-sans leading-relaxed pt-0.5 break-words">
-                  {t('body.metricExplanations.trendWeight.desc')}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+            </div>
+          )}
 
           <div className="flex items-center gap-1.5">
             <span className="size-2 rounded-full border border-foreground/50 bg-background" />
@@ -137,11 +150,17 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
           </div>
         </div>
 
-        {/* 區間切換下拉選單膠囊 (沿用動作詳情統一規格) */}
-        <OverviewPeriodSelector
-          value={range}
-          onChange={setRange}
-        />
+        {/* 區間切換下拉選單膠囊 (沿用動作詳情統一規格，唯讀模式不可點擊且無下拉箭頭) */}
+        {interactive ? (
+          <OverviewPeriodSelector
+            value={range}
+            onChange={setRange}
+          />
+        ) : (
+          <div className="h-5 px-2 rounded-full border border-border/80 bg-muted/20 text-[10px] font-mono text-muted-foreground flex items-center justify-center select-none pointer-events-none cursor-default">
+            <span className="flex-none tabular-nums font-normal">{range}</span>
+          </div>
+        )}
       </div>
 
       <div className="text-[11px] font-mono text-muted-foreground mb-2 text-right">
@@ -154,8 +173,10 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-auto overflow-visible font-mono"
           onMouseLeave={() => {
-            setActivePoint(null);
-            setPointAnchorEl(null);
+            if (interactive) {
+              setActivePoint(null);
+              setPointAnchorEl(null);
+            }
           }}
         >
           {/* 若當前區間無記錄，居中顯示客觀佔位符 */}
@@ -216,7 +237,7 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
             const cy = getY(p.rawWeight);
             const isSelected = activePoint?.date === p.date;
 
-            return (
+            return interactive ? (
               <g
                 key={p.date}
                 className="cursor-pointer"
@@ -245,6 +266,17 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
                   stroke="currentColor"
                   strokeWidth={isSelected ? 2 : 1.25}
                   className="transition-all"
+                />
+              </g>
+            ) : (
+              <g key={p.date} className="pointer-events-none">
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={2.5}
+                  fill="var(--background)"
+                  stroke="currentColor"
+                  strokeWidth={1.25}
                 />
               </g>
             );
@@ -278,46 +310,95 @@ export function WeightTrendChart({ data, unit = 'kg' }: WeightTrendChartProps) {
         </svg>
       </div>
 
-      {/* 數據散點詳情 Popover 浮層 */}
-      <Popover
-        open={Boolean(activePoint && pointAnchorEl)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setActivePoint(null);
-            setPointAnchorEl(null);
-          }
-        }}
-      >
-        {pointAnchorEl && activePoint && (
-          <PopoverContent
-            anchor={pointAnchorEl}
-            side="top"
-            sideOffset={8}
-            align="center"
-            className="w-auto min-w-[148px] p-2.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden z-[90]"
-          >
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-normal text-muted-foreground pb-1 border-b border-border">
-                {activePoint.date}
+      {/* 數據散點詳情 Popover 浮層 (僅互動模式啟用) */}
+      {interactive && (
+        <Popover
+          open={Boolean(activePoint && pointAnchorEl)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setActivePoint(null);
+              setPointAnchorEl(null);
+            }
+          }}
+        >
+          {pointAnchorEl && activePoint && (
+            <PopoverContent
+              anchor={pointAnchorEl}
+              side="top"
+              sideOffset={8}
+              align="center"
+              className="w-auto min-w-[148px] p-2.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden z-[90]"
+            >
+              <div className="space-y-1.5">
+                <div className="text-[11px] font-normal text-muted-foreground pb-1 border-b border-border">
+                  {activePoint.date}
+                </div>
+                <div className="grid grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-1 text-xs font-mono">
+                  <span className="text-muted-foreground whitespace-nowrap">
+                    {t('body.recordedWeight', '記錄體重')}：
+                  </span>
+                  <span className="font-mono text-foreground font-normal whitespace-nowrap text-right">
+                    {activePoint.rawWeight !== undefined ? `${activePoint.rawWeight}${unit}` : '-'}
+                  </span>
+                  <span className="text-muted-foreground whitespace-nowrap">
+                    {t('body.trendWeight', '平滑體重')}：
+                  </span>
+                  <span className="font-mono text-foreground font-normal whitespace-nowrap text-right">
+                    {activePoint.trendWeight}{unit}
+                  </span>
+                </div>
               </div>
-              <div className="grid grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-1 text-xs font-mono">
-                <span className="text-muted-foreground whitespace-nowrap">
-                  {t('body.recordedWeight', '記錄體重')}：
-                </span>
-                <span className="font-mono text-foreground font-normal whitespace-nowrap text-right">
-                  {activePoint.rawWeight !== undefined ? `${activePoint.rawWeight}${unit}` : '-'}
-                </span>
-                <span className="text-muted-foreground whitespace-nowrap">
-                  {t('body.trendWeight', '平滑體重')}：
-                </span>
-                <span className="font-mono text-foreground font-normal whitespace-nowrap text-right">
-                  {activePoint.trendWeight}{unit}
-                </span>
-              </div>
-            </div>
-          </PopoverContent>
-        )}
-      </Popover>
+            </PopoverContent>
+          )}
+        </Popover>
+      )}
     </div>
   );
 }
+
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+/** 模擬深度真實用戶的時序體態數據（男性 180cm 69kg，120 天連續規律記錄，含生理水分噪聲與 EMA 平滑抗噪真值） */
+export function generateDemoWeightTrendData(now: Date = new Date()): SmoothedWeightPoint[] {
+  const rawRecords: BodyMetric[] = [];
+  const baseWeight = 72.5;
+  const targetWeight = 69.0;
+  const totalDays = 120;
+
+  for (let i = totalDays; i >= 0; i--) {
+    const seed = i * 17 + 42;
+    // 88% 的高頻記錄率 (深度自律用戶習慣)
+    const hasRecord = seededRandom(seed) < 0.88 || i === 0;
+    if (!hasRecord) continue;
+
+    const d = subDays(now, i);
+    const dateStr = format(d, 'yyyy-MM-dd');
+    const timestamp = d.getTime();
+
+    // 減脂趨勢：從 72.5kg 平滑漸進至 69.0kg
+    const progress = (totalDays - i) / totalDays;
+    const trendBase = baseWeight - (baseWeight - targetWeight) * Math.pow(progress, 0.9);
+
+    // 生理噪聲：週期性水分波動 (約每週 7 天循環) + 隨機日常水分噪聲 (±0.35kg)
+    const weeklyCycle = Math.sin((totalDays - i) * (Math.PI / 3.5)) * 0.35;
+    const randomNoise = (seededRandom(seed + 1) - 0.5) * 0.7;
+    const rawWeight =
+      i === 0 ? 69.0 : Math.round((trendBase + weeklyCycle + randomNoise) * 10) / 10;
+
+    rawRecords.push({
+      id: `demo-metric-${i}`,
+      date: dateStr,
+      weight: rawWeight,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+  }
+
+  return calculateWeightTrend(rawRecords, 0.15);
+}
+
+/** 落地頁與預覽展示用的深度用戶標準時序數據（單一真理源） */
+export const DEMO_WEIGHT_TREND_DATA: SmoothedWeightPoint[] = generateDemoWeightTrendData();

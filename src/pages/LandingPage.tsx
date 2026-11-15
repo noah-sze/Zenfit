@@ -1,12 +1,39 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sun, Moon, ArrowUpRight } from 'lucide-react';
 import { DashboardView, DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
+import {
+  WorkoutRecoveryDashboard,
+  WorkoutExerciseCard,
+  DEMO_WORKOUT_EXERCISES_DATA,
+  ExerciseOverviewCard,
+  getDemoExerciseOverviewData,
+} from '@/components/workout';
+import type { BodyWeightUnit } from '@/types';
 import { DietView, DEMO_DIET_DATA } from '@/components/diet/DietView';
+import {
+  WeightTrendChart,
+  DEMO_WEIGHT_TREND_DATA,
+  BodyTodayDataCard,
+  DEMO_BODY_TODAY_DATA,
+  BodyMetricsOverviewCard,
+  DEMO_BODY_METRICS_DATA,
+} from '@/components/body';
+import { ShareShowcaseCards } from '@/components/common/ShareShowcaseCards';
+import { SyncTopologyDiagram } from '@/components/common/SyncTopologyDiagram';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+
+  const demoExerciseOverview = useMemo(
+    () =>
+      getDemoExerciseOverviewData(
+        (DEMO_DASHBOARD_DATA.bodyWeightUnit as BodyWeightUnit) || 'kg'
+      ),
+    []
+  );
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -33,7 +60,7 @@ export default function LandingPage() {
   {/*  =========================================================================  */}
   {/*  TOP NAVIGATION HEADER                                                      */}
   {/*  =========================================================================  */}
-  <header className="sticky top-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-200">
+  <header className="sticky top-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-md border-y border-neutral-200 dark:border-neutral-800 transition-colors duration-200">
     <div className="w-full flex items-center h-14 divide-x divide-neutral-200 dark:divide-neutral-800">
 
       {/*  Logo & Identity: Full-bleed Left Cell  */}
@@ -87,7 +114,7 @@ export default function LandingPage() {
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="h-full w-28 sm:w-36 flex items-center justify-center space-x-1.5 bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold transition-colors cursor-pointer"
+          className="relative -my-[1px] h-[calc(100%+2px)] w-28 sm:w-36 flex items-center justify-center space-x-1.5 bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold transition-colors cursor-pointer !border border-black dark:!border-white z-10"
         >
           <span>開啟應用</span>
           <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
@@ -105,7 +132,7 @@ export default function LandingPage() {
     <div className="w-full grid grid-cols-1 lg:grid-cols-12 min-h-0 lg:min-h-[calc(100vh-50px)]">
       
       {/*  Left Column: Manifesto & Value Proposition  */}
-      <div className="lg:col-span-5 pt-10 pb-8 px-6 sm:p-12 lg:p-16 xl:p-20 border-b-0 lg:border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-center space-y-8 bg-white dark:bg-black transition-colors duration-200">
+      <div className="lg:col-span-5 pt-[150px] pb-8 px-6 sm:p-12 lg:p-16 xl:p-20 border-b-0 lg:border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-center space-y-8 bg-white dark:bg-black transition-colors duration-200">
         
         <div className="space-y-6">
           <div>
@@ -237,22 +264,22 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/*  數據指標看板、四大記錄類型介紹與真實飲食展示視窗 (左側縱向堆疊，右側視窗對齊)  */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-mono">
+      {/*  數據指標看板、四大記錄類型介紹與真實飲食展示視窗 (手機版橫向滑動查看，桌面版並列排版)  */}
+      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth items-start gap-4 sm:gap-6 lg:gap-10 font-mono pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 lg:mr-0 lg:pr-0 lg:pb-0 lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
-        {/*  左側欄 (7 欄)：四大記錄模式介紹 + 底部三大核心指標  */}
-        <div className="lg:col-span-7 space-y-6">
+        {/*  左側欄：四大記錄模式介紹 + 底部三大核心指標 (手機端橫向吸附，桌面端緊湊精緻)  */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-[400px] shrink-0 snap-start space-y-4">
           
           {/*  四大記錄類型介紹單元格 (食材、複製、估算、平均)  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-950 overflow-hidden shadow-none">
+          <div className="border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-800 rounded-lg bg-white dark:bg-black overflow-hidden shadow-none">
             {/*  類型 1: 原型食材  */}
-            <div className="p-4 sm:p-4.5 flex flex-col justify-between space-y-1.5 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
+            <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
                   01 // 原型食材
                 </span>
                 <span className="text-xs font-bold text-neutral-900 dark:text-white">
-                  準確生重
+                  自煮精準記錄
                 </span>
               </div>
               <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
@@ -261,13 +288,13 @@ export default function LandingPage() {
             </div>
 
             {/*  類型 2: 一鍵複製  */}
-            <div className="p-4 sm:p-4.5 flex flex-col justify-between space-y-1.5 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
+            <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wider">
                   02 // 一鍵複製
                 </span>
                 <span className="text-xs font-bold text-neutral-900 dark:text-white">
-                  昨日餐點
+                  複用記錄
                 </span>
               </div>
               <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
@@ -276,13 +303,13 @@ export default function LandingPage() {
             </div>
 
             {/*  類型 3: 快速估算  */}
-            <div className="p-4 sm:p-4.5 flex flex-col justify-between space-y-1.5 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
+            <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">
                   03 // 快速估算
                 </span>
                 <span className="text-xs font-bold text-neutral-900 dark:text-white">
-                  場景粗估
+                  外賣、聚餐
                 </span>
               </div>
               <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
@@ -291,13 +318,13 @@ export default function LandingPage() {
             </div>
 
             {/*  類型 4: 滾動平均  */}
-            <div className="p-4 sm:p-4.5 flex flex-col justify-between space-y-1.5 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
+            <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-neutral-500 font-bold uppercase tracking-wider">
                   04 // 滾動平均
                 </span>
                 <span className="text-xs font-bold text-neutral-900 dark:text-white">
-                  正常吃
+                  懶得記
                 </span>
               </div>
               <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
@@ -306,53 +333,53 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/*  飲食核心數據指標單元格 (下移至記錄模式下方，3 欄水平並列底座)  */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 border border-neutral-200 dark:border-neutral-800 divide-y sm:divide-y-0 sm:divide-x divide-neutral-200 dark:divide-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-950 overflow-hidden shadow-none">
+          {/*  飲食核心數據指標單元格 (3 欄水平並列底座)  */}
+          <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-black overflow-hidden shadow-none">
             {/*  指標 1: 內置食材數量  */}
-            <div className="p-4 flex flex-col justify-between space-y-2 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[11px] text-neutral-500 uppercase tracking-wider">
+            <div className="p-3 bg-white dark:bg-black flex flex-col justify-between space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
                 內置食材庫
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-black dark:text-white">
-                420+ <span className="text-xs font-normal text-neutral-500">項</span>
+              <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
+                420+ <span className="text-[11px] font-normal text-neutral-500">項</span>
               </div>
-              <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                標準原型食材生重常數，杜絕熟重吸水誤差
+              <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
+                標準原型生重常數，杜絕熟重誤差
               </div>
             </div>
 
             {/*  指標 2: 允許自定食譜  */}
-            <div className="p-4 flex flex-col justify-between space-y-2 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[11px] text-neutral-500 uppercase tracking-wider">
+            <div className="p-3 bg-white dark:bg-black flex flex-col justify-between space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
                 複合菜餚
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-black dark:text-white">
-                ∞ <span className="text-xs font-normal text-neutral-500">自訂</span>
+              <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
+                ∞ <span className="text-[11px] font-normal text-neutral-500">自訂</span>
               </div>
-              <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                自由組合單品食材，純 ID 引用無快照漂移
+              <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
+                自由組合食材，純 ID 引用無漂移
               </div>
             </div>
 
             {/*  指標 3: 烹調油黑盒歸零  */}
-            <div className="p-4 flex flex-col justify-between space-y-2 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[11px] text-neutral-500 uppercase tracking-wider">
+            <div className="p-3 bg-white dark:bg-black flex flex-col justify-between space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
                 烹調黑盒
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-black dark:text-white">
-                0 <span className="text-xs font-normal text-neutral-500">隱藏油</span>
+              <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
+                0 <span className="text-[11px] font-normal text-neutral-500">隱藏油</span>
               </div>
-              <div className="font-sans text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                外食與自煮用油獨立計量，終結熱量盲區
+              <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
+                用油獨立計量，終結熱量盲區
               </div>
             </div>
           </div>
 
         </div>
 
-        {/*  右側欄 (5 欄)：飲食頁面展示 (100% 調用真實 APP 飲食頁面元件 DietView，落實唯一真理源)  */}
-        <div className="lg:col-span-5 flex justify-center lg:justify-start">
-          <div className="w-full max-w-[440px] sm:max-w-[480px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none transition-colors duration-200">
+        {/*  右側欄：飲食頁面展示 (手機端橫向吸附，桌面端保持原有寬度)  */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-[440px] lg:max-w-[440px] shrink-0 snap-start">
+          <div className="w-full rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none transition-colors duration-200">
             
             {/* 模擬視窗狀態列 (Window Chrome Bar) */}
             <div className="px-3.5 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between font-mono text-xs bg-neutral-50 dark:bg-neutral-950 select-none pointer-events-none">
@@ -372,9 +399,9 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* 核心真實 React 飲食頁面元件 (等比縮放 78%，精密緊緻) */}
+            {/* 核心真實 React 飲食頁面元件 (等比縮放 78%，早餐展開飲食分流選單) */}
             <div className="p-3 sm:p-4 bg-background select-none pointer-events-none" style={{ zoom: 0.78 }}>
-              <DietView {...DEMO_DIET_DATA} interactive={false} />
+              <DietView {...DEMO_DIET_DATA} interactive={false} expandedMealPopover="breakfast" />
             </div>
 
           </div>
@@ -389,7 +416,7 @@ export default function LandingPage() {
   {/*  03. STRENGTH & BIOMECHANICS (訓練記錄)                                     */}
   {/*  =========================================================================  */}
   <section id="workout" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
+    <div className="max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] mx-auto space-y-12">
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
@@ -400,124 +427,54 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">解剖熱圖、有效組數與純數學 e1RM。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          嚴格區分熱身組與正式組，記錄 RPE 自覺竭盡強度。
+          嚴格區分熱身組與正式組，真實記錄重量與次數。
           透過成熟的 Brzycki / Epley 公式估算極限力量，自動統計每週有效訓練組數分佈，拒絕未經科學驗證的隨意評分。
         </p>
       </div>
 
-      {/*  Workout Component Elevation  */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-mono text-xs">
+      {/*  數據指標看板、動作組數記錄與動作歷史詳情 (手機版橫向滑動查看，電腦版自適應 3 欄等分填滿可用空間，無遮蓋)  */}
+      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth items-start gap-4 sm:gap-6 lg:grid lg:grid-cols-3 lg:gap-6 xl:gap-8 font-mono text-xs pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 lg:mr-0 lg:pr-0 lg:pb-0 lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
-        {/*  Anatomical Vector Schematic (BodyHighlighter)  */}
-        <div className="lg:col-span-4 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-4 flex flex-col items-center justify-center shadow-none">
-          <div className="flex justify-between items-center w-full text-xs text-neutral-600 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-2">
-            <span>受力肌群解剖熱圖</span>
-            <span className="text-telemetry-accent">股四頭 / 臀大肌</span>
-          </div>
-
-          <div className="py-4 flex items-center justify-center space-x-8">
-            {/*  Front View  */}
-            <div className="text-center">
-              <div className="text-[10px] text-neutral-500 mb-1">FRONT</div>
-              <svg className="w-20 h-44 stroke-neutral-400 dark:stroke-neutral-700 fill-none" viewBox="0 0 100 200">
-                <circle cx="50" cy="20" r="10" strokeWidth="1.5" />
-                <path d="M40 32 L60 32 L65 75 L35 75 Z" strokeWidth="1.5" />
-                <path d="M35 34 L20 80 L18 110" strokeWidth="1.5" />
-                <path d="M65 34 L80 80 L82 110" strokeWidth="1.5" />
-                <path d="M36 78 L48 78 L46 130 L32 130 Z" fill="#e0533c" stroke="#e0533c" strokeWidth="1" opacity="0.85" />
-                <path d="M52 78 L64 78 L68 130 L54 130 Z" fill="#e0533c" stroke="#e0533c" strokeWidth="1" opacity="0.85" />
-                <path d="M32 132 L34 185 L28 190" strokeWidth="1.5" />
-                <path d="M68 132 L66 185 L72 190" strokeWidth="1.5" />
-              </svg>
-            </div>
-            {/*  Back View  */}
-            <div className="text-center">
-              <div className="text-[10px] text-neutral-500 mb-1">BACK</div>
-              <svg className="w-20 h-44 stroke-neutral-400 dark:stroke-neutral-700 fill-none" viewBox="0 0 100 200">
-                <circle cx="50" cy="20" r="10" strokeWidth="1.5" />
-                <path d="M35 32 L65 32 L62 75 L38 75 Z" strokeWidth="1.5" />
-                <path d="M35 34 L20 80 L18 110" strokeWidth="1.5" />
-                <path d="M65 34 L80 80 L82 110" strokeWidth="1.5" />
-                <path d="M38 76 L62 76 L60 100 L40 100 Z" fill="#e0533c" stroke="#e0533c" strokeWidth="1" opacity="0.75" />
-                <path d="M36 102 L48 102 L46 135 L34 135 Z" fill="#e0533c" stroke="#e0533c" strokeWidth="1" opacity="0.6" />
-                <path d="M52 102 L64 102 L66 135 L54 135 Z" fill="#e0533c" stroke="#e0533c" strokeWidth="1" opacity="0.6" />
-                <path d="M34 137 L34 185 L28 190" strokeWidth="1.5" />
-                <path d="M66 137 L66 185 L72 190" strokeWidth="1.5" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="text-neutral-500 dark:text-neutral-400 text-xs text-center border-t border-neutral-200 dark:border-neutral-800 pt-3 w-full">
-            當前動作：低槓深蹲 (Low-bar Squat)
-          </div>
+        {/*  卡片 1：真實肌群恢復狀態看板 (100% 複用真實 APP 元件 WorkoutRecoveryDashboard，單一真理源)  */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full lg:max-w-none shrink-0 snap-start">
+          <WorkoutRecoveryDashboard
+            recoverySummary={DEMO_DASHBOARD_DATA.recoverySummary}
+            exerciseCount={DEMO_DASHBOARD_DATA.stats.exerciseCount}
+            setCount={DEMO_DASHBOARD_DATA.stats.setCount}
+            totalVolume={DEMO_DASHBOARD_DATA.stats.totalVolume}
+            weightUnit={DEMO_DASHBOARD_DATA.bodyWeightUnit}
+            interactive={true}
+          />
         </div>
 
-        {/*  5-Set Log Table  */}
-        <div className="lg:col-span-8 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded-lg overflow-hidden space-y-0 shadow-none">
-          <div className="px-5 py-3 bg-neutral-100 dark:bg-neutral-900/60 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-center text-xs">
-            <span className="font-bold text-neutral-900 dark:text-white">低槓深蹲 · 5 組組數計量表</span>
-            <span className="text-neutral-500 dark:text-neutral-400">總訓練容量：4,380 kg</span>
-          </div>
+        {/*  卡片 2：真實動作組數計量卡片 (100% 複用真實 APP 元件 WorkoutExerciseCard，單一真理源)  */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full lg:max-w-none shrink-0 snap-start space-y-4">
+          {DEMO_WORKOUT_EXERCISES_DATA.map((ex) => (
+            <WorkoutExerciseCard
+              key={ex.exerciseName}
+              exerciseName={ex.exerciseName}
+              sets={ex.sets}
+              bodyWeightUnit={ex.bodyWeightUnit}
+              interactive={false}
+            />
+          ))}
+        </div>
 
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-neutral-500 border-b border-neutral-200 dark:border-neutral-800 text-[10px] uppercase">
-                <th className="py-2.5 px-4">組別</th>
-                <th className="py-2.5 px-4">類型</th>
-                <th className="py-2.5 px-4">重量</th>
-                <th className="py-2.5 px-4">次數</th>
-                <th className="py-2.5 px-4">RPE</th>
-                <th className="py-2.5 px-4">預估 1RM</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 text-neutral-800 dark:text-neutral-300">
-              <tr>
-                <td className="py-3 px-4">1</td>
-                <td className="py-3 px-4"><span className="px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-400 text-[10px]">熱身</span></td>
-                <td className="py-3 px-4 font-bold text-black dark:text-white">60.0 kg</td>
-                <td className="py-3 px-4">10</td>
-                <td className="py-3 px-4 text-neutral-500">6.0</td>
-                <td className="py-3 px-4 text-neutral-500 dark:text-neutral-400">80.0 kg</td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4">2</td>
-                <td className="py-3 px-4"><span className="px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-400 text-[10px]">熱身</span></td>
-                <td className="py-3 px-4 font-bold text-black dark:text-white">100.0 kg</td>
-                <td className="py-3 px-4">5</td>
-                <td className="py-3 px-4 text-neutral-500">7.0</td>
-                <td className="py-3 px-4 text-neutral-500 dark:text-neutral-400">116.7 kg</td>
-              </tr>
-              <tr className="bg-neutral-50 dark:bg-neutral-900/40">
-                <td className="py-3 px-4 font-bold text-black dark:text-white">3</td>
-                <td className="py-3 px-4"><span className="px-1.5 py-0.5 rounded bg-telemetry-accent/20 text-telemetry-accent font-bold text-[10px]">正式</span></td>
-                <td className="py-3 px-4 font-bold text-black dark:text-white">130.0 kg</td>
-                <td className="py-3 px-4 text-black dark:text-white font-bold">5</td>
-                <td className="py-3 px-4 text-black dark:text-white">8.5</td>
-                <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">151.7 kg</td>
-              </tr>
-              <tr className="bg-neutral-50 dark:bg-neutral-900/40">
-                <td className="py-3 px-4 font-bold text-black dark:text-white">4</td>
-                <td className="py-3 px-4"><span className="px-1.5 py-0.5 rounded bg-telemetry-accent/20 text-telemetry-accent font-bold text-[10px]">正式</span></td>
-                <td className="py-3 px-4 font-bold text-black dark:text-white">130.0 kg</td>
-                <td className="py-3 px-4 text-black dark:text-white font-bold">5</td>
-                <td className="py-3 px-4 text-black dark:text-white">9.0</td>
-                <td className="py-3 px-4 text-neutral-500 dark:text-neutral-400">151.7 kg</td>
-              </tr>
-              <tr className="bg-neutral-50 dark:bg-neutral-900/40">
-                <td className="py-3 px-4 font-bold text-black dark:text-white">5</td>
-                <td className="py-3 px-4"><span className="px-1.5 py-0.5 rounded bg-telemetry-accent/20 text-telemetry-accent font-bold text-[10px]">正式</span></td>
-                <td className="py-3 px-4 font-bold text-black dark:text-white">130.0 kg</td>
-                <td className="py-3 px-4 text-black dark:text-white font-bold">4</td>
-                <td className="py-3 px-4 text-black dark:text-white">9.5</td>
-                <td className="py-3 px-4 text-neutral-500 dark:text-neutral-400">146.3 kg</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div className="p-3 bg-neutral-100 dark:bg-neutral-900/40 text-neutral-500 text-[11px] flex justify-between border-t border-neutral-200 dark:border-neutral-800">
-            <span>Brzycki 純數學純函數無副作用推算</span>
-            <span>100% 單元測試防護覆蓋</span>
-          </div>
+        {/*  卡片 3：真實動作詳情看板與訓練足跡 (100% 複用真實 APP 元件 ExerciseOverviewCard，單一真理源)  */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full lg:max-w-none shrink-0 snap-start">
+          <ExerciseOverviewCard
+            exerciseName={demoExerciseOverview.exerciseName}
+            equipmentName={demoExerciseOverview.equipmentName}
+            isArchived={demoExerciseOverview.isArchived}
+            bestE1RM={demoExerciseOverview.bestE1RM}
+            totalSets={demoExerciseOverview.totalSets}
+            totalVolume={demoExerciseOverview.totalVolume}
+            bodyWeightUnit={demoExerciseOverview.bodyWeightUnit}
+            heatmapDays={demoExerciseOverview.heatmapDays}
+            totalWeeks={demoExerciseOverview.totalWeeks}
+            overviewPeriod={demoExerciseOverview.overviewPeriod}
+            interactive={false}
+          />
         </div>
 
       </div>
@@ -529,7 +486,7 @@ export default function LandingPage() {
   {/*  04. BODY & PHYSIOLOGICAL EMA FILTER (體態記錄)                             */}
   {/*  =========================================================================  */}
   <section id="body" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
+    <div className="max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] mx-auto space-y-12">
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
@@ -545,122 +502,32 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/*  Body Telemetry Grid  */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-mono text-xs">
+      {/* 體態時序趨勢、今日數據與體態指標看板 (手機版橫向滑動查看，電腦版自適應 3 欄等分填滿可用空間，無遮蓋) */}
+      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth items-start gap-4 sm:gap-6 lg:grid lg:grid-cols-3 lg:gap-6 xl:gap-8 font-mono text-xs pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 lg:mr-0 lg:pr-0 lg:pb-0 lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
-        {/*  Left: 64.5kg Reading & EMA Chart & Circumference Matrix  */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/*  Reading Block  */}
-          <div className="p-6 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 rounded-lg flex flex-wrap items-baseline justify-between gap-4 shadow-none">
-            <div>
-              <div className="text-[11px] text-neutral-500 uppercase tracking-widest">當前體重過磅 (平滑加權)</div>
-              <div className="text-5xl sm:text-6xl font-black text-black dark:text-white tracking-tight mt-1">64.50 <span className="text-lg font-normal text-neutral-500">kg</span></div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">7 日 EMA 抗噪真值：64.62 kg</div>
-              <div className="text-sm text-neutral-700 dark:text-neutral-300 mt-0.5">-0.24 kg / 7天 (客觀代謝斜率)</div>
-            </div>
-          </div>
-
-          {/*  EMA Vector Chart  */}
-          <div className="p-6 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 rounded-lg space-y-3 shadow-none">
-            <div className="flex justify-between items-center text-xs text-neutral-600 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-2">
-              <span>體重波形與指數平滑 (S_t = α Y_t + (1-α) S_t-1)</span>
-              <div className="flex items-center space-x-3">
-                <span className="flex items-center space-x-1"><span className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600"></span><span>過磅散點</span></span>
-                <span className="flex items-center space-x-1"><span className="w-3 h-0.5 bg-emerald-600 dark:bg-emerald-400"></span><span className="text-emerald-600 dark:text-emerald-400">EMA 實線</span></span>
-              </div>
-            </div>
-            <div className="h-44 w-full pt-2">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 600 160">
-                <line x1="0" y1="20" x2="600" y2="20" stroke="currentColor" className="text-neutral-200 dark:text-[#1f2028]" strokeDasharray="2 2" />
-                <line x1="0" y1="60" x2="600" y2="60" stroke="currentColor" className="text-neutral-200 dark:text-[#1f2028]" strokeDasharray="2 2" />
-                <line x1="0" y1="100" x2="600" y2="100" stroke="currentColor" className="text-neutral-200 dark:text-[#1f2028]" strokeDasharray="2 2" />
-                <line x1="0" y1="140" x2="600" y2="140" stroke="currentColor" className="text-neutral-200 dark:text-[#1f2028]" strokeDasharray="2 2" />
-                
-                <circle cx="30" cy="115" r="3" fill="#a1a1aa" />
-                <circle cx="110" cy="80" r="3" fill="#a1a1aa" />
-                <circle cx="190" cy="130" r="3" fill="#a1a1aa" />
-                <circle cx="270" cy="95" r="3" fill="#a1a1aa" />
-                <circle cx="350" cy="65" r="3" fill="#a1a1aa" />
-                <circle cx="430" cy="110" r="3" fill="#a1a1aa" />
-                <circle cx="510" cy="70" r="3" fill="#a1a1aa" />
-                <circle cx="570" cy="85" r="3" fill="#a1a1aa" />
-
-                <path d="M30 115 C 80 100, 140 105, 190 108 C 240 110, 300 95, 350 88 C 400 82, 480 85, 570 82" 
-                      fill="none" stroke="#059669" strokeWidth="2.5" className="dark:stroke-[#10b981]" />
-              </svg>
-            </div>
-          </div>
-
-          {/*  6 Circumference Metrics (Normal weight font-normal as per standard)  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-4 rounded-lg shadow-none">
-            <div className="text-[10px] text-neutral-500 uppercase tracking-widest mb-3">6 項身體圍度度量 (FONT-NORMAL 規範)</div>
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 text-center">
-              <div className="p-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded">
-                <div className="text-neutral-500 text-[10px]">胸圍</div>
-                <div className="text-sm font-normal text-neutral-900 dark:text-white mt-1">102.0 cm</div>
-              </div>
-              <div className="p-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded">
-                <div className="text-neutral-500 text-[10px]">腰圍</div>
-                <div className="text-sm font-normal text-neutral-900 dark:text-white mt-1">76.0 cm</div>
-              </div>
-              <div className="p-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded">
-                <div className="text-neutral-500 text-[10px]">臀圍</div>
-                <div className="text-sm font-normal text-neutral-900 dark:text-white mt-1">96.0 cm</div>
-              </div>
-              <div className="p-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded">
-                <div className="text-neutral-500 text-[10px]">手臂</div>
-                <div className="text-sm font-normal text-neutral-900 dark:text-white mt-1">38.5 cm</div>
-              </div>
-              <div className="p-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded">
-                <div className="text-neutral-500 text-[10px]">大腿</div>
-                <div className="text-sm font-normal text-neutral-900 dark:text-white mt-1">58.0 cm</div>
-              </div>
-              <div className="p-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded">
-                <div className="text-neutral-500 text-[10px]">小腿</div>
-                <div className="text-sm font-normal text-neutral-900 dark:text-white mt-1">37.0 cm</div>
-              </div>
-            </div>
-          </div>
-
+        {/* 卡片 1：真實平滑體重時序趨勢折線圖 (100% 複用真實 APP 元件 WeightTrendChart，單一真理源) */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full lg:max-w-none shrink-0 snap-start">
+          <WeightTrendChart
+            data={DEMO_WEIGHT_TREND_DATA}
+            unit={DEMO_DASHBOARD_DATA.bodyWeightUnit}
+            interactive={false}
+          />
         </div>
 
-        {/*  Right: 1:1 Precision Modal Representation (300px Keypad Dialog)  */}
-        <div className="lg:col-span-4 flex justify-center">
-          <div className="border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 p-4 rounded-lg w-[300px] max-w-[300px] font-mono text-xs space-y-3 shadow-none">
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-2 text-[11px]">
-              <button className="w-6 h-6 rounded border border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-neutral-500 dark:text-neutral-400">✕</button>
-              <span className="font-bold text-neutral-900 dark:text-white">體重記錄</span>
-              <button className="w-6 h-6 rounded bg-black text-white dark:bg-white dark:text-black font-bold flex items-center justify-center">✓</button>
-            </div>
-            
-            <div className="text-center py-2.5 bg-neutral-100 dark:bg-black rounded border border-neutral-200 dark:border-neutral-800">
-              <div className="text-[10px] text-neutral-500 uppercase">現時輸入 (kg)</div>
-              <div className="text-3xl font-black text-black dark:text-white tracking-tight mt-0.5">64.50</div>
-            </div>
+        {/* 卡片 2：真實今日數據卡片 (100% 複用真實 APP 元件 BodyTodayDataCard，單一真理源) */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full lg:max-w-none shrink-0 snap-start">
+          <BodyTodayDataCard
+            {...DEMO_BODY_TODAY_DATA}
+            interactive={false}
+          />
+        </div>
 
-            {/*  Keypad Matrix  */}
-            <div className="grid grid-cols-3 gap-1.5 text-center text-sm font-semibold">
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">1</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">2</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">3</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">4</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">5</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">6</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">7</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">8</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">9</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">.</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white">0</button>
-              <button className="py-2.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-500">⌫</button>
-            </div>
-
-            <div className="text-[10px] text-neutral-500 text-center pt-1 border-t border-neutral-200 dark:border-neutral-800">
-              全端恆定 300px 寬度 · 16px 內邊距防洩漏真理源
-            </div>
-          </div>
+        {/* 卡片 3：真實體態指標看板 (100% 複用真實 APP 元件 BodyMetricsOverviewCard，單一真理源) */}
+        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full lg:max-w-none shrink-0 snap-start">
+          <BodyMetricsOverviewCard
+            {...DEMO_BODY_METRICS_DATA}
+            interactive={false}
+          />
         </div>
 
       </div>
@@ -688,52 +555,8 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/*  Sharing Modes Grid  */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-        
-        {/*  Mode 1: AI Prompt Export  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-4 flex flex-col justify-between shadow-none">
-          <div className="space-y-3">
-            <div className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">01 // 一鍵複製結構化 AI PROMPT</div>
-            <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">隨時與任何前沿大模型對話</h3>
-            <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-              將過去 7 天或 30 天的客觀生重宏量素、深蹲組數與 EMA 體重平滑曲線，一鍵格式化為無噪音 Markdown 提示詞，直接發送給 Claude 或 ChatGPT 獲取客製化建議。
-            </p>
-          </div>
-          <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded text-[11px] text-neutral-700 dark:text-neutral-300">
-            [PROMPT PREVIEW]: 包含 C/P/F 生重明細、RPE 負荷矩陣與代謝斜率。
-          </div>
-        </div>
-
-        {/*  Mode 2: Coach & Friend Sharing  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-4 flex flex-col justify-between shadow-none">
-          <div className="space-y-3">
-            <div className="text-sky-600 dark:text-sky-400 font-bold uppercase">02 // 高密度分析長圖匯出</div>
-            <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">分享給教練或自律夥伴</h3>
-            <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-              無需截取雜亂的螢幕截圖。Zenfit 原生支援一鍵生成高對比、無失真、工程質感的極簡長圖，將每日課表與進食事實客觀交付教練檢閱。
-            </p>
-          </div>
-          <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded text-[11px] text-neutral-700 dark:text-neutral-300">
-            [EXPORT PNG]: 純向量線條，扁平無陰影，直接發送至微信/通訊軟體。
-          </div>
-        </div>
-
-        {/*  Mode 3: Pure Math Correlation  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-4 flex flex-col justify-between shadow-none">
-          <div className="space-y-3">
-            <div className="text-amber-600 dark:text-amber-400 font-bold uppercase">03 // 純數學客觀關聯推演</div>
-            <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">只計算數學關係，不給行為指令</h3>
-            <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-              透過 EMA 體重平滑變化斜率與飲食攝入差值，客觀推算真實能量盈餘或缺口。不說「你吃多了」，只陳述客觀推論數值。
-            </p>
-          </div>
-          <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded text-[11px] text-neutral-700 dark:text-neutral-300">
-            [PURE MATH]: 無黑盒神經網路，所有計算公式皆在開源代碼中公開。
-          </div>
-        </div>
-
-      </div>
+      {/* 數據分享模式展示 (100% 複用真實分享界面的圖片、純文本、JSON 三大模式) */}
+      <ShareShowcaseCards />
 
     </div>
   </section>
@@ -753,63 +576,14 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">數據完全私有化，斷網依然毫秒響應。</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          你的身體數據不屬於任何科技巨頭的伺服器。Zenfit 全面採用本地 IndexedDB 驅動，搭配 Web Crypto AES-GCM 零知識加密，支援同步至自己的 Dropbox 或本機資料夾。
+          你的身體數據不屬於任何科技巨頭的伺服器。Zenfit 全面採用本地 IndexedDB 驅動，直連個人 Dropbox 私有目錄進行多設備增量同步，亦支援本機資料夾直接鏡像與一鍵無損導出。
         </p>
       </div>
 
-      {/*  Architecture Pillars Grid  */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs">
-        
-        {/*  Pillar A: Local-First & Dropbox Sync  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6 sm:p-8 rounded-lg space-y-6 shadow-none">
-          <div className="flex justify-between items-center border-b border-neutral-200 dark:border-neutral-800 pb-3">
-            <span className="font-bold text-neutral-900 dark:text-white text-sm">DROPBOX 同步與端到端加密 (E2EE)</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">AES-GCM-256</span>
-          </div>
-
-          <div className="space-y-3 font-sans text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            <p>
-              • <strong>零知識架構 (Zero-Knowledge)</strong>：備份檔案在發送至 Dropbox 之前，已經在瀏覽器端使用你的獨立金鑰完成加密。Dropbox 或任何中繼伺服器永遠只看得到密文。
-            </p>
-            <p>
-              • <strong>資料夾直接同步</strong>：支援 File System Access API，直接與本地硬碟資料夾建立鏡像同步，無需任何第三方雲端帳號。
-            </p>
-            <p>
-              • <strong>一鍵完整匯出</strong>：隨時將整份 IndexedDB 匯出為 ZIP 壓縮檔（內含 JSON 與全解析度圖片），告別平台鎖定。
-            </p>
-          </div>
-
-          <div className="p-3 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded font-mono text-[11px] text-neutral-500 dark:text-neutral-400">
-            ENCLAVE: PBKDF2 密鑰衍生 · SHA-256 校驗 · 0 遙測外流
-          </div>
-        </div>
-
-        {/*  Pillar B: Universal PWA  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6 sm:p-8 rounded-lg space-y-6 shadow-none">
-          <div className="flex justify-between items-center border-b border-neutral-200 dark:border-neutral-800 pb-3">
-            <span className="font-bold text-neutral-900 dark:text-white text-sm">PWA 平台通用與持久化存儲</span>
-            <span className="text-sky-600 dark:text-sky-400 font-bold">ALL OS READY</span>
-          </div>
-
-          <div className="space-y-3 font-sans text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            <p>
-              • <strong>全平台原生安裝</strong>：支援在 iOS、Android、macOS、Windows 及 Linux 上一鍵「加入主畫面」或安裝為原生獨立視窗應用。
-            </p>
-            <p>
-              • <strong>Cache-First 快取架構</strong>：透過 Workbox Service Worker 實現靜態資源 100% 離線可用，斷網時照常秒開。
-            </p>
-            <p>
-              • <strong>持久化存儲保障</strong>：初始化主動呼叫 <code>navigator.storage.persist()</code>，杜絕設備磁碟吃緊時資料庫被瀏覽器自動逐出的風險。
-            </p>
-          </div>
-
-          <div className="p-3 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded font-mono text-[11px] text-neutral-500 dark:text-neutral-400">
-            PLATFORMS: iOS 15+ · Android · Chrome · Safari · Edge
-          </div>
-        </div>
-
+      {/* 多設備 Dropbox 同步線路圖 (以上方文本 max-w-3xl 中心區域對齊) */}
+      <div className="max-w-3xl">
+        <SyncTopologyDiagram />
       </div>
-
     </div>
   </section>
 
@@ -832,55 +606,69 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/*  4 Non-Goals Pillars  */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-xs">
+      {/*  4 Non-Goals Pillars (手機端兩欄可橫向滑動加寬卡片：初始顯示 01/03，右滑顯示 02/04；桌面端 2 欄並列等高排版)  */}
+      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth gap-3 sm:gap-6 pb-4 -mr-4 pr-4 sm:mr-0 sm:pr-0 sm:pb-0 sm:overflow-visible sm:grid sm:grid-cols-2 font-mono text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
-        {/*  Non-goal 1  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-3 shadow-none">
-          <div className="flex items-center space-x-2 text-telemetry-accent font-bold">
-            <span className="w-2 h-2 rounded-full bg-telemetry-accent"></span>
-            <span>01 // 不做內建 AI 評分與行為指令</span>
+        {/*  左欄：01 與 03 (手機端初始顯露卡片組，寬度加寬至 84vw)  */}
+        <div className="w-[84vw] max-w-[350px] sm:w-full sm:max-w-none shrink-0 snap-start flex flex-col gap-3 sm:gap-6">
+          {/*  Non-goal 1  */}
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
+                <span>01 // 不做內建 AI 評分與行為指令</span>
+              </div>
+              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">拒絕黑盒說教與主觀評判</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
+                我們嚴禁在軟體中指示「你少吃了」、「你吃超標了」或「你退步了」；絕對不設置帶有羞辱感的紅色警報卡片。軟體是冷靜的鏡子，決策權 100% 歸還使用者。
+              </p>
+            </div>
           </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">拒絕黑盒說教與主觀評判</h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            我們嚴禁在軟體中指示「你少吃了」、「你吃超標了」或「你退步了」；絕對不設置帶有羞辱感的紅色警報卡片。軟體是冷靜的鏡子，決策權 100% 歸還使用者。
-          </p>
+
+          {/*  Non-goal 3  */}
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
+                <span>03 // 不做強制打卡與斷簽懲罰</span>
+              </div>
+              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">真正的自律不需要外部羞恥機制</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
+                不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的測量儀。
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/*  Non-goal 2  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-3 shadow-none">
-          <div className="flex items-center space-x-2 text-telemetry-accent font-bold">
-            <span className="w-2 h-2 rounded-full bg-telemetry-accent"></span>
-            <span>02 // 不做社交社群與心靈雞湯</span>
+        {/*  右欄：02 與 04 (手機端需向右滑動顯露卡片組，寬度加寬至 84vw)  */}
+        <div className="w-[84vw] max-w-[350px] sm:w-full sm:max-w-none shrink-0 snap-start flex flex-col gap-3 sm:gap-6">
+          {/*  Non-goal 2  */}
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
+                <span>02 // 不做社交社群與心靈雞湯</span>
+              </div>
+              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">拒絕同儕焦慮與動態打擾</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
+                Zenfit 沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。
+              </p>
+            </div>
           </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">拒絕同儕焦慮與動態打擾</h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            Zenfit 沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。
-          </p>
-        </div>
 
-        {/*  Non-goal 3  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-3 shadow-none">
-          <div className="flex items-center space-x-2 text-telemetry-accent font-bold">
-            <span className="w-2 h-2 rounded-full bg-telemetry-accent"></span>
-            <span>03 // 不做強制打卡與斷簽懲罰</span>
+          {/*  Non-goal 4  */}
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
+                <span>04 // 不做模糊的成品菜熱量估算</span>
+              </div>
+              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">拒絕「一碗紅燒牛肉麵 750 大卡」的黑盒謊言</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
+                成品菜估算充滿了不可控的烹調油與吸水率偏差。Zenfit 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。
+              </p>
+            </div>
           </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">真正的自律不需要外部羞恥機制</h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的測量儀。
-          </p>
-        </div>
-
-        {/*  Non-goal 4  */}
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-6 rounded-lg space-y-3 shadow-none">
-          <div className="flex items-center space-x-2 text-telemetry-accent font-bold">
-            <span className="w-2 h-2 rounded-full bg-telemetry-accent"></span>
-            <span>04 // 不做模糊的成品菜熱量估算</span>
-          </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">拒絕「一碗紅燒牛肉麵 750 大卡」的黑盒謊言</h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            成品菜估算充滿了不可控的烹調油與吸水率偏差。Zenfit 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。
-          </p>
         </div>
 
       </div>
@@ -907,50 +695,45 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/*  Technical Architecture Specs Grid  */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/*  Technical Architecture Specs Grid (手機端支援左右滾動橫向吸附，桌面端 3 欄等分網格)  */}
+      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 md:mr-0 md:pr-0 md:pb-0 md:overflow-visible md:grid md:grid-cols-3 gap-4 sm:gap-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6 rounded-lg space-y-3 shadow-none">
-          <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">01 / 前端技術棧與高度管理</div>
-          <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs">
-            <div>• <strong>核心棧</strong>：React 19 + TypeScript (Strict Mode, 0 any) + Vite。</div>
-            <div>• <strong>CSS 系統</strong>：Tailwind CSS v4 + 全域 Design Tokens 變數控制。</div>
-            <div>• <strong>高度防護</strong>：全面採用「樹狀 100% 高度」，嚴禁 <code>100vh</code> 造成行動端工具列遮擋溢出。</div>
+        {/*  卡片 1  */}
+        <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
+          <div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">01 / 前端技術棧與高度管理</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
+              <div>• <strong>核心棧</strong>：React 19 + TypeScript (Strict Mode, 0 any) + Vite。</div>
+              <div>• <strong>CSS 系統</strong>：Tailwind CSS v4 + 全域 Design Tokens 變數控制。</div>
+              <div>• <strong>高度防護</strong>：全面採用「樹狀 100% 高度」，嚴禁 <code>100vh</code> 造成行動端工具列遮擋溢出。</div>
+            </div>
           </div>
         </div>
 
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6 rounded-lg space-y-3 shadow-none">
-          <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">02 / 本地資料庫與遷移紀律</div>
-          <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs">
-            <div>• <strong>資料庫引擎</strong>：Dexie.js (IndexedDB v14)，強型別資料模型。</div>
-            <div>• <strong>安全防線</strong>：結構變更強制遞增版本並編寫 <code>.upgrade()</code> 腳本，絕對禁止生產環境破壞性清庫。</div>
-            <div>• <strong>純 ID 關聯</strong>：關聯實體僅存純 ID，拒絕反正規化快照漂移。</div>
+        {/*  卡片 2  */}
+        <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
+          <div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">02 / 本地資料庫與遷移紀律</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
+              <div>• <strong>資料庫引擎</strong>：Dexie.js (IndexedDB v14)，強型別資料模型。</div>
+              <div>• <strong>安全防線</strong>：結構變更強制遞增版本並編寫 <code>.upgrade()</code> 腳本，絕對禁止生產環境破壞性清庫。</div>
+              <div>• <strong>純 ID 關聯</strong>：關聯實體僅存純 ID，拒絕反正規化快照漂移。</div>
+            </div>
           </div>
         </div>
 
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6 rounded-lg space-y-3 shadow-none">
-          <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">03 / 純數學演算與 100% 測試</div>
-          <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs">
-            <div>• <strong>精密測量純函數</strong>：所有指標推算（e1RM、EMA 平滑、供能比）封裝於無副作用純函數。</div>
-            <div>• <strong>測試守護</strong>：Vitest 測試套件，維持 542 項單元測試 100% 通過。</div>
-            <div>• <strong>文案極簡</strong>：嚴格遵守五大極簡文案法則與中英數半形空格排版。</div>
+        {/*  卡片 3  */}
+        <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
+          <div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">03 / 純數學演算與 100% 測試</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
+              <div>• <strong>精密測量純函數</strong>：所有指標推算（e1RM、EMA 平滑、供能比）封裝於無副作用純函數。</div>
+              <div>• <strong>測試守護</strong>：Vitest 測試套件，維持 542 項單元測試 100% 通過。</div>
+              <div>• <strong>文案極簡</strong>：嚴格遵守五大極簡文案法則與中英數半形空格排版。</div>
+            </div>
           </div>
         </div>
 
-      </div>
-
-      {/*  Terminal Architecture Snapshot  */}
-      <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6 rounded-lg space-y-4 shadow-none">
-        <div className="flex justify-between items-center text-xs border-b border-neutral-200 dark:border-neutral-800 pb-2 text-neutral-600 dark:text-neutral-400">
-          <span className="text-emerald-600 dark:text-emerald-400 font-bold">SYSTEM INTEGRITY REPORT // ALL SYSTEMS GO</span>
-          <span>VITEST: 542 TESTS PASSING (100%)</span>
-        </div>
-        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed space-y-1">
-          <div>✓ [TYPE CHECK]: TypeScript 5.8 strict compiler check passed with 0 errors.</div>
-          <div>✓ [MATH ACCURACY]: Brzycki e1RM, EMA weight filter, and Macro ratio pure functions verified.</div>
-          <div>✓ [DATA INTEGRITY]: IndexedDB zero snapshot drift contract active.</div>
-          <div>✓ [SECURITY]: Web Crypto AES-GCM-256 E2EE envelope verified.</div>
-        </div>
       </div>
 
     </div>
