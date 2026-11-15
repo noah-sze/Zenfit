@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit 手機版 3D 線框球體 (Wireframe Globe) 方案提案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f5f5f5;
+    }
+    canvas {
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-8 bg-neutral-100 text-neutral-900">
+
+  <div class="max-w-7xl mx-auto space-y-8">
+    
+    <!-- 頂部標題說明 -->
+    <div class="border-b border-neutral-300 pb-5 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <div class="font-mono text-xs uppercase tracking-widest text-neutral-500 mb-1">DESIGN PROPOSALS // 3D WIREFRAME GLOBE INTEGRATION</div>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight">手機版 Hero 3D 線框球體配置提案</h1>
+        <p class="text-neutral-600 text-sm mt-1">採用專案原生 <code class="font-mono bg-neutral-200 px-1.5 py-0.5 rounded text-neutral-800">WireframeGlobe</code> 3D 經緯線晶格球體，提供 4 種不同位置、尺寸與佈局的融入方案。</p>
+      </div>
+      <div class="font-mono text-xs bg-white border border-neutral-300 px-3 py-1.5 rounded-lg text-neutral-600 shadow-sm flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>純 Canvas 60fps 3D 數學投影矩陣自轉 · 零外部庫</span>
+      </div>
+    </div>
+
+    <!-- 4 個方案網格並列展示 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+      <!-- ========================================================================= -->
+      <!-- 方案 A：右上角懸浮大球體（經典還原截圖構圖 · 推薦）                        -->
+      <!-- ========================================================================= -->
+      <div class="bg-white rounded-2xl border border-neutral-300 overflow-hidden shadow-sm flex flex-col">
+        <div class="p-3.5 border-b border-neutral-200 bg-neutral-50 flex items-center justify-between">
+          <div>
+            <span class="font-mono font-bold text-xs bg-black text-white px-2 py-0.5 rounded">方案 A</span>
+            <span class="font-bold text-xs ml-2">右上角大氣球體</span>
+          </div>
+          <span class="text-[10px] font-mono text-emerald-600 font-bold">● 完美還原截圖</span>
+        </div>
+        
+        <div class="p-3 bg-neutral-100 flex-1 flex justify-center items-start">
+          <!-- 模擬手機螢幕容器 (340px) -->
+          <div class="relative w-[340px] bg-white rounded-xl border border-neutral-200 p-5 space-y-4 overflow-hidden min-h-[480px]">
+            
+            <!-- 3D Canvas 線框球體：右上角懸浮定位 -->
+            <canvas id="globe-canvas-a" class="absolute inset-0 z-0 w-full h-full"></canvas>
+
+            <!-- 前景內容層 (z-10) -->
+            <div class="relative z-10 space-y-4">
+              <!-- Header 示意 -->
+              <div class="flex items-center justify-between border-b border-neutral-200 pb-3 -mx-5 px-5 bg-white/80 backdrop-blur-sm">
+                <div class="flex items-center space-x-2">
+                  <div class="w-6 h-6 rounded-[23%] bg-black flex items-center justify-center text-white text-[9px] font-mono">⚡</div>
+                  <span class="font-bold text-sm">Zenfit</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs border border-neutral-200 px-2 py-0.5 rounded">淺色</span>
+                  <span class="text-xs bg-black text-white px-2 py-0.5 rounded">開啟應用 ↗</span>
+                </div>
+              </div>
+
+              <!-- Logo -->
+              <div class="pt-1">
+                <div class="w-14 h-14 rounded-2xl bg-black flex items-center justify-center text-white shrink-0 shadow-none">
+                  <svg viewBox="0 0 1024 1024" class="w-9 h-9" fill="none">
+                    <rect width="1024" height="1024" rx="240" fill="#000000" />
+                    <path d="M319 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M360 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M400 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M319 390h101c0 30-20 50-50 50s-51-20-51-50z" fill="#FFF"/>
+                    <path d="M357 470v247a12 12 0 0 0 12 12h1a12 12 0 0 0 12-12V470a12 12 0 0 0-12-12h-1a12 12 0 0 0-12 12z" fill="#FFF"/>
+                    <path d="M567 278v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                    <path d="M618 344v260a17 17 0 0 0 17 17h10a17 17 0 0 0 17-17V344a17 17 0 0 0-17-17h-10a17 17 0 0 0-17 17z" fill="#FFF"/>
+                    <path d="M567 679v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- 大標題 -->
+              <h1 class="text-3xl font-black tracking-tight leading-tight">
+                只記數據，<br />
+                <span class="text-neutral-400 font-mono font-normal text-2xl">絕不對你指手畫腳。</span>
+              </h1>
+
+              <!-- 說明段落 -->
+              <p class="text-neutral-600 text-xs leading-relaxed max-w-[270px]">
+                記錄身體不該帶來壓力。今天吃了多少、練了幾組，軟體只如實告訴你真實數字，絕不批判你吃多吃少。
+              </p>
+
+              <!-- 按鈕組 -->
+              <div class="flex items-center gap-2 pt-1 font-mono text-xs">
+                <span class="bg-black text-white px-4 py-2.5 rounded font-semibold text-xs shadow-sm">探索度量系統 →</span>
+                <span class="bg-neutral-100 border border-neutral-200 text-neutral-500 px-3 py-2.5 rounded text-[11px]">PWA 離線</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="p-3 bg-white text-xs text-neutral-600 border-t border-neutral-200 space-y-1">
+          <div class="font-bold text-neutral-900">構圖：右上角懸浮半透球體</div>
+          <p>球心位於右上角（X: 75%, Y: 22%，半徑 135px），半透明經緯線在空白處優雅舒展自轉，與截圖構圖 100% 契合。</p>
+        </div>
+      </div>
+
+
+      <!-- ========================================================================= -->
+      <!-- 方案 B：Logo 右側微型獨立經緯球儀 (Compact Precision Globe)                 -->
+      <!-- ========================================================================= -->
+      <div class="bg-white rounded-2xl border border-neutral-300 overflow-hidden shadow-sm flex flex-col">
+        <div class="p-3.5 border-b border-neutral-200 bg-neutral-50 flex items-center justify-between">
+          <div>
+            <span class="font-mono font-bold text-xs bg-black text-white px-2 py-0.5 rounded">方案 B</span>
+            <span class="font-bold text-xs ml-2">右側獨立球體儀</span>
+          </div>
+          <span class="text-[10px] font-mono text-neutral-500 font-semibold">● 緊湊精密</span>
+        </div>
+        
+        <div class="p-3 bg-neutral-100 flex-1 flex justify-center items-start">
+          <!-- 模擬手機螢幕容器 (340px) -->
+          <div class="relative w-[340px] bg-white rounded-xl border border-neutral-200 p-5 space-y-4 overflow-hidden min-h-[480px]">
+            
+            <!-- Header 示意 -->
+            <div class="flex items-center justify-between border-b border-neutral-200 pb-3 -mx-5 px-5">
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 rounded-[23%] bg-black flex items-center justify-center text-white text-[9px] font-mono">⚡</div>
+                <span class="font-bold text-sm">Zenfit</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs border border-neutral-200 px-2 py-0.5 rounded">淺色</span>
+                <span class="text-xs bg-black text-white px-2 py-0.5 rounded">開啟應用 ↗</span>
+              </div>
+            </div>
+
+            <!-- Logo 與右側獨立球體小儀表並排 -->
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <!-- 左側 Logo -->
+              <div class="w-14 h-14 rounded-2xl bg-black flex items-center justify-center text-white shrink-0 shadow-none">
+                <svg viewBox="0 0 1024 1024" class="w-9 h-9" fill="none">
+                  <rect width="1024" height="1024" rx="240" fill="#000000" />
+                  <path d="M319 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                  <path d="M360 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                  <path d="M400 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                  <path d="M319 390h101c0 30-20 50-50 50s-51-20-51-50z" fill="#FFF"/>
+                  <path d="M357 470v247a12 12 0 0 0 12 12h1a12 12 0 0 0 12-12V470a12 12 0 0 0-12-12h-1a12 12 0 0 0-12 12z" fill="#FFF"/>
+                  <path d="M567 278v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                  <path d="M618 344v260a17 17 0 0 0 17 17h10a17 17 0 0 0 17-17V344a17 17 0 0 0-17-17h-10a17 17 0 0 0-17 17z" fill="#FFF"/>
+                  <path d="M567 679v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                </svg>
+              </div>
+
+              <!-- 右側獨立 3D 球體小畫布容器 -->
+              <div class="relative w-28 h-20 flex items-center justify-center">
+                <canvas id="globe-canvas-b" class="w-full h-full"></canvas>
+              </div>
+            </div>
+
+            <!-- 大標題 -->
+            <h1 class="text-3xl font-black tracking-tight leading-tight">
+              只記數據，<br />
+              <span class="text-neutral-400 font-mono font-normal text-2xl">絕不對你指手畫腳。</span>
+            </h1>
+
+            <!-- 說明段落 -->
+            <p class="text-neutral-600 text-xs leading-relaxed">
+              記錄身體不該帶來壓力。今天吃了多少、練了幾組，軟體只如實告訴你真實數字，絕不批判你吃多吃少。
+            </p>
+
+            <!-- 按鈕組 -->
+            <div class="flex items-center gap-2 pt-1 font-mono text-xs">
+              <span class="bg-black text-white px-4 py-2.5 rounded font-semibold text-xs">探索度量系統 →</span>
+              <span class="bg-neutral-100 border border-neutral-200 text-neutral-500 px-3 py-2.5 rounded text-[11px]">PWA 離線</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="p-3 bg-white text-xs text-neutral-600 border-t border-neutral-200 space-y-1">
+          <div class="font-bold text-neutral-900">構圖：獨立右側小球儀</div>
+          <p>將球體收斂在 Logo 右側獨立小尺寸（直徑 75px）中旋轉，不干擾下方文字，保留乾淨純粹的留白節奏。</p>
+        </div>
+      </div>
+
+
+      <!-- ========================================================================= -->
+      <!-- 方案 C：全屏深邃背景球體 (Full Deep Space Globe)                           -->
+      <!-- ========================================================================= -->
+      <div class="bg-white rounded-2xl border border-neutral-300 overflow-hidden shadow-sm flex flex-col">
+        <div class="p-3.5 border-b border-neutral-200 bg-neutral-50 flex items-center justify-between">
+          <div>
+            <span class="font-mono font-bold text-xs bg-black text-white px-2 py-0.5 rounded">方案 C</span>
+            <span class="font-bold text-xs ml-2">深邃全景背景球</span>
+          </div>
+          <span class="text-[10px] font-mono text-sky-600 font-semibold">● 宏大空間感</span>
+        </div>
+        
+        <div class="p-3 bg-neutral-100 flex-1 flex justify-center items-start">
+          <!-- 模擬手機螢幕容器 (340px) -->
+          <div class="relative w-[340px] bg-white rounded-xl border border-neutral-200 p-5 space-y-4 overflow-hidden min-h-[480px]">
+            
+            <!-- 3D Canvas 線框球體：大尺寸背景覆蓋 -->
+            <canvas id="globe-canvas-c" class="absolute inset-0 z-0 w-full h-full"></canvas>
+
+            <!-- 前景內容層 -->
+            <div class="relative z-10 space-y-4">
+              <!-- Header 示意 -->
+              <div class="flex items-center justify-between border-b border-neutral-200 pb-3 -mx-5 px-5 bg-white/70 backdrop-blur-sm">
+                <div class="flex items-center space-x-2">
+                  <div class="w-6 h-6 rounded-[23%] bg-black flex items-center justify-center text-white text-[9px] font-mono">⚡</div>
+                  <span class="font-bold text-sm">Zenfit</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs border border-neutral-200 px-2 py-0.5 rounded">淺色</span>
+                  <span class="text-xs bg-black text-white px-2 py-0.5 rounded">開啟應用 ↗</span>
+                </div>
+              </div>
+
+              <!-- Logo -->
+              <div class="pt-1">
+                <div class="w-14 h-14 rounded-2xl bg-black flex items-center justify-center text-white shrink-0 shadow-none">
+                  <svg viewBox="0 0 1024 1024" class="w-9 h-9" fill="none">
+                    <rect width="1024" height="1024" rx="240" fill="#000000" />
+                    <path d="M319 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M360 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M400 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M319 390h101c0 30-20 50-50 50s-51-20-51-50z" fill="#FFF"/>
+                    <path d="M357 470v247a12 12 0 0 0 12 12h1a12 12 0 0 0 12-12V470a12 12 0 0 0-12-12h-1a12 12 0 0 0-12 12z" fill="#FFF"/>
+                    <path d="M567 278v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                    <path d="M618 344v260a17 17 0 0 0 17 17h10a17 17 0 0 0 17-17V344a17 17 0 0 0-17-17h-10a17 17 0 0 0-17 17z" fill="#FFF"/>
+                    <path d="M567 679v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- 大標題 -->
+              <h1 class="text-3xl font-black tracking-tight leading-tight">
+                只記數據，<br />
+                <span class="text-neutral-400 font-mono font-normal text-2xl">絕不對你指手畫腳。</span>
+              </h1>
+
+              <!-- 說明段落 -->
+              <p class="text-neutral-600 text-xs leading-relaxed">
+                記錄身體不該帶來壓力。今天吃了多少、練了幾組，軟體只如實告訴你真實數字，絕不批判你吃多吃少。
+              </p>
+
+              <!-- 按鈕組 -->
+              <div class="flex items-center gap-2 pt-1 font-mono text-xs">
+                <span class="bg-black text-white px-4 py-2.5 rounded font-semibold text-xs">探索度量系統 →</span>
+                <span class="bg-neutral-100 border border-neutral-200 text-neutral-500 px-3 py-2.5 rounded text-[11px]">PWA 離線</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="p-3 bg-white text-xs text-neutral-600 border-t border-neutral-200 space-y-1">
+          <div class="font-bold text-neutral-900">構圖：偏右大尺寸貫穿全屏</div>
+          <p>球心偏右中（X: 68%, Y: 42%，半徑 180px），球體如星球地平線般緩慢自轉，文字浮於網格之上，沉浸感強烈。</p>
+        </div>
+      </div>
+
+
+      <!-- ========================================================================= -->
+      <!-- 方案 D：頂部幾何穹頂弧線半球 (Dome Horizon Arch)                            -->
+      <!-- ========================================================================= -->
+      <div class="bg-white rounded-2xl border border-neutral-300 overflow-hidden shadow-sm flex flex-col">
+        <div class="p-3.5 border-b border-neutral-200 bg-neutral-50 flex items-center justify-between">
+          <div>
+            <span class="font-mono font-bold text-xs bg-black text-white px-2 py-0.5 rounded">方案 D</span>
+            <span class="font-bold text-xs ml-2">頂部穹頂線框</span>
+          </div>
+          <span class="text-[10px] font-mono text-purple-600 font-semibold">● 幾何張力</span>
+        </div>
+        
+        <div class="p-3 bg-neutral-100 flex-1 flex justify-center items-start">
+          <!-- 模擬手機螢幕容器 (340px) -->
+          <div class="relative w-[340px] bg-white rounded-xl border border-neutral-200 p-5 space-y-4 overflow-hidden min-h-[480px]">
+            
+            <!-- 3D Canvas 線框球體：頂部偏右半球 -->
+            <canvas id="globe-canvas-d" class="absolute inset-0 z-0 w-full h-full"></canvas>
+
+            <!-- 前景內容層 -->
+            <div class="relative z-10 space-y-4">
+              <!-- Header 示意 -->
+              <div class="flex items-center justify-between border-b border-neutral-200 pb-3 -mx-5 px-5 bg-white/80 backdrop-blur-sm">
+                <div class="flex items-center space-x-2">
+                  <div class="w-6 h-6 rounded-[23%] bg-black flex items-center justify-center text-white text-[9px] font-mono">⚡</div>
+                  <span class="font-bold text-sm">Zenfit</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs border border-neutral-200 px-2 py-0.5 rounded">淺色</span>
+                  <span class="text-xs bg-black text-white px-2 py-0.5 rounded">開啟應用 ↗</span>
+                </div>
+              </div>
+
+              <!-- Logo -->
+              <div class="pt-1">
+                <div class="w-14 h-14 rounded-2xl bg-black flex items-center justify-center text-white shrink-0 shadow-none">
+                  <svg viewBox="0 0 1024 1024" class="w-9 h-9" fill="none">
+                    <rect width="1024" height="1024" rx="240" fill="#000000" />
+                    <path d="M319 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M360 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M400 278v-8a15 15 0 0 1 15-15h5a15 15 0 0 1 15 15v117a15 15 0 0 1-15 15h-5a15 15 0 0 1-15-15V278z" fill="#FFF"/>
+                    <path d="M319 390h101c0 30-20 50-50 50s-51-20-51-50z" fill="#FFF"/>
+                    <path d="M357 470v247a12 12 0 0 0 12 12h1a12 12 0 0 0 12-12V470a12 12 0 0 0-12-12h-1a12 12 0 0 0-12 12z" fill="#FFF"/>
+                    <path d="M567 278v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                    <path d="M618 344v260a17 17 0 0 0 17 17h10a17 17 0 0 0 17-17V344a17 17 0 0 0-17-17h-10a17 17 0 0 0-17 17z" fill="#FFF"/>
+                    <path d="M567 679v-10a10 10 0 0 1 10-10h117a10 10 0 0 1 10 10v45a10 10 0 0 1-10 10H577a10 10 0 0 1-10-10v-35z" fill="#FFF"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- 大標題 -->
+              <h1 class="text-3xl font-black tracking-tight leading-tight">
+                只記數據，<br />
+                <span class="text-neutral-400 font-mono font-normal text-2xl">絕不對你指手畫腳。</span>
+              </h1>
+
+              <!-- 說明段落 -->
+              <p class="text-neutral-600 text-xs leading-relaxed">
+                記錄身體不該帶來壓力。今天吃了多少、練了幾組，軟體只如實告訴你真實數字，絕不批判你吃多吃少。
+              </p>
+
+              <!-- 按鈕組 -->
+              <div class="flex items-center gap-2 pt-1 font-mono text-xs">
+                <span class="bg-black text-white px-4 py-2.5 rounded font-semibold text-xs">探索度量系統 →</span>
+                <span class="bg-neutral-100 border border-neutral-200 text-neutral-500 px-3 py-2.5 rounded text-[11px]">PWA 離線</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="p-3 bg-white text-xs text-neutral-600 border-t border-neutral-200 space-y-1">
+          <div class="font-bold text-neutral-900">構圖：頂部穹頂線條垂落</div>
+          <p>球心置於頂部正中偏右（X: 62%, Y: 8%，半徑 150px），經線自上而下舒展，給人浩瀚星穹與物理天球的宏大隱喻。</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 方案比較總結表 -->
+    <div class="bg-white rounded-xl border border-neutral-300 p-5 space-y-3 font-mono text-xs">
+      <div class="font-bold text-sm text-neutral-900 font-sans">3D 線框球體配置方案對比</div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-neutral-200 text-neutral-500 text-[11px]">
+              <th class="py-2 pr-4">方案</th>
+              <th class="py-2 pr-4">球心定位 (X, Y)</th>
+              <th class="py-2 pr-4">球體半徑</th>
+              <th class="py-2 pr-4">對應截圖還原度</th>
+              <th class="py-2">視覺效果與推薦指數</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100 text-neutral-700">
+            <tr class="bg-emerald-50/50">
+              <td class="py-2.5 pr-4 font-bold text-neutral-900">方案 A：右上角懸浮大球體</td>
+              <td class="py-2.5 pr-4">76%, 22%</td>
+              <td class="py-2.5 pr-4">135px</td>
+              <td class="py-2.5 pr-4 text-emerald-600 font-bold">100% 完美契合</td>
+              <td class="py-2.5 text-emerald-700 font-semibold">★ 首選推薦：既填補空白，又與左側文字形成完美互補</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 pr-4 font-bold text-neutral-900">方案 B：右側獨立球體儀</td>
+              <td class="py-2.5 pr-4">50%, 50%（容器內）</td>
+              <td class="py-2.5 pr-4">36px</td>
+              <td class="py-2.5 pr-4 text-neutral-500">局部微縮</td>
+              <td class="py-2.5">緊湊精簡，適合偏好極度克制留白風格</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 pr-4 font-bold text-neutral-900">方案 C：深邃全景背景球</td>
+              <td class="py-2.5 pr-4">68%, 42%</td>
+              <td class="py-2.5 pr-4">180px</td>
+              <td class="py-2.5 pr-4 text-neutral-500">大尺寸全覆蓋</td>
+              <td class="py-2.5">大氣磅礴，文字下方帶有網格紋理</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 pr-4 font-bold text-neutral-900">方案 D：頂部穹頂線框</td>
+              <td class="py-2.5 pr-4">62%, 8%</td>
+              <td class="py-2.5 pr-4">150px</td>
+              <td class="py-2.5 pr-4 text-neutral-500">上方弧形半球</td>
+              <td class="py-2.5">幾何張力突出，穹頂感強烈</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 純 Canvas 3D 經緯線投影矩陣渲染引擎 (原生 WireframeGlobe 演算法) -->
+  <script>
+    function initGlobe(canvasId, centerXRatio, centerYRatio, radius, opacity = 0.08) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width || canvas.parentElement.clientWidth;
+      const height = rect.height || canvas.parentElement.clientHeight;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      const points = [];
+      const lines = [];
+      const numLat = 12;
+      const numLon = 24;
+
+      for (let i = 0; i <= numLat; i++) {
+        const theta = (i * Math.PI) / numLat;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+        for (let j = 0; j < numLon; j++) {
+          const phi = (j * 2 * Math.PI) / numLon;
+          points.push({
+            x: radius * sinTheta * Math.cos(phi),
+            y: radius * cosTheta,
+            z: radius * sinTheta * Math.sin(phi),
+          });
+        }
+      }
+
+      for (let i = 0; i <= numLat; i++) {
+        for (let j = 0; j < numLon; j++) {
+          const current = i * numLon + j;
+          const nextLon = i * numLon + ((j + 1) % numLon);
+          lines.push([current, nextLon]);
+          if (i < numLat) {
+            const nextLat = (i + 1) * numLon + j;
+            lines.push([current, nextLat]);
+          }
+        }
+      }
+
+      let angleX = 0.25;
+      let angleY = 0;
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        angleY += 0.0035; // 平滑優雅旋轉
+        angleX += 0.0008;
+
+        ctx.strokeStyle = `rgba(0, 0, 0, ${opacity})`;
+        ctx.lineWidth = 1;
+
+        const cosX = Math.cos(angleX);
+        const sinX = Math.sin(angleX);
+        const cosY = Math.cos(angleY);
+        const sinY = Math.sin(angleY);
+
+        const cx = width * centerXRatio;
+        const cy = height * centerYRatio;
+
+        const projected = points.map(p => {
+          const x1 = p.x * cosY - p.z * sinY;
+          const z1 = p.z * cosY + p.x * sinY;
+          const y2 = p.y * cosX - z1 * sinX;
+          const z2 = z1 * cosX + p.y * sinX;
+
+          const fov = 700;
+          const scale = fov / (fov + z2 + 350);
+          return {
+            x: cx + x1 * scale,
+            y: cy + y2 * scale,
+          };
+        });
+
+        ctx.beginPath();
+        for (let i = 0; i < lines.length; i++) {
+          const p1 = projected[lines[i][0]];
+          const p2 = projected[lines[i][1]];
+          if (p1 && p2) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        requestAnimationFrame(render);
+      }
+
+      render();
+    }
+
+    // 啟動 4 個方案的 3D 線框球體渲染
+    window.addEventListener('load', () => {
+      // 方案 A：右上角懸浮大球 (X: 76%, Y: 22%, 半徑 135px, 契合原截圖)
+      initGlobe('globe-canvas-a', 0.76, 0.22, 135, 0.12);
+
+      // 方案 B：右側獨立小球儀 (容器居中, 半徑 36px)
+      initGlobe('globe-canvas-b', 0.50, 0.50, 36, 0.18);
+
+      // 方案 C：全景深邃背景球 (X: 68%, Y: 42%, 半徑 180px)
+      initGlobe('globe-canvas-c', 0.68, 0.42, 180, 0.09);
+
+      // 方案 D：頂部穹頂線框 (X: 62%, Y: 08%, 半徑 150px)
+      initGlobe('globe-canvas-d', 0.62, 0.08, 150, 0.11);
+    });
+  </script>
+
+</body>
+</html>

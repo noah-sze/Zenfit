@@ -54,9 +54,9 @@ export function HeroShowcaseDeck() {
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>食材詳情</span>
           </div>
-          <div className="flex items-center space-x-1.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>0.08ms</span>
+          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="font-medium">已同步</span>
           </div>
         </div>
 
@@ -173,9 +173,9 @@ export function HeroShowcaseDeck() {
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>飲食度量</span>
           </div>
-          <div className="flex items-center space-x-1.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>0.10ms</span>
+          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="font-medium">已同步</span>
           </div>
         </div>
 
@@ -203,9 +203,9 @@ export function HeroShowcaseDeck() {
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>總覽</span>
           </div>
-          <div className="flex items-center space-x-1.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>0.12ms</span>
+          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="font-medium">已同步</span>
           </div>
         </div>
 

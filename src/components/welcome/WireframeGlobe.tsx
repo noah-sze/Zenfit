@@ -15,6 +15,14 @@ export interface WireframeGlobeProps {
   centerYRatio?: number;
   /** 半徑相對於視窗短邊之比例，預設 0.42 */
   radiusRatio?: number;
+  /** 桌面端 (>= 1024px) 半徑相對於視窗短邊之比例，未指定時使用 radiusRatio */
+  desktopRadiusRatio?: number;
+  /** 桌面端 (>= 1024px) 球體中心水平偏移比例 */
+  desktopCenterXRatio?: number;
+  /** 桌面端 (>= 1024px) 球體中心垂直偏移比例 */
+  desktopCenterYRatio?: number;
+  /** 滑鼠移動對旋轉速度之影響係數，預設 0.015 (極微沉著視差) */
+  mouseInfluence?: number;
 }
 
 /**
@@ -26,6 +34,10 @@ export function WireframeGlobe({
   centerXRatio = 0.60,
   centerYRatio = 0.40,
   radiusRatio = 0.42,
+  desktopRadiusRatio,
+  desktopCenterXRatio,
+  desktopCenterYRatio,
+  mouseInfluence = 0.015,
 }: WireframeGlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -46,7 +58,10 @@ export function WireframeGlobe({
     const numLat = 12;
     const numLon = 24;
 
+    let currentRadius = 0;
+
     const buildGeometry = (radius: number) => {
+      currentRadius = radius;
       points.length = 0;
       lines.length = 0;
 
@@ -79,14 +94,18 @@ export function WireframeGlobe({
 
     const handleResize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = window.innerWidth;
-      height = window.innerHeight;
+      const rect = canvas.getBoundingClientRect();
+      const parent = canvas.parentElement;
+      width = rect.width || parent?.clientWidth || window.innerWidth;
+      height = rect.height || parent?.clientHeight || window.innerHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
 
-      const radius = Math.min(width, height) * radiusRatio;
+      const isDesktop = window.innerWidth >= 1024;
+      const effectiveRadiusRatio = isDesktop && desktopRadiusRatio !== undefined ? desktopRadiusRatio : radiusRatio;
+      const radius = Math.min(width, height) * effectiveRadiusRatio;
       buildGeometry(radius);
     };
 
@@ -101,10 +120,13 @@ export function WireframeGlobe({
     let currentMouseY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const cx = width * centerXRatio;
-      const cy = height * centerYRatio;
-      targetMouseX = (e.clientX - cx) * 0.00015;
-      targetMouseY = (e.clientY - cy) * 0.00015;
+      const isDesktop = window.innerWidth >= 1024;
+      const effectiveCenterXRatio = isDesktop && desktopCenterXRatio !== undefined ? desktopCenterXRatio : centerXRatio;
+      const effectiveCenterYRatio = isDesktop && desktopCenterYRatio !== undefined ? desktopCenterYRatio : centerYRatio;
+      const cx = width * effectiveCenterXRatio;
+      const cy = height * effectiveCenterYRatio;
+      targetMouseX = (e.clientX - cx) * 0.00003;
+      targetMouseY = (e.clientY - cy) * 0.00003;
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -120,9 +142,9 @@ export function WireframeGlobe({
       currentMouseX += (targetMouseX - currentMouseX) * 0.05;
       currentMouseY += (targetMouseY - currentMouseY) * 0.05;
 
-      // 極致緩慢寧靜自轉 (降為原先的 1/3，深邃沉著)
-      angleY += 0.00045 + currentMouseX * 0.35;
-      angleX += 0.0002 + currentMouseY * 0.35;
+      // 極致緩慢寧靜自轉 (大幅降低滑鼠速度影響，維持深邃沉著)
+      angleY += 0.00045 + currentMouseX * mouseInfluence;
+      angleX += 0.0002 + currentMouseY * mouseInfluence;
 
       const isDark = document.documentElement.classList.contains('dark');
       ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.085)' : 'rgba(0, 0, 0, 0.075)';
@@ -133,8 +155,12 @@ export function WireframeGlobe({
       const cosY = Math.cos(angleY);
       const sinY = Math.sin(angleY);
 
-      const centerX = width * centerXRatio;
-      const centerY = height * centerYRatio;
+      const isDesktop = window.innerWidth >= 1024;
+      const effectiveCenterXRatio = isDesktop && desktopCenterXRatio !== undefined ? desktopCenterXRatio : centerXRatio;
+      const effectiveCenterYRatio = isDesktop && desktopCenterYRatio !== undefined ? desktopCenterYRatio : centerYRatio;
+
+      const centerX = width * effectiveCenterXRatio;
+      const centerY = height * effectiveCenterYRatio;
 
       const projected = points.map((p) => {
         // 旋轉 Y 軸
@@ -144,9 +170,10 @@ export function WireframeGlobe({
         const y2 = p.y * cosX - z1 * sinX;
         const z2 = z1 * cosX + p.y * sinX;
 
-        // 透視投影
-        const fov = 800;
-        const scale = fov / (fov + z2 + 400);
+        // 透視投影 (自適應球體半徑之自然焦距)
+        const fov = Math.max(800, currentRadius * 1.6);
+        const cameraDist = Math.max(400, currentRadius * 0.9);
+        const scale = fov / (fov + z2 + cameraDist);
         return {
           x: centerX + x1 * scale,
           y: centerY + y2 * scale,
@@ -176,7 +203,15 @@ export function WireframeGlobe({
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [centerXRatio, centerYRatio, radiusRatio]);
+  }, [
+    centerXRatio,
+    centerYRatio,
+    radiusRatio,
+    desktopRadiusRatio,
+    desktopCenterXRatio,
+    desktopCenterYRatio,
+    mouseInfluence,
+  ]);
 
   return (
     <canvas

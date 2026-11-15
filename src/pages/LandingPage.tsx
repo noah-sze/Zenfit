@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sun, Moon, ArrowUpRight } from 'lucide-react';
@@ -23,10 +23,19 @@ import {
 import { ShareShowcaseCards } from '@/components/common/ShareShowcaseCards';
 import { SyncTopologyDiagram } from '@/components/common/SyncTopologyDiagram';
 import { HeroShowcaseDeck } from '@/components/common/HeroShowcaseDeck';
+import { WireframeGlobe } from '@/components/welcome/WireframeGlobe';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = 'Zenfit - 飲食、訓練記錄';
+    return () => {
+      document.title = prevTitle;
+    };
+  }, []);
 
   const demoExerciseOverview = useMemo(
     () =>
@@ -41,8 +50,12 @@ export default function LandingPage() {
   };
 
   const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
     const container = document.getElementById('landing-container');
+    if (id === 'hero' && container) {
+      container.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const el = document.getElementById(id);
     if (el && container) {
       const top = el.offsetTop - 56;
       container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
@@ -65,8 +78,15 @@ export default function LandingPage() {
     <div className="w-full flex items-center h-14 divide-x divide-neutral-200 dark:divide-neutral-800">
 
       {/*  Logo & Identity: Full-bleed Left Cell  */}
-      <a href="#hero" className="h-full px-5 sm:px-8 md:px-12 flex-1 min-w-0 md:flex-initial md:min-w-[240px] flex items-center space-x-3 shrink-0 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors group">
-        <svg viewBox="0 0 1024 1024" className="w-6 h-6 rounded-[23%] shrink-0 select-none overflow-hidden transition-transform group-hover:scale-105 border border-neutral-200 dark:border-neutral-800" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <a
+        href="#hero"
+        onClick={(e) => {
+          e.preventDefault();
+          scrollToSection("hero");
+        }}
+        className="h-full px-5 sm:px-8 md:px-12 flex-1 min-w-0 md:flex-initial md:min-w-[240px] flex items-center space-x-2.5 shrink-0 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors group cursor-pointer"
+      >
+        <svg viewBox="0 0 1024 1024" className="w-7 h-7 rounded-[23%] shrink-0 select-none overflow-hidden transition-transform group-hover:scale-105" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="1024" height="1024" rx="240" fill="#000000" />
           <g transform="translate(187 187)">
             <g transform="translate(132.031 91.406)">
@@ -83,7 +103,7 @@ export default function LandingPage() {
             </g>
           </g>
         </svg>
-        <span className="font-sans text-sm font-semibold tracking-tight text-black dark:text-white">Zenfit</span>
+        <span className="font-sans text-base font-bold tracking-tight text-black dark:text-white leading-none">Zenfit</span>
       </a>
 
       {/*  Navigation Links: Full-width Edge-to-Edge Grid  */}
@@ -133,9 +153,15 @@ export default function LandingPage() {
     <div className="w-full grid grid-cols-1 lg:grid-cols-12 min-h-0 lg:min-h-[calc(100vh-50px)]">
       
       {/*  Left Column: Manifesto & Value Proposition  */}
-      <div className="lg:col-span-5 pt-[150px] pb-8 px-6 sm:p-12 lg:p-16 xl:p-20 border-b-0 lg:border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-center space-y-8 bg-white dark:bg-black transition-colors duration-200">
+      <div className="relative overflow-hidden lg:col-span-5 pt-[150px] pb-8 px-6 sm:p-12 lg:p-16 xl:p-20 border-b-0 lg:border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-center space-y-8 bg-white dark:bg-black transition-colors duration-200">
+        <WireframeGlobe
+          centerXRatio={0.68}
+          centerYRatio={0.42}
+          radiusRatio={1.44}
+          desktopRadiusRatio={1.44}
+        />
         
-        <div className="space-y-6">
+        <div className="relative z-10 space-y-6">
           <div>
             <div className="mb-3 sm:mb-4">
               <svg viewBox="0 0 1024 1024" className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl shrink-0 select-none overflow-hidden shadow-none" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -180,7 +206,7 @@ export default function LandingPage() {
         </div>
 
         {/*  Core Characteristics List (一行兩個排版)  */}
-        <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 dark:text-neutral-400 grid grid-cols-2 gap-x-4 gap-y-2.5">
+        <div className="relative z-10 pt-6 border-t border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 dark:text-neutral-400 grid grid-cols-2 gap-x-4 gap-y-2.5">
           <div className="flex items-center space-x-2.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">100% 本地優先</span>
@@ -303,25 +329,25 @@ export default function LandingPage() {
           {/*  飲食核心數據指標單元格 (3 欄水平並列底座)  */}
           <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-black overflow-hidden shadow-none">
             {/*  指標 1: 內置食材數量  */}
-            <div className="p-3 bg-white dark:bg-black flex flex-col justify-between space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
+            <div className="p-3 bg-white dark:bg-black flex flex-col space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
                 內置食材庫
               </div>
-              <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
-                420+ <span className="text-[11px] font-normal text-neutral-500">項</span>
+              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-black text-black dark:text-white font-mono">
+                420+ <span className="text-[11px] font-normal text-neutral-500 font-sans">項</span>
               </div>
               <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
-                標準原型生重常數，杜絕熟重誤差
+                標準原型生重，杜絕熟重偏差
               </div>
             </div>
 
             {/*  指標 2: 允許自定食譜  */}
-            <div className="p-3 bg-white dark:bg-black flex flex-col justify-between space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
+            <div className="p-3 bg-white dark:bg-black flex flex-col space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
                 複合菜餚
               </div>
-              <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
-                ∞ <span className="text-[11px] font-normal text-neutral-500">自訂</span>
+              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-black text-black dark:text-white font-mono">
+                ∞ <span className="text-[11px] font-normal text-neutral-500 font-sans">自訂</span>
               </div>
               <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
                 自由組合食材，純 ID 引用無漂移
@@ -329,12 +355,12 @@ export default function LandingPage() {
             </div>
 
             {/*  指標 3: 烹調油黑盒歸零  */}
-            <div className="p-3 bg-white dark:bg-black flex flex-col justify-between space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
+            <div className="p-3 bg-white dark:bg-black flex flex-col space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
                 烹調黑盒
               </div>
-              <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
-                0 <span className="text-[11px] font-normal text-neutral-500">隱藏油</span>
+              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-black text-black dark:text-white font-mono">
+                0 <span className="text-[11px] font-normal text-neutral-500 font-sans">隱藏油</span>
               </div>
               <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
                 用油獨立計量，終結熱量盲區
@@ -360,9 +386,9 @@ export default function LandingPage() {
                 <span className="text-neutral-400 dark:text-neutral-600">/</span>
                 <span>飲食度量</span>
               </div>
-              <div className="flex items-center space-x-1.5 text-[10px] text-emerald-600 dark:text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>0.10ms</span>
+              <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span className="font-medium">已同步</span>
               </div>
             </div>
 
@@ -577,9 +603,9 @@ export default function LandingPage() {
         {/*  左欄：01 與 03 (手機端初始顯露卡片組，寬度加寬至 84vw)  */}
         <div className="w-[84vw] max-w-[350px] sm:w-full sm:max-w-none shrink-0 snap-start flex flex-col gap-3 sm:gap-6">
           {/*  Non-goal 1  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
             <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
                 <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
                 <span>01 // 不做內建 AI 評分與行為指令</span>
               </div>
@@ -588,12 +614,35 @@ export default function LandingPage() {
                 我們嚴禁在軟體中指示「你少吃了」、「你吃超標了」或「你退步了」；絕對不設置帶有羞辱感的紅色警報卡片。軟體是冷靜的鏡子，決策權 100% 歸還使用者。
               </p>
             </div>
+
+            {/* 視覺微型 UI 對比 */}
+            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
+              <div className="rounded border border-red-200 dark:border-red-950/50 bg-red-50/50 dark:bg-red-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-red-200 dark:border-red-900/50 flex items-center space-x-1 text-red-600 dark:text-red-400 font-bold text-[10px]">
+                  <span>🤖</span>
+                  <span>傳統 AI 評分</span>
+                </div>
+                <div className="p-2.5 line-through text-neutral-400 text-[10px] leading-tight flex-1 flex items-center">
+                  「⚠️ 嚴重超標！扣 15 分，晚餐少吃碳水」
+                </div>
+              </div>
+
+              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1 text-neutral-900 dark:text-white font-bold text-[10px]">
+                  <span>📊</span>
+                  <span>客觀事實</span>
+                </div>
+                <div className="p-2.5 font-mono text-xs font-bold text-neutral-900 dark:text-white flex-1 flex items-center">
+                  2,150 / 2,200 <span className="text-[9px] font-normal text-neutral-400 ml-1">kcal</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/*  Non-goal 3  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
             <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
                 <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
                 <span>03 // 不做強制打卡與斷簽懲罰</span>
               </div>
@@ -602,15 +651,40 @@ export default function LandingPage() {
                 不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的測量儀。
               </p>
             </div>
+
+            {/* 視覺微型 UI 對比 */}
+            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
+              <div className="rounded border border-amber-200 dark:border-amber-950/50 bg-amber-50/50 dark:bg-amber-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-amber-200 dark:border-amber-900/50 flex items-center space-x-1 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
+                  <span>🔥</span>
+                  <span>連續打卡中斷！</span>
+                </div>
+                <div className="p-2.5 line-through text-neutral-400 text-[10px] leading-tight flex-1 flex items-center">
+                  「已斷簽！看廣告或花費 50 鑽石補簽」
+                </div>
+              </div>
+
+              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-[10px]">
+                  <div className="flex items-center space-x-1">
+                    <span>🟢</span>
+                    <span className="font-bold text-neutral-900 dark:text-white">隨時安靜待命</span>
+                  </div>
+                </div>
+                <div className="p-2.5 font-mono text-xs text-neutral-900 dark:text-white flex-1 flex items-center">
+                  記或不記，都是事實
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/*  右欄：02 與 04 (手機端需向右滑動顯露卡片組，寬度加寬至 84vw)  */}
         <div className="w-[84vw] max-w-[350px] sm:w-full sm:max-w-none shrink-0 snap-start flex flex-col gap-3 sm:gap-6">
           {/*  Non-goal 2  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
             <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
                 <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
                 <span>02 // 不做社交社群與心靈雞湯</span>
               </div>
@@ -619,12 +693,36 @@ export default function LandingPage() {
                 Zenfit 沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。
               </p>
             </div>
+
+            {/* 視覺微型 UI 對比 */}
+            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
+              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/50 text-[11px] overflow-hidden flex flex-col justify-between opacity-60">
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[10px] text-neutral-500 line-through">
+                  <span>🏆 全國排行 #42</span>
+                </div>
+                <div className="p-2.5 line-through text-neutral-400 text-[10px] truncate flex-1 flex items-center">
+                  「打卡第 100 天，越努力越幸運✨」
+                </div>
+              </div>
+
+              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[10px]">
+                  <div className="flex items-center space-x-1">
+                    <span>🔒</span>
+                    <span className="font-bold text-neutral-900 dark:text-white">個人私密空間</span>
+                  </div>
+                </div>
+                <div className="p-2.5 font-mono text-xs text-neutral-900 dark:text-white flex-1 flex items-center">
+                  臥推 e1RM 120 kg
+                </div>
+              </div>
+            </div>
           </div>
 
           {/*  Non-goal 4  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between flex-1">
+          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
             <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs">
+              <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
                 <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
                 <span>04 // 不做模糊的成品菜熱量估算</span>
               </div>
@@ -632,6 +730,30 @@ export default function LandingPage() {
               <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
                 成品菜估算充滿了不可控的烹調油與吸水率偏差。Zenfit 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。
               </p>
+            </div>
+
+            {/* 視覺微型 UI 對比 */}
+            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
+              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/50 text-[11px] overflow-hidden flex flex-col justify-between opacity-60">
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1 text-[10px] text-neutral-500 line-through font-bold">
+                  <span>🍜</span>
+                  <span>牛肉麵 1 碗 = 750 kcal?</span>
+                </div>
+                <div className="p-2.5 line-through text-neutral-400 text-[10px] leading-tight flex-1 flex items-center">
+                  「隱藏用油 30g？吸水率 250%？」
+                </div>
+              </div>
+
+              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1 text-[10px] font-bold text-neutral-900 dark:text-white">
+                  <span>⚖️</span>
+                  <span>原子食材拆解 (生重)</span>
+                </div>
+                <div className="p-2.5 font-mono text-[10px] text-neutral-700 dark:text-neutral-300 space-y-0.5 flex-1 flex flex-col justify-center">
+                  <div>牛腱 150g · 麵 80g</div>
+                  <div className="text-telemetry-accent font-bold">+ 橄欖油 8g (明示)</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -666,11 +788,11 @@ export default function LandingPage() {
         {/*  卡片 1  */}
         <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
           <div>
-            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">01 / 前端架構與響應速度</div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">01 / 極致速度與流暢</div>
             <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
-              <div>• <strong>現代技術棧</strong>：React 19 + TypeScript 嚴格靜態型別，杜絕隱藏運行錯誤。</div>
-              <div>• <strong>毫秒級載入</strong>：純客戶端本地運行，無任何遠端等待，介面瞬時響應。</div>
-              <div>• <strong>行動端深度適配</strong>：專為手機螢幕設計的抗遮擋佈局，徹底杜絕瀏覽器工具列造成的頁面跑版與跳動。</div>
+              <div>• <strong>零等待時間</strong>：代碼與數據皆在本地運行，徹底告別傳統 App 轉圈等待。</div>
+              <div>• <strong>極度穩定防護</strong>：TypeScript 嚴格型別約束，杜絕隱藏閃退與突發錯誤。</div>
+              <div>• <strong>專注手機體驗</strong>：介面深度適配行動端，鍵盤彈出不遮擋、滾動不跳動。</div>
             </div>
           </div>
         </div>
@@ -678,11 +800,11 @@ export default function LandingPage() {
         {/*  卡片 2  */}
         <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
           <div>
-            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">02 / 本地資料庫與資料防線</div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">02 / 永不損毀的數據</div>
             <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
-              <div>• <strong>IndexedDB 本地引擎</strong>：資料直接保存在裝置底層，支援持久化儲存保障。</div>
-              <div>• <strong>平滑版本升級</strong>：資料庫結構升級自動平滑遷移，版本更新永不損毀或丟失歷史數據。</div>
-              <div>• <strong>純 ID 關聯設計</strong>：食材與動作採純 ID 引用，修改一處歷史全域同步，拒絕資料錯亂。</div>
+              <div>• <strong>原生本地儲存</strong>：數據直接留在設備內部，享有專屬防清理保護。</div>
+              <div>• <strong>無感平滑升級</strong>：軟體升級時自動安全遷移，永遠不覆蓋或丟失歷史記錄。</div>
+              <div>• <strong>數據始終一致</strong>：食材與動作採純 ID 引用，改動一處全域同步，拒絕資料錯亂。</div>
             </div>
           </div>
         </div>
@@ -690,11 +812,11 @@ export default function LandingPage() {
         {/*  卡片 3  */}
         <div className="w-[84vw] max-w-[350px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5 sm:p-6 rounded-lg space-y-3 shadow-none flex flex-col justify-between">
           <div>
-            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">03 / 純數學公式與品質守護</div>
+            <div className="text-black dark:text-white font-bold text-sm border-b border-neutral-200 dark:border-neutral-800 pb-2">03 / 純數學與精準驗證</div>
             <div className="text-neutral-600 dark:text-neutral-400 font-sans space-y-1.5 leading-relaxed text-xs mt-3">
-              <div>• <strong>透明純數學公式</strong>：e1RM 極限力量、EMA 體重抗噪平滑、供能比計算均為客觀純函數。</div>
-              <div>• <strong>540+ 項自動化測試</strong>：嚴格覆蓋所有異常邊界，維持單元測試 100% 通過。</div>
-              <div>• <strong>拒絕黑盒評分</strong>：只呈現物理事實與客觀推算，不玩主觀打分與行為干涉。</div>
+              <div>• <strong>透明科學算法</strong>：力量極限、體重去噪趨勢、供能比皆由客觀純數學推算。</div>
+              <div>• <strong>540+ 項測試守護</strong>：覆蓋所有邊界狀況，維持 100% 單元測試通過保證。</div>
+              <div>• <strong>拒絕主觀干涉</strong>：只呈現冷靜物理事實，不對你的自律妄加評分。</div>
             </div>
           </div>
         </div>
@@ -711,7 +833,7 @@ export default function LandingPage() {
     <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-6">
       
       <div className="flex items-center space-x-2.5">
-        <svg viewBox="0 0 1024 1024" className="w-5 h-5 rounded-[23%] shrink-0 select-none overflow-hidden border border-neutral-200 dark:border-neutral-800" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 1024 1024" className="w-5 h-5 rounded-[23%] shrink-0 select-none overflow-hidden" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="1024" height="1024" rx="240" fill="#000000" />
           <g transform="translate(187 187)">
             <g transform="translate(132.031 91.406)">
@@ -729,11 +851,19 @@ export default function LandingPage() {
           </g>
         </svg>
         <span className="text-neutral-900 dark:text-white font-bold font-sans">Zenfit</span>
-        <span>— 客觀事實的度量碑</span>
       </div>
 
       <div className="flex items-center space-x-6 text-[11px]">
-        <a href="#hero" className="hover:text-black dark:hover:text-white transition-colors">回到頂部 ↑</a>
+        <a
+          href="#hero"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection("hero");
+          }}
+          className="hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+        >
+          回到頂部 ↑
+        </a>
         <a onClick={(e) => { e.preventDefault(); scrollToSection("diet"); }} href="#diet" className="hover:text-black dark:hover:text-white transition-colors">飲食</a>
         <a onClick={(e) => { e.preventDefault(); scrollToSection("workout"); }} href="#workout" className="hover:text-black dark:hover:text-white transition-colors">訓練</a>
         <a onClick={(e) => { e.preventDefault(); scrollToSection("body"); }} href="#body" className="hover:text-black dark:hover:text-white transition-colors">體態</a>
