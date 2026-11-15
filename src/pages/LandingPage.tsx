@@ -1,7 +1,8 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sun, Moon, ArrowUpRight } from 'lucide-react';
+import { SetupProfileDialog } from '@/components/welcome/SetupProfileDialog';
 import { DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
 import {
   WorkoutRecoveryDashboard,
@@ -28,6 +29,7 @@ import { WireframeGlobe } from '@/components/welcome/WireframeGlobe';
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -134,7 +136,7 @@ export default function LandingPage() {
 
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => setIsSetupDialogOpen(true)}
           className="relative -my-[1px] h-[calc(100%+2px)] w-28 sm:w-36 flex items-center justify-center space-x-1.5 bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold transition-colors cursor-pointer !border border-black dark:!border-white z-10"
         >
           <span>開啟應用</span>
@@ -876,6 +878,12 @@ export default function LandingPage() {
 
     </div>
   </footer>
+
+  <SetupProfileDialog
+    open={isSetupDialogOpen}
+    onOpenChange={setIsSetupDialogOpen}
+    onComplete={() => navigate('/')}
+  />
 
   {/*  =========================================================================  */}
   {/*  JAVASCRIPT CONTROLLERS (LIGHT / DARK THEME MANAGER)                        */}

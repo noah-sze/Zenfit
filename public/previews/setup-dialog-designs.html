@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenfit - 基本資料 Dialog 儀式感設計提案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            border: 'var(--border)',
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+            hover: 'var(--hover)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --background: #fbfbfb;
+      --foreground: #000000;
+      --card: #ffffff;
+      --border: rgba(0, 0, 0, 0.1);
+      --muted: #f4f4f5;
+      --muted-foreground: #71717a;
+      --hover: rgba(0, 0, 0, 0.035);
+    }
+    .dark {
+      --background: #000000;
+      --foreground: #ffffff;
+      --card: #09090b;
+      --border: rgba(255, 255, 255, 0.12);
+      --muted: #18181b;
+      --muted-foreground: #a1a1aa;
+      --hover: rgba(255, 255, 255, 0.045);
+    }
+    /* Subtle dot grid */
+    .bg-grid-pattern {
+      background-size: 24px 24px;
+      background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+    }
+    /* Corner Crosshairs */
+    .crosshair-corner {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      pointer-events: none;
+    }
+    .crosshair-tl { top: -4px; left: -4px; border-top: 1.5px solid currentColor; border-left: 1.5px solid currentColor; }
+    .crosshair-tr { top: -4px; right: -4px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; }
+    .crosshair-bl { bottom: -4px; left: -4px; border-bottom: 1.5px solid currentColor; border-left: 1.5px solid currentColor; }
+    .crosshair-br { bottom: -4px; right: -4px; border-bottom: 1.5px solid currentColor; border-right: 1.5px solid currentColor; }
+  </style>
+</head>
+<body class="bg-background text-foreground font-sans antialiased min-h-screen transition-colors duration-200">
+
+  <!-- ========================================================================= -->
+  <!-- TOP CONTROL BAR: THEME & VIEW SWITCHER                                    -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-6 h-6 rounded bg-foreground flex items-center justify-center text-background font-mono font-bold text-xs">
+          ZF
+        </div>
+        <div class="font-mono text-xs">
+          <span class="font-bold tracking-tight">ZENFIT</span>
+          <span class="text-muted-foreground ml-1.5">/ 基本資料 Dialog 儀式感設計提案</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 font-mono text-xs">
+        <!-- 視圖切換 -->
+        <div class="hidden sm:flex items-center bg-muted/40 p-0.5 rounded border border-border">
+          <button type="button" onclick="switchView('grid')" id="btn-view-grid" class="px-2.5 py-1 rounded font-medium bg-foreground text-background transition-all">四案對比</button>
+          <button type="button" onclick="switchView('interactive')" id="btn-view-interactive" class="px-2.5 py-1 rounded font-medium text-muted-foreground hover:text-foreground transition-all">全螢幕浮層驗收</button>
+        </div>
+
+        <!-- 主題切換 -->
+        <button
+          type="button"
+          onclick="toggleTheme()"
+          id="theme-btn"
+          class="h-8 px-3 rounded border border-border flex items-center space-x-1.5 hover:bg-hover transition-colors"
+        >
+          <span id="theme-icon">☀️</span>
+          <span id="theme-text">淺色模式</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN CONTENT CONTAINER                                                    -->
+  <!-- ========================================================================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- 導言與設計背景說明 -->
+    <div class="mb-10 max-w-3xl">
+      <div class="inline-flex items-center space-x-2 text-[11px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>RITUAL REDESIGN ARCHITECTURE // V1.0</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tight mb-2">
+        重塑「基本資料」的啟動儀式感
+      </h1>
+      <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+        在 Zenfit「客觀測量儀」哲學下，使用者輸入基本常數不是繁瑣的表單填寫，而是<strong class="text-foreground">「初始化個人精密測量儀（Personal Calibration）」</strong>的莊嚴儀式。<br/>
+        在<strong class="text-foreground">表單內部 6 欄排版（姓名、性別/出生年月、單位偏好、身高/體重、生理常數 BMI/BMR）完全保持不變</strong>的前提下，我們提煉了 4 種獨具工程美學與空間哲學的儀式感設計方案。
+      </p>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- VIEW 1: GRID COMPARISON (四案並列)                                      -->
+    <!-- ======================================================================= -->
+    <div id="view-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+      <!-- ===================================================================== -->
+      <!-- 方案 A：【高維校準終端 · Precision Telemetry Deck】                      -->
+      <!-- ===================================================================== -->
+      <div class="flex flex-col bg-card/60 backdrop-blur-sm border border-border rounded-xl p-5 relative group hover:border-foreground/40 transition-all">
+        <!-- 標籤資訊 -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between font-mono text-[11px] text-muted-foreground mb-1">
+            <span class="font-bold text-foreground">方案 A</span>
+            <span class="text-emerald-500 font-mono">● TELEMETRY</span>
+          </div>
+          <h2 class="text-base font-bold tracking-tight mb-1">高維校準終端</h2>
+          <p class="text-[11px] text-muted-foreground leading-snug">
+            定位十字準心、實時脈衝狀態燈與微型刻度尺，營造實驗室級光譜儀的冷靜基線校準儀式。
+          </p>
+        </div>
+
+        <!-- 預覽容器 (模擬彈窗幾何) -->
+        <div class="flex-1 flex items-center justify-center p-3 bg-muted/15 rounded-lg border border-border/60 relative overflow-hidden">
+          
+          <!-- Modal 本體 A -->
+          <div class="w-[300px] bg-card rounded-lg border border-foreground/30 p-4 font-mono text-xs select-none shadow-none relative">
+            <!-- 四角十字定位準心 (Crosshairs) -->
+            <div class="crosshair-corner crosshair-tl text-foreground/40"></div>
+            <div class="crosshair-corner crosshair-tr text-foreground/40"></div>
+            <div class="crosshair-corner crosshair-bl text-foreground/40"></div>
+            <div class="crosshair-corner crosshair-br text-foreground/40"></div>
+
+            <!-- 頂部遙測狀態列 (Telemetry Status) -->
+            <div class="flex items-center justify-between text-[10px] pb-2 mb-2 border-b border-border/80 text-muted-foreground">
+              <div class="flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                <span class="text-foreground font-semibold">CALIBRATION // 01</span>
+              </div>
+              <div class="tracking-widest opacity-60">||||||||</div>
+            </div>
+
+            <!-- 標頭列 (Variant D 精密標頭) -->
+            <div class="flex items-center justify-between w-full h-7 mb-2">
+              <button class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground">✕</button>
+              <div class="text-center">
+                <div class="text-[10px] text-muted-foreground tracking-widest uppercase">BASELINE MODEL</div>
+                <div class="text-foreground text-xs font-bold -mt-0.5">個人基線校準</div>
+              </div>
+              <button class="size-7 rounded-full flex items-center justify-center bg-foreground text-background font-bold hover:opacity-90">✓</button>
+            </div>
+
+            <!-- 嚴格保持不變的表單內容本體 -->
+            <div class="rounded border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs">
+              <!-- 1. 姓名 -->
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">姓名</span>
+                <span class="font-medium text-foreground">Noah</span>
+              </div>
+              <!-- 2. 性別與出生年月 -->
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">性別</span>
+                  <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                    <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                    <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                  </div>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">出生年月</span>
+                  <span class="text-[11px] font-medium">29 歲 📅</span>
+                </div>
+              </div>
+              <!-- 3. 單位偏好 -->
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">單位偏好</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-2 py-0.5 rounded bg-foreground text-background">公制</span>
+                  <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+                </div>
+              </div>
+              <!-- 4. 身高與體重 -->
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">身高</span>
+                  <span class="font-medium text-[11px]">183 cm</span>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">體重</span>
+                  <span class="font-medium text-[11px]">75 kg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. 獨立區塊：生理常數雙欄 -->
+            <div class="rounded-lg border border-border bg-card overflow-hidden text-xs relative z-10 divide-y divide-border/60 font-mono mt-2.5">
+              <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground bg-muted/20">生理常數</div>
+              <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left bg-muted/10">
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                  <div class="text-xs font-normal text-foreground">22.4</div>
+                </div>
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                  <div class="text-xs font-normal text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 方案 A 專屬底欄：啟動終端按鈕 (帶有高光掠影) -->
+            <button class="w-full mt-2.5 h-8 rounded bg-foreground text-background font-semibold text-xs flex items-center justify-center space-x-1.5 hover:opacity-90 active:scale-[0.99] transition-all">
+              <span>確認校準並啟動測量儀</span>
+              <span class="text-xs">↗</span>
+            </button>
+          </div>
+
+        </div>
+
+        <button onclick="openModal('telemetry')" class="mt-4 w-full py-1.5 rounded border border-border hover:bg-hover text-xs font-mono text-center transition-colors">
+          呼出全螢幕驗收 ↗
+        </button>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- 方案 B：【微縮線框穹頂 · Celestial Wireframe Dome】                     -->
+      <!-- ===================================================================== -->
+      <div class="flex flex-col bg-card/60 backdrop-blur-sm border border-border rounded-xl p-5 relative group hover:border-foreground/40 transition-all">
+        <!-- 標籤資訊 -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between font-mono text-[11px] text-muted-foreground mb-1">
+            <span class="font-bold text-foreground">方案 B</span>
+            <span class="text-sky-500 font-mono">● 3D CELESTIAL</span>
+          </div>
+          <h2 class="text-base font-bold tracking-tight mb-1">微縮線框穹頂</h2>
+          <p class="text-[11px] text-muted-foreground leading-snug">
+            延續落地頁 Hero 震撼的 3D 線框球體哲學，將其精縮為彈窗背景旋轉穹頂，映射個體與世界。
+          </p>
+        </div>
+
+        <!-- 預覽容器 -->
+        <div class="flex-1 flex items-center justify-center p-3 bg-muted/15 rounded-lg border border-border/60 relative overflow-hidden">
+          
+          <!-- Modal 本體 B -->
+          <div class="w-[360px] sm:w-[380px] max-w-[calc(100vw-24px)] bg-card/95 backdrop-blur-md rounded-xl border border-border p-6 font-mono text-xs select-none shadow-none relative overflow-hidden">
+            
+            <!-- 背景微縮動態線框球體 (SVG 幾何投影，放大至 3x，1px 精準細線) -->
+            <div class="absolute -top-[240px] -right-[240px] w-[600px] h-[600px] pointer-events-none opacity-[0.14] dark:opacity-[0.22] text-foreground">
+              <svg viewBox="0 0 100 100" class="w-full h-full animate-[spin_90s_linear_infinite]" fill="none" stroke="currentColor">
+                <circle cx="50" cy="50" r="48" vector-effect="non-scaling-stroke" stroke-width="1" />
+                <ellipse cx="50" cy="50" rx="48" ry="18" vector-effect="non-scaling-stroke" stroke-width="1" />
+                <ellipse cx="50" cy="50" rx="48" ry="34" vector-effect="non-scaling-stroke" stroke-width="1" />
+                <ellipse cx="50" cy="50" rx="18" ry="48" vector-effect="non-scaling-stroke" stroke-width="1" />
+                <ellipse cx="50" cy="50" rx="34" ry="48" vector-effect="non-scaling-stroke" stroke-width="1" />
+                <line x1="50" y1="2" x2="50" y2="98" vector-effect="non-scaling-stroke" stroke-width="1" />
+                <line x1="2" y1="50" x2="98" y2="50" vector-effect="non-scaling-stroke" stroke-width="1" />
+              </svg>
+            </div>
+
+            <!-- 標頭區塊：Logo 置頂、大尺寸歡迎標題與右側關閉按鈕 -->
+            <div class="flex items-start justify-between w-full relative z-10 shrink-0 mb-3">
+              <div class="space-y-2 select-none pr-2">
+                <div class="w-9 h-9 rounded-lg bg-foreground flex items-center justify-center text-background text-xs font-bold shadow-none">ZF</div>
+                <div class="space-y-1">
+                  <h3 class="text-foreground text-lg sm:text-xl font-bold tracking-tight leading-tight">歡迎使用 Zenfit，</h3>
+                  <p class="text-sm text-muted-foreground leading-normal font-sans">
+                    開始之前請輸入個人基本信息。
+                  </p>
+                </div>
+              </div>
+              <button class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground -mr-0.5 -mt-0.5">✕</button>
+            </div>
+
+            <!-- 嚴格保持不變的表單內容本體 -->
+            <div class="rounded-lg border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs relative z-10">
+              <!-- 1. 姓名 -->
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">姓名</span>
+                <span class="font-medium text-foreground">Noah</span>
+              </div>
+              <!-- 2. 性別與出生年月 -->
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">性別</span>
+                  <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                    <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                    <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                  </div>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">出生年月</span>
+                  <span class="text-[11px] font-medium">29 歲 📅</span>
+                </div>
+              </div>
+              <!-- 3. 單位偏好 -->
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">單位偏好</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-2 py-0.5 rounded bg-foreground text-background">公制</span>
+                  <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+                </div>
+              </div>
+              <!-- 4. 身高與體重 -->
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">身高</span>
+                  <span class="font-medium text-[11px]">183 cm</span>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">體重</span>
+                  <span class="font-medium text-[11px]">75 kg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. 獨立區塊：生理常數雙欄 -->
+            <div class="rounded-lg border border-border bg-card overflow-hidden text-xs relative z-10 divide-y divide-border/60 font-mono mt-2.5">
+              <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground bg-muted/20">生理常數</div>
+              <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left bg-muted/10">
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                  <div class="text-xs font-normal text-foreground">22.4</div>
+                </div>
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                  <div class="text-xs font-normal text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 進入 Zenfit 按鈕 (高度加高至 h-11 44px) -->
+            <button class="w-full mt-2.5 h-11 shrink-0 rounded-md bg-foreground text-background font-mono text-xs sm:text-sm font-semibold flex items-center justify-center space-x-1.5 hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer shadow-none">
+              <span>進入 Zenfit</span>
+            </button>
+
+            <!-- 底欄輔助小字 -->
+            <div class="mt-2.5 text-center text-[10px] text-muted-foreground">
+              LOCAL-FIRST &middot; 100% PRIVATE
+            </div>
+          </div>
+
+        </div>
+
+        <button onclick="openModal('celestial')" class="mt-4 w-full py-1.5 rounded border border-border hover:bg-hover text-xs font-mono text-center transition-colors">
+          呼出全螢幕驗收 ↗
+        </button>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- 方案 C：【空間景深透鏡 · Spatial Prism Lens】                           -->
+      <!-- ===================================================================== -->
+      <div class="flex flex-col bg-card/60 backdrop-blur-sm border border-border rounded-xl p-5 relative group hover:border-foreground/40 transition-all">
+        <!-- 標籤資訊 -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between font-mono text-[11px] text-muted-foreground mb-1">
+            <span class="font-bold text-foreground">方案 C</span>
+            <span class="text-amber-500 font-mono">● SPATIAL PRISM</span>
+          </div>
+          <h2 class="text-base font-bold tracking-tight mb-1">空間景深透鏡</h2>
+          <p class="text-[11px] text-muted-foreground leading-snug">
+            傳承 Step 4 備受好評的 Prism 空間景深幾何，背部微傾斜透鏡卡片突顯浮空儀表的高維科技感。
+          </p>
+        </div>
+
+        <!-- 預覽容器 -->
+        <div class="flex-1 flex items-center justify-center p-3 bg-muted/15 rounded-lg border border-border/60 relative overflow-hidden">
+          
+          <!-- Modal 本體 C：雙層空間透鏡 -->
+          <div class="relative w-[300px]">
+            <!-- 後置景深卡片 (向左傾斜 -2.5 度，左上圓鈕與標籤浮現) -->
+            <div class="absolute inset-x-1 -top-2.5 bottom-2.5 rounded-xl pointer-events-none -rotate-2 -translate-y-1.5 border border-foreground/15 bg-foreground/[0.03] backdrop-blur-md flex flex-col justify-between p-2.5 transition-transform duration-500">
+              <div class="flex items-center justify-between">
+                <div class="w-3.5 h-3.5 rounded-full border border-foreground/25"></div>
+                <div class="font-mono text-[8px] text-muted-foreground tracking-widest">
+                  PRISM // CALIBRATION
+                </div>
+              </div>
+              <div class="w-6 h-0.5 rounded-full bg-foreground/20"></div>
+            </div>
+
+            <!-- 前方主卡片 -->
+            <div class="relative bg-card/95 backdrop-blur-2xl rounded-xl border border-border p-4 font-mono text-xs select-none shadow-none">
+              
+              <!-- 標頭列 (Variant D 精密標頭) -->
+              <div class="flex items-center justify-between w-full h-7 mb-2">
+                <button class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground">✕</button>
+                <div class="flex items-center space-x-1">
+                  <span class="text-foreground text-xs font-bold">基本資料</span>
+                  <span class="text-[10px] text-muted-foreground">#ZF-902</span>
+                </div>
+                <button class="size-7 rounded-full flex items-center justify-center bg-foreground text-background font-bold hover:opacity-90">✓</button>
+              </div>
+
+              <!-- 嚴格保持不變的表單內容本體 -->
+              <div class="rounded-lg border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs">
+                <!-- 1. 姓名 -->
+                <div class="h-9 px-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">姓名</span>
+                  <span class="font-medium text-foreground">Noah</span>
+                </div>
+                <!-- 2. 性別與出生年月 -->
+                <div class="grid grid-cols-2 divide-x divide-border">
+                  <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                    <span class="text-[11px] text-muted-foreground">性別</span>
+                    <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                      <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                      <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                    </div>
+                  </div>
+                  <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                    <span class="text-[11px] text-muted-foreground">出生年月</span>
+                    <span class="text-[11px] font-medium">29 歲 📅</span>
+                  </div>
+                </div>
+                <!-- 3. 單位偏好 -->
+                <div class="h-9 px-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">單位偏好</span>
+                  <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                    <span class="px-2 py-0.5 rounded bg-foreground text-background font-bold">公制</span>
+                    <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+                  </div>
+                </div>
+                <!-- 4. 身高與體重 -->
+                <div class="grid grid-cols-2 divide-x divide-border">
+                  <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                    <span class="text-[11px] text-muted-foreground">身高</span>
+                    <span class="font-medium text-[11px]">183 cm</span>
+                  </div>
+                  <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                    <span class="text-[11px] text-muted-foreground">體重</span>
+                    <span class="font-medium text-[11px]">75 kg</span>
+                  </div>
+                </div>
+                <!-- 5. 生理常數雙欄 -->
+                <div class="bg-muted/15 font-mono">
+                  <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground border-b border-border/60">生理常數</div>
+                  <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left">
+                    <div class="pl-2 space-y-0.5">
+                      <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                      <div class="text-xs font-bold text-foreground">22.4</div>
+                    </div>
+                    <div class="pl-2 space-y-0.5">
+                      <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                      <div class="text-xs font-bold text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 微型狀態指示 -->
+              <div class="mt-2.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>MODEL: ACCURATE</span>
+                <span>STATUS: READY</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <button onclick="openModal('prism')" class="mt-4 w-full py-1.5 rounded border border-border hover:bg-hover text-xs font-mono text-center transition-colors">
+          呼出全螢幕驗收 ↗
+        </button>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- 方案 D：【冷鍛極簡銘牌 · Monolith Signature Seal】                       -->
+      <!-- ===================================================================== -->
+      <div class="flex flex-col bg-card/60 backdrop-blur-sm border border-border rounded-xl p-5 relative group hover:border-foreground/40 transition-all">
+        <!-- 標籤資訊 -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between font-mono text-[11px] text-muted-foreground mb-1">
+            <span class="font-bold text-foreground">方案 D</span>
+            <span class="text-purple-500 font-mono">● MONOLITH</span>
+          </div>
+          <h2 class="text-base font-bold tracking-tight mb-1">冷鍛極簡銘牌</h2>
+          <p class="text-[11px] text-muted-foreground leading-snug">
+            純粹金屬工藝感、工業倒角線與自律契約銘刻，如同為個人量化鍛造專屬身份銘牌。
+          </p>
+        </div>
+
+        <!-- 預覽容器 -->
+        <div class="flex-1 flex items-center justify-center p-3 bg-muted/15 rounded-lg border border-border/60 relative overflow-hidden">
+          
+          <!-- Modal 本體 D -->
+          <div class="w-[300px] bg-card rounded-lg border-2 border-foreground/80 p-4 font-mono text-xs select-none shadow-none relative">
+            
+            <!-- 銘牌頂部釘扣與專屬規格標籤 -->
+            <div class="flex items-center justify-between text-[10px] text-muted-foreground pb-2 mb-2 border-b border-border">
+              <span class="inline-flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-sm bg-foreground"></span>
+                <span class="font-bold text-foreground tracking-wider">ZENFIT // SPEC</span>
+              </span>
+              <span>VER: 1.0.0</span>
+            </div>
+
+            <!-- 標頭列 -->
+            <div class="flex items-center justify-between w-full h-7 mb-2">
+              <button class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground">✕</button>
+              <div class="text-center font-bold text-xs text-foreground tracking-tight">
+                客觀生理常數銘牌
+              </div>
+              <button class="size-7 rounded-full flex items-center justify-center bg-foreground text-background font-bold hover:opacity-90">✓</button>
+            </div>
+
+            <!-- 嚴格保持不變的表單內容本體 -->
+            <div class="rounded border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs">
+              <!-- 1. 姓名 -->
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">姓名</span>
+                <span class="font-medium text-foreground">Noah</span>
+              </div>
+              <!-- 2. 性別與出生年月 -->
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">性別</span>
+                  <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                    <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                    <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                  </div>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">出生年月</span>
+                  <span class="text-[11px] font-medium">29 歲 📅</span>
+                </div>
+              </div>
+              <!-- 3. 單位偏好 -->
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">單位偏好</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-2 py-0.5 rounded bg-foreground text-background">公制</span>
+                  <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+                </div>
+              </div>
+              <!-- 4. 身高與體重 -->
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">身高</span>
+                  <span class="font-medium text-[11px]">183 cm</span>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">體重</span>
+                  <span class="font-medium text-[11px]">75 kg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. 獨立區塊：生理常數雙欄 -->
+            <div class="rounded-lg border border-border bg-card overflow-hidden text-xs relative z-10 divide-y divide-border/60 font-mono mt-2.5">
+              <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground bg-muted/20">生理常數</div>
+              <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left bg-muted/10">
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                  <div class="text-xs font-normal text-foreground">22.4</div>
+                </div>
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                  <div class="text-xs font-normal text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部自律宣言 -->
+            <div class="mt-2.5 pt-2 border-t border-border/80 flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>ZERO NOISE · HIGH SIGNAL</span>
+              <span class="font-bold text-foreground">INITIALIZE</span>
+            </div>
+          </div>
+
+        </div>
+
+        <button onclick="openModal('monolith')" class="mt-4 w-full py-1.5 rounded border border-border hover:bg-hover text-xs font-mono text-center transition-colors">
+          呼出全螢幕驗收 ↗
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 方案詳細對比分析表 -->
+    <div class="mt-14 border border-border rounded-xl overflow-hidden bg-card/60 backdrop-blur-sm">
+      <div class="px-5 py-4 border-b border-border font-mono text-xs flex items-center justify-between">
+        <span class="font-bold text-foreground">四種儀式感架構深度對比 (ARCHITECTURAL COMPARISON)</span>
+        <span class="text-muted-foreground">TABLE // 01</span>
+      </div>
+      <div class="overflow-x-auto font-mono text-xs">
+        <table class="w-full text-left divide-y divide-border">
+          <thead class="bg-muted/30 text-muted-foreground text-[11px]">
+            <tr>
+              <th class="px-4 py-3">設計維度</th>
+              <th class="px-4 py-3 text-foreground font-semibold">方案 A：高維校準終端</th>
+              <th class="px-4 py-3 text-foreground font-semibold">方案 B：微縮線框穹頂</th>
+              <th class="px-4 py-3 text-foreground font-semibold">方案 C：空間景深透鏡</th>
+              <th class="px-4 py-3 text-foreground font-semibold">方案 D：冷鍛極簡銘牌</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border text-muted-foreground">
+            <tr>
+              <td class="px-4 py-3 font-semibold text-foreground">儀式感來源</td>
+              <td class="px-4 py-3">實驗室光譜儀基線校準流程</td>
+              <td class="px-4 py-3">Hero 3D 空間球體的宇宙微縮</td>
+              <td class="px-4 py-3">空間計算多層浮空卡片景深</td>
+              <td class="px-4 py-3">冷鍛銘牌金屬工藝自律契約</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-foreground">視覺焦點特徵</td>
+              <td class="px-4 py-3">四角十字準心 + 遙測代碼 + 啟動鍵</td>
+              <td class="px-4 py-3">右上背景 3D 線框球體持續旋轉</td>
+              <td class="px-4 py-3">後置傾斜 -2.5° 透鏡半透明卡片</td>
+              <td class="px-4 py-3">加粗外框 + 規格圖章 + 底部標籤</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-foreground">品牌哲學契合度</td>
+              <td class="px-4 py-3">極高（精確、科研、客觀、高訊號）</td>
+              <td class="px-4 py-3">極高（延續落地頁視覺統一體系）</td>
+              <td class="px-4 py-3">極高（傳承 Welcome 空間景深）</td>
+              <td class="px-4 py-3">高（極度硬核、工藝感強烈）</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-foreground">代碼與效能影響</td>
+              <td class="px-4 py-3">零開銷（純 CSS 幾何定位）</td>
+              <td class="px-4 py-3">極低（純 SVG 輕量旋轉動畫）</td>
+              <td class="px-4 py-3">零開銷（純 CSS Transform）</td>
+              <td class="px-4 py-3">零開銷（純 CSS Border）</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-foreground">推薦適用場景</td>
+              <td class="px-4 py-3 text-foreground font-bold">★ 追求高專業度與極限儀式感首選</td>
+              <td class="px-4 py-3 text-foreground font-bold">★ 追求與落地頁視覺連貫感首選</td>
+              <td class="px-4 py-3">喜愛立體空間懸浮質感的用戶</td>
+              <td class="px-4 py-3">喜愛極簡冷鍛工業產品的用戶</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- FULLSCREEN INTERACTIVE MODAL OVERLAY (模擬真實環境)                      -->
+  <!-- ========================================================================= -->
+  <div id="modal-container" class="fixed inset-0 z-50 hidden">
+    <!-- 毛玻璃遮罩 (Backdrop) -->
+    <div onclick="closeModal()" class="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-[3px] transition-opacity"></div>
+    
+    <!-- 彈窗居中槽位 -->
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div id="modal-content" class="pointer-events-auto">
+        <!-- 動態注入各方案彈窗 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT CONTROLLERS                                                    -->
+  <!-- ========================================================================= -->
+  <script>
+    let isDark = true;
+
+    function toggleTheme() {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('theme-icon').textContent = '☀️';
+        document.getElementById('theme-text').textContent = '淺色模式';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('theme-icon').textContent = '🌙';
+        document.getElementById('theme-text').textContent = '深色模式';
+      }
+    }
+
+    function switchView(view) {
+      const gridBtn = document.getElementById('btn-view-grid');
+      const interBtn = document.getElementById('btn-view-interactive');
+      if (view === 'grid') {
+        gridBtn.className = 'px-2.5 py-1 rounded font-medium bg-foreground text-background transition-all';
+        interBtn.className = 'px-2.5 py-1 rounded font-medium text-muted-foreground hover:text-foreground transition-all';
+        closeModal();
+      } else {
+        interBtn.className = 'px-2.5 py-1 rounded font-medium bg-foreground text-background transition-all';
+        gridBtn.className = 'px-2.5 py-1 rounded font-medium text-muted-foreground hover:text-foreground transition-all';
+        openModal('telemetry');
+      }
+    }
+
+    // 各方案完整彈窗樣板
+    const templates = {
+      telemetry: `
+        <div class="w-[300px] max-w-[calc(100vw-24px)] bg-card rounded-lg border border-foreground/35 p-4 font-mono text-xs select-none shadow-none relative">
+          <!-- 四角十字定位準心 -->
+          <div class="crosshair-corner crosshair-tl text-foreground/50"></div>
+          <div class="crosshair-corner crosshair-tr text-foreground/50"></div>
+          <div class="crosshair-corner crosshair-bl text-foreground/50"></div>
+          <div class="crosshair-corner crosshair-br text-foreground/50"></div>
+
+          <!-- 頂部遙測狀態列 -->
+          <div class="flex items-center justify-between text-[10px] pb-2 mb-2.5 border-b border-border text-muted-foreground">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span class="text-foreground font-semibold">CALIBRATION // 01</span>
+            </div>
+            <div class="tracking-widest opacity-60">||||||||</div>
+          </div>
+
+          <!-- 標頭列 (Variant D 精密標頭) -->
+          <div class="flex items-center justify-between w-full h-7 mb-2.5">
+            <button onclick="closeModal()" class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer">✕</button>
+            <div class="text-center">
+              <div class="text-[9px] text-muted-foreground tracking-widest uppercase">BASELINE MODEL</div>
+              <div class="text-foreground text-xs font-bold -mt-0.5">個人基線校準</div>
+            </div>
+            <button onclick="alert('校準成功，進入主畫面！'); closeModal();" class="size-7 rounded-full flex items-center justify-center bg-foreground text-background font-bold hover:opacity-90 transition-all cursor-pointer">✓</button>
+          </div>
+
+          <!-- 嚴格保持不變的表單內容本體 -->
+          <div class="rounded border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs">
+            <label class="h-9 px-3 flex items-center justify-between hover:bg-hover transition-colors cursor-text">
+              <span class="text-[11px] text-muted-foreground">姓名</span>
+              <input type="text" value="Noah" class="text-right text-[11px] bg-transparent border-none outline-none font-mono font-medium p-0" />
+            </label>
+            <div class="grid grid-cols-2 divide-x divide-border">
+              <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">性別</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                  <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                </div>
+              </div>
+              <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">出生年月</span>
+                <span class="text-[11px] font-medium">29 歲 📅</span>
+              </div>
+            </div>
+            <div class="h-9 px-3 flex items-center justify-between">
+              <span class="text-[11px] text-muted-foreground">單位偏好</span>
+              <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                <span class="px-2 py-0.5 rounded bg-foreground text-background font-bold">公制</span>
+                <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 divide-x divide-border">
+              <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">身高</span>
+                <span class="font-medium text-[11px]">183 cm</span>
+              </div>
+              <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">體重</span>
+                <span class="font-medium text-[11px]">75 kg</span>
+              </div>
+            </div>
+            <div class="bg-muted/15 font-mono">
+              <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground border-b border-border/60">生理常數</div>
+              <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left">
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                  <div class="text-xs font-bold text-foreground">22.4</div>
+                </div>
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                  <div class="text-xs font-bold text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="alert('校準成功，進入主畫面！'); closeModal();" class="w-full mt-3 h-8 rounded bg-foreground text-background font-semibold text-xs flex items-center justify-center space-x-1.5 hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer">
+            <span>確認校準並啟動測量儀</span>
+            <span class="text-xs">↗</span>
+          </button>
+        </div>
+      `,
+      celestial: `
+        <div class="w-[360px] sm:w-[380px] max-w-[calc(100vw-24px)] bg-card/95 backdrop-blur-md rounded-xl border border-border p-6 font-mono text-xs select-none shadow-none relative overflow-hidden">
+          <!-- 背景微縮動態線框球體 (放大至 3x，1px 精準細線) -->
+          <div class="absolute -top-[240px] -right-[240px] w-[600px] h-[600px] pointer-events-none opacity-[0.14] dark:opacity-[0.22] text-foreground">
+            <svg viewBox="0 0 100 100" class="w-full h-full animate-[spin_90s_linear_infinite]" fill="none" stroke="currentColor">
+              <circle cx="50" cy="50" r="48" vector-effect="non-scaling-stroke" stroke-width="1" />
+              <ellipse cx="50" cy="50" rx="48" ry="18" vector-effect="non-scaling-stroke" stroke-width="1" />
+              <ellipse cx="50" cy="50" rx="48" ry="34" vector-effect="non-scaling-stroke" stroke-width="1" />
+              <ellipse cx="50" cy="50" rx="18" ry="48" vector-effect="non-scaling-stroke" stroke-width="1" />
+              <ellipse cx="50" cy="50" rx="34" ry="48" vector-effect="non-scaling-stroke" stroke-width="1" />
+              <line x1="50" y1="2" x2="50" y2="98" vector-effect="non-scaling-stroke" stroke-width="1" />
+              <line x1="2" y1="50" x2="98" y2="50" vector-effect="non-scaling-stroke" stroke-width="1" />
+            </svg>
+          </div>
+
+          <!-- 標頭區塊：Logo 置頂、大尺寸歡迎標題與右側關閉按鈕 -->
+          <div class="flex items-start justify-between w-full relative z-10 shrink-0 mb-3">
+            <div class="space-y-2 select-none pr-2">
+              <div class="w-9 h-9 rounded-lg bg-foreground flex items-center justify-center text-background text-xs font-bold shadow-none">ZF</div>
+              <div class="space-y-1">
+                <h3 class="text-foreground text-lg sm:text-xl font-bold tracking-tight leading-tight">歡迎使用 Zenfit，</h3>
+                <p class="text-sm text-muted-foreground leading-normal font-sans">
+                  開始之前請輸入個人基本信息。
+                </p>
+              </div>
+            </div>
+            <button onclick="closeModal()" class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground cursor-pointer -mr-0.5 -mt-0.5">✕</button>
+          </div>
+
+          <!-- 表單內容本體 -->
+          <div class="rounded-lg border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs relative z-10">
+            <div class="h-9 px-3 flex items-center justify-between">
+              <span class="text-[11px] text-muted-foreground">姓名</span>
+              <span class="font-medium text-foreground">Noah</span>
+            </div>
+            <div class="grid grid-cols-2 divide-x divide-border">
+              <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">性別</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                  <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                </div>
+              </div>
+              <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">出生年月</span>
+                <span class="text-[11px] font-medium">29 歲 📅</span>
+              </div>
+            </div>
+            <div class="h-9 px-3 flex items-center justify-between">
+              <span class="text-[11px] text-muted-foreground">單位偏好</span>
+              <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                <span class="px-2 py-0.5 rounded bg-foreground text-background font-bold">公制</span>
+                <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 divide-x divide-border">
+              <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">身高</span>
+                <span class="font-medium text-[11px]">183 cm</span>
+              </div>
+              <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">體重</span>
+                <span class="font-medium text-[11px]">75 kg</span>
+              </div>
+            </div>
+            <div class="bg-muted/15 font-mono">
+              <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground border-b border-border/60">生理常數</div>
+              <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left">
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                  <div class="text-xs font-bold text-foreground">22.4</div>
+                </div>
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                  <div class="text-xs font-bold text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 進入 Zenfit 按鈕 (高度加高至 h-11 44px) -->
+          <button onclick="alert('歡迎進入 Zenfit！'); closeModal();" class="w-full mt-3 h-11 shrink-0 rounded-md bg-foreground text-background font-mono text-xs sm:text-sm font-semibold flex items-center justify-center space-x-1.5 hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer shadow-none">
+            <span>進入 Zenfit</span>
+          </button>
+
+          <div class="mt-3 text-center text-[10px] text-muted-foreground">
+            LOCAL-FIRST &middot; 100% PRIVATE
+          </div>
+        </div>
+      `,
+      prism: `
+        <div class="relative w-[300px] max-w-[calc(100vw-24px)]">
+          <!-- 後置景深卡片 -->
+          <div class="absolute inset-x-1 -top-2.5 bottom-2.5 rounded-xl pointer-events-none -rotate-2 -translate-y-1.5 border border-foreground/15 bg-foreground/[0.04] backdrop-blur-md flex flex-col justify-between p-2.5">
+            <div class="flex items-center justify-between">
+              <div class="w-3.5 h-3.5 rounded-full border border-foreground/30"></div>
+              <div class="font-mono text-[8px] text-muted-foreground tracking-widest">PRISM // CALIBRATION</div>
+            </div>
+            <div class="w-6 h-0.5 rounded-full bg-foreground/20"></div>
+          </div>
+
+          <div class="relative bg-card/95 backdrop-blur-2xl rounded-xl border border-border p-4 font-mono text-xs select-none shadow-none">
+            <div class="flex items-center justify-between w-full h-7 mb-2.5">
+              <button onclick="closeModal()" class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground cursor-pointer">✕</button>
+              <div class="flex items-center space-x-1">
+                <span class="text-foreground text-xs font-bold">基本資料</span>
+                <span class="text-[10px] text-muted-foreground">#ZF-902</span>
+              </div>
+              <button onclick="alert('校準成功，進入主畫面！'); closeModal();" class="size-7 rounded-full flex items-center justify-center bg-foreground text-background font-bold hover:opacity-90 cursor-pointer">✓</button>
+            </div>
+
+            <!-- 表單內容本體 -->
+            <div class="rounded-lg border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs">
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">姓名</span>
+                <span class="font-medium text-foreground">Noah</span>
+              </div>
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">性別</span>
+                  <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                    <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                    <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                  </div>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">出生年月</span>
+                  <span class="text-[11px] font-medium">29 歲 📅</span>
+                </div>
+              </div>
+              <div class="h-9 px-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">單位偏好</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-2 py-0.5 rounded bg-foreground text-background">公制</span>
+                  <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 divide-x divide-border">
+                <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">身高</span>
+                  <span class="font-medium text-[11px]">183 cm</span>
+                </div>
+                <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                  <span class="text-[11px] text-muted-foreground">體重</span>
+                  <span class="font-medium text-[11px]">75 kg</span>
+                </div>
+              </div>
+              <div class="bg-muted/15 font-mono">
+                <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground border-b border-border/60">生理常數</div>
+                <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left">
+                  <div class="pl-2 space-y-0.5">
+                    <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                    <div class="text-xs font-bold text-foreground">22.4</div>
+                  </div>
+                  <div class="pl-2 space-y-0.5">
+                    <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                    <div class="text-xs font-bold text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>MODEL: ACCURATE</span>
+              <span>STATUS: READY</span>
+            </div>
+          </div>
+        </div>
+      `,
+      monolith: `
+        <div class="w-[300px] max-w-[calc(100vw-24px)] bg-card rounded-lg border-2 border-foreground/80 p-4 font-mono text-xs select-none shadow-none relative">
+          <div class="flex items-center justify-between text-[10px] text-muted-foreground pb-2 mb-2 border-b border-border">
+            <span class="inline-flex items-center space-x-1">
+              <span class="w-1.5 h-1.5 rounded-sm bg-foreground"></span>
+              <span class="font-bold text-foreground tracking-wider">ZENFIT // SPEC</span>
+            </span>
+            <span>VER: 1.0.0</span>
+          </div>
+
+          <div class="flex items-center justify-between w-full h-7 mb-2.5">
+            <button onclick="closeModal()" class="size-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground cursor-pointer">✕</button>
+            <div class="text-center font-bold text-xs text-foreground tracking-tight">
+              客觀生理常數銘牌
+            </div>
+            <button onclick="alert('校準成功，進入主畫面！'); closeModal();" class="size-7 rounded-full flex items-center justify-center bg-foreground text-background font-bold hover:opacity-90 cursor-pointer">✓</button>
+          </div>
+
+          <!-- 表單內容本體 -->
+          <div class="rounded border border-border divide-y divide-border bg-card text-foreground overflow-hidden text-xs">
+            <div class="h-9 px-3 flex items-center justify-between">
+              <span class="text-[11px] text-muted-foreground">姓名</span>
+              <span class="font-medium text-foreground">Noah</span>
+            </div>
+            <div class="grid grid-cols-2 divide-x divide-border">
+              <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">性別</span>
+                <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                  <span class="px-1.5 py-0.5 rounded bg-foreground text-background font-bold">男</span>
+                  <span class="px-1.5 py-0.5 text-muted-foreground">女</span>
+                </div>
+              </div>
+              <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">出生年月</span>
+                <span class="text-[11px] font-medium">29 歲 📅</span>
+              </div>
+            </div>
+            <div class="h-9 px-3 flex items-center justify-between">
+              <span class="text-[11px] text-muted-foreground">單位偏好</span>
+              <div class="flex gap-0.5 p-0.5 rounded bg-muted/40 border border-border text-[10px]">
+                <span class="px-2 py-0.5 rounded bg-foreground text-background font-bold">公制</span>
+                <span class="px-2 py-0.5 text-muted-foreground">英制</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 divide-x divide-border">
+              <div class="h-9 pl-3 pr-2 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">身高</span>
+                <span class="font-medium text-[11px]">183 cm</span>
+              </div>
+              <div class="h-9 pl-2 pr-3 flex items-center justify-between">
+                <span class="text-[11px] text-muted-foreground">體重</span>
+                <span class="font-medium text-[11px]">75 kg</span>
+              </div>
+            </div>
+            <div class="bg-muted/15 font-mono">
+              <div class="px-3 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground border-b border-border/60">生理常數</div>
+              <div class="grid grid-cols-2 divide-x divide-border p-1.5 text-left">
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">身體質量 (BMI)</div>
+                  <div class="text-xs font-bold text-foreground">22.4</div>
+                </div>
+                <div class="pl-2 space-y-0.5">
+                  <div class="text-[9px] text-muted-foreground">基礎代謝 (BMR)</div>
+                  <div class="text-xs font-bold text-foreground">1,720 <span class="text-[9px] font-normal text-muted-foreground">kcal</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>ZERO NOISE · HIGH SIGNAL</span>
+            <span class="font-bold text-foreground">INITIALIZE</span>
+          </div>
+        </div>
+      `
+    };
+
+    function openModal(schemeKey) {
+      const container = document.getElementById('modal-container');
+      const content = document.getElementById('modal-content');
+      content.innerHTML = templates[schemeKey] || templates.telemetry;
+      container.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      const container = document.getElementById('modal-container');
+      container.classList.add('hidden');
+    }
+
+    // ESC 快捷鍵關閉
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>
