@@ -16,151 +16,158 @@ import {
 } from '@/services/aiDataExportImage';
 
 /**
- * 男性 180cm 69kg 深度用戶全天數據分享載荷（單一真理源）
+ * 男性 180cm 69kg 深度用戶全天數據分享載荷（工廠函式，完整支援多語系 i18n）
  */
-export const DEMO_DAILY_EXPORT_PAYLOAD: DailyExportPayload = {
-  date: '2026-11-14',
-  scope: 'all',
-  body: {
-    weight: 69.0,
-    trendWeight: 68.85,
-    weightUnit: 'kg',
-    bodyFat: 12.5,
-    circumferences: [
-      { key: 'shoulders', label: '肩寬', value: 46.5, unit: 'cm' },
-      { key: 'chest', label: '胸圍', value: 98.0, unit: 'cm' },
-      { key: 'waist', label: '腰圍', value: 74.5, unit: 'cm' },
-      { key: 'hips', label: '臀圍', value: 92.5, unit: 'cm' },
-    ],
-  },
-  diet: {
-    activityLevel: 1.55,
-    activityLabel: '中度活動 (每週 3-5 天訓練)',
-    macroSplit: { carbs: 50, protein: 25, fat: 25 },
-    target: {
-      calories: 2500,
-      energyUnit: 'kcal',
-      carbs: 330,
-      protein: 155,
-      fat: 62,
-    },
-    actual: {
-      calories: 2350,
-      energyUnit: 'kcal',
-      carbs: 305,
-      protein: 152,
-      fat: 58,
-    },
-    calorieDiff: 150,
-    meals: [
-      {
-        mealType: 'breakfast',
-        mealLabel: '早餐',
-        calories: 638,
-        carbs: 54,
-        protein: 69,
-        fat: 17,
-        items: [
-          { type: 'food', name: '去皮雞胸肉', amount: '150 g', calories: 195, carbs: 0, protein: 45, fat: 2 },
-          { type: 'food', name: '傳統燕麥片', amount: '80 g', calories: 293, carbs: 53, protein: 11, fat: 5 },
-          { type: 'food', name: '全雞蛋', amount: '100 g', calories: 150, carbs: 1, protein: 13, fat: 10 },
-        ],
-      },
-      {
-        mealType: 'lunch',
-        mealLabel: '午餐',
-        calories: 830,
-        carbs: 112,
-        protein: 52,
-        fat: 20,
-        items: [
-          {
-            type: 'recipe',
-            name: '番茄牛肉糙米飯',
-            calories: 830,
-            carbs: 112,
-            protein: 52,
-            fat: 20,
-            ingredients: [
-              { name: '牛里肌', amount: '180 g', calories: 234, carbs: 0, protein: 40, fat: 8 },
-              { name: '糙米', amount: '150 g', calories: 525, carbs: 112, protein: 12, fat: 4 },
-              { name: '橄欖油', amount: '8 g', calories: 71, carbs: 0, protein: 0, fat: 8 },
-            ],
-          },
-        ],
-      },
-      {
-        mealType: 'snack',
-        mealLabel: '加餐',
-        calories: 299,
-        carbs: 53,
-        protein: 7,
-        fat: 7,
-        items: [
-          { type: 'estimate', name: '燕麥拿鐵 (大杯 · 無糖)', calories: 192, carbs: 26, protein: 6, fat: 7 },
-          { type: 'food', name: '香蕉', amount: '120 g', calories: 107, carbs: 27, protein: 1, fat: 0 },
-        ],
-      },
-      {
-        mealType: 'dinner',
-        mealLabel: '晚餐',
-        calories: 583,
-        carbs: 86,
-        protein: 24,
-        fat: 14,
-        items: [
-          { type: 'as_planned', name: '日常規律晚餐', calories: 583, carbs: 86, protein: 24, fat: 14 },
-        ],
-      },
-    ],
-  },
-  workout: {
-    summary: {
-      totalExercises: 2,
-      totalSets: 6,
-      totalVolume: 1480,
+export function getDemoDailyExportPayload(
+  t?: (key: string, fallback?: string) => string
+): DailyExportPayload {
+  const tr = (key: string, fallback: string) => (t ? t(key, fallback) : fallback);
+  return {
+    date: '2026-11-14',
+    scope: 'all',
+    body: {
+      weight: 69.0,
+      trendWeight: 68.85,
       weightUnit: 'kg',
+      bodyFat: 12.5,
+      circumferences: [
+        { key: 'shoulders', label: tr('body.shoulders', '肩寬'), value: 46.5, unit: 'cm' },
+        { key: 'chest', label: tr('body.chest', '胸圍'), value: 98.0, unit: 'cm' },
+        { key: 'waist', label: tr('body.waist', '腰圍'), value: 74.5, unit: 'cm' },
+        { key: 'hips', label: tr('body.hips', '臀圍'), value: 92.5, unit: 'cm' },
+      ],
     },
-    sessions: [
-      {
-        routineTitle: '胸部與上背專項',
-        exercises: [
-          {
-            name: '啞鈴臥推',
-            equipment: '啞鈴',
-            primaryMuscles: ['中下胸', '上胸'],
-            secondaryMuscles: ['前三角肌', '肱三頭肌'],
-            sets: [
-              { setNumber: 1, weight: 20, unit: 'kg', reps: 15 },
-              { setNumber: 2, weight: 20, unit: 'kg', reps: 12 },
-              { setNumber: 3, weight: 20, unit: 'kg', reps: 10 },
-            ],
-          },
-          {
-            name: '啞鈴俯身飛鳥',
-            equipment: '啞鈴',
-            primaryMuscles: ['後三角肌', '上背斜方肌'],
-            secondaryMuscles: ['背闊肌'],
-            sets: [
-              { setNumber: 1, weight: 20, unit: 'kg', reps: 15 },
-              { setNumber: 2, weight: 20, unit: 'kg', reps: 12 },
-              { setNumber: 3, weight: 20, unit: 'kg', reps: 10 },
-            ],
-          },
-        ],
+    diet: {
+      activityLevel: 1.55,
+      activityLabel: tr('landing.demoData.moderateActivity', '中度活動 (每週 3-5 天訓練)'),
+      macroSplit: { carbs: 50, protein: 25, fat: 25 },
+      target: {
+        calories: 2500,
+        energyUnit: 'kcal',
+        carbs: 330,
+        protein: 155,
+        fat: 62,
       },
-    ],
-    recovery: {
-      recoveringCount: 2,
-      intensityMap: {
-        upper_chest: 85,
-        mid_lower_chest: 85,
-        lats: 70,
-        upper_back_traps: 65,
+      actual: {
+        calories: 2350,
+        energyUnit: 'kcal',
+        carbs: 305,
+        protein: 152,
+        fat: 58,
+      },
+      calorieDiff: 150,
+      meals: [
+        {
+          mealType: 'breakfast',
+          mealLabel: tr('diet.breakfast', '早餐'),
+          calories: 638,
+          carbs: 54,
+          protein: 69,
+          fat: 17,
+          items: [
+            { type: 'food', name: tr('landing.demoData.chickenBreast', '去皮雞胸肉'), amount: '150 g', calories: 195, carbs: 0, protein: 45, fat: 2 },
+            { type: 'food', name: tr('landing.demoData.rolledOats', '傳統燕麥片'), amount: '80 g', calories: 293, carbs: 53, protein: 11, fat: 5 },
+            { type: 'food', name: tr('landing.demoData.wholeEggs', '全雞蛋'), amount: '100 g', calories: 150, carbs: 1, protein: 13, fat: 10 },
+          ],
+        },
+        {
+          mealType: 'lunch',
+          mealLabel: tr('diet.lunch', '午餐'),
+          calories: 830,
+          carbs: 112,
+          protein: 52,
+          fat: 20,
+          items: [
+            {
+              type: 'recipe',
+              name: tr('landing.demoData.tomatoBeefRice', '番茄牛肉糙米飯'),
+              calories: 830,
+              carbs: 112,
+              protein: 52,
+              fat: 20,
+              ingredients: [
+                { name: tr('landing.demoData.beefTenderloin', '牛里肌'), amount: '180 g', calories: 234, carbs: 0, protein: 40, fat: 8 },
+                { name: tr('landing.demoData.brownRice', '糙米'), amount: '150 g', calories: 525, carbs: 112, protein: 12, fat: 4 },
+                { name: tr('landing.demoData.oliveOil', '橄欖油'), amount: '8 g', calories: 71, carbs: 0, protein: 0, fat: 8 },
+              ],
+            },
+          ],
+        },
+        {
+          mealType: 'snack',
+          mealLabel: tr('diet.snack', '加餐'),
+          calories: 299,
+          carbs: 53,
+          protein: 7,
+          fat: 7,
+          items: [
+            { type: 'estimate', name: tr('landing.demoData.snackOatLatte', '燕麥拿鐵 (大杯 · 無糖)'), calories: 192, carbs: 26, protein: 6, fat: 7 },
+            { type: 'food', name: tr('landing.demoData.banana', '香蕉'), amount: '120 g', calories: 107, carbs: 27, protein: 1, fat: 0 },
+          ],
+        },
+        {
+          mealType: 'dinner',
+          mealLabel: tr('diet.dinner', '晚餐'),
+          calories: 583,
+          carbs: 86,
+          protein: 24,
+          fat: 14,
+          items: [
+            { type: 'as_planned', name: tr('landing.demoData.regularDinner', '日常規律晚餐'), calories: 583, carbs: 86, protein: 24, fat: 14 },
+          ],
+        },
+      ],
+    },
+    workout: {
+      summary: {
+        totalExercises: 2,
+        totalSets: 6,
+        totalVolume: 1480,
+        weightUnit: 'kg',
+      },
+      sessions: [
+        {
+          routineTitle: tr('landing.demoData.routineChestBack', '胸部與上背專項'),
+          exercises: [
+            {
+              name: tr('landing.demoData.dumbbellBenchPress', '啞鈴臥推'),
+              equipment: tr('workout.equipDumbbell', '啞鈴'),
+              primaryMuscles: [tr('workout.muscleMidLowerChest', '中下胸'), tr('workout.muscleUpperChest', '上胸')],
+              secondaryMuscles: [tr('workout.muscleFrontDelts', '前三角肌'), tr('workout.muscleTriceps', '肱三頭肌')],
+              sets: [
+                { setNumber: 1, weight: 20, unit: 'kg', reps: 15 },
+                { setNumber: 2, weight: 20, unit: 'kg', reps: 12 },
+                { setNumber: 3, weight: 20, unit: 'kg', reps: 10 },
+              ],
+            },
+            {
+              name: tr('landing.demoData.dumbbellReverseFly', '啞鈴俯身飛鳥'),
+              equipment: tr('workout.equipDumbbell', '啞鈴'),
+              primaryMuscles: [tr('workout.muscleRearDelts', '後三角肌'), tr('workout.muscleUpperBackTraps', '上背斜方肌')],
+              secondaryMuscles: [tr('workout.muscleLats', '背闊肌')],
+              sets: [
+                { setNumber: 1, weight: 20, unit: 'kg', reps: 15 },
+                { setNumber: 2, weight: 20, unit: 'kg', reps: 12 },
+                { setNumber: 3, weight: 20, unit: 'kg', reps: 10 },
+              ],
+            },
+          ],
+        },
+      ],
+      recovery: {
+        recoveringCount: 2,
+        intensityMap: {
+          upper_chest: 85,
+          mid_lower_chest: 85,
+          lats: 70,
+          upper_back_traps: 65,
+        },
       },
     },
-  },
-};
+  };
+}
+
+export const DEMO_DAILY_EXPORT_PAYLOAD: DailyExportPayload = getDemoDailyExportPayload();
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -174,11 +181,13 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export function ShareShowcaseCards({
-  payload = DEMO_DAILY_EXPORT_PAYLOAD,
+  payload,
 }: {
   payload?: DailyExportPayload;
 }) {
   const { t } = useTranslation();
+  const tr = (k: string, fb?: string) => (fb !== undefined ? t(k, fb) : t(k));
+  const activePayload = useMemo(() => payload || getDemoDailyExportPayload(tr), [payload, t]);
   const { theme } = useTheme();
   const isDark =
     theme === 'dark' ||
@@ -196,7 +205,7 @@ export function ShareShowcaseCards({
   useEffect(() => {
     let isMounted = true;
     try {
-      const url = generateDailyExportImageDataUrl(payload, {
+      const url = generateDailyExportImageDataUrl(activePayload, {
         theme: isDark ? 'dark' : 'light',
         dpr: 2,
       });
@@ -207,11 +216,11 @@ export function ShareShowcaseCards({
     return () => {
       isMounted = false;
     };
-  }, [payload, isDark]);
+  }, [activePayload, isDark]);
 
   // 純文本與 JSON 內容
-  const textContent = useMemo(() => formatDailyExportAsText(payload, t), [payload, t]);
-  const jsonContent = useMemo(() => formatDailyExportAsJson(payload), [payload]);
+  const textContent = useMemo(() => formatDailyExportAsText(activePayload, t), [activePayload, t]);
+  const jsonContent = useMemo(() => formatDailyExportAsJson(activePayload), [activePayload]);
 
   // 複製圖片（分享朋友或社交媒體）
   const handleCopyImage = async () => {
@@ -219,7 +228,7 @@ export function ShareShowcaseCards({
     setIsCapturing(true);
     try {
       triggerHaptic('selection');
-      const blob = await generateDailyExportImageBlob(payload, {
+      const blob = await generateDailyExportImageBlob(activePayload, {
         theme: isDark ? 'dark' : 'light',
         dpr: 2,
       });
@@ -236,7 +245,7 @@ export function ShareShowcaseCards({
         toast(t('aiExport.imageCopied', '已複製圖片'));
         setTimeout(() => setImageCopied(false), 2000);
       } else {
-        downloadBlob(blob, `zenfit-${payload.date}.png`);
+        downloadBlob(blob, `zenfit-${activePayload.date}.png`);
         setImageCopied(true);
         triggerHaptic('success');
         toast(t('aiExport.imageSaved', '已保存長圖'));
@@ -296,10 +305,10 @@ export function ShareShowcaseCards({
             </span>
           </div>
           <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">
-            高密度分析長圖
+            {t('landing.shareCards.imageTitle', '高密度分析長圖')}
           </h3>
           <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            像素級高對比向量排版，無失真記錄體態、課表與生重進食，適合發送給教練或社群分享。
+            {t('landing.shareCards.imageDesc', '像素級高對比向量排版，無失真記錄體態、課表與生重進食，適合發送給教練或社群分享。')}
           </p>
         </div>
 
@@ -308,7 +317,7 @@ export function ShareShowcaseCards({
           {previewImageUrl ? (
             <img
               src={previewImageUrl}
-              alt={`Zenfit ${payload.date} Share`}
+              alt={`Zenfit ${activePayload.date} Share`}
               className="block w-full h-auto rounded shadow-none select-none pointer-events-none"
             />
           ) : (
@@ -353,10 +362,10 @@ export function ShareShowcaseCards({
             </span>
           </div>
           <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">
-            結構化 AI 提示詞
+            {t('landing.shareCards.textTitle', '結構化 AI 提示詞')}
           </h3>
           <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            將當日客觀體態、生重宏量素與訓練組數格式化為無噪音 Markdown，直接貼入 Claude 或 ChatGPT。
+            {t('landing.shareCards.textDesc', '將當日客觀體態、生重宏量素與訓練組數格式化為無噪音 Markdown，直接貼入 Claude 或 ChatGPT。')}
           </p>
         </div>
 
@@ -396,10 +405,10 @@ export function ShareShowcaseCards({
             </span>
           </div>
           <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">
-            純數學結構化 JSON
+            {t('landing.shareCards.jsonTitle', '純數學結構化 JSON')}
           </h3>
           <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            100% 開放標準數據合約，包含完整能量平衡、動作參數與身體維度，便於自動化腳本分析。
+            {t('landing.shareCards.jsonDesc', '100% 開放標準數據合約，包含完整能量平衡、動作參數與身體維度，便於自動化腳本分析。')}
           </p>
         </div>
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Smartphone,
   Laptop,
@@ -17,6 +18,8 @@ import {
  * - 底部：個人 Dropbox
  */
 export function SyncTopologyDiagram() {
+  const { t } = useTranslation();
+
   return (
     <div className="w-full rounded-lg border border-border bg-card text-card-foreground p-5 sm:p-6 select-none font-mono shadow-none">
       {/* 核心路線圖主體 (縱向流暢連接，居中緊湊) */}
@@ -28,7 +31,7 @@ export function SyncTopologyDiagram() {
         <div className="flex flex-col items-center">
           <div className="px-3 py-1 rounded-full border border-border bg-muted/40 text-foreground text-xs font-semibold flex items-center gap-1.5 shadow-none">
             <Download className="size-3 text-emerald-600 dark:text-emerald-400 stroke-[2.2]" />
-            <span>本地導出</span>
+            <span>{t('landing.diagram.localExport', '本地導出')}</span>
             <span className="text-[10px] font-normal text-muted-foreground">(ZIP)</span>
           </div>
           {/* 連接線：垂直連向頂部匯流母線 */}
@@ -65,7 +68,7 @@ export function SyncTopologyDiagram() {
             <div className="w-full flex flex-col items-center justify-center py-2.5 px-1.5 rounded-lg border border-border bg-muted/20 text-center">
               <Smartphone className="size-4 text-foreground mb-1 stroke-[1.8]" />
               <span className="text-[11px] font-bold text-foreground">iPhone</span>
-              <span className="text-[9px] text-muted-foreground">手機</span>
+              <span className="text-[9px] text-muted-foreground">{t('landing.diagram.phone', '手機')}</span>
             </div>
           </div>
 
@@ -74,7 +77,7 @@ export function SyncTopologyDiagram() {
             <div className="w-full flex flex-col items-center justify-center py-2.5 px-1.5 rounded-lg border border-border bg-muted/20 text-center">
               <Laptop className="size-4 text-foreground mb-1 stroke-[1.8]" />
               <span className="text-[11px] font-bold text-foreground">MacBook</span>
-              <span className="text-[9px] text-muted-foreground">桌面</span>
+              <span className="text-[9px] text-muted-foreground">{t('landing.diagram.desktop', '桌面')}</span>
             </div>
           </div>
 
@@ -83,7 +86,7 @@ export function SyncTopologyDiagram() {
             <div className="w-full flex flex-col items-center justify-center py-2.5 px-1.5 rounded-lg border border-border bg-muted/20 text-center">
               <Tablet className="size-4 text-foreground mb-1 stroke-[1.8]" />
               <span className="text-[11px] font-bold text-foreground">iPad</span>
-              <span className="text-[9px] text-muted-foreground">平板</span>
+              <span className="text-[9px] text-muted-foreground">{t('landing.diagram.tablet', '平板')}</span>
             </div>
           </div>
         </div>
@@ -115,7 +118,7 @@ export function SyncTopologyDiagram() {
         {/* 雙向增量同步標籤膠囊 */}
         <div className="px-2.5 py-0.5 rounded-full border border-border bg-background text-[10px] text-muted-foreground flex items-center gap-1.5 shadow-none my-0.5">
           <ArrowDownUp className="size-2.5 text-sky-500" />
-          <span>雙向增量同步</span>
+          <span>{t('landing.diagram.bidirectionalSync', '雙向增量同步')}</span>
         </div>
 
         {/* 垂直引線連入 Dropbox */}
@@ -127,10 +130,10 @@ export function SyncTopologyDiagram() {
         <div className="w-full max-w-xs rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 text-center space-y-0.5">
           <div className="flex items-center justify-center gap-1.5 text-sky-600 dark:text-sky-400 font-bold text-xs">
             <Cloud className="size-4 stroke-[2]" />
-            <span>個人 Dropbox</span>
+            <span>{t('landing.diagram.personalDropbox', '個人 Dropbox')}</span>
           </div>
           <div className="text-[10px] font-mono text-muted-foreground">
-            OAuth 2.0 PKCE 直連
+            {t('landing.diagram.oauthPkce', 'OAuth 2.0 PKCE 直連')}
           </div>
         </div>
 
@@ -140,7 +143,7 @@ export function SyncTopologyDiagram() {
       <div className="border-t border-border mt-5 sm:mt-6 pt-3 flex items-center justify-between text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <ShieldCheck className="size-3 text-emerald-500" />
-          <span>數據 100% 本地所有 · 隨時自由遷移</span>
+          <span>{t('landing.diagram.dataSovereignty', '數據 100% 本地所有 · 隨時自由遷移')}</span>
         </div>
         <span className="uppercase tracking-wider hidden sm:inline">ZERO VENDOR LOCK-IN</span>
       </div>

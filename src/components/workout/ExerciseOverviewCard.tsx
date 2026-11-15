@@ -280,7 +280,11 @@ export function ExerciseOverviewCard({
 }
 
 /** 落地頁與預覽展示用的標準動作概覽數據（對標真實 APP 啞鈴臥推詳情頁，展現高自律訓練軌跡） */
-export function getDemoExerciseOverviewData(bodyWeightUnit: BodyWeightUnit = 'kg') {
+export function getDemoExerciseOverviewData(
+  bodyWeightUnit: BodyWeightUnit = 'kg',
+  t?: (key: string, fallback?: string) => string
+) {
+  const tr = (key: string, fallback: string) => (t ? t(key, fallback) : fallback);
   // 生成高自律擬真訓練日誌 (近 30d 累計 8 次訓練、32 組，總容量 6,688kg，最佳 e1RM 30.0kg)
   const demoWorkoutLogs = [
     // 近 30 天高自律規律訓練 (每週 2 次，每次 4 組，穩定漸進超負荷)
@@ -390,8 +394,8 @@ export function getDemoExerciseOverviewData(bodyWeightUnit: BodyWeightUnit = 'kg
   });
 
   return {
-    exerciseName: '啞鈴臥推',
-    equipmentName: '啞鈴',
+    exerciseName: tr('landing.demoData.dumbbellBenchPress', '啞鈴臥推'),
+    equipmentName: tr('landing.demoData.dumbbell', '啞鈴'),
     isArchived: false,
     bestE1RM: footprint.periodBestE1RM || 30.0,
     totalSets: footprint.periodSets || 32,

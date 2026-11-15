@@ -202,27 +202,35 @@ export function WorkoutExerciseCard({
   );
 }
 
+/** 落地頁與預覽展示用的標準動作組列表（工廠函式，完整支援多語系 i18n） */
+export function getDemoWorkoutExercisesData(
+  t?: (key: string, fallback?: string) => string
+) {
+  const tr = (key: string, fallback: string) => (t ? t(key, fallback) : fallback);
+  return [
+    {
+      exerciseName: tr('landing.demoData.dumbbellBenchPress', '啞鈴臥推'),
+      bodyWeightUnit: 'kg',
+      sets: [
+        { weight: 20, reps: 15 },
+        { weight: 20, reps: 12 },
+        { weight: 20, reps: 10 },
+      ],
+    },
+    {
+      exerciseName: tr('landing.demoData.dumbbellReverseFly', '啞鈴俯身飛鳥'),
+      bodyWeightUnit: 'kg',
+      sets: [
+        { weight: 20, reps: 15 },
+        { weight: 20, reps: 12 },
+        { weight: 20, reps: 10 },
+      ],
+    },
+  ];
+}
+
 /** 落地頁與預覽展示用的標準動作組列表（單一真理源） */
-export const DEMO_WORKOUT_EXERCISES_DATA = [
-  {
-    exerciseName: '啞鈴臥推',
-    bodyWeightUnit: 'kg',
-    sets: [
-      { weight: 20, reps: 15 },
-      { weight: 20, reps: 12 },
-      { weight: 20, reps: 10 },
-    ],
-  },
-  {
-    exerciseName: '啞鈴俯身飛鳥',
-    bodyWeightUnit: 'kg',
-    sets: [
-      { weight: 20, reps: 15 },
-      { weight: 20, reps: 12 },
-      { weight: 20, reps: 10 },
-    ],
-  },
-];
+export const DEMO_WORKOUT_EXERCISES_DATA = getDemoWorkoutExercisesData();
 
 /** 向後相容單一動作常數 */
 export const DEMO_WORKOUT_EXERCISE_DATA = DEMO_WORKOUT_EXERCISES_DATA[0];

@@ -5,7 +5,10 @@
       "slogan": "极简、隐私优先的饮食与健身追踪 PWA"
     },
     "common": {
+      "items": "项",
+      "details": "详细信息",
       "all": "全部",
+      "openApp": "开启应用",
       "confirm": "确认",
       "cancel": "取消",
       "save": "保存",
@@ -1128,6 +1131,257 @@
         "bodyFat": "体脂率",
         "circumferences": "身体围度",
         "noLogs": "当日无身体数据记录"
+      }
+    },
+    "landing": {
+      "metaTitle": "Zenfit - 饮食、训练记录",
+      "nav": {
+        "diet": "饮食",
+        "workout": "训练",
+        "body": "体态",
+        "analytics": "分析",
+        "sync": "同步",
+        "principles": "原则",
+        "tech": "技术",
+        "specs": "规格",
+        "backToTop": "回到顶部 ↑"
+      },
+      "hero": {
+        "titleLine1": "只记数据，",
+        "titleLine2": "绝不对你指手画脚。",
+        "desc": "记录身体不该带来压力。今天吃了多少、练了几组，软件只如实告诉你真实数字，绝不批判你吃多吃少，更不强迫打卡断签。完全支持离线使用，每一次输入都干脆利落。",
+        "ctaExplore": "探索度量系统",
+        "ctaPwa": "PWA 离线安装 · 100% 数据私有化",
+        "traits": {
+          "localFirst": "100% 本地优先",
+          "crossPlatform": "全平台支持",
+          "dropboxSync": "Dropbox 同步",
+          "nonPreachy": "客观无说教",
+          "minimalDesign": "极简设计"
+        }
+      },
+      "diet": {
+        "tag": "[ 01 / 饮食 ]",
+        "titleLine1": "零摩擦记录饮食。",
+        "titleLine2": "准确食材、一键复制、快速估算、滚动均值。",
+        "desc": "记录饮食不该是繁琐负担。Zenfit 针对真实生活打造零阻力记录流：自煮时依托 420+ 种原型食材准确称重；规律进餐时一键复制昨日餐点；外食聚餐时支持快速粗估。",
+        "types": {
+          "raw": {
+            "tag": "01 // 原型食材",
+            "title": "自煮精准记录",
+            "desc": "自煮称重基准。内置 420+ 种原型食材未烹生重常数，以物理克数 (g) 录入，杜绝吸水与出水误差。"
+          },
+          "copy": {
+            "tag": "02 // 一键复制",
+            "title": "复用记录",
+            "desc": "规律饮食无摩擦。当进餐内容高度重复时，一键带入昨日或历史同餐所有食材配方，零重复手动录入。"
+          },
+          "estimate": {
+            "tag": "03 // 快速估算",
+            "title": "外卖、聚餐",
+            "desc": "社交聚餐零焦虑。外食或无法称重情境，依连锁门市与场景秒级预设热量与三大元素，过滤记录压力。"
+          },
+          "average": {
+            "tag": "04 // 滚动平均",
+            "title": "懒得记",
+            "desc": "算我正常吃模式。依 7 日与 30 日历史摄入自动代入平均预算，客观平滑水分滞留与单日进食波动。"
+          }
+        },
+        "metrics": {
+          "foodDb": {
+            "label": "内置食材库",
+            "value": "420+",
+            "unit": "项",
+            "desc": "标准原型生重，杜绝熟重偏差"
+          },
+          "recipes": {
+            "label": "复合菜肴",
+            "value": "∞",
+            "unit": "自订",
+            "desc": "自由组合食材，纯 ID 引用无漂移"
+          },
+          "oil": {
+            "label": "烹调黑盒",
+            "value": "0",
+            "unit": "隐藏油",
+            "desc": "用油独立计量，终结热量盲区"
+          }
+        },
+        "windowBar": {
+          "module": "饮食度量",
+          "synced": "已同步"
+        }
+      },
+      "workout": {
+        "tag": "[ 02 / 训练 ]",
+        "titleLine1": "肌力生物力学与组数表。",
+        "titleLine2": "解剖热图、有效组数与纯数学 e1RM。",
+        "desc": "严格区分热身组与正式组，真实记录重量与次数。透过成熟的 Brzycki / Epley 公式估算极限力量，自动统计每周有效训练组数分布，拒绝未经科学验证的随意评分。"
+      },
+      "body": {
+        "tag": "[ 03 / 体态 ]",
+        "titleLine1": "过滤水分波动，看懂真实体态。",
+        "titleLine2": "7 天平滑曲线、身体围度追踪与客观进展。",
+        "desc": "喝水多寡与重咸饮食，常让单日体重上下跳动 1～2 公斤。Zenfit 自动过滤水分干扰，帮您算出身体的真实增减趋势；同步支持胸围、腰围等围度追踪，只摆客观事实，告别体重焦虑。"
+      },
+      "analytics": {
+        "tag": "[ 04 / 分析 ]",
+        "titleLine1": "内部零黑盒 AI，",
+        "titleLine2": "外部开放自由分析。",
+        "desc": "我们不在软件里塞入未经科学验证的 AI 评分机制。Zenfit 的职责是提供毫秒级的客观事实，并主动帮您整理好格式：一键导出为适合 ChatGPT 与 Claude 的对话文本，或一张精致的长图。分析的自由与决策权，始终 100% 握在您手里。"
+      },
+      "sync": {
+        "tag": "[ 05 / 同步 ]",
+        "titleLine1": "数据完全归你，断网也能秒开记录。",
+        "titleLine2": "离线可用、个人 Dropbox 私密同步与一键打包导出。",
+        "desc": "你的身体数据不经过任何第三方云端服务器，直接保存在手机与电脑中。需要多设备同步时直连你的个人 Dropbox，断网依然流畅好用，随时都能一键完整打包带走。"
+      },
+      "principles": {
+        "tag": "[ 06 / 原则 ]",
+        "titleLine1": "拒绝制造焦虑。",
+        "titleLine2": "不搞社交、不催打卡、不给指令、不做成品黑盒。",
+        "desc": "你不需要一个软件每天催你打卡、对你教导，或是逼你跟别人比较。Zenfit 刻意拿掉所有恼人的套路：今天记录，今天就是事实；今天没记，明天打开依旧是一把干净、安静待命的记录工具。",
+        "items": {
+          "item1": {
+            "tag": "01 // 不做内建 AI 评分与行为指令",
+            "title": "拒绝黑盒说教与主观批判",
+            "desc": "我们严禁在软件中指示「你少吃了」、「你吃超标了」或「你退步了」；绝对不设置带有羞辱感的红色警报卡片。软件是冷静的镜子，决策权 100% 归还使用者。",
+            "legacyTitle": "传统 AI 评分",
+            "legacyBad": "「⚠️ 严重超标！扣 15 分，晚餐少吃碳水」",
+            "factTitle": "客观事实",
+            "factGood": "2,150 / 2,200"
+          },
+          "item2": {
+            "tag": "02 // 不做社交社群与心灵鸡汤",
+            "title": "拒绝同侪焦虑与动态打扰",
+            "desc": "Zenfit 没有动态广场、没有点赞排行、没有同侪比较。自我量化是一场自己与物理事实的严肃对话，无须向外界表演自律。",
+            "legacyTitle": "全国排行 #42",
+            "legacyBad": "「打卡第 100 天，越努力越幸运✨」",
+            "factTitle": "个人私密空间",
+            "factGood": "卧推 e1RM 120 kg"
+          },
+          "item3": {
+            "tag": "03 // 不做强制打卡与断签惩罚",
+            "title": "真正的自律不需要外部羞耻机制",
+            "desc": "不设置断签警告或红点催促。今天记录，今天就是事实；今天没记，明天打开依旧是一把干净、随时待命的测量仪。",
+            "legacyTitle": "连续打卡中断！",
+            "legacyBad": "「已断签！看广告或花费 50 钻石补签」",
+            "factTitle": "随时安静待命",
+            "factGood": "记或不记，都是事实"
+          },
+          "item4": {
+            "tag": "04 // 不做模糊的成品菜热量估算",
+            "title": "拒绝「一碗红烧牛肉面 750 大卡」的黑盒谎言",
+            "desc": "成品菜估算充满了不可控的烹调油与吸水率偏差。Zenfit 坚持以原子食材生重为唯一真理源，引导使用者建立真正的克数称重感知。",
+            "legacyTitle": "牛肉面 1 碗 = 750 kcal?",
+            "legacyBad": "「隐藏用油 30g？吸水率 250%？」",
+            "factTitle": "原子食材拆解 (生重)",
+            "factLine1": "牛腱 150g · 面 80g",
+            "factLine2": "+ 橄榄油 8g (明示)"
+          }
+        }
+      },
+      "tech": {
+        "tag": "[ 07 / 技术 ]",
+        "titleLine1": "可靠，源自极致克制。",
+        "titleLine2": "零外部依赖、纯本地计算、永不损坏数据。",
+        "desc": "拒绝臃肿的第三方追踪与肥大框架。Zenfit 透过无副作用纯数学纯函数与 100% 单元测试防线，保证您的每一次点击都获得毫秒级的确定性。",
+        "cards": {
+          "speed": {
+            "title": "01 / 极致速度与流畅",
+            "point1Title": "零等待时间",
+            "point1Desc": "代码与数据皆在本地运行，彻底告别传统 App 转圈等待。",
+            "point2Title": "极度稳定防护",
+            "point2Desc": "TypeScript 严格类型约束，杜绝隐藏闪退与突发错误。",
+            "point3Title": "专注手机体验",
+            "point3Desc": "界面深度适配移动端，键盘弹出不遮挡、滚动不跳动。"
+          },
+          "safety": {
+            "title": "02 / 永不损坏的数据",
+            "point1Title": "原生本地存储",
+            "point1Desc": "数据直接留在设备内部，享有专属防清理保护。",
+            "point2Title": "无感平滑升级",
+            "point2Desc": "软件升级时自动安全迁移，永远不覆盖或丢失历史记录。",
+            "point3Title": "数据始终一致",
+            "point3Desc": "食材与动作采纯 ID 引用，改动一处全域同步，拒绝资料错乱。"
+          },
+          "math": {
+            "title": "03 / 纯数学与精准验证",
+            "point1Title": "透明科学算法",
+            "point1Desc": "力量极限、体重去噪趋势、供能比皆由客观纯数学推算。",
+            "point2Title": "540+ 项测试守护",
+            "point2Desc": "覆盖所有边界状况，维持 100% 单元测试通过保证。",
+            "point3Title": "拒绝主观干涉",
+            "point3Desc": "只呈现冷静物理事实，不对您的自律妄加评分。"
+          }
+        }
+      },
+      "footer": {
+        "license": "MIT License · Local-First Architecture · 2026"
+      },
+      "diagram": {
+        "localExport": "本地导出",
+        "phone": "手机",
+        "desktop": "桌面",
+        "tablet": "平板",
+        "bidirectionalSync": "双向增量同步",
+        "personalDropbox": "个人 Dropbox",
+        "oauthPkce": "OAuth 2.0 PKCE 直连",
+        "dataSovereignty": "数据 100% 本地所有 · 随时自由迁移"
+      },
+      "deck": {
+        "foodDetails": "食材详情",
+        "dietMetrics": "饮食度量",
+        "dashboard": "总览",
+        "synced": "已同步",
+        "rawFoodHud": "天然原型食材 · 生重",
+        "active": "使用中",
+        "chickenBreast": "鸡胸肉",
+        "highProtein": "高蛋白",
+        "totalIntake": "总摄入",
+        "frequency": "频率",
+        "timesUnit": "次",
+        "singleDayMax": "单日最高",
+        "matrixTitle": "摄入足迹矩阵 (7 周趋势)",
+        "benchmarkTitle": "基准物理常数 (每 100g 生重)",
+        "calories": "热量",
+        "carbs": "碳水化合物",
+        "protein": "蛋白质",
+        "fat": "脂肪"
+      },
+      "shareCards": {
+        "imageTitle": "高密度分析长图",
+        "imageDesc": "像素级高对比矢量排版，无失真记录体态、课表与生重进食，适合发送给教练或社群分享。",
+        "textTitle": "结构化 AI 提示词",
+        "textDesc": "将当日客观体态、生重宏量素与训练组数格式化为无噪音 Markdown，直接贴入 Claude 或 ChatGPT。",
+        "jsonTitle": "纯数学结构化 JSON",
+        "jsonDesc": "100% 开放标准数据合约，包含完整能量平衡、动作参数与身体维度，便于自动化脚本分析。"
+      },
+      "themeToggle": "切换浅色/深色模式",
+      "demoData": {
+        "greeting": "晚上好，Noah",
+        "inclineBenchPress": "上斜杠铃卧推",
+        "flatDumbbellPress": "平板哑铃卧推",
+        "pullUp": "引体向上",
+        "barbellRow": "杠铃划船",
+        "dumbbellBenchPress": "哑铃卧推",
+        "dumbbellReverseFly": "哑铃俯身飞鸟",
+        "dumbbell": "哑铃",
+        "balanced": "均衡",
+        "chickenBreast": "去皮鸡胸肉",
+        "rolledOats": "传统燕麦片",
+        "wholeEggs": "全鸡蛋",
+        "beefTenderloin": "牛里脊",
+        "brownRice": "糙米",
+        "oliveOil": "橄榄油",
+        "tomatoBeefRice": "番茄牛肉糙米饭",
+        "regularDinner": "日常规律晚餐",
+        "historicalAverage": "历史均值",
+        "snackOatLatte": "燕麦拿铁 (大杯 · 无糖)",
+        "banana": "香蕉",
+        "routineChestBack": "胸部与上背专项",
+        "moderateActivity": "中度活动 (每周 3-5 天训练)",
+        "servingUnit": "份"
       }
     }
   }

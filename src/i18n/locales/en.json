@@ -5,7 +5,10 @@
       "slogan": "Minimalist, privacy-first diet & fitness tracking PWA"
     },
     "common": {
+      "items": "items",
+      "details": "Details",
       "all": "All",
+      "openApp": "Open App",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "save": "Save",
@@ -1129,6 +1132,257 @@
         "bodyFat": "Body Fat",
         "circumferences": "Circumferences",
         "noLogs": "No body metrics for this date"
+      }
+    },
+    "landing": {
+      "metaTitle": "Zenfit - Nutrition & Strength Tracker",
+      "nav": {
+        "diet": "Diet",
+        "workout": "Workout",
+        "body": "Body",
+        "analytics": "Analytics",
+        "sync": "Sync",
+        "principles": "Principles",
+        "tech": "Tech",
+        "specs": "Specs",
+        "backToTop": "Back to top ↑"
+      },
+      "hero": {
+        "titleLine1": "Just Pure Data.",
+        "titleLine2": "Zero Preaching.",
+        "desc": "Logging your body shouldn't cause anxiety. Zenfit delivers raw numbers with zero preaching or forced streaks. Fully offline, snappy, and private.",
+        "ctaExplore": "Explore Metric System",
+        "ctaPwa": "Install PWA · 100% Private Data",
+        "traits": {
+          "localFirst": "100% Local-First",
+          "crossPlatform": "Universal Platform",
+          "dropboxSync": "Dropbox Sync",
+          "nonPreachy": "Non-Preachy",
+          "minimalDesign": "Minimal Design"
+        }
+      },
+      "diet": {
+        "tag": "[ 01 / Diet ]",
+        "titleLine1": "Frictionless Nutrition Logging.",
+        "titleLine2": "Accurate Ingredients, One-Tap Copy, Quick Estimate, Rolling Average.",
+        "desc": "Nutrition tracking should never be a chore. Zenfit offers four flexible workflows: weighed raw ingredients, one-tap copy from yesterday, quick estimates for dining out, and historical rolling averages.",
+        "types": {
+          "raw": {
+            "tag": "01 // Raw Food",
+            "title": "Precision Home Cooking",
+            "desc": "Physical scale baseline. Built-in constants for 420+ raw ingredients by grams, eliminating water retention bias."
+          },
+          "copy": {
+            "tag": "02 // Copy Meal",
+            "title": "Zero-Effort Routine",
+            "desc": "Frictionless routine eating. Duplicate past identical meals with a single tap, zero manual re-entry."
+          },
+          "estimate": {
+            "tag": "03 // Quick Estimate",
+            "title": "Takeout & Social",
+            "desc": "Zero anxiety when dining out. Preset calories and macros for common meals in seconds."
+          },
+          "average": {
+            "tag": "04 // Rolling Average",
+            "title": "Effortless Average",
+            "desc": "Default to regular intake. Smooth out daily fluid retention and fluctuations with 7-day and 30-day averages."
+          }
+        },
+        "metrics": {
+          "foodDb": {
+            "label": "Food Library",
+            "value": "420+",
+            "unit": "items",
+            "desc": "Raw weight baseline, zero cooked variance"
+          },
+          "recipes": {
+            "label": "Custom Recipes",
+            "value": "∞",
+            "unit": "Custom",
+            "desc": "Pure ID references, zero snapshot drift"
+          },
+          "oil": {
+            "label": "Cooking Blackbox",
+            "value": "0",
+            "unit": "Hidden Oils",
+            "desc": "Explicit oil metering, zero blindspots"
+          }
+        },
+        "windowBar": {
+          "module": "Nutrition Metrics",
+          "synced": "Synced"
+        }
+      },
+      "workout": {
+        "tag": "[ 02 / Workout ]",
+        "titleLine1": "Strength Biomechanics & Sets.",
+        "titleLine2": "Anatomy Heatmaps, Effective Sets & Pure Math e1RM.",
+        "desc": "Strict separation of warm-up and working sets. Accurate weight and reps with battle-tested Brzycki / Epley e1RM formulas and weekly effective volume distribution."
+      },
+      "body": {
+        "tag": "[ 03 / Body ]",
+        "titleLine1": "Filter Fluid Noise, Reveal Real Progress.",
+        "titleLine2": "7-Day Smoothed EMA, Body Circumferences & Objective Trends.",
+        "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. Zenfit filters out noise with mathematical smoothing while tracking body circumferences."
+      },
+      "analytics": {
+        "tag": "[ 04 / Analytics ]",
+        "titleLine1": "Zero Blackbox AI Inside.",
+        "titleLine2": "Full Freedom Outside.",
+        "desc": "No unverified AI scores or ratings. Zenfit provides instant objective metrics and formats them cleanly: export structured text for ChatGPT / Claude, or generate crisp high-resolution images."
+      },
+      "sync": {
+        "tag": "[ 05 / Sync ]",
+        "titleLine1": "Data 100% Yours. Snappy Offline.",
+        "titleLine2": "Full Offline Operation, Private Dropbox Sync & Single-File Backup.",
+        "desc": "Your physiological data never passes through third-party cloud servers. Sync peer-to-peer with your personal Dropbox account, fully functional offline."
+      },
+      "principles": {
+        "tag": "[ 06 / Principles ]",
+        "titleLine1": "Zero Anxiety Engineering.",
+        "titleLine2": "No Social Feeds, No Streak Shaming, No Preaching, No Blackboxes.",
+        "desc": "You don't need an app to nag you, preach, or compare you to others. Zenfit removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp instrument.",
+        "items": {
+          "item1": {
+            "tag": "01 // No In-App AI Grading or Prescriptions",
+            "title": "No Blackbox Lectures or Judgments",
+            "desc": "We never tell you that you ate too little, too much, or slipped up. No shaming red warning cards. The app is an objective mirror—100% of decisions belong to you.",
+            "legacyTitle": "Traditional AI Grading",
+            "legacyBad": "“⚠️ Major Overconsumption! -15 pts, cut dinner carbs”",
+            "factTitle": "Objective Reality",
+            "factGood": "2,150 / 2,200"
+          },
+          "item2": {
+            "tag": "02 // No Social Feeds or Peer Pressure",
+            "title": "Zero Peer Anxiety or Feed Noise",
+            "desc": "No discovery feed, no leaderboard, no comparisons. Quantified self is a serious dialogue between you and physics. You never need to perform discipline.",
+            "legacyTitle": "National Rank #42",
+            "legacyBad": "“Day 100 streak! Work hard, shine bright ✨”",
+            "factTitle": "Private Space",
+            "factGood": "Bench Press e1RM 120 kg"
+          },
+          "item3": {
+            "tag": "03 // No Mandatory Streaks or Punishments",
+            "title": "True Discipline Needs No Shame Mechanism",
+            "desc": "No broken streak alerts or red badge urgency. If you logged today, that is a fact. If you didn't, tomorrow opens to the same clean, ready tool.",
+            "legacyTitle": "Streak Broken!",
+            "legacyBad": "“Streak broken! Watch an ad or spend 50 gems to restore”",
+            "factTitle": "Calmly on Standby",
+            "factGood": "Logged or not, facts are facts"
+          },
+          "item4": {
+            "tag": "04 // No Vague Dish Calorie Estimates",
+            "title": "Reject the “1 Bowl Beef Noodles = 750 kcal” Lie",
+            "desc": "Dish guessing is riddled with unpredictable cooking oil and water absorption bias. Zenfit grounds everything in raw ingredient constants.",
+            "legacyTitle": "1 Bowl Beef Noodles = 750 kcal?",
+            "legacyBad": "“Hidden oil 30g? 250% water absorption?”",
+            "factTitle": "Atomic Ingredient Breakdown (Raw)",
+            "factLine1": "Beef Shank 150g · Noodles 80g",
+            "factLine2": "+ Olive Oil 8g (Explicit)"
+          }
+        }
+      },
+      "tech": {
+        "tag": "[ 07 / Tech ]",
+        "titleLine1": "Reliable Through Radical Restraint.",
+        "titleLine2": "Zero Dependencies, Pure Client Math, Indestructible Data.",
+        "desc": "No bloated tracking SDKs or heavy frameworks. Pure mathematical functions and 100% unit test coverage guarantee deterministic execution.",
+        "cards": {
+          "speed": {
+            "title": "01 / Speed & Fluidity",
+            "point1Title": "Zero Waiting Time",
+            "point1Desc": "Code and data execute locally. No spinners, no network latency.",
+            "point2Title": "Solid Reliability",
+            "point2Desc": "Strict TypeScript typing eliminates runtime crashes and surprises.",
+            "point3Title": "Mobile-First Polish",
+            "point3Desc": "Carefully tuned for mobile screens. Stable viewports, no layout jumps."
+          },
+          "safety": {
+            "title": "02 / Indestructible Data",
+            "point1Title": "Native Local Storage",
+            "point1Desc": "Data stays on your hardware with persistent storage protection.",
+            "point2Title": "Smooth Schema Migrations",
+            "point2Desc": "Automatic safe migrations during app updates. Never lose history.",
+            "point3Title": "Referential Consistency",
+            "point3Desc": "Pure ID references for foods and workouts. Clean normalized relations."
+          },
+          "math": {
+            "title": "03 / Pure Math & Rigor",
+            "point1Title": "Transparent Algorithms",
+            "point1Desc": "e1RM, EMA weight trends, and energy ratios computed with pure math.",
+            "point2Title": "540+ Unit Tests",
+            "point2Desc": "Guaranteed 100% passing test suite covering edge cases.",
+            "point3Title": "Zero Behavioral Interference",
+            "point3Desc": "Presents objective physiological facts without unsolicited ratings."
+          }
+        }
+      },
+      "footer": {
+        "license": "MIT License · Local-First Architecture · 2026"
+      },
+      "diagram": {
+        "localExport": "Local Export",
+        "phone": "Mobile",
+        "desktop": "Desktop",
+        "tablet": "Tablet",
+        "bidirectionalSync": "Bidirectional Delta Sync",
+        "personalDropbox": "Personal Dropbox",
+        "oauthPkce": "Direct OAuth 2.0 PKCE",
+        "dataSovereignty": "100% Local Ownership · Free to Migrate"
+      },
+      "deck": {
+        "foodDetails": "Food Details",
+        "dietMetrics": "Nutrition Metrics",
+        "dashboard": "Dashboard",
+        "synced": "Synced",
+        "rawFoodHud": "Raw Ingredient Baseline",
+        "active": "Active",
+        "chickenBreast": "Chicken Breast",
+        "highProtein": "High Protein",
+        "totalIntake": "Total Intake",
+        "frequency": "Frequency",
+        "timesUnit": "times",
+        "singleDayMax": "Daily Max",
+        "matrixTitle": "Intake Heatmap (7-Week Trend)",
+        "benchmarkTitle": "Physical Constants (per 100g raw)",
+        "calories": "Calories",
+        "carbs": "Carbs",
+        "protein": "Protein",
+        "fat": "Fat"
+      },
+      "shareCards": {
+        "imageTitle": "High-Density Graphic Export",
+        "imageDesc": "High-contrast vector export recording body, workouts, and raw foods without compression loss.",
+        "textTitle": "Structured AI Prompt",
+        "textDesc": "Clean noise-free Markdown with daily metrics and sets, ready to paste into Claude or ChatGPT.",
+        "jsonTitle": "Pure Structured JSON",
+        "jsonDesc": "100% open standardized data schema including energy balance and workouts for automated scripts."
+      },
+      "themeToggle": "Toggle light/dark mode",
+      "demoData": {
+        "greeting": "Good evening, Noah",
+        "inclineBenchPress": "Incline Barbell Bench Press",
+        "flatDumbbellPress": "Flat Dumbbell Bench Press",
+        "pullUp": "Pull-up",
+        "barbellRow": "Barbell Row",
+        "dumbbellBenchPress": "Dumbbell Bench Press",
+        "dumbbellReverseFly": "Dumbbell Reverse Fly",
+        "dumbbell": "Dumbbell",
+        "balanced": "Balanced",
+        "chickenBreast": "Skinless Chicken Breast",
+        "rolledOats": "Rolled Oats",
+        "wholeEggs": "Whole Eggs",
+        "beefTenderloin": "Beef Tenderloin",
+        "brownRice": "Brown Rice",
+        "oliveOil": "Olive Oil",
+        "tomatoBeefRice": "Tomato Beef Brown Rice",
+        "regularDinner": "Regular Dinner",
+        "historicalAverage": "Historical Average",
+        "snackOatLatte": "Oat Milk Latte (L · Sugar-Free)",
+        "banana": "Banana",
+        "routineChestBack": "Chest & Upper Back",
+        "moderateActivity": "Moderate Activity (3-5 sessions/week)",
+        "servingUnit": "serving"
       }
     }
   }
