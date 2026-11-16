@@ -88,9 +88,6 @@ export function MealActionMenuContent({
             <span className="text-xs font-medium text-foreground tracking-tight">
               {t('diet.actionMenu.copyTitle', '複製餐點')}
             </span>
-            <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 leading-none">
-              {t('diet.actionMenu.copyTag', '省時')}
-            </span>
           </div>
           <div className="text-2xs text-muted-foreground leading-normal mt-0.5 truncate">
             {t('diet.actionMenu.copyDesc', '套用昨日或歷史餐點')}
@@ -114,9 +111,6 @@ export function MealActionMenuContent({
           <div className="flex items-center gap-1.5 leading-tight">
             <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
               {t('diet.actionMenu.placeholderTitle', '快速估算')}
-            </span>
-            <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-blue-500/70 bg-blue-500/5 border border-blue-500/15 leading-none">
-              {t('diet.actionMenu.placeholderTag', '佔位')}
             </span>
           </div>
           <div className="text-2xs text-muted-foreground/60 leading-normal mt-0.5 truncate">

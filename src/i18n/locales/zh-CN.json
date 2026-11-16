@@ -109,6 +109,7 @@
         "namePlaceholder": "备注",
         "defaultName": "快速估算",
         "badge": "估算",
+        "asPlannedBadge": "推算",
         "modeCalories": "纯热量 (kcal)",
         "modeMacros": "三大元素 (C/P/F)",
         "tapToEdit": "点击修改",

@@ -109,6 +109,7 @@
         "namePlaceholder": "Note",
         "defaultName": "Quick Estimate",
         "badge": "Est.",
+        "asPlannedBadge": "Avg.",
         "modeCalories": "Calories (kcal)",
         "modeMacros": "Macros (C/P/F)",
         "tapToEdit": "Tap to edit",

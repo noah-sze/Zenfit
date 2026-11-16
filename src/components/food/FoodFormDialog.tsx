@@ -12,12 +12,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import type { FoodItem, FoodCategory } from '@/types';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn, formatDisplayAmount } from '@/lib/utils';
+import { useFoods } from '@/hooks/useFoods';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
 import { convertFoodWeight, convertFoodVolume } from '@/utils/unitMath';
+import { matchesMultilingual } from '@/utils/multilingualSearch';
 import { ChevronRight } from 'lucide-react';
 
 type KeypadField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
@@ -90,6 +93,42 @@ export function FoodFormDialog({
   const [name, setName] = useState('');
   const [category, setCategory] = useState<FoodCategory>('natural');
   const [brand, setBrand] = useState('');
+  const [isBrandFocused, setIsBrandFocused] = useState(false);
+  const [brandHighlightIdx, setBrandHighlightIdx] = useState(-1);
+  const brandInputRef = useRef<HTMLInputElement>(null);
+  const { allFoods } = useFoods();
+
+  // 提取既有品牌清單（依使用頻次排序、大小寫去重）
+  const existingBrands = useMemo(() => {
+    const counts = new Map<string, { label: string; count: number }>();
+    for (const f of allFoods) {
+      const raw = f.brand?.trim();
+      if (!raw) continue;
+      const key = raw.toLowerCase();
+      const prev = counts.get(key);
+      if (prev) {
+        prev.count += 1;
+      } else {
+        counts.set(key, { label: raw, count: 1 });
+      }
+    }
+    return Array.from(counts.values())
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+      .map((entry) => entry.label);
+  }, [allFoods]);
+
+  // 依輸入內容進行簡繁與拼音首字母聯想過濾
+  const brandSuggestions = useMemo(() => {
+    const q = brand.trim();
+    if (!q) return existingBrands;
+    const matched = existingBrands.filter((b) => matchesMultilingual(q, { name: b }));
+    if (matched.length === 1 && matched[0].toLowerCase() === q.toLowerCase()) {
+      return [];
+    }
+    return matched;
+  }, [brand, existingBrands]);
+
+  const showBrandSuggestions = open && isBrandFocused && brandSuggestions.length > 0;
 
   // 品牌與名稱輸入框自適應寬度 (精確等於輸入文字長度，風格 A：純粹名詞「品牌」)
   const brandPlaceholder = t('diet.brand');
@@ -589,11 +628,48 @@ export function FoodFormDialog({
               <div className="h-10 px-4 flex items-center justify-between gap-2 bg-card">
                 <span className="text-muted-foreground text-xs shrink-0">{t('diet.foodName')}</span>
                 <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end font-sans">
-                  {/* 品牌 (選填) - 長度自適應之膠囊輸入框 */}
+                  {/* 品牌 (選填) - 長度自適應之膠囊輸入框（含既有品牌聯想） */}
                   <input
+                    ref={brandInputRef}
                     type="text"
                     value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
+                    onFocus={() => {
+                      setIsBrandFocused(true);
+                      setBrandHighlightIdx(-1);
+                    }}
+                    onBlur={() => setIsBrandFocused(false)}
+                    onChange={(e) => {
+                      setBrand(e.target.value);
+                      setIsBrandFocused(true);
+                      setBrandHighlightIdx(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (!showBrandSuggestions) return;
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setBrandHighlightIdx((prev) =>
+                          prev < brandSuggestions.length - 1 ? prev + 1 : 0
+                        );
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setBrandHighlightIdx((prev) =>
+                          prev > 0 ? prev - 1 : brandSuggestions.length - 1
+                        );
+                      } else if (e.key === 'Enter' && brandHighlightIdx >= 0) {
+                        e.preventDefault();
+                        const chosen = brandSuggestions[brandHighlightIdx];
+                        if (chosen) {
+                          triggerHaptic('selection');
+                          setBrand(chosen);
+                          setIsBrandFocused(false);
+                          setBrandHighlightIdx(-1);
+                        }
+                      } else if (e.key === 'Escape') {
+                        e.stopPropagation();
+                        setIsBrandFocused(false);
+                        setBrandHighlightIdx(-1);
+                      }
+                    }}
                     placeholder={brandPlaceholder}
                     style={{ width: `${brandWidth}px` }}
                     className="h-7 px-2.5 rounded-full border border-border/80 bg-background text-center text-xs font-sans text-muted-foreground focus:text-foreground focus:outline-none placeholder:text-muted-foreground/40 focus:border-foreground transition-all duration-100"
@@ -845,6 +921,52 @@ export function FoodFormDialog({
         titleClassName={keypadConfig.titleClassName || keypadConfig.valueClassName}
       />
     )}
+
+    {/* 品牌聯想選擇浮層 (平級兄弟節點，避免撐大彈窗高度與干擾輸入焦點) */}
+    <Popover
+      open={showBrandSuggestions}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setIsBrandFocused(false);
+          setBrandHighlightIdx(-1);
+        }
+      }}
+    >
+      {brandInputRef.current && showBrandSuggestions && (
+        <PopoverContent
+          anchor={brandInputRef.current}
+          side="bottom"
+          align="end"
+          sideOffset={6}
+          initialFocus={false}
+          finalFocus={false}
+          positionerClassName="z-[95]"
+          className="w-44 p-1 gap-0.5 max-h-44 overflow-y-auto no-scrollbar rounded-lg border border-border bg-popover text-popover-foreground shadow-none"
+        >
+          {brandSuggestions.map((b, idx) => (
+            <button
+              key={b}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                triggerHaptic('selection');
+                setBrand(b);
+                setIsBrandFocused(false);
+                setBrandHighlightIdx(-1);
+              }}
+              className={cn(
+                'w-full px-2.5 py-1.5 rounded text-left text-xs font-sans truncate transition-colors cursor-pointer',
+                idx === brandHighlightIdx
+                  ? 'bg-hover text-foreground font-medium'
+                  : 'text-foreground/90 hover:bg-hover'
+              )}
+            >
+              {b}
+            </button>
+          ))}
+        </PopoverContent>
+      )}
+    </Popover>
     </>
   );
 }

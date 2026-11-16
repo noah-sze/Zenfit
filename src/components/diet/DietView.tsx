@@ -465,6 +465,9 @@ export function DietView({
                   });
                   const isLowCalorie = evalRes.labels.includes('low-calorie');
                   const isHighCalorie = evalRes.labels.includes('high-calorie');
+                  const isEstimateEntry = item.entryType === 'estimate' || Boolean(item.isPlaceholder);
+                  const isAsPlannedEntry = item.entryType === 'as_planned' || Boolean(item.isAsPlanned);
+                  const isSystemEntry = isEstimateEntry || isAsPlannedEntry;
 
                   return (
                     <div
@@ -472,7 +475,7 @@ export function DietView({
                       onClick={() => {
                         if (!interactive) return;
                         triggerHaptic('selection');
-                        if (item.entryType === 'estimate' || item.isPlaceholder) {
+                        if (isEstimateEntry) {
                           onEditPlaceholderLog?.(item);
                         } else {
                           onEditFoodLog?.(item);
@@ -483,54 +486,51 @@ export function DietView({
                         interactive ? 'hover:bg-hover cursor-pointer' : 'cursor-default'
                       )}
                     >
-                      {/* 左側：系統圖標（如有）、品名與份量熱量副標 */}
-                      <div className="flex-1 min-w-0 pr-3 select-none flex items-center gap-3">
-                        {(item.entryType === 'as_planned' || item.isAsPlanned) && (
-                          <div
-                            className="size-9 rounded-md border border-border bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0"
-                            aria-hidden="true"
-                          >
-                            <History className="size-4 stroke-[1.75]" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate text-foreground font-medium text-sm flex items-center gap-1.5">
-                            {(item.entryType === 'estimate' || item.isPlaceholder) && (
-                              <span className="px-1.5 py-0.5 rounded-md border border-border bg-muted/60 text-muted-foreground text-[10px] font-mono font-medium shrink-0 leading-none flex items-center gap-1 shadow-none select-none">
-                                <Zap className="size-2.5 stroke-[2.2]" />
-                                <span>{t('diet.placeholder.badge', '估算')}</span>
-                              </span>
-                            )}
-                            <span className="truncate">
-                              {resolveFoodLogTitle(item, t)}
-                            </span>
-                          </div>
-                          <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
-                            {item.entryType === 'estimate' || item.entryType === 'as_planned' || item.isPlaceholder || item.isAsPlanned ? (
-                              <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
-                            ) : (
-                              <>
+                      {/* 左側：品名與份量熱量副標 (系統推算條目維持與實秤食物一致的左緣對齊) */}
+                      <div className="flex-1 min-w-0 pr-3 select-none">
+                        <div className="truncate text-foreground font-medium text-sm">
+                          {resolveFoodLogTitle(item, t)}
+                        </div>
+                        <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+                          {isSystemEntry ? (
+                            <>
+                              <span className="inline-flex items-center gap-1 shrink-0">
+                                {isEstimateEntry ? (
+                                  <Zap className="size-3 stroke-[1.8]" />
+                                ) : (
+                                  <History className="size-3 stroke-[1.8]" />
+                                )}
                                 <span>
-                                  {formatFoodServing(item.quantity || 0, item.unit || 'g', foodWeightUnit, foodVolumeUnit).formatted}
+                                  {isEstimateEntry
+                                    ? t('diet.placeholder.badge', '估算')
+                                    : t('diet.placeholder.asPlannedBadge', '推算')}
                                 </span>
-                                <span className="text-border">·</span>
-                                <span
-                                  className={cn(
-                                    isLowCalorie &&
-                                      'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
-                                    isHighCalorie &&
-                                      'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
-                                  )}
-                                >
-                                  {formatEnergy(item.calories || 0, energyUnit).formatted}
-                                </span>
-                              </>
-                            )}
-                          </div>
+                              </span>
+                              <span className="text-border">·</span>
+                              <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>
+                                {formatFoodServing(item.quantity || 0, item.unit || 'g', foodWeightUnit, foodVolumeUnit).formatted}
+                              </span>
+                              <span className="text-border">·</span>
+                              <span
+                                className={cn(
+                                  isLowCalorie &&
+                                    'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
+                                  isHighCalorie &&
+                                    'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
+                                )}
+                              >
+                                {formatEnergy(item.calories || 0, energyUnit).formatted}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
 
-                      {/* 右側：MacroSquares 矩陣 (首頁採用方案 A 柔和微光) */}
+                      {/* 右側：MacroSquares 矩陣 (首頁採用方案 A 柔和微光，系統推算條目採虛線邊框) */}
                       <div className="flex items-center shrink-0">
                         <MacroSquares
                           protein={item.protein || 0}
@@ -538,6 +538,7 @@ export function DietView({
                           fat={item.fat || 0}
                           highlights={evalRes.highlights}
                           variant="subtle"
+                          dashed={isSystemEntry}
                         />
                       </div>
                     </div>

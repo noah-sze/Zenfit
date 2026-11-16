@@ -15,6 +15,7 @@ export interface MacroSquaresProps {
   fat: number;
   highlights?: MacroHighlights;
   variant?: 'default' | 'subtle';
+  dashed?: boolean;
   className?: string;
 }
 
@@ -34,6 +35,7 @@ export const MacroSquares = React.memo(function MacroSquares({
   fat,
   highlights,
   variant = 'default',
+  dashed = false,
   className,
 }: MacroSquaresProps) {
   const { t } = useTranslation();
@@ -56,6 +58,7 @@ export const MacroSquares = React.memo(function MacroSquares({
       <div
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
+          dashed && "border-dashed",
           resolvedHighlights?.carbs
             ? isSubtle
               ? "border-carbs-subtle-border bg-carbs-subtle-bg text-foreground shadow-none"
@@ -84,6 +87,7 @@ export const MacroSquares = React.memo(function MacroSquares({
       <div
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
+          dashed && "border-dashed",
           resolvedHighlights?.protein
             ? isSubtle
               ? "border-protein-subtle-border bg-protein-subtle-bg text-foreground shadow-none"
@@ -112,6 +116,7 @@ export const MacroSquares = React.memo(function MacroSquares({
       <div
         className={cn(
           "w-11 py-1 px-0.5 rounded border transition-all overflow-hidden",
+          dashed && "border-dashed",
           resolvedHighlights?.fat
             ? isSubtle
               ? "border-fat-subtle-border bg-fat-subtle-bg text-foreground shadow-none"
