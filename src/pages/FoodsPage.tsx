@@ -69,8 +69,8 @@ export default function FoodsPage() {
       {isDetailOpen && (
         <div className="fixed inset-x-0 bottom-0 top-14 z-30 bg-background overflow-y-auto no-scrollbar">
           <div className="w-full max-w-xl mx-auto px-4 py-4 pb-8">
-            {isFoodDetail && <CategoryDetails id={activeId} />}
-            {isRecipeDetail && <RecipeDetails id={activeId} />}
+            {isFoodDetail && <CategoryDetails key={activeId} id={activeId} />}
+            {isRecipeDetail && <RecipeDetails key={activeId} id={activeId} />}
           </div>
         </div>
       )}

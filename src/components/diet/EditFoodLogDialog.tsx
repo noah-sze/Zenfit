@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import {
   Dialog,
   PrecisionDialogContent,
@@ -48,7 +48,7 @@ export function EditFoodLogDialog({
   onDelete,
 }: EditFoodLogDialogProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const pushSubView = useInAppNavigation((s) => s.pushSubView);
   const { energyUnit } = useUnitPreferences();
 
   // 本地狀態：用量與基準食材資訊
@@ -227,7 +227,7 @@ export function EditFoodLogDialog({
     if (!canNavigateToFood || !log.foodId) return;
     triggerHaptic('selection');
     onOpenChange(false);
-    navigate(`/settings/foods/${log.foodId}`);
+    pushSubView({ type: 'foods', id: log.foodId, mode: 'foods' });
   };
 
   return (

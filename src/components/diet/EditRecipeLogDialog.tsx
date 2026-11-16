@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronRight } from 'lucide-react';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import {
   Dialog,
   PrecisionDialogContent,
@@ -60,7 +60,7 @@ export function EditRecipeLogDialog({
   onDeleteBundle,
 }: EditRecipeLogDialogProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const pushSubView = useInAppNavigation((s) => s.pushSubView);
   const { energyUnit, foodWeightUnit, foodVolumeUnit } = useUnitPreferences();
 
   const [ingredients, setIngredients] = useState<EditableRecipeIngredient[]>([]);
@@ -358,7 +358,7 @@ export function EditRecipeLogDialog({
     if (!hasRecipeInDb || !bundleId) return;
     triggerHaptic('selection');
     onOpenChange(false);
-    navigate(`/settings/recipes/${bundleId}`);
+    pushSubView({ type: 'foods', id: bundleId, mode: 'recipes' });
   };
 
   return (

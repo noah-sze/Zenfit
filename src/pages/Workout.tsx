@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { useAppStore } from '@/store/useAppStore';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyRecovery } from '@/hooks/useBodyRecovery';
@@ -521,10 +521,19 @@ export default function Workout() {
                     <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {workout.routineId ? (
-                          <Link
-                            to={`/settings/routines/${workout.routineId}`}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!workout.routineId) return;
+                              triggerHaptic('light');
+                              useInAppNavigation.getState().pushSubView({
+                                type: 'exercises',
+                                id: workout.routineId,
+                                mode: 'routines',
+                              });
+                            }}
                             className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none shrink-0"
-                          >{workout.title}</Link>
+                          >{workout.title}</button>
                         ) : (
                           <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">{workout.title}</span>
                         )}

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
@@ -334,8 +334,14 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
     }
   }, [headerActionEl]);
 
+  useEffect(() => {
+    if (!id || (!isRecipesLoading && !isFoodsLoading && (!recipe || !standardTotals))) {
+      goBack();
+    }
+  }, [id, isRecipesLoading, isFoodsLoading, recipe, standardTotals, goBack]);
+
   if (!id) {
-    return <Navigate to="/settings/recipes" replace />;
+    return null;
   }
 
   if (isRecipesLoading || isFoodsLoading) {
@@ -347,7 +353,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
   }
 
   if (!recipe || !standardTotals) {
-    return <Navigate to="/settings/recipes" replace />;
+    return null;
   }
 
   return (

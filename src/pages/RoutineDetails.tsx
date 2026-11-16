@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -407,10 +408,20 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
               ][];
 
               return (
-                <Link
+                <button
                   key={idx}
-                  to={ex ? `/settings/exercises/${ex.id}` : '#'}
-                  className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
+                  type="button"
+                  disabled={!ex}
+                  onClick={() => {
+                    if (!ex) return;
+                    triggerHaptic('light');
+                    useInAppNavigation.getState().pushSubView({
+                      type: 'exercises',
+                      id: ex.id,
+                      mode: 'exercises',
+                    });
+                  }}
+                  className="w-full p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group text-left disabled:cursor-default disabled:hover:bg-transparent"
                 >
                   <div className="space-y-1 min-w-0 flex-1 pr-2">
                     <div className="flex items-center gap-2">
@@ -434,7 +445,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
                     </div>
                   </div>
                   <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
-                </Link>
+                </button>
               );
             })
           )}

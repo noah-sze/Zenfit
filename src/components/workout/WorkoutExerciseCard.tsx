@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { Plus, ChevronRight } from 'lucide-react';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { triggerHaptic } from '@/lib/haptics';
 import { HoldToDeleteIconButton } from '@/components/ui/HoldToDeleteIconButton';
 import { cn } from '@/lib/utils';
 import { kgToLbs } from '@/utils/unitMath';
@@ -53,12 +54,20 @@ export function WorkoutExerciseCard({
       <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
         <div className="flex items-center gap-1.5 min-w-0">
           {exerciseId && interactive ? (
-            <Link
-              to={`/settings/exercises/${exerciseId}`}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                useInAppNavigation.getState().pushSubView({
+                  type: 'exercises',
+                  id: exerciseId,
+                  mode: 'exercises',
+                });
+              }}
               className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none shrink-0"
             >
               {exerciseName}
-            </Link>
+            </button>
           ) : (
             <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">
               {exerciseName}

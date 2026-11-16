@@ -68,8 +68,8 @@ export default function ExercisesPage() {
       {isDetailOpen && (
         <div className="fixed inset-x-0 bottom-0 top-14 z-30 bg-background overflow-y-auto no-scrollbar">
           <div className="w-full max-w-xl mx-auto px-4 py-4 pb-8">
-            {isExerciseDetail && <ExerciseDetails id={activeId} />}
-            {isRoutineDetail && <RoutineDetails id={activeId} />}
+            {isExerciseDetail && <ExerciseDetails key={activeId} id={activeId} />}
+            {isRoutineDetail && <RoutineDetails key={activeId} id={activeId} />}
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
@@ -216,7 +216,13 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
     });
   }, [foodLogs, overviewPeriod, totalWeeks]);
 
-  if (!id) return <Navigate to="/settings/foods" />;
+  useEffect(() => {
+    if (!id || (!isLoading && !food)) {
+      goBack();
+    }
+  }, [id, isLoading, food, goBack]);
+
+  if (!id) return null;
 
   if (isLoading) {
     return (
@@ -227,7 +233,7 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
   }
 
   if (!food) {
-    return <Navigate to="/settings/foods" />;
+    return null;
   }
 
   return (

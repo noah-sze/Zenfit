@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -323,10 +324,18 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
             </div>
           ) : (
             relatedRoutines.map((routine) => (
-              <Link
+              <button
                 key={routine.id}
-                to={`/settings/routines/${routine.id}`}
-                className="p-3.5 flex items-center justify-between hover:bg-hover transition-colors group cursor-pointer"
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  useInAppNavigation.getState().pushSubView({
+                    type: 'exercises',
+                    id: routine.id,
+                    mode: 'routines',
+                  });
+                }}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-hover transition-colors group cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
                   <Layers className="size-4 text-muted-foreground" />
@@ -338,7 +347,7 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
                   <span>{t('workout.exerciseCount', { count: routine.exercises.length })}</span>
                   <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
                 </div>
-              </Link>
+              </button>
             ))
           )}
         </div>
