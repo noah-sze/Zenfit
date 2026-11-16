@@ -210,38 +210,24 @@ export function resolvePlaceholderDisplayName(
     return item.customTitle.trim();
   }
 
-  if (item.scenario && DINING_SCENARIOS[item.scenario as DiningScenarioId]) {
-    const sc = DINING_SCENARIOS[item.scenario as DiningScenarioId];
-    return t(sc.nameKey, sc.defaultName);
-  }
-
+  const defaultEstimateTitle = t('diet.placeholder.defaultName', '快速估算');
   const rawName = item.foodName?.trim() || '';
-  const isLegacy =
+  const isGenericOrScenario =
     !rawName ||
     rawName === '快速估算' ||
     rawName === '快速粗估' ||
     rawName === 'Quick Estimate' ||
     rawName === t('diet.placeholder.title', '快速估算') ||
-    rawName === t('diet.placeholder.defaultName', '快速估算');
-
-  if (isLegacy) {
-    const scenario = inferDiningScenario(
-      item.calories || 0,
-      item.carbs,
-      item.protein,
-      item.fat
+    rawName === defaultEstimateTitle ||
+    Object.values(DINING_SCENARIOS).some(
+      (sc) =>
+        sc.id === rawName ||
+        sc.defaultName === rawName ||
+        t(sc.nameKey, sc.defaultName) === rawName
     );
-    return t(scenario.nameKey, scenario.defaultName);
-  }
 
-  const matchingScenario = Object.values(DINING_SCENARIOS).find(
-    (sc) =>
-      sc.id === rawName ||
-      sc.defaultName === rawName ||
-      t(sc.nameKey, sc.defaultName) === rawName
-  );
-  if (matchingScenario) {
-    return t(matchingScenario.nameKey, matchingScenario.defaultName);
+  if (isGenericOrScenario) {
+    return defaultEstimateTitle;
   }
 
   return rawName;
@@ -277,15 +263,7 @@ export function resolveFoodLogTitle(
   }
 
   if (log.entryType === 'estimate' || log.isPlaceholder) {
-    if (log.scenario && DINING_SCENARIOS[log.scenario as DiningScenarioId]) {
-      const scenario = DINING_SCENARIOS[log.scenario as DiningScenarioId];
-      return t(scenario.nameKey, scenario.defaultName);
-    }
-    if (log.foodName) {
-      return resolvePlaceholderDisplayName(log, t);
-    }
-    const scenario = inferDiningScenario(log.calories, log.carbs, log.protein, log.fat);
-    return t(scenario.nameKey, scenario.defaultName);
+    return resolvePlaceholderDisplayName(log, t);
   }
 
   // 若提供食材實體，優先格式化展示名稱

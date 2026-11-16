@@ -73,6 +73,8 @@ describe('resolveFoodLogTitle (系統分類條目動態解析)', () => {
   const mockT = (key: string, defaultValue?: string) => {
     const dict: Record<string, string> = {
       'diet.asPlanned.defaultName': '歷史均值',
+      'diet.placeholder.defaultName': '快速估算',
+      'diet.placeholder.title': '快速估算',
       'diet.placeholder.scenarioBalanced': '常規',
       'diet.placeholder.scenarioHotpot': '火鍋',
       'diet.placeholder.scenarioBento': '便當',
@@ -156,7 +158,7 @@ describe('resolveFoodLogTitle (系統分類條目動態解析)', () => {
     ).toBe('Past Average');
   });
 
-  it('estimate 條目應依據 scenario 返回對應多語系場景名稱', () => {
+  it('estimate 條目無備註時，應返回多語系快速估算', () => {
     expect(
       resolveFoodLogTitle(
         {
@@ -170,7 +172,7 @@ describe('resolveFoodLogTitle (系統分類條目動態解析)', () => {
         },
         mockT as any
       )
-    ).toBe('火鍋');
+    ).toBe('快速估算');
 
     expect(
       resolveFoodLogTitle(
@@ -185,11 +187,10 @@ describe('resolveFoodLogTitle (系統分類條目動態解析)', () => {
         },
         mockT as any
       )
-    ).toBe('便當');
+    ).toBe('快速估算');
   });
 
-  it('舊版 isPlaceholder 資料若無 scenario，應依宏量比例動態推斷', () => {
-    // 高脂高蛋白火鍋比例 (C: 10g, P: 30g, F: 50g)
+  it('舊版 isPlaceholder 資料若無備註，應返回多語系快速估算', () => {
     expect(
       resolveFoodLogTitle(
         {
@@ -206,7 +207,7 @@ describe('resolveFoodLogTitle (系統分類條目動態解析)', () => {
         },
         mockT as any
       )
-    ).toBe('火鍋');
+    ).toBe('快速估算');
   });
 
   it('實體食材 (entryType === item 或無 entryType) 應返回食材名稱', () => {
