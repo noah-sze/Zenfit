@@ -51,4 +51,38 @@ describe('useInAppNavigation', () => {
     useInAppNavigation.getState().popSubView();
     expect(useInAppNavigation.getState().subViewStack).toEqual([]);
   });
+
+  it('pushSubView 遇見棧內已存在目標時應去重回捲而非無限疊加', () => {
+    const mockPushState = vi.fn();
+    const mockGo = vi.fn();
+    (globalThis as any).window = {
+      history: {
+        pushState: mockPushState,
+        go: mockGo,
+        state: { zenfitSubViewDepth: 3 },
+      },
+    };
+
+    useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'ex-1', mode: 'exercises' });
+    useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'rt-1', mode: 'routines' });
+    useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'ex-2', mode: 'exercises' });
+    expect(useInAppNavigation.getState().subViewStack.length).toBe(3);
+    expect(mockPushState).toHaveBeenCalledTimes(3);
+
+    // 點擊棧頂相同目標：不應推入也不應呼叫 go
+    useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'ex-2', mode: 'exercises' });
+    expect(mockPushState).toHaveBeenCalledTimes(3);
+    expect(mockGo).not.toHaveBeenCalled();
+
+    // 從 ex-2 回到已存在於 index 0 的 ex-1：應回捲 2 層
+    useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'ex-1', mode: 'exercises' });
+    expect(mockPushState).toHaveBeenCalledTimes(3);
+    expect(mockGo).toHaveBeenCalledWith(-2);
+
+    // truncateSubViews 應精確截斷至目標深度
+    useInAppNavigation.getState().truncateSubViews(1);
+    expect(useInAppNavigation.getState().subViewStack).toEqual([
+      { type: 'exercises', id: 'ex-1', mode: 'exercises' },
+    ]);
+  });
 });

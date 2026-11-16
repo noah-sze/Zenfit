@@ -137,11 +137,20 @@ export function AppLayout() {
     }
   }, [activeTab, subViewStack, currentViewKey]);
 
-  // 虛擬歷史記錄橋接：監聽原生 popstate 實現瀏覽器後退鍵攔截
+  // 虛擬歷史記錄橋接：監聽原生 popstate 實現瀏覽器後退鍵與多層回捲同步
   useEffect(() => {
-    const handlePopState = () => {
-      const { subViewStack: stack, popSubView: pop } = useInAppNavigation.getState();
-      if (stack.length > 0) {
+    const handlePopState = (event: PopStateEvent) => {
+      const {
+        subViewStack: stack,
+        popSubView: pop,
+        truncateSubViews,
+      } = useInAppNavigation.getState();
+      if (stack.length === 0) return;
+
+      const targetDepth = event.state?.zenfitSubViewDepth;
+      if (typeof targetDepth === 'number') {
+        truncateSubViews(targetDepth);
+      } else {
         pop();
       }
     };

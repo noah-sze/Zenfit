@@ -16,7 +16,19 @@ interface InAppNavigationState {
   setActiveTab: (tab: AppMainTab) => void;
   pushSubView: (view: InAppSubView) => void;
   popSubView: () => void;
+  truncateSubViews: (depth: number) => void;
   clearSubViews: () => void;
+}
+
+function isSameSubView(a: InAppSubView, b: InAppSubView): boolean {
+  if (a.type !== b.type) return false;
+  if (a.type === 'foods' && b.type === 'foods') {
+    return a.id === b.id && a.mode === b.mode;
+  }
+  if (a.type === 'exercises' && b.type === 'exercises') {
+    return a.id === b.id && a.mode === b.mode;
+  }
+  return true;
 }
 
 export const useInAppNavigation = create<InAppNavigationState>()(
@@ -32,6 +44,26 @@ export const useInAppNavigation = create<InAppNavigationState>()(
 
       pushSubView: (view) => {
         const currentStack = get().subViewStack;
+        const existingIndex = currentStack.findIndex((item) => isSameSubView(item, view));
+
+        // 導航棧去重回捲：若目標視圖已存在於棧中，直接回退至該層級，杜絕 A → B → A → B 無限疊加
+        if (existingIndex !== -1) {
+          const targetDepth = existingIndex + 1;
+          const stepsToPop = currentStack.length - targetDepth;
+          if (stepsToPop <= 0) return;
+
+          if (
+            typeof window !== 'undefined' &&
+            typeof window.history?.go === 'function' &&
+            window.history.state?.zenfitSubViewDepth
+          ) {
+            window.history.go(-stepsToPop);
+          } else {
+            set({ subViewStack: currentStack.slice(0, targetDepth) });
+          }
+          return;
+        }
+
         // 虛擬歷史記錄橋接：推入一筆歷史狀態，但不改變 /app 路徑
         if (typeof window !== 'undefined') {
           window.history.pushState({ zenfitSubViewDepth: currentStack.length + 1 }, '', '/app');
@@ -43,6 +75,14 @@ export const useInAppNavigation = create<InAppNavigationState>()(
         const currentStack = get().subViewStack;
         if (currentStack.length > 0) {
           set({ subViewStack: currentStack.slice(0, -1) });
+        }
+      },
+
+      truncateSubViews: (depth) => {
+        const currentStack = get().subViewStack;
+        const clampedDepth = Math.max(0, Math.min(depth, currentStack.length));
+        if (clampedDepth !== currentStack.length) {
+          set({ subViewStack: currentStack.slice(0, clampedDepth) });
         }
       },
 
