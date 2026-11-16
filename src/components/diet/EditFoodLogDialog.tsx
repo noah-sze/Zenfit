@@ -59,6 +59,13 @@ export function EditFoodLogDialog({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isSystemEntry = Boolean(
+    log?.entryType === 'as_planned' ||
+    log?.entryType === 'estimate' ||
+    log?.isAsPlanned ||
+    log?.isPlaceholder
+  );
+
   // 數字鍵盤狀態
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
   const anchorElRef = useRef<HTMLElement | null>(null);
@@ -68,7 +75,7 @@ export function EditFoodLogDialog({
   // 當 log 變更時同步初始狀態與查詢原食物實體，並預熱詳情頁所需快取
   useEffect(() => {
     if (log && open) {
-      const safeQty = log.quantity ?? 100;
+      const safeQty = isSystemEntry ? (log.quantity ?? 1) : (log.quantity ?? 100);
       setQuantity(safeQty);
       initialQuantityRef.current = safeQty;
 
@@ -76,7 +83,7 @@ export function EditFoodLogDialog({
       void prewarmRecipesCache();
       void prewarmDailyDietLogsCache();
 
-      if (log.foodId) {
+      if (!isSystemEntry && log.foodId) {
         const cached = getInMemoryFoodsCache()?.find((f) => f.id === log.foodId);
         if (cached) {
           setBaseFood(cached);
@@ -92,12 +99,22 @@ export function EditFoodLogDialog({
         setBaseFood(null);
       }
     }
-  }, [log, open]);
+  }, [log, open, isSystemEntry]);
 
   // 動態推算即時營養素 (C -> P -> F 順序)
   const currentMacros = useMemo(() => {
     if (!log) {
       return { calories: 0, carbs: 0, protein: 0, fat: 0 };
+    }
+
+    // 系統條目 (歷史均值 / 快速估算) 無物理克數，直接原樣呈現既有數值，嚴禁等比縮放
+    if (isSystemEntry) {
+      return {
+        calories: Math.round(log.calories || 0),
+        carbs: Math.round((log.carbs || 0) * 10) / 10,
+        protein: Math.round((log.protein || 0) * 10) / 10,
+        fat: Math.round((log.fat || 0) * 10) / 10,
+      };
     }
 
     if (baseFood) {
@@ -113,7 +130,7 @@ export function EditFoodLogDialog({
       protein: Math.round((log.protein || 0) * ratio * 10) / 10,
       fat: Math.round((log.fat || 0) * ratio * 10) / 10,
     };
-  }, [log, baseFood, quantity]);
+  }, [log, isSystemEntry, baseFood, quantity]);
 
   // 供能比比例推算 (供能比標尺：碳水 4kcal/g, 蛋白 4kcal/g, 脂肪 9kcal/g)
   const energyRatios = useMemo(() => {
@@ -168,13 +185,6 @@ export function EditFoodLogDialog({
     }
     onOpenChange(nextOpen);
   };
-
-  const isSystemEntry = Boolean(
-    log?.entryType === 'as_planned' ||
-    log?.entryType === 'estimate' ||
-    log?.isAsPlanned ||
-    log?.isPlaceholder
-  );
 
   // 送出保存
   const handleSubmit = async () => {

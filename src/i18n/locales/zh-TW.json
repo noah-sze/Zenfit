@@ -131,8 +131,8 @@
       },
       "asPlanned": {
         "actionTitle": "歷史均值",
-        "badge": "配額",
-        "badgeLong": "配額",
+        "badge": "歷史均值",
+        "badgeLong": "歷史均值",
         "actionDesc": "套用過去{{meal}}的平均值 · {{calories}}kcal",
         "emptyBtn": "歷史均值 ({{calories}}k)",
         "defaultName": "歷史均值",
@@ -1187,7 +1187,7 @@
           "average": {
             "tag": "04 // 滾動平均",
             "title": "懶得記",
-            "desc": "算我正常吃模式。依 7 日與 30 日歷史攝入自動代入平均預算，客觀平滑水分滯留與單日進食波動。"
+            "desc": "歷史均值模式。依 7 日與 30 日歷史攝入自動代入平均值，客觀平滑水分滯留與單日進食波動。"
           }
         },
         "metrics": {

@@ -868,7 +868,7 @@ function renderMealCard(
 
         let badgeText = '';
         if (item.type === 'estimate') badgeText = '⚡ 估算';
-        if (item.type === 'as_planned') badgeText = '⚡ 配額';
+        if (item.type === 'as_planned') badgeText = '⚡ 歷史均值';
         if (item.type === 'recipe') badgeText = '食譜';
 
         let titleStartX = leftX;

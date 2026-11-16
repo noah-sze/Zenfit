@@ -131,8 +131,8 @@
       },
       "asPlanned": {
         "actionTitle": "Past Average",
-        "badge": "Budget",
-        "badgeLong": "Budget",
+        "badge": "Past Average",
+        "badgeLong": "Past Average",
         "actionDesc": "Apply past average for {{meal}} · {{calories}}kcal",
         "emptyBtn": "Past Average ({{calories}}k)",
         "defaultName": "Past Average",

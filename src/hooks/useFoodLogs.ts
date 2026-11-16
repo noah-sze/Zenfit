@@ -86,7 +86,9 @@ export function useFoodLogs(date: string) {
 
         const displayName = food
           ? formatFoodDisplayName(food)
-          : (log.customTitle || log.foodName || '未知食材');
+          : isSystemEntry
+            ? (log.customTitle || log.foodName || '')
+            : (log.customTitle || log.foodName || '未知食材');
 
         const entryType: FoodLogEntryType =
           log.entryType ||

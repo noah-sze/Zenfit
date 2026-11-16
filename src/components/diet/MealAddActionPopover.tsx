@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, Copy, Zap, Calculator } from 'lucide-react';
+import { Plus, Search, Copy, History, Calculator } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
@@ -132,15 +132,12 @@ export function MealActionMenuContent({
         className="w-full flex items-start gap-2.5 p-2 rounded-md hover:bg-hover active:bg-muted/50 transition-colors text-left cursor-pointer group"
       >
         <div className="size-7 rounded-md bg-muted/40 text-muted-foreground/70 flex items-center justify-center shrink-0 group-hover:text-muted-foreground group-hover:bg-muted/60 transition-colors mt-0.5">
-          <Zap className="size-3.5" />
+          <History className="size-3.5" />
         </div>
         <div className="flex-1 min-w-0 select-none">
           <div className="flex items-center gap-1.5 leading-tight">
             <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors tracking-tight">
               {t('diet.asPlanned.actionTitle', '歷史均值')}
-            </span>
-            <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-muted-foreground bg-muted/60 border border-border leading-none">
-              {t('diet.asPlanned.badge', '配額')}
             </span>
           </div>
           <div className="text-2xs font-mono text-muted-foreground/60 leading-normal mt-0.5 truncate">
