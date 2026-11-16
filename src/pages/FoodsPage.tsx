@@ -6,6 +6,7 @@ import RecipeDetails from './RecipeDetails';
 import { cn } from '@/lib/utils';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
 import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { DetailOverlayContainer } from '@/components/layout/DetailOverlayContainer';
 
 /**
  * 食物與菜餚管理模組 - 視圖堆疊保活容器 (View Stack Container)
@@ -65,14 +66,15 @@ export default function FoodsPage() {
         </div>
       )}
 
-      {/* 頂層詳情頁：覆蓋於列表頁上方，擁有獨立全屏滾動上下文 */}
+      {/* 頂層詳情頁：覆蓋於列表頁上方，擁有獨立全屏滾動上下文與棧深度滾動記憶 */}
       {isDetailOpen && (
-        <div className="fixed inset-x-0 bottom-0 top-14 z-30 bg-background overflow-y-auto no-scrollbar">
-          <div className="w-full max-w-xl mx-auto px-4 py-4 pb-8">
-            {isFoodDetail && <CategoryDetails key={activeId} id={activeId} />}
-            {isRecipeDetail && <RecipeDetails key={activeId} id={activeId} />}
-          </div>
-        </div>
+        <DetailOverlayContainer
+          stackDepth={subViewStack.length}
+          detailKey={`${inAppDetailMode ?? 'foods'}:${activeId ?? ''}`}
+        >
+          {isFoodDetail && <CategoryDetails key={activeId} id={activeId} />}
+          {isRecipeDetail && <RecipeDetails key={activeId} id={activeId} />}
+        </DetailOverlayContainer>
       )}
     </div>
   );
