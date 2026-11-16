@@ -75,6 +75,19 @@
   --color-muscle-intensity-low-text: var(--muscle-intensity-low-text);
   --color-muscle-intensity-low-border: var(--muscle-intensity-low-border);
 
+  /* 肌群角色膠囊按鈕系統 (Muscle Role Badges) */
+  --color-muscle-badge-high-bg: var(--muscle-badge-high-bg);
+  --color-muscle-badge-high-text: var(--muscle-badge-high-text);
+  --color-muscle-badge-high-border: var(--muscle-badge-high-border);
+
+  --color-muscle-badge-med-bg: var(--muscle-badge-med-bg);
+  --color-muscle-badge-med-text: var(--muscle-badge-med-text);
+  --color-muscle-badge-med-border: var(--muscle-badge-med-border);
+
+  --color-muscle-badge-low-bg: var(--muscle-badge-low-bg);
+  --color-muscle-badge-low-text: var(--muscle-badge-low-text);
+  --color-muscle-badge-low-border: var(--muscle-badge-low-border);
+
   /* 圓角體系：除 full 與 none 外全面統一為 rounded-lg (var(--radius)) */
   --radius-xs: var(--radius);
   --radius-sm: var(--radius);
@@ -203,6 +216,19 @@
 
     --muscle-outline-stroke: rgba(9, 9, 11, 1.00);
     --muscle-outline-stroke-width: 1px;
+
+    /* 肌群角色膠囊按鈕系統 - 亮色模式 */
+    --muscle-badge-high-bg: rgba(225, 29, 72, 0.14);
+    --muscle-badge-high-text: #be123c;
+    --muscle-badge-high-border: rgba(225, 29, 72, 0.32);
+
+    --muscle-badge-med-bg: rgba(234, 88, 12, 0.11);
+    --muscle-badge-med-text: #c2410c;
+    --muscle-badge-med-border: rgba(234, 88, 12, 0.28);
+
+    --muscle-badge-low-bg: rgba(221, 169, 141, 0.11);
+    --muscle-badge-low-text: #475569;
+    --muscle-badge-low-border: rgba(100, 116, 139, 0.26);
     --radius: 0.5rem;
   }
   .dark {
@@ -284,6 +310,19 @@
 
     --muscle-outline-stroke: rgba(250, 250, 250, 0.45);
     --muscle-outline-stroke-width: 1px;
+
+    /* 肌群角色膠囊按鈕系統 - 深色模式 */
+    --muscle-badge-high-bg: rgba(251, 113, 133, 0.22);
+    --muscle-badge-high-text: #fda4af;
+    --muscle-badge-high-border: rgba(251, 113, 133, 0.40);
+
+    --muscle-badge-med-bg: rgba(251, 146, 60, 0.16);
+    --muscle-badge-med-text: #fdba74;
+    --muscle-badge-med-border: rgba(251, 146, 60, 0.34);
+
+    --muscle-badge-low-bg: rgba(148, 163, 184, 0.14);
+    --muscle-badge-low-text: #cbd5e1;
+    --muscle-badge-low-border: rgba(148, 163, 184, 0.30);
   }
 }
 

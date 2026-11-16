@@ -125,7 +125,7 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
 
             <div className={cn('flex items-center gap-1.5', !showTitle && 'ml-auto')}>
               {recoverySummary.recoveringCount > 0 ? (
-                <span className="inline-flex items-center text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-[var(--muscle-intensity-high-border)] bg-[var(--muscle-intensity-high-bg)] text-[var(--muscle-intensity-high-text)]">
+                <span className="inline-flex items-center text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-[var(--muscle-badge-high-border)] bg-[var(--muscle-badge-high-bg)] text-[var(--muscle-badge-high-text)]">
                   <span>
                     {recoverySummary.recoveringCount}{' '}
                     {t('workout.musclesRecovering', '個肌群恢復中')}

@@ -452,6 +452,7 @@
       "equipment": "器械類型",
       "targetMuscles": "肌群刺激",
       "targetMusclesDesc": "受刺激肌群與角色層級",
+      "muscleRole": "發力角色",
       "muscleRolePrimary": "主動肌",
       "muscleRoleSecondary": "協同肌",
       "muscleRoleStabilizer": "穩定肌",

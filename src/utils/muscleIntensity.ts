@@ -112,21 +112,21 @@ export function getMuscleRoleBadgeClasses(role: MuscleRole): {
     case 'primary':
       return {
         container:
-          'bg-[var(--muscle-intensity-high-bg)] border-[var(--muscle-intensity-high-border)] text-[var(--muscle-intensity-high-text)]',
-        text: 'text-[var(--muscle-intensity-high-text)]',
+          'bg-[var(--muscle-badge-high-bg)] border-[var(--muscle-badge-high-border)] text-[var(--muscle-badge-high-text)]',
+        text: 'text-[var(--muscle-badge-high-text)]',
       };
     case 'secondary':
       return {
         container:
-          'bg-[var(--muscle-intensity-med-bg)] border-[var(--muscle-intensity-med-border)] text-[var(--muscle-intensity-med-text)]',
-        text: 'text-[var(--muscle-intensity-med-text)]',
+          'bg-[var(--muscle-badge-med-bg)] border-[var(--muscle-badge-med-border)] text-[var(--muscle-badge-med-text)]',
+        text: 'text-[var(--muscle-badge-med-text)]',
       };
     case 'stabilizer':
     default:
       return {
         container:
-          'bg-[var(--muscle-intensity-low-bg)] border-[var(--muscle-intensity-low-border)] text-[var(--muscle-intensity-low-text)]',
-        text: 'text-[var(--muscle-intensity-low-text)]',
+          'bg-[var(--muscle-badge-low-bg)] border-[var(--muscle-badge-low-border)] text-[var(--muscle-badge-low-text)]',
+        text: 'text-[var(--muscle-badge-low-text)]',
       };
   }
 }

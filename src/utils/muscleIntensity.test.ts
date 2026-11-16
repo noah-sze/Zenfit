@@ -57,28 +57,28 @@ describe('肌群刺激強度分級純函數測試 (Muscle Intensity & Roles)', (
   describe('getMuscleRoleBadgeClasses', () => {
     it('各角色均回傳對應之赤陶 Design Token 樣式類名 (不含粗體)', () => {
       const primaryClasses = getMuscleRoleBadgeClasses('primary');
-      expect(primaryClasses.container).toContain('--muscle-intensity-high-bg');
+      expect(primaryClasses.container).toContain('--muscle-badge-high-bg');
       expect(primaryClasses.container).not.toContain('font-semibold');
 
       const secondaryClasses = getMuscleRoleBadgeClasses('secondary');
-      expect(secondaryClasses.container).toContain('--muscle-intensity-med-bg');
+      expect(secondaryClasses.container).toContain('--muscle-badge-med-bg');
       expect(secondaryClasses.container).not.toContain('font-semibold');
 
       const stabilizerClasses = getMuscleRoleBadgeClasses('stabilizer');
-      expect(stabilizerClasses.container).toContain('--muscle-intensity-low-bg');
+      expect(stabilizerClasses.container).toContain('--muscle-badge-low-bg');
     });
   });
 
   describe('getMuscleIntensityBadgeClasses (多型入口)', () => {
     it('支援傳入 MuscleRole 字串或歷史數字', () => {
-      expect(getMuscleIntensityBadgeClasses('primary').container).toContain('--muscle-intensity-high-bg');
-      expect(getMuscleIntensityBadgeClasses(100).container).toContain('--muscle-intensity-high-bg');
+      expect(getMuscleIntensityBadgeClasses('primary').container).toContain('--muscle-badge-high-bg');
+      expect(getMuscleIntensityBadgeClasses(100).container).toContain('--muscle-badge-high-bg');
 
-      expect(getMuscleIntensityBadgeClasses('secondary').container).toContain('--muscle-intensity-med-bg');
-      expect(getMuscleIntensityBadgeClasses(60).container).toContain('--muscle-intensity-med-bg');
+      expect(getMuscleIntensityBadgeClasses('secondary').container).toContain('--muscle-badge-med-bg');
+      expect(getMuscleIntensityBadgeClasses(60).container).toContain('--muscle-badge-med-bg');
 
-      expect(getMuscleIntensityBadgeClasses('stabilizer').container).toContain('--muscle-intensity-low-bg');
-      expect(getMuscleIntensityBadgeClasses(30).container).toContain('--muscle-intensity-low-bg');
+      expect(getMuscleIntensityBadgeClasses('stabilizer').container).toContain('--muscle-badge-low-bg');
+      expect(getMuscleIntensityBadgeClasses(30).container).toContain('--muscle-badge-low-bg');
     });
   });
 

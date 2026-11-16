@@ -12,3 +12,4 @@ export * from './CopyWorkoutDialog';
 export * from './CopyWorkoutDatePickerDialog';
 export * from './WorkoutExerciseCard';
 export * from './ExerciseOverviewCard';
+export * from './TargetMusclesCard';

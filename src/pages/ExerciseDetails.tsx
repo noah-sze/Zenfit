@@ -23,17 +23,9 @@ import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
-import type { DetailedMuscle, MuscleRole } from '@/types';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { BodyHighlighter } from '@/components/workout/BodyHighlighter';
-import { ExerciseOverviewCard } from '@/components/workout';
-import {
-  getMuscleRoleBadgeClasses,
-  getMuscleRoleLabel,
-  normalizeMuscleRole,
-  sortMuscleEntries,
-} from '@/utils/muscleIntensity';
+import { ExerciseOverviewCard, TargetMusclesCard } from '@/components/workout';
 import { cn } from '@/lib/utils';
 import {
   ExerciseFormDialog,
@@ -148,30 +140,6 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
     });
   }, [exerciseDayLogs, overviewPeriod, totalWeeks]);
 
-  // 當前選中的肌群 (地圖點擊反饋與雙向聯動)
-  const [selectedMuscle, setSelectedMuscle] = useState<DetailedMuscle | null>(null);
-
-  const handleMuscleClick = (muscle: DetailedMuscle) => {
-    triggerHaptic('selection');
-    setSelectedMuscle((prev) => (prev === muscle ? null : muscle));
-  };
-
-  // 目標細分肌群機能學分組 (必須嚴格位於所有條件 return 之前，遵守 React Rules of Hooks)
-  const muscleEntries = useMemo(() => {
-    if (!exercise?.targetMuscles) return [];
-    return Object.entries(exercise.targetMuscles) as [DetailedMuscle, MuscleRole | number][];
-  }, [exercise]);
-
-  const primaryEntries = useMemo(
-    () => sortMuscleEntries(muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) === 'primary')),
-    [muscleEntries]
-  );
-
-  const supportEntries = useMemo(
-    () => sortMuscleEntries(muscleEntries.filter(([, rawRole]) => normalizeMuscleRole(rawRole) !== 'primary')),
-    [muscleEntries]
-  );
-
   // 編輯動作彈窗狀態
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -237,11 +205,6 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
       toast.show(t('common.deleted'));
       goBack();
     }
-  };
-
-  const getMuscleLabel = (muscle: DetailedMuscle) => {
-    const key = `workout.muscle${muscle.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
-    return t(key);
   };
 
   // 頂部 Header Action Portal 元素掛載
@@ -342,116 +305,11 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
         interactive={true}
       />
 
-      {/* 目標細分肌群機能學分析畫布 (保留現有肌肉刺激區塊) */}
-      <div className="space-y-1.5">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 font-mono">
-          {t('workout.targetMuscles')}
-        </div>
-        <div className="border border-border rounded-lg bg-card p-4 space-y-5">
-          {/* 一體化人體解剖地圖 (無盒中盒多餘灰底邊框，直接舒展於主卡片內) */}
-          <div className="flex justify-center py-1">
-            <BodyHighlighter
-              gender={profile.gender}
-              muscles={exercise.targetMuscles}
-              selectedMuscle={selectedMuscle}
-              onMuscleClick={handleMuscleClick}
-              onClearSelection={() => setSelectedMuscle(null)}
-              view="both"
-              size="md"
-              interactive
-              showLabels
-              showOutline
-            />
-          </div>
-
-          {/* 精密機能學量表 (Functional Hierarchy) */}
-          {muscleEntries.length === 0 ? (
-            <div className="text-xs font-mono text-muted-foreground text-center py-2">
-              {t('workout.noTargetMuscles', '無肌群')}
-            </div>
-          ) : (
-            <div className="space-y-3.5 pt-2 border-t border-border/60">
-              {/* 1. 核心發力層 (Hero / Prime Mover) */}
-              {primaryEntries.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">
-                    {t('workout.primaryMover', '主要發力')}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {primaryEntries.map(([m, rawRole]) => {
-                      const role = normalizeMuscleRole(rawRole);
-                      const badgeStyle = getMuscleRoleBadgeClasses(role);
-                      const roleLabel = getMuscleRoleLabel(role, t);
-                      const isSelected = selectedMuscle === m;
-
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => handleMuscleClick(m)}
-                          className={cn(
-                            'w-full p-3 rounded-lg border font-mono transition-all flex items-center justify-between text-left cursor-pointer group shadow-none',
-                            badgeStyle.container,
-                            isSelected && 'ring-1 ring-foreground'
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="size-2 rounded-full bg-[var(--muscle-intensity-high-text)] opacity-90" />
-                            <span className="text-sm font-semibold tracking-tight text-foreground">
-                              {getMuscleLabel(m)}
-                            </span>
-                          </div>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded border border-[var(--muscle-intensity-high-border)] bg-card text-[var(--muscle-intensity-high-text)] shrink-0 font-medium">
-                            {roleLabel}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* 2. 協同與穩定層 (Synergists & Stabilizers - 通透機能學膠囊群) */}
-              {supportEntries.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">
-                    {t('workout.synergistsAndStabilizers', '協同與穩定')}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {supportEntries.map(([m, rawRole]) => {
-                      const role = normalizeMuscleRole(rawRole);
-                      const badgeStyle = getMuscleRoleBadgeClasses(role);
-                      const roleLabel = getMuscleRoleLabel(role, t);
-                      const isSelected = selectedMuscle === m;
-
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => handleMuscleClick(m)}
-                          className={cn(
-                            'inline-flex items-center gap-2 px-3 py-1.5 rounded-md border font-mono text-xs transition-all text-left cursor-pointer shadow-none',
-                            badgeStyle.container,
-                            isSelected && 'ring-1 ring-foreground'
-                          )}
-                        >
-                          <span className="font-medium whitespace-nowrap">
-                            {getMuscleLabel(m)}
-                          </span>
-                          <span className="opacity-40 text-[10px]">·</span>
-                          <span className="text-[11px] opacity-90 whitespace-nowrap">
-                            {roleLabel}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* 目標細分肌群機能學分析畫布 */}
+      <TargetMusclesCard
+        gender={profile.gender}
+        muscles={exercise.targetMuscles ?? {}}
+      />
 
       {/* 包含此動作的訓練組合 */}
       <div className="space-y-1.5">

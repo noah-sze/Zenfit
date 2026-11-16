@@ -453,6 +453,7 @@
       "equipment": "Equipment",
       "targetMuscles": "Muscle Stimulus",
       "targetMusclesDesc": "Target muscles & stimulus roles",
+      "muscleRole": "Role",
       "muscleRolePrimary": "Primary",
       "muscleRoleSecondary": "Secondary",
       "muscleRoleStabilizer": "Stabilizer",
