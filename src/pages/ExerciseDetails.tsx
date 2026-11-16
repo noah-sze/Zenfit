@@ -25,6 +25,7 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import type { DetailedMuscle, MuscleRole } from '@/types';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { BodyHighlighter } from '@/components/workout/BodyHighlighter';
 import { ExerciseOverviewCard } from '@/components/workout';
 import {
@@ -53,6 +54,7 @@ export interface ExerciseDetailsProps {
 
 export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {}) {
   const { id: routeId } = useParams<{ id: string }>();
+  const { profile } = useUserProfile();
   const id = propId || routeId;
   const { t } = useTranslation();
   const { goBack } = useSafeNavigate();
@@ -349,6 +351,7 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
           {/* 一體化人體解剖地圖 (無盒中盒多餘灰底邊框，直接舒展於主卡片內) */}
           <div className="flex justify-center py-1">
             <BodyHighlighter
+              gender={profile.gender}
               muscles={exercise.targetMuscles}
               selectedMuscle={selectedMuscle}
               onMuscleClick={handleMuscleClick}

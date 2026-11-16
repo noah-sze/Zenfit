@@ -60,7 +60,7 @@ export function getDetailedMusclesForSlug(
     case 'trapezius':
       return ['upper_back_traps'];
     case 'upper-back':
-      return ['lats', 'upper_back_traps'];
+      return ['lats'];
     case 'lower-back':
       return ['lower_back'];
     case 'gluteal':
@@ -145,7 +145,6 @@ export function getSlugsForDetailedMuscle(
       return [
         { slug: 'trapezius', view: 'anterior' },
         { slug: 'trapezius', view: 'posterior' },
-        { slug: 'upper-back', view: 'posterior' },
       ];
     case 'lower_back':
       return [{ slug: 'lower-back', view: 'posterior' }];
@@ -153,6 +152,7 @@ export function getSlugsForDetailedMuscle(
       return [
         { slug: 'quadriceps', view: 'anterior' },
         { slug: 'adductors', view: 'anterior' },
+        { slug: 'adductors', view: 'posterior' },
       ];
     case 'hamstrings':
       return [{ slug: 'hamstring', view: 'posterior' }];
@@ -229,6 +229,8 @@ export interface MuscleHighlightOptions {
   isNonMuscle?: boolean;
   /** 是否被手動選中 */
   isSelected?: boolean;
+  /** 是否正被滑鼠懸停 (支援整組肌群同步高亮) */
+  isHovered?: boolean;
 }
 
 /**
@@ -248,7 +250,13 @@ export function getMuscleHighlightStyle(
   intensity: number,
   options?: MuscleHighlightOptions
 ): MuscleHighlightStyle {
-  const { highlightColor, baseColor, isNonMuscle = false, isSelected = false } = options || {};
+  const {
+    highlightColor,
+    baseColor,
+    isNonMuscle = false,
+    isSelected = false,
+    isHovered = false,
+  } = options || {};
 
   // 1. 選中狀態 (isSelected)：解耦機能刺激角色與 UI 焦點態
   // 描邊全面升級為極致高對比、對齊 Vercel 聚焦環體系 (var(--foreground), strokeWidth: 1.5)
@@ -326,31 +334,32 @@ export function getMuscleHighlightStyle(
 
     // 2.2 預設赤陶磚紅 Design Tokens 體系 (高/中/低三級階梯，精密分層線寬與透明度)
     const tier = getMuscleIntensityTier(intensity);
+    const hoverStrokeOverride = isHovered ? 'var(--foreground)' : undefined;
     switch (tier) {
       case 'high':
         return {
           fill: 'var(--muscle-intensity-high-bg)',
           fillOpacity: 1,
-          stroke: 'var(--muscle-intensity-high-text)',
-          strokeOpacity: 1.0,
-          strokeWidth: 1.0,
+          stroke: hoverStrokeOverride || 'var(--muscle-intensity-high-text)',
+          strokeOpacity: isHovered ? 0.75 : 1.0,
+          strokeWidth: isHovered ? 1.2 : 1.0,
         };
       case 'med':
         return {
           fill: 'var(--muscle-intensity-med-bg)',
           fillOpacity: 1,
-          stroke: 'var(--muscle-intensity-med-text)',
-          strokeOpacity: 0.95,
-          strokeWidth: 0.85,
+          stroke: hoverStrokeOverride || 'var(--muscle-intensity-med-text)',
+          strokeOpacity: isHovered ? 0.75 : 0.95,
+          strokeWidth: isHovered ? 1.1 : 0.85,
         };
       case 'low':
       default:
         return {
           fill: 'var(--muscle-intensity-low-bg)',
           fillOpacity: 1,
-          stroke: 'var(--muscle-intensity-low-text)',
-          strokeOpacity: 0.85,
-          strokeWidth: 0.75,
+          stroke: hoverStrokeOverride || 'var(--muscle-intensity-low-text)',
+          strokeOpacity: isHovered ? 0.75 : 0.85,
+          strokeWidth: isHovered ? 1.05 : 0.75,
         };
     }
   }
@@ -366,12 +375,12 @@ export function getMuscleHighlightStyle(
     };
   }
 
-  // 4. 未激活肌肉部位 (intensity === 0：結構清晰可讀，線條舒適不發白)
+  // 4. 未激活肌肉部位 (intensity === 0：結構清晰可讀，Hover 時整組肌群同步亮起)
   return {
     fill: baseColor || 'currentColor',
-    fillOpacity: 0.09,
+    fillOpacity: isHovered ? 0.14 : 0.09,
     stroke: 'currentColor',
-    strokeOpacity: 0.22,
-    strokeWidth: 0.75,
+    strokeOpacity: isHovered ? 0.45 : 0.22,
+    strokeWidth: isHovered ? 1.0 : 0.75,
   };
 }

@@ -20,16 +20,29 @@ import { cn } from '@/lib/utils';
 import {
   MALE_OUTLINE_FRONT,
   MALE_OUTLINE_BACK,
+  HEAD_OUTLINE_FRONT,
+  HEAD_OUTLINE_BACK,
   BODY_FRONT_PARTS,
   BODY_BACK_PARTS,
   type BodyPartPathGroup,
 } from './bodyModelData';
+import {
+  FEMALE_OUTLINE_FRONT,
+  FEMALE_OUTLINE_BACK,
+  FEMALE_HEAD_OUTLINE_FRONT,
+  FEMALE_HEAD_OUTLINE_BACK,
+  FEMALE_BODY_FRONT_PARTS,
+  FEMALE_BODY_BACK_PARTS,
+} from './femaleBodyModelData';
 
 export type BodyHighlighterView = 'anterior' | 'posterior' | 'both';
 export type BodyHighlighterSize = 'sm' | 'md' | 'lg' | 'responsive';
 export type BodyHighlighterHudPosition = 'top' | 'bottom';
+export type BodyHighlighterGender = 'male' | 'female';
 
 export interface BodyHighlighterProps {
+  /** 模型性別：'male' | 'female'，預設 'male' */
+  gender?: BodyHighlighterGender;
   /** 呈現視角：正面 / 背面 / 並排，預設 'both' */
   view?: BodyHighlighterView;
   /** 各肌群刺激角色或歷史強度 (0 ~ 100) */
@@ -84,7 +97,16 @@ const NON_MUSCLE_SLUGS: Set<BodyPartSlug> = new Set([
   'hands',
 ]);
 
+/** 窄長型細小肌群：需額外擴展透明觸控熱區，提升行動端點擊命中率 */
+const THIN_MUSCLE_SLUGS: Set<BodyPartSlug> = new Set([
+  'trapezius',
+  'forearm',
+  'tibialis',
+  'calves',
+]);
+
 export const BodyHighlighter = memo(function BodyHighlighter({
+  gender = 'male',
   view = 'both',
   muscles,
   selectedMuscles,
@@ -126,15 +148,23 @@ export const BodyHighlighter = memo(function BodyHighlighter({
     return set;
   }, [selectedMuscles, currentSelected]);
 
+  const isFemale = gender === 'female';
+  const outlineFront = isFemale ? FEMALE_OUTLINE_FRONT : MALE_OUTLINE_FRONT;
+  const outlineBack = isFemale ? FEMALE_OUTLINE_BACK : MALE_OUTLINE_BACK;
+  const headOutlineFront = isFemale ? FEMALE_HEAD_OUTLINE_FRONT : HEAD_OUTLINE_FRONT;
+  const headOutlineBack = isFemale ? FEMALE_HEAD_OUTLINE_BACK : HEAD_OUTLINE_BACK;
+  const frontParts = isFemale ? FEMALE_BODY_FRONT_PARTS : BODY_FRONT_PARTS;
+  const backParts = isFemale ? FEMALE_BODY_BACK_PARTS : BODY_BACK_PARTS;
+
   const viewBox = useMemo(() => {
     switch (view) {
       case 'anterior':
-        return '0 0 724 1448';
+        return '0 70 724 1305';
       case 'posterior':
-        return '724 0 724 1448';
+        return '724 70 724 1305';
       case 'both':
       default:
-        return '0 0 1448 1448';
+        return '0 70 1448 1305';
     }
   }, [view]);
 
@@ -168,68 +198,89 @@ export const BodyHighlighter = memo(function BodyHighlighter({
 
     const intensity = isNonMuscle ? 0 : getMuscleIntensity(muscles, group.slug, currentView);
     const isSelected = targetMuscles.some((m) => selectedSet.has(m));
+    const isHovered = Boolean(
+      interactive && !isNonMuscle && primaryMuscle && hoveredInfo?.muscle === primaryMuscle
+    );
 
     const style = getMuscleHighlightStyle(intensity, {
       highlightColor,
       baseColor,
       isNonMuscle,
       isSelected,
+      isHovered,
     });
 
     const isClickable = interactive && !isNonMuscle && primaryMuscle !== undefined;
 
     const muscleLabel = primaryMuscle ? getMuscleTranslation(primaryMuscle) : undefined;
-    const tooltipText = muscleLabel
+    const ariaLabel = muscleLabel
       ? `${muscleLabel}${intensity > 0 ? ` · ${intensity}%` : ''}`
       : undefined;
 
+    const needsExpandedHitArea = isClickable && THIN_MUSCLE_SLUGS.has(group.slug);
+
+    const handlePathClick = isClickable
+      ? (e: React.MouseEvent<SVGPathElement>) => {
+          e.stopPropagation();
+          triggerHaptic('selection');
+          if (selectedMuscle === undefined) {
+            setInternalSelectedMuscle((prev) => (prev === primaryMuscle ? null : primaryMuscle));
+          }
+          onMuscleClick?.(primaryMuscle, group.slug, currentView, e);
+        }
+      : undefined;
+
+    const handlePathMouseEnter =
+      isClickable && primaryMuscle
+        ? () =>
+            setHoveredInfo({
+              muscle: primaryMuscle,
+              slug: group.slug,
+            })
+        : undefined;
+
+    const handlePathMouseLeave = isClickable ? () => setHoveredInfo(null) : undefined;
+
     return group.paths.map((d, idx) => (
-      <path
-        key={`${group.slug}-${group.side || 'c'}-${idx}`}
-        d={d}
-        fill={style.fill}
-        fillOpacity={style.fillOpacity}
-        stroke={style.stroke}
-        strokeOpacity={style.strokeOpacity}
-        strokeWidth={style.strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-        className={
-          isClickable
-            ? cn(
-                'cursor-pointer transition-all duration-150',
-                intensity > 0
-                  ? 'hover:stroke-foreground hover:stroke-opacity-70 hover:brightness-105'
-                  : 'hover:fill-foreground hover:fill-opacity-10 hover:stroke-foreground hover:stroke-opacity-40'
-              )
-            : undefined
-        }
-        onClick={
-          isClickable
-            ? (e) => {
-                e.stopPropagation();
-                triggerHaptic('selection');
-                if (selectedMuscle === undefined) {
-                  setInternalSelectedMuscle((prev) => (prev === primaryMuscle ? null : primaryMuscle));
-                }
-                onMuscleClick?.(primaryMuscle, group.slug, currentView, e);
-              }
-            : undefined
-        }
-        onMouseEnter={
-          isClickable && primaryMuscle
-            ? () =>
-                setHoveredInfo({
-                  muscle: primaryMuscle,
-                  slug: group.slug,
-                })
-            : undefined
-        }
-        onMouseLeave={isClickable ? () => setHoveredInfo(null) : undefined}
-      >
-        {tooltipText && <title>{tooltipText}</title>}
-      </path>
+      <g key={`${group.slug}-${group.side || 'c'}-${idx}`}>
+        <path
+          d={d}
+          fill={style.fill}
+          fillOpacity={style.fillOpacity}
+          stroke={style.stroke}
+          strokeOpacity={style.strokeOpacity}
+          strokeWidth={style.strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          aria-label={isClickable ? ariaLabel : undefined}
+          className={
+            isNonMuscle
+              ? 'pointer-events-none'
+              : isClickable
+                ? 'cursor-pointer transition-all duration-150'
+                : undefined
+          }
+          onClick={handlePathClick}
+          onMouseEnter={handlePathMouseEnter}
+          onMouseLeave={handlePathMouseLeave}
+        />
+        {needsExpandedHitArea && (
+          <path
+            d={d}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            className="cursor-pointer"
+            onClick={handlePathClick}
+            onMouseEnter={handlePathMouseEnter}
+            onMouseLeave={handlePathMouseLeave}
+          />
+        )}
+      </g>
     ));
   };
 
@@ -298,7 +349,8 @@ export const BodyHighlighter = memo(function BodyHighlighter({
             <span className="inline-block size-1.5 rounded-full bg-[var(--muscle-intensity-high-text)] opacity-70" />
             {primaryMuscleLabel ? (
               <span>
-                {t('workout.primaryMover', '主要發力')} : <span className="text-foreground font-medium">{primaryMuscleLabel}</span>
+                {t('workout.primaryMover', '主要發力')}：{` `}
+                <span className="text-foreground font-medium">{primaryMuscleLabel}</span>
                 {muscleCount > 1 ? ` · +${muscleCount - 1}` : ''}
               </span>
             ) : (
@@ -335,22 +387,32 @@ export const BodyHighlighter = memo(function BodyHighlighter({
               fill="none"
               vectorEffect="non-scaling-stroke"
             >
-              {(view === 'anterior' || view === 'both') && <path d={MALE_OUTLINE_FRONT} />}
-              {(view === 'posterior' || view === 'both') && <path d={MALE_OUTLINE_BACK} />}
+              {(view === 'anterior' || view === 'both') && (
+                <>
+                  <path d={outlineFront} />
+                  {headOutlineFront && <path d={headOutlineFront} />}
+                </>
+              )}
+              {(view === 'posterior' || view === 'both') && (
+                <>
+                  <path d={outlineBack} />
+                  {headOutlineBack && <path d={headOutlineBack} />}
+                </>
+              )}
             </g>
           )}
 
           {/* 正面肌肉與部位 */}
           {(view === 'anterior' || view === 'both') && (
             <g id="body-anterior">
-              {BODY_FRONT_PARTS.map((group) => renderPartGroup(group, 'anterior'))}
+              {frontParts.map((group) => renderPartGroup(group, 'anterior'))}
             </g>
           )}
 
           {/* 背面肌肉與部位 */}
           {(view === 'posterior' || view === 'both') && (
             <g id="body-posterior">
-              {BODY_BACK_PARTS.map((group) => renderPartGroup(group, 'posterior'))}
+              {backParts.map((group) => renderPartGroup(group, 'posterior'))}
             </g>
           )}
         </svg>

@@ -9,6 +9,8 @@ import type { DetailedMuscle } from '@/types';
 import { cn } from '@/lib/utils';
 
 export interface WorkoutRecoveryDashboardProps {
+  /** 模型性別：'male' | 'female'，預設 'male' */
+  gender?: 'male' | 'female';
   /** 全身肌肉恢復匯總數據 */
   recoverySummary: BodyRecoverySummary;
   /** 當日動作項目數 */
@@ -29,6 +31,7 @@ export interface WorkoutRecoveryDashboardProps {
 }
 
 export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
+  gender = 'male',
   recoverySummary,
   exerciseCount,
   setCount,
@@ -91,11 +94,11 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
   const getTierTextColor = (tier: MuscleRecoveryTier) => {
     switch (tier) {
       case 'acute':
-        return 'text-destructive';
+        return 'text-[var(--muscle-intensity-high-text)]';
       case 'recovering':
-        return 'text-amber-500';
+        return 'text-[var(--muscle-intensity-med-text)]';
       case 'near_ready':
-        return 'text-blue-500';
+        return 'text-[var(--muscle-intensity-low-text)]';
       case 'recovered':
       default:
         return 'text-foreground';
@@ -122,7 +125,7 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
 
             <div className={cn('flex items-center gap-1.5', !showTitle && 'ml-auto')}>
               {recoverySummary.recoveringCount > 0 ? (
-                <span className="inline-flex items-center text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-[var(--muscle-intensity-high-text)]/40 bg-[var(--muscle-intensity-high-bg)]/30 text-[var(--muscle-intensity-high-text)]">
+                <span className="inline-flex items-center text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border border-[var(--muscle-intensity-high-border)] bg-[var(--muscle-intensity-high-bg)] text-[var(--muscle-intensity-high-text)]">
                   <span>
                     {recoverySummary.recoveringCount}{' '}
                     {t('workout.musclesRecovering', '個肌群恢復中')}
@@ -154,6 +157,7 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
           {/* 人體解剖圖渲染 (前後雙向並排) */}
           <div className="flex flex-col items-center justify-center py-1">
             <BodyHighlighter
+              gender={gender}
               view="both"
               muscles={recoverySummary.intensityMap}
               selectedMuscle={selectedMuscle}
@@ -163,7 +167,6 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
               size="md"
               showLabels={true}
               showHud={false}
-              highlightColor="#ef4444"
               className="w-full max-w-[340px] sm:max-w-[400px]"
             />
           </div>
@@ -232,21 +235,21 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
           <PopoverContent
             anchor={anchorEl}
             side="top"
-            sideOffset={6}
+            sideOffset={8}
             align="center"
             className="p-0 border-none bg-transparent shadow-none flex flex-col items-center animate-none w-auto z-[90]"
           >
             {/* 專案統計資訊分欄卡片 */}
-            <div className="w-[176px] rounded-lg border border-border bg-popover/98 backdrop-blur-md text-popover-foreground shadow-none font-mono select-none overflow-hidden">
+            <div className="w-[176px] rounded-lg border border-border bg-popover text-popover-foreground shadow-none font-mono select-none overflow-hidden">
               {/* 頂部標題列 */}
-              <div className="px-2.5 py-1.5 border-b border-border bg-muted/30 flex items-center justify-between">
+              <div className="px-2.5 py-1.5 border-b border-border bg-muted flex items-center justify-between">
                 <span className="font-bold text-foreground text-[13px] sm:text-sm leading-tight truncate">
                   {getMuscleDisplayName(selectedStatus.muscle)}
                 </span>
               </div>
 
               {/* 下方雙欄分割統計行 */}
-              <div className="grid grid-cols-2 divide-x divide-border bg-card/40">
+              <div className="grid grid-cols-2 divide-x divide-border bg-card">
                 {/* 左欄（狀態） */}
                 <div className="p-2 flex flex-col items-start gap-0.5 overflow-hidden">
                   <span className="text-[10px] text-muted-foreground font-normal leading-none truncate">
@@ -286,9 +289,6 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
                 </div>
               </div>
             </div>
-
-            {/* 微型倒三角指針 */}
-            <div className="w-0 h-0 border-x-[4px] border-x-transparent border-t-[4.5px] border-t-border mx-auto -mb-1 mt-0.5" />
           </PopoverContent>
         )}
       </Popover>

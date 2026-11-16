@@ -19,6 +19,7 @@ import {
   setInMemoryWorkoutLogsCache,
 } from '@/hooks/useWorkoutLogs';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { convertBodyWeight } from '@/utils/unitMath';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ export interface RoutineDetailsProps {
 
 export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {}) {
   const { id: routeId } = useParams<{ id: string }>();
+  const { profile } = useUserProfile();
   const id = propId || routeId;
   const { t } = useTranslation();
   const { goBack } = useSafeNavigate();
@@ -408,6 +410,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
           {/* 一體化人體解剖地圖 (無盒中盒多餘灰底邊框，直接舒展於主卡片內) */}
           <div className="flex justify-center py-1">
             <BodyHighlighter
+              gender={profile.gender}
               muscles={aggregatedTargetMuscles}
               selectedMuscle={selectedMuscle}
               onMuscleClick={handleMuscleClick}

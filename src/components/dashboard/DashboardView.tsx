@@ -6,6 +6,7 @@ import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDa
 import type { BodyRecoverySummary } from '@/utils/recoveryMath';
 
 export interface DashboardViewProps {
+  gender?: 'male' | 'female';
   greeting: string;
   displayWeight: number | null;
   bodyWeightUnit: string;
@@ -38,6 +39,7 @@ export interface DashboardViewProps {
 }
 
 export function DashboardView({
+  gender = 'male',
   greeting,
   displayWeight,
   bodyWeightUnit,
@@ -249,6 +251,7 @@ export function DashboardView({
       {/* 模組 2：肌群恢復狀態卡片 (右上角「>」跳轉，卡片本體保留肌肉交互) */}
       {/* ========================================================================= */}
       <WorkoutRecoveryDashboard
+        gender={gender}
         recoverySummary={recoverySummary}
         exerciseCount={stats.exerciseCount}
         setCount={stats.setCount}

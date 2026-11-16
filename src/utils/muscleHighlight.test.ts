@@ -29,6 +29,25 @@ describe('muscleHighlight pure functions', () => {
       ]);
     });
 
+    it('strictly decouples trapezius (upper_back_traps) from upper-back (lats)', () => {
+      expect(getDetailedMusclesForSlug('trapezius', 'anterior')).toEqual(['upper_back_traps']);
+      expect(getDetailedMusclesForSlug('trapezius', 'posterior')).toEqual(['upper_back_traps']);
+      expect(getDetailedMusclesForSlug('upper-back', 'posterior')).toEqual(['lats']);
+      expect(getSlugsForDetailedMuscle('upper_back_traps')).toEqual([
+        { slug: 'trapezius', view: 'anterior' },
+        { slug: 'trapezius', view: 'posterior' },
+      ]);
+    });
+
+    it('keeps quads bidirectional mapping consistent across anterior and posterior adductors', () => {
+      expect(getDetailedMusclesForSlug('adductors', 'posterior')).toEqual(['quads']);
+      expect(getSlugsForDetailedMuscle('quads')).toEqual([
+        { slug: 'quadriceps', view: 'anterior' },
+        { slug: 'adductors', view: 'anterior' },
+        { slug: 'adductors', view: 'posterior' },
+      ]);
+    });
+
     it('returns empty array for non-muscle body parts', () => {
       expect(getDetailedMusclesForSlug('head', 'anterior')).toEqual([]);
       expect(getDetailedMusclesForSlug('hair', 'posterior')).toEqual([]);
@@ -297,6 +316,24 @@ describe('muscleHighlight pure functions', () => {
         expect(style.fillOpacity).toBe(0.03);
         expect(style.strokeOpacity).toBe(0.08);
         expect(style.strokeWidth).toBe(0.5);
+      });
+    });
+
+    describe('懸停狀態 (isHovered)', () => {
+      it('懸停未受刺激肌群時同步提升底色透明度與描邊對比度', () => {
+        const style = getMuscleHighlightStyle(0, { isHovered: true });
+        expect(style.fill).toBe('currentColor');
+        expect(style.fillOpacity).toBe(0.14);
+        expect(style.strokeOpacity).toBe(0.45);
+        expect(style.strokeWidth).toBe(1.0);
+      });
+
+      it('懸停受刺激肌群時保留原階梯底色並將描邊升級為高對比前景色', () => {
+        const style = getMuscleHighlightStyle(90, { isHovered: true });
+        expect(style.fill).toBe('var(--muscle-intensity-high-bg)');
+        expect(style.stroke).toBe('var(--foreground)');
+        expect(style.strokeOpacity).toBe(0.75);
+        expect(style.strokeWidth).toBe(1.2);
       });
     });
   });

@@ -6,6 +6,7 @@ import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyRecovery } from '@/hooks/useBodyRecovery';
 import { useExercises } from '@/hooks/useExercises';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
@@ -48,6 +49,7 @@ export default function Workout() {
   const { t } = useTranslation();
   const { selectedDate } = useAppStore();
   const { bodyWeightUnit } = useUnitPreferences();
+  const { profile } = useUserProfile();
   const confirm = useConfirm();
 
   const { workouts, addWorkout, updateWorkout, deleteWorkout } = useWorkoutLogs(selectedDate);
@@ -476,6 +478,7 @@ export default function Workout() {
     <div className="w-full max-w-xl mx-auto space-y-4 pb-20">
       {/* 頂部客觀看板：人體肌群恢復熱圖 + 3 欄客觀指標 (全面對標飲食頁面的熱量大卡片) */}
       <WorkoutRecoveryDashboard
+        gender={profile.gender}
         recoverySummary={recoverySummary}
         exerciseCount={stats.exerciseCount}
         setCount={stats.setCount}
