@@ -196,10 +196,10 @@ describe('muscleHighlight pure functions', () => {
         for (const val of [80, 90, 100, 150]) {
           const style = getMuscleHighlightStyle(val);
           expect(style.fill).toBe('var(--muscle-intensity-high-bg)');
-          expect(style.stroke).toBe('var(--muscle-intensity-high-text)');
+          expect(style.stroke).toBe('var(--muscle-intensity-high-stroke)');
           expect(style.fillOpacity).toBe(1);
-          expect(style.strokeOpacity).toBe(1.0);
-          expect(style.strokeWidth).toBe(1.0);
+          expect(style.strokeOpacity).toBe(1);
+          expect(style.strokeWidth).toBe('var(--muscle-intensity-high-stroke-width)');
         }
       });
 
@@ -207,10 +207,10 @@ describe('muscleHighlight pure functions', () => {
         for (const val of [50, 60, 70, 79]) {
           const style = getMuscleHighlightStyle(val);
           expect(style.fill).toBe('var(--muscle-intensity-med-bg)');
-          expect(style.stroke).toBe('var(--muscle-intensity-med-text)');
+          expect(style.stroke).toBe('var(--muscle-intensity-med-stroke)');
           expect(style.fillOpacity).toBe(1);
-          expect(style.strokeOpacity).toBe(0.95);
-          expect(style.strokeWidth).toBe(0.85);
+          expect(style.strokeOpacity).toBe(1);
+          expect(style.strokeWidth).toBe('var(--muscle-intensity-med-stroke-width)');
         }
       });
 
@@ -218,10 +218,10 @@ describe('muscleHighlight pure functions', () => {
         for (const val of [1, 20, 30, 49]) {
           const style = getMuscleHighlightStyle(val);
           expect(style.fill).toBe('var(--muscle-intensity-low-bg)');
-          expect(style.stroke).toBe('var(--muscle-intensity-low-text)');
+          expect(style.stroke).toBe('var(--muscle-intensity-low-stroke)');
           expect(style.fillOpacity).toBe(1);
-          expect(style.strokeOpacity).toBe(0.85);
-          expect(style.strokeWidth).toBe(0.75);
+          expect(style.strokeOpacity).toBe(1);
+          expect(style.strokeWidth).toBe('var(--muscle-intensity-low-stroke-width)');
         }
       });
     });
@@ -241,38 +241,42 @@ describe('muscleHighlight pure functions', () => {
       }
     });
 
-    describe('選中狀態 (isSelected)', () => {
-      it('選中受刺激肌群時保留對應生理階梯底色，描邊升級為高對比聚焦環', () => {
+    describe('選中狀態 (isSelected，與懸停高亮視覺一致)', () => {
+      it('選中受刺激肌群時保留對應生理階梯底色，描邊與懸停狀態完全一致', () => {
         // High (主動肌)
         const styleHigh = getMuscleHighlightStyle(100, { isSelected: true });
         expect(styleHigh.fill).toBe('var(--muscle-intensity-high-bg)');
         expect(styleHigh.fillOpacity).toBe(1);
         expect(styleHigh.stroke).toBe('var(--foreground)');
-        expect(styleHigh.strokeOpacity).toBe(1);
-        expect(styleHigh.strokeWidth).toBe(1.5);
+        expect(styleHigh.strokeOpacity).toBe(0.75);
+        expect(styleHigh.strokeWidth).toBe(1);
 
         // Med (協同肌)
         const styleMed = getMuscleHighlightStyle(60, { isSelected: true });
         expect(styleMed.fill).toBe('var(--muscle-intensity-med-bg)');
         expect(styleMed.fillOpacity).toBe(1);
         expect(styleMed.stroke).toBe('var(--foreground)');
-        expect(styleMed.strokeWidth).toBe(1.5);
+        expect(styleMed.strokeOpacity).toBe(0.75);
+        expect(styleMed.strokeWidth).toBe(1);
 
         // Low (穩定肌)
         const styleLow = getMuscleHighlightStyle(30, { isSelected: true });
         expect(styleLow.fill).toBe('var(--muscle-intensity-low-bg)');
         expect(styleLow.fillOpacity).toBe(1);
         expect(styleLow.stroke).toBe('var(--foreground)');
-        expect(styleLow.strokeWidth).toBe(1.5);
+        expect(styleLow.strokeOpacity).toBe(0.75);
+        expect(styleLow.strokeWidth).toBe(1);
       });
 
-      it('選中未受刺激肌群時維持中性淡底，絕不偽裝成受刺激赤陶色', () => {
-        const styleZero = getMuscleHighlightStyle(0, { isSelected: true });
-        expect(styleZero.fill).toBe('currentColor');
-        expect(styleZero.fillOpacity).toBe(0.16);
-        expect(styleZero.stroke).toBe('var(--foreground)');
-        expect(styleZero.strokeOpacity).toBe(1);
-        expect(styleZero.strokeWidth).toBe(1.5);
+      it('選中未受刺激肌群時與懸停樣式一致，維持中性淡底與優雅描邊', () => {
+        const styleZeroSelected = getMuscleHighlightStyle(0, { isSelected: true });
+        const styleZeroHovered = getMuscleHighlightStyle(0, { isHovered: true });
+        expect(styleZeroSelected).toEqual(styleZeroHovered);
+        expect(styleZeroSelected.fill).toBe('currentColor');
+        expect(styleZeroSelected.fillOpacity).toBe(0.14);
+        expect(styleZeroSelected.stroke).toBe('currentColor');
+        expect(styleZeroSelected.strokeOpacity).toBe(0.45);
+        expect(styleZeroSelected.strokeWidth).toBe(1);
       });
 
       it('選中時支援自訂 highlightColor 顯式覆蓋', () => {
@@ -281,21 +285,21 @@ describe('muscleHighlight pure functions', () => {
           highlightColor: '#10b981',
         });
         expect(styleCustom.fill).toBe('#10b981');
-        expect(styleCustom.fillOpacity).toBe(0.35);
+        expect(styleCustom.fillOpacity).toBe(1);
         expect(styleCustom.stroke).toBe('#10b981');
-        expect(styleCustom.strokeOpacity).toBe(1);
-        expect(styleCustom.strokeWidth).toBe(1.5);
+        expect(styleCustom.strokeOpacity).toBe(0.75);
+        expect(styleCustom.strokeWidth).toBe(1);
       });
     });
 
     describe('未受刺激與非肌肉部位', () => {
-      it('未受刺激部位 (intensity === 0) 傳回清晰可讀線條與淡底色', () => {
+      it('未受刺激部位 (intensity === 0) 引用全域未激活 Tokens', () => {
         const style = getMuscleHighlightStyle(0);
-        expect(style.fill).toBe('currentColor');
-        expect(style.fillOpacity).toBe(0.09);
-        expect(style.stroke).toBe('currentColor');
-        expect(style.strokeOpacity).toBe(0.22);
-        expect(style.strokeWidth).toBe(0.75);
+        expect(style.fill).toBe('var(--muscle-unselected-bg)');
+        expect(style.fillOpacity).toBe(1);
+        expect(style.stroke).toBe('var(--muscle-unselected-stroke)');
+        expect(style.strokeOpacity).toBe(1);
+        expect(style.strokeWidth).toBe('var(--muscle-unselected-stroke-width)');
       });
 
       it('未受刺激部位支援傳入自訂 baseColor', () => {
@@ -306,16 +310,17 @@ describe('muscleHighlight pure functions', () => {
 
       it('負數強度回退至未受刺激樣式', () => {
         const style = getMuscleHighlightStyle(-20);
-        expect(style.fill).toBe('currentColor');
-        expect(style.fillOpacity).toBe(0.09);
+        expect(style.fill).toBe('var(--muscle-unselected-bg)');
+        expect(style.fillOpacity).toBe(1);
       });
 
-      it('非肌肉部位即使傳入非零強度亦維持極淡背景定位骨架樣式 (不可訓練/不可點擊)', () => {
+      it('非肌肉部位即使傳入非零強度亦維持全域骨架 Token 樣式 (不可訓練/不可點擊)', () => {
         const style = getMuscleHighlightStyle(100, { isNonMuscle: true });
-        expect(style.fill).toBe('currentColor');
-        expect(style.fillOpacity).toBe(0.03);
-        expect(style.strokeOpacity).toBe(0.08);
-        expect(style.strokeWidth).toBe(0.5);
+        expect(style.fill).toBe('var(--muscle-non-bg)');
+        expect(style.fillOpacity).toBe(1);
+        expect(style.stroke).toBe('var(--muscle-non-stroke)');
+        expect(style.strokeOpacity).toBe(1);
+        expect(style.strokeWidth).toBe('var(--muscle-non-stroke-width)');
       });
     });
 
@@ -325,7 +330,7 @@ describe('muscleHighlight pure functions', () => {
         expect(style.fill).toBe('currentColor');
         expect(style.fillOpacity).toBe(0.14);
         expect(style.strokeOpacity).toBe(0.45);
-        expect(style.strokeWidth).toBe(1.0);
+        expect(style.strokeWidth).toBe(1);
       });
 
       it('懸停受刺激肌群時保留原階梯底色並將描邊升級為高對比前景色', () => {
@@ -333,7 +338,7 @@ describe('muscleHighlight pure functions', () => {
         expect(style.fill).toBe('var(--muscle-intensity-high-bg)');
         expect(style.stroke).toBe('var(--foreground)');
         expect(style.strokeOpacity).toBe(0.75);
-        expect(style.strokeWidth).toBe(1.2);
+        expect(style.strokeWidth).toBe(1);
       });
     });
   });

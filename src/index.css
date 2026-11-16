@@ -174,18 +174,35 @@
     --fat-subtle-border: rgba(124, 58, 237, 0.15);
     --fat-subtle-bg: rgba(124, 58, 237, 0.035);
 
-    /* 肌群刺激強度赤陶磚紅系統 - 亮色模式 (赤陶微透膠囊，高/中/低梯隊呈現，文字高對比保證可讀性) */
-    --muscle-intensity-high-bg: rgba(220, 38, 38, 0.10);
-    --muscle-intensity-high-text: #b91c1c;
-    --muscle-intensity-high-border: rgba(185, 28, 28, 0.28);
+    /* 肌群刺激強度與人體地圖系統 - 亮色模式 */
+    --muscle-intensity-high-bg: rgba(255, 36, 83, 0.75);
+    --muscle-intensity-high-text: #000000;
+    --muscle-intensity-high-border: rgba(225, 29, 72, 0.30);
+    --muscle-intensity-high-stroke: rgba(255, 36, 83, 1.00);
+    --muscle-intensity-high-stroke-width: 0.2px;
 
-    --muscle-intensity-med-bg: rgba(234, 88, 12, 0.08);
-    --muscle-intensity-med-text: #c2410c;
-    --muscle-intensity-med-border: rgba(194, 65, 12, 0.22);
+    --muscle-intensity-med-bg: rgba(255, 149, 92, 0.75);
+    --muscle-intensity-med-text: #000000;
+    --muscle-intensity-med-border: rgba(255, 146, 87, 0.30);
+    --muscle-intensity-med-stroke: rgba(255, 149, 92, 1.00);
+    --muscle-intensity-med-stroke-width: 0.2px;
 
-    --muscle-intensity-low-bg: rgba(249, 115, 22, 0.04);
-    --muscle-intensity-low-text: #9a3412;
-    --muscle-intensity-low-border: rgba(234, 88, 12, 0.14);
+    --muscle-intensity-low-bg: rgba(221, 169, 141, 0.70);
+    --muscle-intensity-low-text: #000000;
+    --muscle-intensity-low-border: rgba(233, 233, 233, 0.30);
+    --muscle-intensity-low-stroke: rgba(221, 169, 141, 1.00);
+    --muscle-intensity-low-stroke-width: 0.2px;
+
+    --muscle-unselected-bg: rgba(9, 9, 11, 0.13);
+    --muscle-unselected-stroke: rgba(9, 9, 11, 0.22);
+    --muscle-unselected-stroke-width: 0.2px;
+
+    --muscle-non-bg: rgba(9, 9, 11, 0.04);
+    --muscle-non-stroke: rgba(9, 9, 11, 0.00);
+    --muscle-non-stroke-width: 1px;
+
+    --muscle-outline-stroke: rgba(9, 9, 11, 1.00);
+    --muscle-outline-stroke-width: 1px;
     --radius: 0.5rem;
   }
   .dark {
@@ -238,18 +255,35 @@
     --fat-subtle-border: rgba(167, 139, 250, 0.20);
     --fat-subtle-bg: rgba(167, 139, 250, 0.05);
 
-    /* 肌群刺激強度赤陶磚紅系統 - 深色模式 (赤陶暖焦微透膠囊，高/中/低梯隊呈現，文字高對比保證可讀性) */
-    --muscle-intensity-high-bg: rgba(239, 68, 68, 0.16);
-    --muscle-intensity-high-text: #fca5a5;
-    --muscle-intensity-high-border: rgba(248, 113, 113, 0.35);
+    /* 肌群刺激強度與人體地圖系統 - 深色模式 */
+    --muscle-intensity-high-bg: rgba(251, 113, 133, 0.24);
+    --muscle-intensity-high-text: #fda4af;
+    --muscle-intensity-high-border: rgba(251, 113, 133, 0.44);
+    --muscle-intensity-high-stroke: rgba(253, 164, 175, 1.00);
+    --muscle-intensity-high-stroke-width: 1px;
 
-    --muscle-intensity-med-bg: rgba(249, 115, 22, 0.12);
+    --muscle-intensity-med-bg: rgba(251, 146, 60, 0.16);
     --muscle-intensity-med-text: #fdba74;
-    --muscle-intensity-med-border: rgba(251, 146, 60, 0.28);
+    --muscle-intensity-med-border: rgba(251, 146, 60, 0.35);
+    --muscle-intensity-med-stroke: rgba(253, 186, 116, 0.95);
+    --muscle-intensity-med-stroke-width: 1px;
 
-    --muscle-intensity-low-bg: rgba(251, 146, 60, 0.06);
-    --muscle-intensity-low-text: #fed7aa;
-    --muscle-intensity-low-border: rgba(253, 186, 116, 0.16);
+    --muscle-intensity-low-bg: rgba(148, 163, 184, 0.16);
+    --muscle-intensity-low-text: #cbd5e1;
+    --muscle-intensity-low-border: rgba(148, 163, 184, 0.34);
+    --muscle-intensity-low-stroke: rgba(203, 213, 225, 0.85);
+    --muscle-intensity-low-stroke-width: 1px;
+
+    --muscle-unselected-bg: rgba(250, 250, 250, 0.09);
+    --muscle-unselected-stroke: rgba(250, 250, 250, 0.22);
+    --muscle-unselected-stroke-width: 1px;
+
+    --muscle-non-bg: rgba(250, 250, 250, 0.03);
+    --muscle-non-stroke: rgba(250, 250, 250, 0.08);
+    --muscle-non-stroke-width: 1px;
+
+    --muscle-outline-stroke: rgba(250, 250, 250, 0.45);
+    --muscle-outline-stroke-width: 1px;
   }
 }
 

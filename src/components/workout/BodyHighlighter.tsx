@@ -379,9 +379,9 @@ export const BodyHighlighter = memo(function BodyHighlighter({
           {/* 外圍人體精確輪廓線 (清晰剪影輪廓，一眼識別完整人體結構) */}
           {showOutline && (
             <g
-              stroke="currentColor"
-              strokeOpacity={0.45}
-              strokeWidth={1.0}
+              stroke="var(--muscle-outline-stroke)"
+              strokeOpacity={1}
+              strokeWidth="var(--muscle-outline-stroke-width)"
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"

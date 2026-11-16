@@ -216,8 +216,8 @@ export interface MuscleHighlightStyle {
   stroke: string;
   /** SVG 描邊不透明度 (0 ~ 1) */
   strokeOpacity: number;
-  /** SVG 描邊線寬 (像素或比例) */
-  strokeWidth: number;
+  /** SVG 描邊線寬 (像素或 CSS Token) */
+  strokeWidth: number | string;
 }
 
 export interface MuscleHighlightOptions {
@@ -258,129 +258,71 @@ export function getMuscleHighlightStyle(
     isHovered = false,
   } = options || {};
 
-  // 1. 選中狀態 (isSelected)：解耦機能刺激角色與 UI 焦點態
-  // 描邊全面升級為極致高對比、對齊 Vercel 聚焦環體系 (var(--foreground), strokeWidth: 1.5)
-  // 填充忠實保留其生理機能底色，絕不將未受刺激部位偽裝為赤陶色
-  if (isSelected) {
-    const strokeColor = highlightColor || 'var(--foreground)';
-    const strokeWidth = 1.5;
-    const strokeOpacity = 1;
+  // 互動焦點態 (選中與懸停採用完全一致的高雅視覺反饋)
+  const isActive = isSelected || isHovered;
 
-    // 1.1 顯式傳入 highlightColor 作為自訂覆蓋
-    if (highlightColor) {
-      return {
-        fill: highlightColor,
-        fillOpacity: 0.35,
-        stroke: strokeColor,
-        strokeOpacity,
-        strokeWidth,
-      };
-    }
-
-    // 1.2 依據生理刺激強度保留對應階梯微透底色
-    if (!isNonMuscle && intensity > 0) {
-      const tier = getMuscleIntensityTier(intensity);
-      switch (tier) {
-        case 'high':
-          return {
-            fill: 'var(--muscle-intensity-high-bg)',
-            fillOpacity: 1,
-            stroke: strokeColor,
-            strokeOpacity,
-            strokeWidth,
-          };
-        case 'med':
-          return {
-            fill: 'var(--muscle-intensity-med-bg)',
-            fillOpacity: 1,
-            stroke: strokeColor,
-            strokeOpacity,
-            strokeWidth,
-          };
-        case 'low':
-        default:
-          return {
-            fill: 'var(--muscle-intensity-low-bg)',
-            fillOpacity: 1,
-            stroke: strokeColor,
-            strokeOpacity,
-            strokeWidth,
-          };
-      }
-    }
-
-    // 1.3 未受刺激部位或非肌肉組織選中時：維持純淨中性淡底 (opacity 0.16) + 高對比聚焦環
+  // 1. 非肌肉/不可訓練身體部位 (頭部、關節、手腳等：引用全域骨架 Token，明確不可點擊語意)
+  if (isNonMuscle) {
     return {
-      fill: baseColor || 'currentColor',
-      fillOpacity: 0.16,
-      stroke: strokeColor,
-      strokeOpacity,
-      strokeWidth,
+      fill: baseColor || 'var(--muscle-non-bg)',
+      fillOpacity: baseColor ? 0.03 : 1,
+      stroke: 'var(--muscle-non-stroke)',
+      strokeOpacity: 1,
+      strokeWidth: 'var(--muscle-non-stroke-width)',
     };
   }
 
-  // 2. 有刺激強度 (intensity > 0 且非非肌肉組織)
-  if (!isNonMuscle && intensity > 0) {
+  // 2. 有刺激強度 (intensity > 0)
+  if (intensity > 0) {
     // 2.1 顯式傳入 highlightColor 作為自訂覆蓋
     if (highlightColor) {
       return {
         fill: highlightColor,
-        fillOpacity: getIntensityAlpha(intensity),
+        fillOpacity: isActive ? Math.max(0.35, getIntensityAlpha(intensity)) : getIntensityAlpha(intensity),
         stroke: highlightColor,
-        strokeOpacity: 0.4,
+        strokeOpacity: isActive ? 0.75 : 0.4,
         strokeWidth: 1,
       };
     }
 
-    // 2.2 預設赤陶磚紅 Design Tokens 體系 (高/中/低三級階梯，精密分層線寬與透明度)
+    // 2.2 全域 Design Tokens 體系 (支援淺深雙模式獨立線寬與描邊 Token)
     const tier = getMuscleIntensityTier(intensity);
-    const hoverStrokeOverride = isHovered ? 'var(--foreground)' : undefined;
+    const activeStrokeOverride = isActive ? 'var(--foreground)' : undefined;
     switch (tier) {
       case 'high':
         return {
           fill: 'var(--muscle-intensity-high-bg)',
           fillOpacity: 1,
-          stroke: hoverStrokeOverride || 'var(--muscle-intensity-high-text)',
-          strokeOpacity: isHovered ? 0.75 : 1.0,
-          strokeWidth: isHovered ? 1.2 : 1.0,
+          stroke: activeStrokeOverride || 'var(--muscle-intensity-high-stroke)',
+          strokeOpacity: isActive ? 0.75 : 1,
+          strokeWidth: isActive ? 1 : 'var(--muscle-intensity-high-stroke-width)',
         };
       case 'med':
         return {
           fill: 'var(--muscle-intensity-med-bg)',
           fillOpacity: 1,
-          stroke: hoverStrokeOverride || 'var(--muscle-intensity-med-text)',
-          strokeOpacity: isHovered ? 0.75 : 0.95,
-          strokeWidth: isHovered ? 1.1 : 0.85,
+          stroke: activeStrokeOverride || 'var(--muscle-intensity-med-stroke)',
+          strokeOpacity: isActive ? 0.75 : 1,
+          strokeWidth: isActive ? 1 : 'var(--muscle-intensity-med-stroke-width)',
         };
       case 'low':
       default:
         return {
           fill: 'var(--muscle-intensity-low-bg)',
           fillOpacity: 1,
-          stroke: hoverStrokeOverride || 'var(--muscle-intensity-low-text)',
-          strokeOpacity: isHovered ? 0.75 : 0.85,
-          strokeWidth: isHovered ? 1.05 : 0.75,
+          stroke: activeStrokeOverride || 'var(--muscle-intensity-low-stroke)',
+          strokeOpacity: isActive ? 0.75 : 1,
+          strokeWidth: isActive ? 1 : 'var(--muscle-intensity-low-stroke-width)',
         };
     }
   }
 
-  // 3. 非肌肉/不可訓練身體部位 (頭部、關節、手腳等：極淡背景定位骨架，明確不可點擊語意)
-  if (isNonMuscle) {
-    return {
-      fill: baseColor || 'currentColor',
-      fillOpacity: 0.03,
-      stroke: 'currentColor',
-      strokeOpacity: 0.08,
-      strokeWidth: 0.5,
-    };
-  }
-
-  // 4. 未激活肌肉部位 (intensity === 0：結構清晰可讀，Hover 時整組肌群同步亮起)
+  // 3. 未激活肌肉部位 (intensity === 0：引用全域 Token，選中與 Hover 皆同步微幅亮起)
   return {
-    fill: baseColor || 'currentColor',
-    fillOpacity: isHovered ? 0.14 : 0.09,
-    stroke: 'currentColor',
-    strokeOpacity: isHovered ? 0.45 : 0.22,
-    strokeWidth: isHovered ? 1.0 : 0.75,
+    fill: baseColor || (isActive ? 'currentColor' : 'var(--muscle-unselected-bg)'),
+    fillOpacity: baseColor ? (isActive ? 0.14 : 0.09) : isActive ? 0.14 : 1,
+    stroke: isActive ? 'currentColor' : 'var(--muscle-unselected-stroke)',
+    strokeOpacity: isActive ? 0.45 : 1,
+    strokeWidth: isActive ? 1 : 'var(--muscle-unselected-stroke-width)',
   };
 }
