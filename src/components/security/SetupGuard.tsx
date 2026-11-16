@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { WelcomeWizard } from '@/components/welcome/WelcomeWizard';
 
 interface SetupGuardProps {
   children: ReactNode;
@@ -14,9 +14,9 @@ export function SetupGuard({ children }: SetupGuardProps) {
     return null;
   }
 
-  // 尚未完成初始設定時，全螢幕攔截渲染歡迎與設置嚮導
+  // 尚未完成初始設定時，安全重定向回落地頁由首頁引導輸入
   if (!profile.isSetupCompleted) {
-    return <WelcomeWizard />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

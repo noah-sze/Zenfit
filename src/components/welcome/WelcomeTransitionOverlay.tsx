@@ -1,0 +1,159 @@
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Logo } from '@/components/ui/Logo';
+import { triggerHaptic } from '@/lib/haptics';
+import { cn } from '@/lib/utils';
+
+export interface WelcomeTransitionOverlayProps {
+  open: boolean;
+  userName?: string;
+  onFinish: () => void;
+  /** 動畫持續毫秒數，預設 1800ms */
+  duration?: number;
+}
+
+/**
+ * 方案 D：天體經緯線框歡迎過渡動畫組件 (Welcome Transition Overlay · Celestial Dome)
+ * 用於使用者完成初次個人資料輸入後，提供儀式感與品牌一脈相承的極簡科技轉場。
+ */
+export function WelcomeTransitionOverlay({
+  open,
+  userName,
+  onFinish,
+  duration = 1800,
+}: WelcomeTransitionOverlayProps) {
+  const { t } = useTranslation();
+  const [activeTickCount, setActiveTickCount] = useState(0);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
+  const totalTicks = 24;
+  const displayName = userName?.trim() || t('common.user', '使用者');
+
+  // 刻度進度與計時生命週期
+  useEffect(() => {
+    if (!open) {
+      setActiveTickCount(0);
+      setIsFadingOut(false);
+      return;
+    }
+
+    triggerHaptic('light');
+
+    // 刻度條逐格遞增
+    const tickInterval = Math.max(20, Math.floor((duration - 300) / totalTicks));
+    const tickTimer = setInterval(() => {
+      setActiveTickCount((prev) => {
+        if (prev < totalTicks) {
+          return prev + 1;
+        }
+        clearInterval(tickTimer);
+        return prev;
+      });
+    }, tickInterval);
+
+    // 結束前 300ms 觸發淡出
+    const fadeTimer = setTimeout(() => {
+      setIsFadingOut(true);
+    }, Math.max(0, duration - 300));
+
+    // 時間到達後完成回調
+    const finishTimer = setTimeout(() => {
+      onFinish();
+    }, duration);
+
+    return () => {
+      clearInterval(tickTimer);
+      clearTimeout(fadeTimer);
+      clearTimeout(finishTimer);
+    };
+  }, [open, duration, onFinish, totalTicks]);
+
+  // 點擊任意處略過
+  const handleSkip = () => {
+    triggerHaptic('selection');
+    setIsFadingOut(true);
+    setTimeout(() => {
+      onFinish();
+    }, 150);
+  };
+
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('welcome.entering', '正在進入 Zenfit ……')}
+      onClick={handleSkip}
+      className={cn(
+        "fixed inset-0 z-[100] bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer",
+        "transition-opacity duration-300 ease-out",
+        isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"
+      )}
+    >
+      {/* 3D Celestial Wireframe Dome (天體經緯線框球體，以 1px 髮絲線深邃旋轉) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[420px] h-[340px] sm:h-[420px] pointer-events-none opacity-[0.12] dark:opacity-[0.18] text-foreground select-none">
+        <svg
+          viewBox="0 0 100 100"
+          className="w-full h-full animate-[spin_40s_linear_infinite]"
+          fill="none"
+          stroke="currentColor"
+        >
+          <circle cx="50" cy="50" r="48" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+          <ellipse cx="50" cy="50" rx="48" ry="18" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+          <ellipse cx="50" cy="50" rx="48" ry="34" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+          <ellipse cx="50" cy="50" rx="18" ry="48" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+          <ellipse cx="50" cy="50" rx="34" ry="48" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+          <line x1="50" y1="2" x2="50" y2="98" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+          <line x1="2" y1="50" x2="98" y2="50" vectorEffect="non-scaling-stroke" strokeWidth="1" />
+        </svg>
+      </div>
+
+      {/* 中央主內容層 */}
+      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-sm animate-in fade-in-50 zoom-in-95 duration-500">
+        {/* 中心微縮 Logo 徽章 */}
+        <div className="size-12 rounded-full border border-border bg-card flex items-center justify-center mb-6 shadow-none">
+          <Logo size={24} className="shrink-0" />
+        </div>
+
+        {/* 歡迎問候主標題 */}
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-2">
+          {t('welcome.greeting', { name: displayName, defaultValue: `你好，${displayName}。` })}
+        </h2>
+
+        {/* 系統進入副標 */}
+        <p className="text-xs sm:text-sm font-mono text-muted-foreground tracking-wide">
+          {t('welcome.entering', '正在進入 Zenfit ……')}
+        </p>
+
+        {/* 底部微型刻度條波形 (Telemetry Tick Meter) */}
+        <div
+          className="flex items-center gap-[3px] justify-center mt-7 h-3"
+          aria-hidden="true"
+        >
+          {Array.from({ length: totalTicks }).map((_, index) => {
+            const isActive = index < activeTickCount;
+            return (
+              <span
+                key={index}
+                className={cn(
+                  "w-[2px] rounded-full transition-all duration-200",
+                  isActive
+                    ? "bg-foreground h-3"
+                    : "bg-border h-2"
+                )}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 右上角極致克制略過提示 */}
+      <div className="absolute top-safe right-4 pt-4 text-[10px] font-mono text-muted-foreground uppercase tracking-widest pointer-events-none opacity-60">
+        {t('welcome.skipPrompt', '點擊任意處進入')}
+      </div>
+    </div>
+  );
+}

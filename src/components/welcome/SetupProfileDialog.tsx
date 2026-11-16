@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 export interface SetupProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onComplete?: () => void;
+  onComplete?: (name?: string) => void;
 }
 
 /**
@@ -176,7 +176,7 @@ export function SetupProfileDialog({
       onOpenChange(false);
 
       if (onComplete) {
-        onComplete();
+        onComplete(name.trim());
       }
     } catch (err) {
       console.error('Failed to complete onboarding setup:', err);

@@ -1,25 +1,27 @@
 import * as React from "react"
-import { X, Check } from "lucide-react"
+import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
-import { Button } from "@/components/ui/button"
 import { triggerHaptic } from "@/lib/haptics"
 import { calculateAgeFromBirth } from "@/utils/weightMath"
 
-export type MonthCalendarProps = {
-  selected?: string // "YYYY-MM"
-  onSelect?: (yearMonth: string) => void
-  onClose?: () => void
+export interface MonthCalendarProps {
+  value?: string // "YYYY-MM"
+  onChange?: (yearMonth: string) => void
   className?: string
 }
 
-export function MonthCalendar({ selected, onSelect, onClose, className }: MonthCalendarProps) {
+/**
+ * Zenfit 精密月份與年份雙列選擇器 (Precision Month & Year Calendar Selector)
+ * 遵循標準精密彈窗規範：300px 緊湊網格、微型 HUD 狀態條、雙列獨立滾動
+ */
+export function MonthCalendar({ value, onChange, className }: MonthCalendarProps) {
   const { t } = useTranslation()
 
   // 解析初始選中年份與月份
   const parseInitial = () => {
-    if (selected && selected.includes("-")) {
-      const [y, m] = selected.split("-")
+    if (value && value.includes("-")) {
+      const [y, m] = value.split("-")
       const parsedY = parseInt(y, 10)
       const parsedM = parseInt(m, 10)
       if (!isNaN(parsedY) && !isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) {
@@ -34,10 +36,17 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
   const [tempYear, setTempYear] = React.useState<number>(initial.year)
   const [tempMonth, setTempMonth] = React.useState<number>(initial.month)
 
-  // 同步外部 selected 變更
+  const currentYM = `${tempYear}-${String(tempMonth).padStart(2, "0")}`
+
+  // 當內部選取變動時即時同步至外部
   React.useEffect(() => {
-    if (selected && selected.includes("-")) {
-      const [y, m] = selected.split("-")
+    onChange?.(currentYM)
+  }, [currentYM, onChange])
+
+  // 同步外部傳入的 value
+  React.useEffect(() => {
+    if (value && value.includes("-")) {
+      const [y, m] = value.split("-")
       const parsedY = parseInt(y, 10)
       const parsedM = parseInt(m, 10)
       if (!isNaN(parsedY) && !isNaN(parsedM)) {
@@ -45,9 +54,8 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
         setTempMonth(parsedM)
       }
     }
-  }, [selected])
+  }, [value])
 
-  // 當前真實年份與年份清單（1920 ~ 當前年份，降序排列）
   const currentActualYear = new Date().getFullYear()
   const yearsList = React.useMemo(() => {
     const list: number[] = []
@@ -75,17 +83,14 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
   ]
 
   const formatYear = (y: number) => {
-    return t("monthPicker.yearFormat", "{{year}} 年")
-      .replace("{{year}}", String(y))
-      .replace("yyyy", String(y))
+    return `${y} ${t("common.year", "年")}`
   }
 
-  // 自動將選中項滾動至各自列表的可見區域中心
+  // 瞬時將選中項目滾動至視圖中央
   const selectedYearRef = React.useRef<HTMLButtonElement>(null)
   const selectedMonthRef = React.useRef<HTMLButtonElement>(null)
 
   React.useEffect(() => {
-    // 瞬時彈出後將選中項滾動居中，避免慢速過渡動畫
     const timer = setTimeout(() => {
       selectedYearRef.current?.scrollIntoView({
         block: "center",
@@ -109,76 +114,38 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
     triggerHaptic("selection")
   }
 
-  const handleConfirm = () => {
-    const formatted = `${tempYear}-${String(tempMonth).padStart(2, "0")}`
-    onSelect?.(formatted)
-    onClose?.()
-  }
-
-  // 即時計算客觀生理年齡
-  const tempYearMonth = `${tempYear}-${String(tempMonth).padStart(2, "0")}`
-  const calculatedAge = calculateAgeFromBirth(tempYearMonth)
+  const calculatedAge = calculateAgeFromBirth(currentYM)
 
   return (
-    <div
-      className={cn(
-        "w-full max-w-[340px] sm:max-w-[360px] select-none rounded-lg bg-card text-card-foreground border border-border overflow-hidden shadow-none",
-        className
-      )}
-    >
-      {/* 1. Header: 標題與關閉按鈕 */}
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/10">
-        <span className="text-sm font-semibold tracking-tight text-foreground font-mono">
-          {t("monthPicker.title", "選擇出生年月")}
+    <div className={cn("w-full space-y-3 pt-3.5 select-none font-mono", className)}>
+      {/* 1. 微型 HUD 狀態卡片 (Micro Status HUD) */}
+      <div className="h-9 px-3 rounded-md border border-border bg-muted/20 flex items-center justify-between text-xs">
+        <span className="font-semibold text-foreground tracking-tight font-mono">
+          {currentYM}
         </span>
-        {onClose && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-            onClick={onClose}
-            title={t("monthPicker.close", "關閉")}
-          >
-            <X className="size-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* 2. 動態生理年齡客觀事實看板 (替換原冗餘偽下拉框) */}
-      <div className="py-4 px-4 flex flex-col items-center justify-center border-b border-border/60 bg-muted/5">
-        <div className="flex items-baseline gap-1.5 font-mono">
-          <span className="text-4xl font-bold tracking-tight text-foreground">
-            {calculatedAge}
-          </span>
-          <span className="text-sm font-medium text-muted-foreground">
-            {t("profileSettings.yearsOld", "歲")}
-          </span>
-        </div>
-        <span className="text-xs font-mono text-muted-foreground mt-1">
-          {tempYearMonth}
+        <span className="text-[11px] font-medium text-muted-foreground font-mono">
+          {calculatedAge > 0
+            ? `${calculatedAge} ${t("profileSettings.yearsOld", "歲")}`
+            : `0 ${t("profileSettings.yearsOld", "歲")}`}
         </span>
       </div>
 
-      {/* 3. 雙列獨立滾動選擇面板 (左側年份，右側月份，高度恆定防抖) */}
-      <div className="p-3">
-        {/* 雙列吸頂小標籤 */}
-        <div className="grid grid-cols-2 gap-2 mb-1.5 px-2">
-          <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+      {/* 2. 雙列標籤與滾動選擇區 */}
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-2 px-1">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
             {t("monthPicker.year", "年份")}
           </span>
-          <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground border-l border-border/60 pl-2">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono border-l border-border pl-2">
             {t("monthPicker.month", "月份")}
           </span>
         </div>
 
-        {/* 雙列列表容器 */}
-        <div className="grid grid-cols-2 gap-2 h-48 rounded-lg border border-border bg-muted/15 p-1 overflow-hidden">
-          {/* 左側：年份滾動清單 */}
-          <div className="h-full overflow-y-auto overscroll-contain pr-1 flex flex-col gap-0.5 no-scrollbar sm:scrollbar-thin">
+        <div className="grid grid-cols-2 gap-2 h-48 rounded-md border border-border bg-muted/10 p-1 overflow-hidden">
+          {/* 左側年份列表 */}
+          <div className="h-full overflow-y-auto overscroll-contain pr-1 flex flex-col gap-0.5 no-scrollbar">
             {yearsList.map((y) => {
               const isSelected = tempYear === y
-              const isCurrent = y === currentActualYear
               return (
                 <button
                   key={y}
@@ -186,22 +153,21 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
                   type="button"
                   onClick={() => handleSelectYear(y)}
                   className={cn(
-                    "h-9 w-full px-2.5 rounded-lg text-xs font-mono flex items-center justify-between cursor-pointer transition-colors shrink-0",
+                    "h-8 w-full px-2 rounded text-xs font-mono flex items-center justify-between cursor-pointer transition-colors shrink-0",
                     isSelected
-                      ? "bg-foreground text-background font-semibold hover:bg-foreground/90"
-                      : "text-foreground hover:bg-muted/70",
-                    isCurrent && !isSelected && "font-medium"
+                      ? "bg-foreground text-background font-semibold"
+                      : "text-foreground hover:bg-hover active:bg-hover/80"
                   )}
                 >
                   <span>{formatYear(y)}</span>
-                  {isSelected && <Check className="size-3.5 text-background shrink-0" />}
+                  {isSelected && <Check className="size-3 text-background shrink-0" />}
                 </button>
               )
             })}
           </div>
 
-          {/* 右側：月份滾動清單 */}
-          <div className="h-full overflow-y-auto overscroll-contain pr-1 flex flex-col gap-0.5 border-l border-border/60 pl-1 no-scrollbar sm:scrollbar-thin">
+          {/* 右側月份列表 */}
+          <div className="h-full overflow-y-auto overscroll-contain pr-1 flex flex-col gap-0.5 border-l border-border pl-1 no-scrollbar">
             {monthsList.map((m) => {
               const isSelected = tempMonth === m
               return (
@@ -211,37 +177,19 @@ export function MonthCalendar({ selected, onSelect, onClose, className }: MonthC
                   type="button"
                   onClick={() => handleSelectMonth(m)}
                   className={cn(
-                    "h-9 w-full px-2.5 rounded-lg text-xs font-mono flex items-center justify-between cursor-pointer transition-colors shrink-0",
+                    "h-8 w-full px-2 rounded text-xs font-mono flex items-center justify-between cursor-pointer transition-colors shrink-0",
                     isSelected
-                      ? "bg-foreground text-background font-semibold hover:bg-foreground/90"
-                      : "text-foreground hover:bg-muted/70"
+                      ? "bg-foreground text-background font-semibold"
+                      : "text-foreground hover:bg-hover active:bg-hover/80"
                   )}
                 >
                   <span>{monthNames[m - 1]}</span>
-                  {isSelected && <Check className="size-3.5 text-background shrink-0" />}
+                  {isSelected && <Check className="size-3 text-background shrink-0" />}
                 </button>
               )
             })}
           </div>
         </div>
-      </div>
-
-      {/* 4. 底部操作按鈕 (取消 / 確認) */}
-      <div className="p-3 border-t border-border bg-card grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-2.5 rounded-lg text-xs font-medium border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-center"
-        >
-          {t("common.cancel", "取消")}
-        </button>
-        <button
-          type="button"
-          onClick={handleConfirm}
-          className="w-full py-2.5 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity cursor-pointer text-center font-mono"
-        >
-          {t("common.confirm", "確認")}
-        </button>
       </div>
     </div>
   )

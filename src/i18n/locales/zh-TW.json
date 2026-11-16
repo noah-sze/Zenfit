@@ -982,6 +982,9 @@
       "syncNowAction": "點擊立即同步"
     },
     "welcome": {
+      "greeting": "你好，{{name}}。",
+      "entering": "正在進入 Zenfit ……",
+      "skipPrompt": "點擊任意處進入",
       "badge": "ZENFIT SETUP",
       "stepCounter": "{{current}} / {{total}}",
       "resendHero1": "Zenfit for",

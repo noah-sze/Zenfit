@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sun, Moon, ArrowUpRight, Globe } from 'lucide-react';
 import { SetupProfileDialog } from '@/components/welcome/SetupProfileDialog';
+import { WelcomeTransitionOverlay } from '@/components/welcome/WelcomeTransitionOverlay';
 import { getDemoDashboardData, DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
 import {
   WorkoutRecoveryDashboard,
@@ -34,10 +35,13 @@ export default function LandingPage() {
   const { t, i18n } = useTranslation();
   const { profile, isLoading: isProfileLoading } = useUserProfile();
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
+  const [isTransitionOpen, setIsTransitionOpen] = useState(false);
+  const [welcomeUserName, setWelcomeUserName] = useState('');
 
   const handleOpenApp = () => {
     if (!isProfileLoading && profile.isSetupCompleted) {
-      navigate('/app');
+      setWelcomeUserName(profile.name || '');
+      setIsTransitionOpen(true);
     } else {
       setIsSetupDialogOpen(true);
     }
@@ -933,7 +937,17 @@ export default function LandingPage() {
   <SetupProfileDialog
     open={isSetupDialogOpen}
     onOpenChange={setIsSetupDialogOpen}
-    onComplete={() => navigate('/app')}
+    onComplete={(name) => {
+      setIsSetupDialogOpen(false);
+      setWelcomeUserName(name || profile.name || '');
+      setIsTransitionOpen(true);
+    }}
+  />
+
+  <WelcomeTransitionOverlay
+    open={isTransitionOpen}
+    userName={welcomeUserName}
+    onFinish={() => navigate('/app')}
   />
 
   {/*  =========================================================================  */}

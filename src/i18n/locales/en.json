@@ -983,6 +983,9 @@
       "syncNowAction": "Click to sync now"
     },
     "welcome": {
+      "greeting": "Hello, {{name}}.",
+      "entering": "Entering Zenfit...",
+      "skipPrompt": "Click anywhere to continue",
       "badge": "ZENFIT SETUP",
       "stepCounter": "{{current}} / {{total}}",
       "resendHero1": "Fitness for",
