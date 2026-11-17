@@ -65,7 +65,7 @@ export function DashboardView({
       {/* ========================================================================= */}
       {/* 頂部列：問候語 + 今日體重入口卡片 (點擊跳轉「體態界面」) */}
       {/* ========================================================================= */}
-      <div className="flex items-center justify-between pb-1">
+      <div className="flex items-center justify-between">
         <h1 className="text-lg sm:text-xl font-medium tracking-tight text-foreground font-sans truncate pr-2">
           {greeting}
         </h1>
