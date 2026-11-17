@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
-import { Check, Clock, ChevronRight, ChevronDown } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Dialog, DialogContent, DialogPrecisionHeader } from '@/components/ui/dialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
@@ -52,9 +52,14 @@ export function CopyMealDialog({
   const { t } = useTranslation();
   const { energyUnit } = useUnitPreferences();
 
-  // 查詢當前目標日期前，該餐別所有有記錄的歷史日期 (降序排列)
+  // 來源餐別與日期選擇狀態
+  const [sourceMealType, setSourceMealType] = useState<MealType>(targetMealType);
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState<string | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  // 查詢當前目標日期前，該來源餐別所有有記錄的歷史日期 (降序排列)
   const recordedDates = useLiveQuery<string[]>(async () => {
-    if (!open || !targetDate || !targetMealType) return [];
+    if (!open || !targetDate || !sourceMealType) return [];
     const logs = await db.daily_diet_logs
       .where('date')
       .below(targetDate)
@@ -62,35 +67,44 @@ export function CopyMealDialog({
       .toArray();
 
     return logs
-      .filter((log) => log.entries && log.entries.some((e) => e.mealType === targetMealType))
+      .filter((log) => log.entries && log.entries.some((e) => e.mealType === sourceMealType))
       .map((log) => log.date);
-  }, [open, targetDate, targetMealType]);
+  }, [open, targetDate, sourceMealType]);
 
   const lastRecordedDate = recordedDates && recordedDates.length > 0 ? recordedDates[0] : null;
-
-  // 手動選擇日期狀態與日曆彈窗
-  const [selectedHistoryDate, setSelectedHistoryDate] = useState<string | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // 當前生效之歷史日期字串（手動選擇優先，預設為最新一次紀錄日期）
   const activeHistoryDate = useMemo(() => {
     return selectedHistoryDate || lastRecordedDate;
   }, [selectedHistoryDate, lastRecordedDate]);
 
-  // 彈窗開啟或目標參數變更時，預設重置手動選擇與次級彈窗
+  // 計算左右步進可用目標日期（降序排列：older 在後、newer 在前）
+  const prevRecordedDate = useMemo(() => {
+    if (!recordedDates || recordedDates.length === 0 || !activeHistoryDate) return null;
+    return recordedDates.find((d) => d < activeHistoryDate) ?? null;
+  }, [recordedDates, activeHistoryDate]);
+
+  const nextRecordedDate = useMemo(() => {
+    if (!recordedDates || recordedDates.length === 0 || !activeHistoryDate) return null;
+    const newer = recordedDates.filter((d) => d > activeHistoryDate);
+    return newer.length > 0 ? newer[newer.length - 1] : null;
+  }, [recordedDates, activeHistoryDate]);
+
+  // 彈窗開啟或目標參數變更時，預設重置來源餐別、手動選擇與次級彈窗
   useEffect(() => {
     if (open) {
+      setSourceMealType(targetMealType);
       setSelectedHistoryDate(null);
       setIsDatePickerOpen(false);
       setKeypadConfig(null);
     }
   }, [open, targetDate, targetMealType]);
 
-  // 查詢歷史日期該餐別所有食材條目
+  // 查詢歷史日期該來源餐別所有食材條目
   const historicalLogs = useLiveQuery<CopyableMealItem[]>(async () => {
     if (!open || !activeHistoryDate) return [];
     const dailyLog = await db.daily_diet_logs.where('date').equals(activeHistoryDate).first();
-    const rawEntries = (dailyLog?.entries || []).filter((e) => e.mealType === targetMealType);
+    const rawEntries = (dailyLog?.entries || []).filter((e) => e.mealType === sourceMealType);
     if (rawEntries.length === 0) return [];
 
     const cachedFoods = getInMemoryFoodsCache();
@@ -127,7 +141,7 @@ export function CopyMealDialog({
         } : undefined,
       };
     });
-  }, [activeHistoryDate, targetMealType]);
+  }, [open, activeHistoryDate, sourceMealType]);
 
   // 本地可編輯食材清單
   const [items, setItems] = useState<CopyableMealItem[]>([]);
@@ -394,38 +408,82 @@ export function CopyMealDialog({
             cancelAriaLabel={t('common.cancel', '取消')}
           />
 
-          {/* 食材清單容器（全站標準 min-h-[220px] max-h-[340px]，方案 1A 表頭一體化橫欄 Integrated Header Notch） */}
-          <div className="flex-1 min-h-[220px] max-h-[340px] flex flex-col mt-5 mb-5 rounded-lg border border-border bg-card overflow-hidden">
-            {/* 表頭一體化橫欄 */}
-            <div className="h-8.5 bg-muted/40 border-b border-border px-3 flex items-center justify-between select-none shrink-0">
-              {/* 左側：時鐘圖標 + 來源： + 粗體高亮日期 */}
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono min-w-0 truncate">
-                <Clock className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="shrink-0">{t('diet.copyMeal.source', '來源：')}</span>
-                <span className="font-semibold text-foreground truncate">
+          <div className="flex flex-col min-h-0">
+            {/* 食材清單容器（方案 B 雙層整合頭：固定高度防切換跳動，超出時內部滾動） */}
+            <div className="h-[300px] shrink-0 flex flex-col mt-5 mb-5 rounded-lg border border-border bg-card overflow-hidden">
+            {/* 第一列：居中日期左右步進器 + 點擊開啟月曆 */}
+            <div className="h-11 bg-muted/40 border-b border-border px-3 flex items-center justify-center select-none shrink-0">
+              <div className="inline-flex items-center h-7 rounded-md border border-border/80 bg-background overflow-hidden">
+                <button
+                  type="button"
+                  disabled={!prevRecordedDate}
+                  onClick={() => {
+                    if (!prevRecordedDate) return;
+                    triggerHaptic('selection');
+                    setSelectedHistoryDate(prevRecordedDate);
+                  }}
+                  aria-label={t('common.previousDay', '前一天')}
+                  className="w-6.5 h-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronLeft className="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={!recordedDates || recordedDates.length === 0}
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setIsDatePickerOpen(true);
+                  }}
+                  className="h-full w-32 px-2 border-x border-border/80 font-mono text-xs font-semibold text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center truncate"
+                >
                   {sourceDateLabel || t('common.none', '無')}
-                </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!nextRecordedDate}
+                  onClick={() => {
+                    if (!nextRecordedDate) return;
+                    triggerHaptic('selection');
+                    setSelectedHistoryDate(nextRecordedDate);
+                  }}
+                  aria-label={t('common.nextDay', '後一天')}
+                  className="w-6.5 h-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronRight className="size-3.5" />
+                </button>
               </div>
+            </div>
 
-              {/* 右側：微型膠囊按鈕 [更換 ▾] */}
-              <button
-                type="button"
-                disabled={!recordedDates || recordedDates.length === 0}
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setIsDatePickerOpen(true);
-                }}
-                className="h-6 px-2 rounded border border-border/80 bg-background hover:bg-hover text-2xs font-mono flex items-center gap-1 text-foreground cursor-pointer transition-colors active:scale-95 disabled:opacity-40 disabled:pointer-events-none select-none shrink-0"
-              >
-                <span>{t('diet.copyMeal.change', '更換')}</span>
-                <ChevronDown className="size-3 text-muted-foreground" />
-              </button>
+            {/* 第二列：四餐別膠囊切換欄（早 / 午 / 晚 / 加餐） */}
+            <div className="grid grid-cols-4 h-11 px-2 gap-1.5 items-center bg-card border-b border-border select-none shrink-0">
+              {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((meal) => {
+                const isActive = sourceMealType === meal;
+                return (
+                  <button
+                    key={meal}
+                    type="button"
+                    onClick={() => {
+                      if (sourceMealType === meal) return;
+                      triggerHaptic('selection');
+                      setSourceMealType(meal);
+                    }}
+                    className={cn(
+                      'h-7 rounded-full text-xs font-sans transition-colors cursor-pointer flex items-center justify-center',
+                      isActive
+                        ? 'bg-foreground text-background font-semibold'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-hover'
+                    )}
+                  >
+                    <span>{t(`diet.${meal}`)}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* 食物清單滾動區 */}
             <div className="flex-1 overflow-y-auto overscroll-contain">
               {items.length === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center text-center space-y-1">
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-1">
                   <span className="text-xs text-muted-foreground font-mono">
                     {t('diet.copyMeal.empty', '該餐別無歷史記錄')}
                   </span>
@@ -509,6 +567,7 @@ export function CopyMealDialog({
                 defaultValue: `已選 ${selectedCount} 項食材 · 總計 ${totalCaloriesFormatted}`,
               })}
             </span>
+          </div>
           </div>
         </DialogContent>
       </Dialog>
