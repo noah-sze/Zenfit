@@ -32,6 +32,16 @@ export const DEFAULT_FOOD_IDS = {
   soy_milk: '6bdcc9bd-6e4b-40f7-b772-113e38ee556d',
   tomato: '53aef1a1-7d50-4655-924c-aa544ef76558',
   cooking_oil: '182261b5-6e77-4f51-9cdd-4a2b3c5ab785',
+  olive_oil: '2d4f8c1a-7b3e-4e92-a814-6c5d9e2f1a01',
+  corn_oil: '3e5a9d2b-8c4f-4f03-b925-7d6e0f3a2b02',
+  rapeseed_oil: '4f6b0e3c-9d5a-4014-ca36-8e7f1a4b3c03',
+  sunflower_oil: '5a7c1f4d-ae6b-4125-db47-9f8a2b5c4d04',
+  soybean_oil: '6b8d2a5e-bf7c-4236-ec58-0a9b3c6d5e05',
+  sesame_oil: '7c9e3b6f-c08d-4347-fd69-1b0c4d7e6f06',
+  coconut_oil: '8d0f4c70-d19e-4458-ae70-2c1d5e8f7007',
+  avocado_oil: '9e105d81-e2af-4569-bf81-3d2e6f908108',
+  lard: 'af216e92-f3b0-467a-c092-4e3f70a19209',
+  butter: 'b0327fa3-04c1-478b-d1a3-5f4081b2a310',
   black_pepper: 'f564160e-46af-4a25-aaad-3c8fe8cf9710',
   ...NATURAL_FOOD_IDS,
 } as const;
@@ -87,6 +97,19 @@ export const LEGACY_ID_TO_UUID_MAP: Record<string, string> = {
   'default-user-profile': DEFAULT_USER_PROFILE_ID,
 };
 
+export const DEFAULT_OILS: Omit<FoodItem, 'createdAt' | 'updatedAt'>[] = [
+  { id: DEFAULT_FOOD_IDS.olive_oil, name: '橄欖油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 88, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.corn_oil, name: '玉米油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.rapeseed_oil, name: '菜籽油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.sunflower_oil, name: '葵花籽油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 88, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.soybean_oil, name: '大豆油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 88, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.sesame_oil, name: '芝麻油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 88, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.coconut_oil, name: '椰子油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 89, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.avocado_oil, name: '酪梨油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 88, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.lard, name: '豬油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.butter, name: '奶油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 72, protein: 0.1, carbs: 0, fat: 8.1, isCustom: false, isArchived: false },
+];
+
 export const DEFAULT_FOODS: Omit<FoodItem, 'createdAt' | 'updatedAt'>[] = [
   { id: DEFAULT_FOOD_IDS.chicken_breast, name: '雞胸肉', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 110, protein: 23, carbs: 0, fat: 1.2, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.whole_egg, name: '雞蛋', category: 'natural', servingSize: 50, servingUnit: 'g', calories: 72, protein: 6.3, carbs: 0.4, fat: 4.8, isCustom: false, isArchived: false },
@@ -99,7 +122,8 @@ export const DEFAULT_FOODS: Omit<FoodItem, 'createdAt' | 'updatedAt'>[] = [
   { id: DEFAULT_FOOD_IDS.salmon, name: '鮭魚', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 208, protein: 20, carbs: 0, fat: 13, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.soy_milk, name: '無糖豆漿', category: 'beverage', servingSize: 250, servingUnit: 'ml', calories: 85, protein: 8.5, carbs: 4.5, fat: 3.5, isCustom: false, isArchived: false },
   { id: DEFAULT_FOOD_IDS.tomato, name: '牛番茄', category: 'natural', servingSize: 100, servingUnit: 'g', calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, isCustom: false, isArchived: false },
-  { id: DEFAULT_FOOD_IDS.cooking_oil, name: '食用植物油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  { id: DEFAULT_FOOD_IDS.cooking_oil, name: '花生油', category: 'oil', servingSize: 10, servingUnit: 'g', calories: 90, protein: 0, carbs: 0, fat: 10, isCustom: false, isArchived: false },
+  ...DEFAULT_OILS,
   { id: DEFAULT_FOOD_IDS.black_pepper, name: '黑胡椒粒', category: 'condiment', servingSize: 5, servingUnit: 'g', calories: 13, protein: 0.5, carbs: 3.2, fat: 0.2, isCustom: false, isArchived: false },
   ...DEFAULT_NATURAL_FOODS,
 ];

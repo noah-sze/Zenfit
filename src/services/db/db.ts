@@ -22,6 +22,7 @@ import {
   DEFAULT_EXERCISES,
   DEFAULT_FOODS,
   DEFAULT_FOOD_IDS,
+  DEFAULT_OILS,
   DEFAULT_RECIPES,
   DEFAULT_RECIPE_IDS,
   PRIMARY_USER_ID,
@@ -1231,6 +1232,35 @@ export class ZenfitDatabase extends Dexie {
         const changed = migrateDailyDietLogEntriesToArchetype(log);
         if (changed) {
           await tx.table('daily_diet_logs').put(log);
+        }
+      }
+    });
+
+    this.version(23).upgrade(async (tx) => {
+      // 升級至版本 23：將預設「食用植物油」更名為「花生油」，並擴充常見油類食材
+      const now = Date.now();
+      const foodsTable = tx.table('foods');
+      const cookingOil = await foodsTable.get(DEFAULT_FOOD_IDS.cooking_oil);
+      if (cookingOil && cookingOil.name === '食用植物油') {
+        await foodsTable.update(DEFAULT_FOOD_IDS.cooking_oil, {
+          name: '花生油',
+          updatedAt: now,
+        });
+      }
+
+      const existingFoods = await foodsTable.toArray();
+      const existingIds = new Set(existingFoods.map((f: FoodItem) => f.id));
+      const existingNames = new Set(existingFoods.map((f: FoodItem) => f.name?.trim()));
+
+      for (const oil of DEFAULT_OILS) {
+        if (!existingIds.has(oil.id) && !existingNames.has(oil.name.trim())) {
+          await foodsTable.add({
+            ...oil,
+            createdAt: now,
+            updatedAt: now,
+          });
+          existingIds.add(oil.id);
+          existingNames.add(oil.name.trim());
         }
       }
     });
