@@ -65,7 +65,7 @@ export function DashboardView({
       {/* ========================================================================= */}
       {/* 頂部列：問候語 + 今日體重入口卡片 (點擊跳轉「體態界面」) */}
       {/* ========================================================================= */}
-      <div className="flex items-center justify-between pb-0.5">
+      <div className="flex items-center justify-between pb-1">
         <h1 className="text-lg sm:text-xl font-medium tracking-tight text-foreground font-sans truncate pr-2">
           {greeting}
         </h1>
@@ -76,7 +76,7 @@ export function DashboardView({
             triggerHaptic('light');
             onNavigateBody?.();
           }}
-          className="h-8 px-3 rounded-full border border-border bg-card hover:bg-hover active:scale-95 transition-all cursor-pointer font-mono text-xs flex items-center gap-1.5 select-none shrink-0"
+          className="h-8 px-3 rounded-full border border-border bg-card hover:bg-hover active:scale-95 transition-[background-color,transform] cursor-pointer font-mono text-xs tabular-nums flex items-center gap-1.5 select-none shrink-0"
           aria-label={t('body.title', '體態')}
         >
           <span className="text-muted-foreground">{t('body.weight', '體重')}</span>
@@ -131,7 +131,7 @@ export function DashboardView({
 
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-1 pb-1 text-center">
-            <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
+            <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono tabular-nums">
               <span>{consumedEnergy.toLocaleString()}</span>
               <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
                 {energyUnit}
@@ -139,7 +139,7 @@ export function DashboardView({
             </div>
 
             {/* 客觀差額事實 */}
-            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono tabular-nums text-muted-foreground">
               <span>
                 {energyDiff >= 0
                   ? `${t('dietPlan.underBudget', '剩餘')} ${energyDiff.toLocaleString()}${energyUnit}`
@@ -148,9 +148,9 @@ export function DashboardView({
             </div>
 
             {/* 客觀進度標尺 */}
-            <div className="h-2 w-full max-w-[220px] mx-auto bg-track rounded-full overflow-hidden mt-3">
+            <div className="h-2 w-full max-w-56 mx-auto bg-track rounded-full overflow-hidden mt-3">
               <div
-                className="h-full bg-foreground transition-all duration-300"
+                className="h-full bg-foreground"
                 style={{
                   width: `${Math.min(100, targetEnergy > 0 ? (consumedEnergy / targetEnergy) * 100 : 0)}%`,
                 }}
@@ -162,21 +162,21 @@ export function DashboardView({
         {/* 下半部：三大營養素 (碳水、蛋白質、脂肪) */}
         <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
           {/* 1. 碳水化合物 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-carbs truncate whitespace-nowrap">
               {t('dietPlan.carbsShort', '碳水')}
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
               <span className="font-normal text-foreground">
                 {Math.round(totals.carbs)}g
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
                 /{targetMacros.carbsGrams}g
               </span>
             </div>
             <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-carbs transition-all duration-300"
+                className="h-full bg-carbs"
                 style={{
                   width: `${Math.min(
                     100,
@@ -190,21 +190,21 @@ export function DashboardView({
           </div>
 
           {/* 2. 蛋白質 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-protein truncate whitespace-nowrap">
               {t('dietPlan.proteinShort', '蛋白質')}
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
               <span className="font-normal text-foreground">
                 {Math.round(totals.protein)}g
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
                 /{targetMacros.proteinGrams}g
               </span>
             </div>
             <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-protein transition-all duration-300"
+                className="h-full bg-protein"
                 style={{
                   width: `${Math.min(
                     100,
@@ -218,21 +218,21 @@ export function DashboardView({
           </div>
 
           {/* 3. 脂肪 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-fat truncate whitespace-nowrap">
               {t('dietPlan.fatShort', '脂肪')}
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
               <span className="font-normal text-foreground">
                 {Math.round(totals.fat)}g
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
                 /{targetMacros.fatGrams}g
               </span>
             </div>
             <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-fat transition-all duration-300"
+                className="h-full bg-fat"
                 style={{
                   width: `${Math.min(
                     100,

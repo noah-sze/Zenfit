@@ -223,7 +223,7 @@ export default function Settings() {
   return (
     <div className="w-full max-w-xl mx-auto space-y-7 pb-20 select-none">
       {/* 區塊 0：個人資料 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.profileSection')}
@@ -250,7 +250,7 @@ export default function Settings() {
       </section>
 
       {/* 區塊 1：偏好設定 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.preferencesSection')}
@@ -309,7 +309,7 @@ export default function Settings() {
       <div className="border-t border-border/60" />
 
       {/* 區塊 2：度量衡單位偏好 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.unitsSection')}
@@ -476,7 +476,7 @@ export default function Settings() {
       <div className="border-t border-border/60" />
 
       {/* 區塊 3：體態指標追蹤與忽略設定 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.bodyTrackingSection', '體態指標')}
@@ -550,7 +550,7 @@ export default function Settings() {
       <div className="border-t border-border/60" />
 
       {/* 區塊 3：自訂資料庫管理 (飲食庫 + 訓練庫) */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.databaseSection')}
@@ -608,7 +608,7 @@ export default function Settings() {
       <div className="border-t border-border/60" />
 
       {/* 區塊 4：資料與儲存 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.dataVaultSection')}
@@ -684,7 +684,7 @@ export default function Settings() {
       <div className="border-t border-border/60" />
 
       {/* 區塊 6：關於 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
             {t('settings.aboutSection')}
@@ -715,7 +715,7 @@ export default function Settings() {
       <div className="border-t border-border/60" />
 
       {/* 區塊 7：危險操作 */}
-      <section className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+      <section className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
         <div className="sm:col-span-4 space-y-0.5 px-1 sm:px-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-destructive font-mono">
             {t('settings.dangerZoneSection')}

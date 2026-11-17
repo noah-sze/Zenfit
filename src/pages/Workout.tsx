@@ -518,7 +518,7 @@ export default function Workout() {
                     className="border border-border bg-card text-card-foreground shadow-none rounded-lg overflow-visible"
                   >
                     {/* 組合專屬大卡片表頭 (40px 高度) */}
-                    <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
+                    <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {workout.routineId ? (
                           <button
@@ -532,7 +532,7 @@ export default function Workout() {
                                 mode: 'routines',
                               });
                             }}
-                            className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none shrink-0"
+                            className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-colors cursor-pointer select-none shrink-0"
                           >{workout.title}</button>
                         ) : (
                           <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">{workout.title}</span>

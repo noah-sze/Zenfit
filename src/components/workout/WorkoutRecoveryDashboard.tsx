@@ -114,7 +114,7 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
         )}
       >
         {/* 上半部：人體肌肉恢復熱圖 */}
-        <div className="p-3.5 sm:p-5 space-y-3">
+        <div className="p-4 sm:p-5 space-y-3">
           {/* 頂部標頭與摘要膠囊 */}
           <div className="flex items-center justify-between">
             {showTitle && (
@@ -173,9 +173,9 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
         </div>
 
         {/* 下半部：訓練客觀 3 欄指標 (完全對標飲食頁面的碳水、蛋白質、脂肪 3 欄) */}
-        <div className="grid grid-cols-3 divide-x divide-border border-t border-border font-mono">
+        <div className="grid grid-cols-3 divide-x divide-border border-t border-border font-mono tabular-nums">
           {/* 1. 動作項目 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-muted-foreground truncate whitespace-nowrap">
               {t('workout.exercises', '動作項目')}
             </div>
@@ -183,14 +183,14 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
               <span className="font-normal text-foreground">
                 {exerciseCount}
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground ml-1">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground ml-1">
                 {t('common.items', '項')}
               </span>
             </div>
           </div>
 
           {/* 2. 完成組數 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-muted-foreground truncate whitespace-nowrap">
               {t('workout.completedSets', '完成組數')}
             </div>
@@ -198,14 +198,14 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
               <span className="font-normal text-foreground">
                 {setCount}
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground ml-1">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground ml-1">
                 {t('workout.set', '組')}
               </span>
             </div>
           </div>
 
           {/* 3. 訓練總容量 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-muted-foreground truncate whitespace-nowrap">
               {t('workout.totalVolume', '訓練容量')}
             </div>
@@ -213,7 +213,7 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
               <span className="font-normal text-foreground">
                 {Math.round(totalVolume).toLocaleString()}
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground ml-1">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground ml-1">
                 {weightUnit}
               </span>
             </div>
@@ -252,12 +252,12 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
               <div className="grid grid-cols-2 divide-x divide-border bg-card">
                 {/* 左欄（狀態） */}
                 <div className="p-2 flex flex-col items-start gap-0.5 overflow-hidden">
-                  <span className="text-[10px] text-muted-foreground font-normal leading-none truncate">
+                  <span className="text-[11px] text-muted-foreground font-normal leading-none truncate">
                     {t('workout.status', '狀態')}
                   </span>
                   <span
                     className={cn(
-                      'text-xs font-bold leading-tight truncate mt-0.5',
+                      'text-xs font-semibold leading-tight truncate mt-0.5',
                       getTierTextColor(selectedStatus.tier)
                     )}
                   >
@@ -267,14 +267,14 @@ export const WorkoutRecoveryDashboard = memo(function WorkoutRecoveryDashboard({
 
                 {/* 右欄（上次刺激） */}
                 <div className="p-2 flex flex-col items-start gap-0.5 overflow-hidden">
-                  <span className="text-[10px] text-muted-foreground font-normal leading-none truncate">
+                  <span className="text-[11px] text-muted-foreground font-normal leading-none truncate">
                     {t('workout.lastStimulus', '上次刺激')}
                   </span>
                   <span
                     className={cn(
                       'text-xs font-mono leading-tight truncate mt-0.5',
                       selectedStatus.daysElapsed !== null
-                        ? 'font-bold text-foreground'
+                        ? 'font-semibold text-foreground'
                         : 'font-normal text-muted-foreground'
                     )}
                   >

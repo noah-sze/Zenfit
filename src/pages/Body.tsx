@@ -531,7 +531,7 @@ export default function Body() {
             <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
               <span
                 className={cn(
-                  'text-4xl sm:text-5xl font-bold tracking-tight transition-all',
+                  'text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums transition-colors',
                   hasTodayWeight
                     ? 'text-foreground group-hover:opacity-80'
                     : heroDisplayWeight
@@ -565,7 +565,7 @@ export default function Body() {
                   e.currentTarget
                 )
               }
-              className="h-7 px-3 rounded-full border border-border bg-muted/30 hover:bg-hover active:scale-95 transition-all cursor-pointer font-mono text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+              className="h-7 px-3 rounded-full border border-border bg-muted/30 hover:bg-hover active:scale-95 transition-[background-color,transform] cursor-pointer font-mono text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <span className="text-[11px]">{t('body.bodyFat', '體脂率')}</span>
               <span
@@ -603,7 +603,7 @@ export default function Body() {
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.shoulders', '肩寬')}
@@ -634,7 +634,7 @@ export default function Body() {
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.chest', '胸圍')}
@@ -665,7 +665,7 @@ export default function Body() {
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.waist', '腰圍')}
@@ -696,7 +696,7 @@ export default function Body() {
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.hips', '臀圍')}
@@ -732,7 +732,7 @@ export default function Body() {
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.arms', '手臂圍')}
@@ -763,7 +763,7 @@ export default function Body() {
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.thighs', '大腿圍')}
@@ -791,7 +791,7 @@ export default function Body() {
       {/* 模組 2：體態指標 (平滑體重 · BMI · FFMI · 去脂體重 · 脂肪總重) */}
       {/* ========================================================================= */}
       <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
-        <div className="px-3.5 sm:px-4 py-2.5 border-b border-border flex items-center justify-between text-xs">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between text-xs">
           <span className="font-semibold text-xs uppercase tracking-widest text-muted-foreground font-sans">
             {t('body.metricsTitle', '體態指標')}
           </span>
@@ -826,7 +826,7 @@ export default function Body() {
           <button
             type="button"
             onClick={(e) => handleOpenMetricPopover('bmi', e.currentTarget)}
-            className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
+            className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
           >
             <div className="text-[11px] text-muted-foreground truncate">
               {t('body.bmi', 'BMI')}
@@ -849,7 +849,7 @@ export default function Body() {
           <button
             type="button"
             onClick={(e) => handleOpenMetricPopover('ffmi', e.currentTarget)}
-            className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
+            className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
           >
             <div className="text-[11px] text-muted-foreground truncate">
               {t('body.ffmi', 'FFMI')}
@@ -875,7 +875,7 @@ export default function Body() {
           <button
             type="button"
             onClick={(e) => handleOpenMetricPopover('leanBodyMass', e.currentTarget)}
-            className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
+            className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
           >
             <div className="text-[11px] text-muted-foreground truncate">
               {t('body.leanBodyMass', '去脂體重')}
@@ -898,7 +898,7 @@ export default function Body() {
           <button
             type="button"
             onClick={(e) => handleOpenMetricPopover('fatMass', e.currentTarget)}
-            className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
+            className="p-3 text-center space-y-0.5 overflow-hidden hover:bg-hover transition-colors cursor-pointer active:scale-[0.99] focus:outline-hidden"
           >
             <div className="text-[11px] text-muted-foreground truncate">
               {t('body.fatMass', '脂肪總重')}
@@ -935,7 +935,7 @@ export default function Body() {
             align="center"
             side="bottom"
             sideOffset={6}
-            className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-3.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
+            className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-4 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between pb-2 border-b border-border">
@@ -953,7 +953,7 @@ export default function Body() {
                   {getMetricDisplayValue(activeMetricInfo)}
                   {!isMetricFresh(activeMetricInfo) &&
                     getMetricDisplayValue(activeMetricInfo) !== '-' && (
-                      <span className="text-[10px] text-muted-foreground/60 ml-1.5 font-sans">
+                      <span className="text-[11px] text-muted-foreground/60 ml-1.5 font-sans">
                         ({t('body.referenceValue', '參考值')})
                       </span>
                     )}
@@ -961,7 +961,7 @@ export default function Body() {
               </div>
 
               <div className="text-[11px] text-muted-foreground font-mono flex flex-wrap items-center gap-1.5 bg-muted/50 px-2.5 py-1.5 rounded leading-relaxed">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
                   {t('body.metricExplanations.formula', '計算公式')}:
                 </span>
                 <span className="text-foreground whitespace-normal break-words">
@@ -990,7 +990,7 @@ export default function Body() {
       {/* ========================================================================= */}
       {(!bodyPreferences.ignoreTorsoCircumferences || !bodyPreferences.ignoreLimbCircumferences) && (
         <div className="bg-card border border-border rounded-lg shadow-none overflow-hidden text-card-foreground select-none font-mono">
-          <div className="px-3.5 sm:px-4 py-2.5 border-b border-border flex items-center justify-between text-xs">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between text-xs">
             <span className="font-semibold text-xs uppercase tracking-widest text-muted-foreground font-sans">
               {t('body.bodyProportions', '體型圍度')}
             </span>
@@ -1020,7 +1020,7 @@ export default function Body() {
                 >
                   {vTaperRatio !== null ? vTaperRatio : '-'}
                 </div>
-                <div className="text-[10px] text-muted-foreground/60 truncate">
+                <div className="text-[11px] text-muted-foreground/60 truncate">
                   {t('body.vTaperHint', '倒三角係數')}
                 </div>
               </button>
@@ -1046,7 +1046,7 @@ export default function Body() {
                 >
                   {whRatio !== null ? whRatio : '-'}
                 </div>
-                <div className="text-[10px] text-muted-foreground/60 truncate">
+                <div className="text-[11px] text-muted-foreground/60 truncate">
                   {t('body.whRatioHint', '形態基準')}
                 </div>
               </button>
@@ -1055,7 +1055,7 @@ export default function Body() {
 
           {/* 圍度演進表格 (三欄固定 Grid 佈局，依偏好動態過濾項目) */}
           <div className="divide-y divide-border text-xs">
-            <div className="px-3.5 sm:px-4 py-2 grid grid-cols-3 items-center text-muted-foreground text-[11px] bg-muted/20">
+            <div className="px-4 py-2 grid grid-cols-3 items-center text-muted-foreground text-[11px] bg-muted/20">
               <span className="text-left">{t('body.bodyPart', '部位圍度')}</span>
               <span className="text-center">{t('body.currentValue', '當前數值')}</span>
               <span className="text-right">{t('body.thirtyDaysChange', '30 天變動')}</span>
@@ -1065,7 +1065,7 @@ export default function Body() {
             {!bodyPreferences.ignoreTorsoCircumferences && (
               <>
                 {/* 1. 肩寬 */}
-                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                <div className="px-4 py-3 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.shoulders', '肩寬')}</span>
                   <span className="text-center font-normal text-foreground">{effectiveShoulders ? `${effectiveShoulders}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
@@ -1076,7 +1076,7 @@ export default function Body() {
                 </div>
 
                 {/* 2. 胸圍 */}
-                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                <div className="px-4 py-3 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.chest', '胸圍')}</span>
                   <span className="text-center font-normal text-foreground">{effectiveChest ? `${effectiveChest}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
@@ -1087,7 +1087,7 @@ export default function Body() {
                 </div>
 
                 {/* 3. 腰圍 */}
-                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                <div className="px-4 py-3 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.waist', '腰圍')}</span>
                   <span className="text-center font-normal text-foreground">{effectiveWaist ? `${effectiveWaist}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
@@ -1098,7 +1098,7 @@ export default function Body() {
                 </div>
 
                 {/* 4. 臀圍 */}
-                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                <div className="px-4 py-3 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.hips', '臀圍')}</span>
                   <span className="text-center font-normal text-foreground">{effectiveHips ? `${effectiveHips}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
@@ -1114,7 +1114,7 @@ export default function Body() {
             {!bodyPreferences.ignoreLimbCircumferences && (
               <>
                 {/* 手臂圍 */}
-                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                <div className="px-4 py-3 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.arms', '手臂圍')}</span>
                   <span className="text-center font-normal text-foreground">{effectiveArms ? `${effectiveArms}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">
@@ -1125,7 +1125,7 @@ export default function Body() {
                 </div>
 
                 {/* 大腿圍 */}
-                <div className="px-3.5 sm:px-4 py-2.5 grid grid-cols-3 items-center hover:bg-hover transition-colors">
+                <div className="px-4 py-3 grid grid-cols-3 items-center hover:bg-hover transition-colors">
                   <span className="text-left font-medium text-foreground">{t('body.thighs', '大腿圍')}</span>
                   <span className="text-center font-normal text-foreground">{effectiveThighs ? `${effectiveThighs}${lengthUnit}` : '-'}</span>
                   <span className="text-right font-mono text-muted-foreground">

@@ -123,7 +123,7 @@ export function BodyTodayDataCard({
             <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
               <span
                 className={cn(
-                  'text-4xl sm:text-5xl font-bold tracking-tight transition-all',
+                  'text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums transition-colors',
                   hasTodayWeight
                     ? 'text-foreground group-hover:opacity-80'
                     : weight
@@ -148,7 +148,7 @@ export function BodyTodayDataCard({
             <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono">
               <span
                 className={cn(
-                  'text-4xl sm:text-5xl font-bold tracking-tight',
+                  'text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums',
                   hasTodayWeight ? 'text-foreground' : 'text-muted-foreground/40'
                 )}
               >
@@ -180,7 +180,7 @@ export function BodyTodayDataCard({
                   e.currentTarget
                 )
               }
-              className="h-7 px-3 rounded-full border border-border bg-muted/30 hover:bg-hover active:scale-95 transition-all cursor-pointer font-mono text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+              className="h-7 px-3 rounded-full border border-border bg-muted/30 hover:bg-hover active:scale-95 transition-[background-color,transform] cursor-pointer font-mono text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <span className="text-[11px]">{t('body.bodyFat', '體脂率')}</span>
               <span
@@ -237,7 +237,7 @@ export function BodyTodayDataCard({
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.shoulders', '肩寬')}
@@ -256,7 +256,7 @@ export function BodyTodayDataCard({
                   </div>
                 </button>
               ) : (
-                <div className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden">
+                <div className="p-3 text-center space-y-0.5 overflow-hidden">
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.shoulders', '肩寬')}
                   </div>
@@ -288,7 +288,7 @@ export function BodyTodayDataCard({
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.chest', '胸圍')}
@@ -307,7 +307,7 @@ export function BodyTodayDataCard({
                   </div>
                 </button>
               ) : (
-                <div className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden">
+                <div className="p-3 text-center space-y-0.5 overflow-hidden">
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.chest', '胸圍')}
                   </div>
@@ -339,7 +339,7 @@ export function BodyTodayDataCard({
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.waist', '腰圍')}
@@ -358,7 +358,7 @@ export function BodyTodayDataCard({
                   </div>
                 </button>
               ) : (
-                <div className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden">
+                <div className="p-3 text-center space-y-0.5 overflow-hidden">
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.waist', '腰圍')}
                   </div>
@@ -390,7 +390,7 @@ export function BodyTodayDataCard({
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.hips', '臀圍')}
@@ -409,7 +409,7 @@ export function BodyTodayDataCard({
                   </div>
                 </button>
               ) : (
-                <div className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden">
+                <div className="p-3 text-center space-y-0.5 overflow-hidden">
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.hips', '臀圍')}
                   </div>
@@ -446,7 +446,7 @@ export function BodyTodayDataCard({
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.arms', '手臂圍')}
@@ -465,7 +465,7 @@ export function BodyTodayDataCard({
                   </div>
                 </button>
               ) : (
-                <div className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden">
+                <div className="p-3 text-center space-y-0.5 overflow-hidden">
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.arms', '手臂圍')}
                   </div>
@@ -497,7 +497,7 @@ export function BodyTodayDataCard({
                       e.currentTarget
                     )
                   }
-                  className="p-2.5 sm:p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
+                  className="p-3 text-center space-y-0.5 hover:bg-hover transition-colors cursor-pointer active:scale-98 overflow-hidden"
                 >
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.thighs', '大腿圍')}
@@ -516,7 +516,7 @@ export function BodyTodayDataCard({
                   </div>
                 </button>
               ) : (
-                <div className="p-2.5 sm:p-3 text-center space-y-0.5 overflow-hidden">
+                <div className="p-3 text-center space-y-0.5 overflow-hidden">
                   <div className="text-[11px] text-muted-foreground truncate">
                     {t('body.thighs', '大腿圍')}
                   </div>

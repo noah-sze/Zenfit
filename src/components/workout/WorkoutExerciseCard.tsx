@@ -51,7 +51,7 @@ export function WorkoutExerciseCard({
       )}
     >
       {/* 灰底表頭橫欄 (單行 40px 高度：動作名稱 · 組數 · 容量) */}
-      <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
+      <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
         <div className="flex items-center gap-1.5 min-w-0">
           {exerciseId && interactive ? (
             <button
@@ -64,7 +64,7 @@ export function WorkoutExerciseCard({
                   mode: 'exercises',
                 });
               }}
-              className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-all cursor-pointer select-none shrink-0"
+              className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-colors cursor-pointer select-none shrink-0"
             >
               {exerciseName}
             </button>
@@ -112,7 +112,7 @@ export function WorkoutExerciseCard({
           return (
             <div
               key={set.id || setIdx}
-              className="min-h-10 py-1.5 px-3.5 sm:px-4 flex items-center justify-between gap-3 text-xs font-mono"
+              className="min-h-10 py-1.5 px-4 flex items-center justify-between gap-3 text-xs font-mono"
             >
               <span className="text-muted-foreground text-xs w-14 shrink-0">
                 {t('workout.set', '組')} {setIdx + 1}
@@ -142,7 +142,7 @@ export function WorkoutExerciseCard({
                   >
                     {displayWeight}
                   </span>
-                  <span className="text-muted-foreground text-[10px] shrink-0">
+                  <span className="text-muted-foreground text-[11px] shrink-0">
                     {bodyWeightUnit}
                   </span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
@@ -179,7 +179,7 @@ export function WorkoutExerciseCard({
                       ? set.reps
                       : '-'}
                   </span>
-                  <span className="text-muted-foreground text-[10px] shrink-0">
+                  <span className="text-muted-foreground text-[11px] shrink-0">
                     {t('common.times', '次')}
                   </span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
@@ -190,7 +190,7 @@ export function WorkoutExerciseCard({
         })}
 
         {/* 動作底部快速增加一組按鈕 */}
-        <div className="py-1.5 px-3.5 sm:px-4 flex justify-center bg-card/60 rounded-b-lg">
+        <div className="py-1.5 px-4 flex justify-center bg-card/60 rounded-b-lg">
           <button
             type="button"
             disabled={!interactive}

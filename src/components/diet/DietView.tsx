@@ -236,7 +236,7 @@ export function DietView({
 
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-2 pb-1 text-center">
-            <div className="hero-number flex items-baseline justify-center gap-1.5">
+            <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono tabular-nums">
               <span>{consumedEnergy.toLocaleString()}</span>
               <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
                 {energyUnit}
@@ -244,7 +244,7 @@ export function DietView({
             </div>
 
             {/* 客觀差額事實 */}
-            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono tabular-nums text-muted-foreground">
               <span>
                 {energyDiff >= 0
                   ? `${t('dietPlan.underBudget')} ${energyDiff.toLocaleString()}${energyUnit}`
@@ -253,9 +253,9 @@ export function DietView({
             </div>
 
             {/* 客觀進度標尺 */}
-            <div className="h-2 w-full max-w-[220px] mx-auto bg-track rounded-full overflow-hidden mt-3">
+            <div className="h-2 w-full max-w-56 mx-auto bg-track rounded-full overflow-hidden mt-3">
               <div
-                className="h-full bg-foreground transition-all duration-300"
+                className="h-full bg-foreground"
                 style={{
                   width: `${Math.min(100, targetEnergy > 0 ? (consumedEnergy / targetEnergy) * 100 : 0)}%`,
                 }}
@@ -267,21 +267,21 @@ export function DietView({
         {/* 下半部：三大營養素 (2. 碳水、蛋白質、脂肪) */}
         <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
           {/* 1. 碳水化合物 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-carbs truncate whitespace-nowrap">
               {t('dietPlan.carbsShort')}
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
               <span className="font-normal text-foreground">
                 {Math.round(totals.carbs)}g
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
                 /{targetMacros.carbsGrams}g
               </span>
             </div>
             <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-carbs transition-all duration-300"
+                className="h-full bg-carbs"
                 style={{
                   width: `${Math.min(
                     100,
@@ -295,21 +295,21 @@ export function DietView({
           </div>
 
           {/* 2. 蛋白質 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-protein truncate whitespace-nowrap">
               {t('dietPlan.proteinShort')}
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
               <span className="font-normal text-foreground">
                 {Math.round(totals.protein)}g
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
                 /{targetMacros.proteinGrams}g
               </span>
             </div>
             <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-protein transition-all duration-300"
+                className="h-full bg-protein"
                 style={{
                   width: `${Math.min(
                     100,
@@ -323,21 +323,21 @@ export function DietView({
           </div>
 
           {/* 3. 脂肪 */}
-          <div className="p-2.5 sm:p-4 space-y-1 overflow-hidden">
+          <div className="p-3 sm:p-4 space-y-1 overflow-hidden">
             <div className="text-xs font-medium text-fat truncate whitespace-nowrap">
               {t('dietPlan.fatShort')}
             </div>
-            <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
+            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
               <span className="font-normal text-foreground">
                 {Math.round(totals.fat)}g
               </span>
-              <span className="text-2xs sm:text-xs font-normal text-muted-foreground">
+              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
                 /{targetMacros.fatGrams}g
               </span>
             </div>
             <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-fat transition-all duration-300"
+                className="h-full bg-fat"
                 style={{
                   width: `${Math.min(
                     100,
@@ -373,12 +373,12 @@ export function DietView({
           <div
             key={type}
             className={cn(
-              "border border-border bg-card text-card-foreground shadow-none rounded-lg transition-all",
+              "border border-border bg-card text-card-foreground shadow-none rounded-lg",
               isPopoverExpanded ? "overflow-visible relative z-30" : "overflow-hidden"
             )}
           >
             {/* 灰底表頭橫欄 (單行 40px 高度：左側餐別名稱 + 3C-2 供能微線微箭頭 Popover，右側圓形「+」圖標按鈕) */}
-            <div className="h-10 px-3.5 sm:px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 relative">
+            <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 relative">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-semibold text-sm tracking-tight text-foreground shrink-0">
                   {t(`diet.${type}`)}
@@ -482,7 +482,7 @@ export function DietView({
                         }
                       }}
                       className={cn(
-                        'min-h-16 py-2.5 px-3.5 sm:px-4 flex items-center justify-between transition-colors',
+                        'min-h-16 py-2.5 px-4 flex items-center justify-between transition-colors',
                         interactive ? 'hover:bg-hover cursor-pointer' : 'cursor-default'
                       )}
                     >
@@ -491,14 +491,14 @@ export function DietView({
                         <div className="truncate text-foreground font-medium text-sm">
                           {resolveFoodLogTitle(item, t)}
                         </div>
-                        <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+                        <div className="text-[11px] font-mono tabular-nums text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
                           {isSystemEntry ? (
                             <>
                               <span className="inline-flex items-center gap-1 shrink-0">
                                 {isEstimateEntry ? (
-                                  <Zap className="size-3 stroke-[1.8]" />
+                                  <Zap className="size-3 stroke-[1.5]" />
                                 ) : (
-                                  <History className="size-3 stroke-[1.8]" />
+                                  <History className="size-3 stroke-[1.5]" />
                                 )}
                                 <span>
                                   {isEstimateEntry

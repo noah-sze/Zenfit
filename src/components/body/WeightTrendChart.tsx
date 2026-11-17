@@ -96,7 +96,7 @@ export function WeightTrendChart({
           {interactive ? (
             <Popover>
               <PopoverTrigger
-                className="flex items-center gap-1.5 px-2 py-0.5 -ml-1 rounded-full text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-hover active:scale-[0.98] transition-all cursor-pointer select-none focus:outline-hidden"
+                className="flex items-center gap-1.5 px-2 py-0.5 -ml-1 rounded-full text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-hover active:scale-[0.98] transition-[background-color,transform] cursor-pointer select-none focus:outline-hidden"
                 aria-label={t('body.trendWeight', '平滑體重')}
               >
                 <span className="size-2 rounded-full bg-foreground" />
@@ -106,7 +106,7 @@ export function WeightTrendChart({
                 align="start"
                 side="bottom"
                 sideOffset={8}
-                className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-3.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
+                className="w-80 sm:w-88 max-w-[calc(100vw-24px)] p-4 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between pb-2 border-b border-border">
@@ -121,7 +121,7 @@ export function WeightTrendChart({
                   </div>
 
                   <div className="text-[11px] text-muted-foreground font-mono flex flex-wrap items-center gap-1.5 bg-muted/50 px-2.5 py-1.5 rounded leading-relaxed">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
                       {t('body.metricExplanations.formula', '計算公式')}:
                     </span>
                     <span className="text-foreground whitespace-normal break-words">
@@ -157,7 +157,7 @@ export function WeightTrendChart({
             onChange={setRange}
           />
         ) : (
-          <div className="h-5 px-2 rounded-full border border-border/80 bg-muted/20 text-[10px] font-mono text-muted-foreground flex items-center justify-center select-none pointer-events-none cursor-default">
+          <div className="h-5 px-2 rounded-full border border-border/80 bg-muted/20 text-[11px] font-mono text-muted-foreground flex items-center justify-center select-none pointer-events-none cursor-default">
             <span className="flex-none tabular-nums font-normal">{range}</span>
           </div>
         )}
@@ -265,7 +265,7 @@ export function WeightTrendChart({
                   fill="var(--background)"
                   stroke="currentColor"
                   strokeWidth={isSelected ? 2 : 1.25}
-                  className="transition-all"
+                  className="transition-opacity"
                 />
               </g>
             ) : (
@@ -327,7 +327,7 @@ export function WeightTrendChart({
               side="top"
               sideOffset={8}
               align="center"
-              className="w-auto min-w-[148px] p-2.5 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden z-[90]"
+              className="w-auto min-w-[148px] p-3 bg-popover text-popover-foreground border border-border shadow-none rounded-lg select-none font-mono focus:outline-hidden z-[90]"
             >
               <div className="space-y-1.5">
                 <div className="text-[11px] font-normal text-muted-foreground pb-1 border-b border-border">
