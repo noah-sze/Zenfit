@@ -54,7 +54,13 @@
       "times": "次",
       "selectedDate": "选定日期",
       "recent": "最近",
-      "none": "无"
+      "none": "无",
+      "archivedSuccess": "已归档",
+      "nextDay": "后一天",
+      "previousDay": "前一天",
+      "selected": "已选",
+      "user": "用户",
+      "year": "年"
     },
     "calendar": {
       "monthYearFormat": "yyyy 年 M 月",
@@ -67,7 +73,9 @@
         "thu": "四",
         "fri": "五",
         "sat": "六"
-      }
+      },
+      "today": "今天",
+      "yesterday": "昨天"
     },
     "nav": {
       "dashboard": "总览",
@@ -311,7 +319,11 @@
         "proteinDesc": "蛋白质最高",
         "carbsDesc": "碳水最高",
         "fatDesc": "脂肪最高"
-      }
+      },
+      "replaceIngredient": "替换食材",
+      "unknownFood": "未知食材",
+      "servingCount_one": "{{count}} 份",
+      "servingCount_other": "{{count}} 份"
     },
     "dietPlan": {
       "title": "供能比",
@@ -573,7 +585,15 @@
       "lastStimulus": "上次刺激",
       "neverTrained": "近期无刺激 · 已就绪",
       "completedSets": "完成组数",
-      "noWorkoutLogs": "无训练记录"
+      "noWorkoutLogs": "无训练记录",
+      "allMusclesAdded": "已包含所有肌群",
+      "atLeastOneMuscle": "至少需设定一个目标肌群",
+      "customEquipment": "自定义器械",
+      "equipmentName": "器械名称",
+      "equipmentPlaceholder": "例如：滑轮机",
+      "exerciseNamePlaceholder": "例如：杠铃卧推",
+      "searchEquipmentPlaceholder": "搜索器械名称...",
+      "selectDateHint": "可套用现有组合或直接新增动作进行练后记录"
     },
     "equipment": {
       "all": "全部",
@@ -889,7 +909,13 @@
       "connectDropbox": "连接",
       "disconnectDropbox": "断开连接",
       "missingAppKey": "未配置 Dropbox App Key",
-      "disconnectedToast": "已断开连接"
+      "disconnectedToast": "已断开连接",
+      "noArchivedItems": "无已归档项目",
+      "unlockE2eeTitle": "解锁端到端加密",
+      "unlockE2eeDesc": "云端数据库已启用 E2EE 加密保护。请输入您的同步主密码以解锁本地密钥。",
+      "unlockE2eePlaceholder": "输入加密主密码...",
+      "unlockE2eeBtn": "解锁并同步",
+      "unlockFailed": "密码错误，无法解锁"
     },
     "stats": {
       "allTime": "全部",
@@ -1157,7 +1183,10 @@
         "bodyFat": "体脂率",
         "circumferences": "身体围度",
         "noLogs": "当日无身体数据记录"
-      }
+      },
+      "copyFailed": "复制失败",
+      "jsonCopied": "已复制 JSON",
+      "textCopied": "已复制纯文本"
     },
     "landing": {
       "metaTitle": "Zenfit - 饮食、训练记录",
@@ -1410,6 +1439,44 @@
         "moderateActivity": "中度活动 (每周 3-5 天训练)",
         "servingUnit": "份"
       }
+    },
+    "profile": {
+      "birth": "出生",
+      "female": "女",
+      "gender": "性别",
+      "height": "身高",
+      "male": "男",
+      "name": "姓名"
+    },
+    "security": {
+      "appLocked": "应用已锁定",
+      "enterPinPrompt": "请输入 PIN 码解锁",
+      "pinError": "PIN 码错误，剩余 {{remaining}} 次尝试",
+      "answerError": "安全问题答案错误，剩余 {{remaining}} 次尝试",
+      "tooManyAttempts": "错误次数过多，请稍后再试",
+      "lockoutWait": "请于 {{seconds}} 秒后重试",
+      "biometricButtonTitle": "生物识别解锁",
+      "biometricClickToRetry": "点击重试生物识别",
+      "biometricVerifying": "正在验证生物识别...",
+      "biometricFailed": "生物识别未通过，请点击重试",
+      "biometricFallbackToPin": "生物识别多次未通过，请输入 PIN 码",
+      "usePinInstead": "改用 PIN 码",
+      "forgotPin": "忘记 PIN 码",
+      "forgotPinTitle": "重设应用锁",
+      "forgotPinDescE2ee": "输入您的 E2EE 同步主密码以验证身份并重设 PIN 码",
+      "forgotPinDescQuestion": "回答先前设置的安全问题以验证身份并重设 PIN 码",
+      "forgotPinDescLegacy": "尚未设置同步密码或安全问题，仅可通过清除应用锁定状态进行重设",
+      "syncPassphrasePlaceholder": "输入同步主密码...",
+      "passphraseError": "同步主密码错误",
+      "verifyAndUnlock": "验证并解锁",
+      "useSecurityQuestion": "改用安全问题验证",
+      "useE2EEPassphrase": "改用 E2EE 主密码验证",
+      "securityQuestion": "安全问题",
+      "securityAnswerPlaceholder": "输入安全问题答案...",
+      "verifySecurityAnswer": "验证答案并解锁",
+      "resetWarningNoE2ee": "重设后将关闭本地 PIN 锁保护，您的运动与饮食数据不会受影响",
+      "legacyResetConfirm": "确认重设并解锁",
+      "backToPin": "返回输入 PIN 码"
     }
   }
 }
