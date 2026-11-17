@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '@/components/ui/Logo';
 import { triggerHaptic } from '@/lib/haptics';
@@ -24,23 +24,23 @@ export function WelcomeTransitionOverlay({
 }: WelcomeTransitionOverlayProps) {
   const { t } = useTranslation();
   const [activeTickCount, setActiveTickCount] = useState(0);
-  const [isFadingOut, setIsFadingOut] = useState(false);
+  const onFinishRef = useRef(onFinish);
+  onFinishRef.current = onFinish;
 
   const totalTicks = 24;
   const displayName = userName?.trim() || t('common.user', '使用者');
 
-  // 刻度進度與計時生命週期
+  // 刻度進度與計時生命週期（維持不透明覆蓋直到切換路由，避免提前露底頻閃）
   useEffect(() => {
     if (!open) {
       setActiveTickCount(0);
-      setIsFadingOut(false);
       return;
     }
 
     triggerHaptic('light');
 
     // 刻度條逐格遞增
-    const tickInterval = Math.max(20, Math.floor((duration - 300) / totalTicks));
+    const tickInterval = Math.max(20, Math.floor((duration - 150) / totalTicks));
     const tickTimer = setInterval(() => {
       setActiveTickCount((prev) => {
         if (prev < totalTicks) {
@@ -51,30 +51,21 @@ export function WelcomeTransitionOverlay({
       });
     }, tickInterval);
 
-    // 結束前 300ms 觸發淡出
-    const fadeTimer = setTimeout(() => {
-      setIsFadingOut(true);
-    }, Math.max(0, duration - 300));
-
-    // 時間到達後完成回調
+    // 時間到達後直接觸發路由切換
     const finishTimer = setTimeout(() => {
-      onFinish();
+      onFinishRef.current();
     }, duration);
 
     return () => {
       clearInterval(tickTimer);
-      clearTimeout(fadeTimer);
       clearTimeout(finishTimer);
     };
-  }, [open, duration, onFinish, totalTicks]);
+  }, [open, duration, totalTicks]);
 
   // 點擊任意處略過
   const handleSkip = () => {
     triggerHaptic('selection');
-    setIsFadingOut(true);
-    setTimeout(() => {
-      onFinish();
-    }, 150);
+    onFinishRef.current();
   };
 
   if (!open) {
@@ -87,11 +78,7 @@ export function WelcomeTransitionOverlay({
       aria-modal="true"
       aria-label={t('welcome.entering', '正在進入 Zenfit ……')}
       onClick={handleSkip}
-      className={cn(
-        "fixed inset-0 z-[100] bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer",
-        "transition-opacity duration-300 ease-out",
-        isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"
-      )}
+      className="fixed inset-0 z-[100] bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer opacity-100 pointer-events-auto"
     >
       {/* 3D Celestial Wireframe Dome (天體經緯線框球體，以 1px 髮絲線深邃旋轉) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[420px] h-[340px] sm:h-[420px] pointer-events-none opacity-[0.12] dark:opacity-[0.18] text-foreground select-none">

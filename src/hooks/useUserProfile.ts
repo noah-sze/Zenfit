@@ -17,26 +17,37 @@ const DEFAULT_BASE_INFO: UserBaseInfo = {
   updatedAt: 0,
 };
 
+// 模組級記憶體注水快取：讓 SetupGuard 進入 /app 第 0 幀即同步取得資料，避免 return null 空畫面閃爍
+let inMemoryBaseInfoCache: UserBaseInfo | null = null;
+let inMemoryLatestWeightCache: number | null = null;
+
 export function useUserProfile() {
   const { bodyWeightUnit } = useUnitPreferences();
 
   // 1. 讀取獨立的用戶基礎資訊（名字、性別、身高、出生日期）
-  const baseInfo = useLiveQuery(async () => {
+  const liveBaseInfo = useLiveQuery(async () => {
     const existing = await db.user_base_info.get(PRIMARY_USER_ID);
-    return existing || DEFAULT_BASE_INFO;
+    const resolved = existing || DEFAULT_BASE_INFO;
+    inMemoryBaseInfoCache = resolved;
+    return resolved;
   }, []);
+  const baseInfo = liveBaseInfo ?? inMemoryBaseInfoCache ?? undefined;
 
   // 2. 動態讀取最新時序體重（從 body_metrics 取最新記錄）
-  const latestWeightMetric = useLiveQuery(async () => {
+  const liveLatestWeightMetric = useLiveQuery(async () => {
     const latest = await db.body_metrics
       .orderBy('date')
       .reverse()
       .filter((m) => typeof m.weight === 'number' && m.weight > 0)
       .first();
+    inMemoryLatestWeightCache = latest?.weight ?? 0;
     return latest || null;
   }, []);
 
-  const currentWeightKg = latestWeightMetric?.weight || 0;
+  const currentWeightKg =
+    liveLatestWeightMetric !== undefined
+      ? liveLatestWeightMetric?.weight || 0
+      : inMemoryLatestWeightCache ?? 0;
   const computedAge = baseInfo?.birthDate ? calculateAgeFromBirth(baseInfo.birthDate) : 0;
 
   // 組合為具備向後相容性的 UserProfile 視圖
@@ -80,11 +91,13 @@ export function useUserProfile() {
     if (updates.heightCm !== undefined) baseUpdates.heightCm = updates.heightCm;
 
     if (Object.keys(baseUpdates).length > 0) {
-      await db.user_base_info.put({
+      const nextBaseInfo: UserBaseInfo = {
         ...currentBase,
         ...baseUpdates,
         updatedAt: now,
-      });
+      };
+      inMemoryBaseInfoCache = nextBaseInfo;
+      await db.user_base_info.put(nextBaseInfo);
     }
 
     // 同步更新 user_profile 表
@@ -105,6 +118,7 @@ export function useUserProfile() {
 
     // 若有傳入體重變更，更新或新增至當日的 body_metrics
     if (updates.currentWeightKg !== undefined) {
+      inMemoryLatestWeightCache = updates.currentWeightKg;
       const todayStr = new Date().toISOString().slice(0, 10);
       const existingToday = await db.body_metrics.where('date').equals(todayStr).first();
       if (existingToday) {
