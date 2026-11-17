@@ -377,7 +377,7 @@ export function CopyDailyDataDialog({
               )}
             </div>
           ) : (
-            <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-foreground overscroll-contain">
+            <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-muted-foreground overscroll-contain">
               {previewContent}
             </div>
           )}
