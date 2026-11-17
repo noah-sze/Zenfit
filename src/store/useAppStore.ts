@@ -18,6 +18,10 @@ interface AppState {
   nutritionDisplayMode: NutritionDisplayMode;
   setNutritionDisplayMode: (mode: NutritionDisplayMode) => void;
 
+  // 首次記錄食材前是否已閱讀並確認生重計算基準
+  hasConfirmedRawWeight: boolean;
+  setHasConfirmedRawWeight: (confirmed: boolean) => void;
+
   // Add / Edit Modal Controls
   isAddModalOpen: boolean;
   addModalType: QuickAddType;
@@ -46,6 +50,9 @@ export const useAppStore = create<AppState>()(
 
       nutritionDisplayMode: 'serving',
       setNutritionDisplayMode: (nutritionDisplayMode) => set({ nutritionDisplayMode }),
+
+      hasConfirmedRawWeight: false,
+      setHasConfirmedRawWeight: (hasConfirmedRawWeight) => set({ hasConfirmedRawWeight }),
 
       isAddModalOpen: false,
       addModalType: 'food',
@@ -77,6 +84,7 @@ export const useAppStore = create<AppState>()(
         lastSyncTime: state.lastSyncTime,
         hidePwaInstallPrompt: state.hidePwaInstallPrompt,
         nutritionDisplayMode: state.nutritionDisplayMode,
+        hasConfirmedRawWeight: state.hasConfirmedRawWeight,
       }),
       merge: (persistedState: unknown, currentState) => ({
         ...currentState,

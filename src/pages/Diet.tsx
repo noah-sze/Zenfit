@@ -16,6 +16,7 @@ import { DietPlanModal } from '@/components/diet/DietPlanModal';
 import { EditFoodLogDialog } from '@/components/diet/EditFoodLogDialog';
 import { EditRecipeLogDialog } from '@/components/diet/EditRecipeLogDialog';
 import { CopyMealDialog } from '@/components/diet/CopyMealDialog';
+import { RawWeightGuideDialog } from '@/components/diet/RawWeightGuideDialog';
 import {
   QuickPlaceholderDialog,
   type DiningScenarioId,
@@ -33,7 +34,7 @@ import { evaluateAmountExpression } from '@/lib/utils';
 
 export default function Diet() {
   const { t } = useTranslation();
-  const { selectedDate } = useAppStore();
+  const { selectedDate, hasConfirmedRawWeight, setHasConfirmedRawWeight } = useAppStore();
   const {
     mealGroups,
     addFoodLog,
@@ -61,6 +62,7 @@ export default function Diet() {
   const confirm = useConfirm();
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isRawWeightGuideOpen, setIsRawWeightGuideOpen] = useState(false);
   const [editingFoodLog, setEditingFoodLog] = useState<HydratedFoodLog | null>(null);
   const [editingBundle, setEditingBundle] = useState<{
     bundleId: string;
@@ -230,11 +232,15 @@ export default function Diet() {
     await deleteFoodLogBundle(bundleId);
   };
 
-  // 開啟新增飲食選擇彈窗
+  // 開啟新增飲食選擇彈窗（首次需先閱讀並確認生重計算基準）
   const handleOpenAddForMeal = (type: MealType) => {
     triggerHaptic('light');
     setTargetMealTypeForAdd(type);
-    setIsSelectDialogOpen(true);
+    if (!hasConfirmedRawWeight) {
+      setIsRawWeightGuideOpen(true);
+    } else {
+      setIsSelectDialogOpen(true);
+    }
   };
 
   // 開啟複製餐點彈窗
@@ -449,6 +455,17 @@ export default function Diet() {
           }}
         />
       )}
+
+      {/* 首次點擊「食材 / 食譜」顯示之生重計算基準說明 Dialog */}
+      <RawWeightGuideDialog
+        open={isRawWeightGuideOpen}
+        onOpenChange={setIsRawWeightGuideOpen}
+        onConfirm={() => {
+          setHasConfirmedRawWeight(true);
+          setIsRawWeightGuideOpen(false);
+          setIsSelectDialogOpen(true);
+        }}
+      />
 
       {/* 複製餐點 Dialog (方案 A Precision Modal) */}
       {Boolean(copyMealType) && (
