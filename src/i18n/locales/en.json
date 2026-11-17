@@ -1250,41 +1250,42 @@
         "desc": "You don't need an app to nag you, preach, or compare you to others. Zenfit removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp instrument.",
         "items": {
           "item1": {
-            "tag": "01 // No In-App AI Grading or Prescriptions",
+            "tag": "01 // No Grading or Prescriptions",
             "title": "No Blackbox Lectures or Judgments",
             "desc": "We never tell you that you ate too little, too much, or slipped up. No shaming red warning cards. The app is an objective mirror—100% of decisions belong to you.",
-            "legacyTitle": "Traditional AI Grading",
-            "legacyBad": "“Major Overconsumption. -15 pts, cut dinner carbs”",
+            "legacyTitle": "Traditional Grading",
+            "legacyBad": "Carbs too high today. Run 40 min tomorrow to burn it off.",
             "factTitle": "Objective Reality",
-            "factGood": "2,150 / 2,200"
+            "factGood": "2,180 / 2,000 kcal · +180 kcal",
+            "factNote": "Only objective facts from your logs. Eat more or less, move more or less—every choice is yours."
           },
           "item2": {
             "tag": "02 // No Social Feeds or Peer Pressure",
             "title": "Zero Peer Anxiety or Feed Noise",
             "desc": "No discovery feed, no leaderboard, no comparisons. Quantified self is a serious dialogue between you and physics. You never need to perform discipline.",
-            "legacyTitle": "National Rank #42",
-            "legacyBad": "“Day 100 streak. Work hard, shine bright”",
-            "factTitle": "Private Space",
-            "factGood": "Bench Press e1RM 120 kg"
+            "legacyTitle": "Friend Feed",
+            "legacyBad": "Alex has lower body fat than 90% of peers—push harder to catch up.",
+            "factTitle": "Quantified Self",
+            "factGood": "Local IndexedDB only · No public feed. Zero anxiety, no need to perform discipline."
           },
           "item3": {
             "tag": "03 // No Mandatory Streaks or Punishments",
             "title": "True Discipline Needs No Shame Mechanism",
             "desc": "No broken streak alerts or red badge urgency. If you logged today, that is a fact. If you didn't, tomorrow opens to the same clean, ready tool.",
             "legacyTitle": "Streak Broken",
-            "legacyBad": "“Streak broken. Watch an ad or spend 50 gems to restore”",
+            "legacyBad": "Streak broken. Watch an ad or spend 50 gems to restore.",
             "factTitle": "Calmly on Standby",
-            "factGood": "Logged or not, facts are facts"
+            "factGood": "Logged or not, facts are facts. Your body and life matter most—never feel ashamed of gaps."
           },
           "item4": {
             "tag": "04 // No Vague Dish Calorie Estimates",
             "title": "Reject the “1 Bowl Beef Noodles = 750 kcal” Lie",
             "desc": "Dish guessing is riddled with unpredictable cooking oil and water absorption bias. Zenfit grounds everything in raw ingredient constants.",
-            "legacyTitle": "1 Bowl Beef Noodles = 750 kcal?",
-            "legacyBad": "“Hidden oil 30g? 250% water absorption?”",
-            "factTitle": "Atomic Ingredient Breakdown (Raw)",
+            "legacyTitle": "Dish Database",
+            "legacyBad": "Fixed estimate: 1 Bowl Beef Noodles = 750 kcal",
+            "factTitle": "Ingredient Breakdown",
             "factLine1": "Beef Shank 150g · Noodles 80g",
-            "factLine2": "+ Olive Oil 8g (Explicit)"
+            "factLine2": "+ Olive Oil 8g"
           }
         }
       },

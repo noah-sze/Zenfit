@@ -681,7 +681,7 @@ export default function LandingPage() {
             <div className="space-y-3">
               <div className="flex items-center space-x-2 text-telemetry-accent font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
                 <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
-                <span>{t('landing.principles.items.item1.tag', '01 // 不做內建 AI 評分與行為指令')}</span>
+                <span>{t('landing.principles.items.item1.tag', '01 // 不做評分和行為指令')}</span>
               </div>
               <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item1.title', '拒絕黑盒說教與主觀評判')}</h3>
               <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
@@ -694,10 +694,10 @@ export default function LandingPage() {
               <div className="rounded border border-red-200 dark:border-red-950/50 bg-red-50/50 dark:bg-red-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
                 <div className="px-2.5 py-1.5 border-b border-red-200 dark:border-red-900/50 flex items-center space-x-1.5 text-red-600 dark:text-red-400 font-semibold text-[11px]">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item1.legacyTitle', '傳統 AI 評分')}</span>
+                  <span>{t('landing.principles.items.item1.legacyTitle', '傳統評分')}</span>
                 </div>
                 <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item1.legacyBad', '「嚴重超標，扣 15 分，晚餐少吃碳水」')}
+                  {t('landing.principles.items.item1.legacyBad', '今天碳水太高了，明天多跑 40 分鐘消耗。')}
                 </div>
               </div>
 
@@ -706,8 +706,13 @@ export default function LandingPage() {
                   <BarChart2 className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
                   <span>{t('landing.principles.items.item1.factTitle', '客觀事實')}</span>
                 </div>
-                <div className="p-2.5 font-mono text-xs font-semibold tabular-nums text-neutral-900 dark:text-white flex-1 flex items-center">
-                  {t('landing.principles.items.item1.factGood', '2,150 / 2,200')} <span className="text-[11px] font-normal text-neutral-400 ml-1">kcal</span>
+                <div className="p-2.5 font-mono text-[11px] text-neutral-900 dark:text-white flex-1 flex flex-col justify-center gap-1">
+                  <div className="font-semibold tabular-nums leading-tight">
+                    {t('landing.principles.items.item1.factGood', '2,180 / 2,000 kcal · 超出 +180 kcal')}
+                  </div>
+                  <div className="font-sans text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug">
+                    {t('landing.principles.items.item1.factNote', '只會根據你的記錄呈現客觀事實。多吃少吃，多動少動，完全取決於你自己。')}
+                  </div>
                 </div>
               </div>
             </div>
@@ -722,7 +727,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item3.title', '真正的自律不需要外部羞恥機制')}</h3>
               <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                {t('landing.principles.items.item3.desc', '不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的測量儀。')}
+                {t('landing.principles.items.item3.desc', '不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的記錄工具。')}
               </p>
             </div>
 
@@ -734,7 +739,7 @@ export default function LandingPage() {
                   <span>{t('landing.principles.items.item3.legacyTitle', '連續打卡中斷')}</span>
                 </div>
                 <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item3.legacyBad', '「已斷簽，看廣告或花費 50 鑽石補簽」')}
+                  {t('landing.principles.items.item3.legacyBad', '已斷簽，看廣告或花費 50 鑽石補簽。')}
                 </div>
               </div>
 
@@ -745,8 +750,8 @@ export default function LandingPage() {
                     <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item3.factTitle', '隨時安靜待命')}</span>
                   </div>
                 </div>
-                <div className="p-2.5 font-mono text-xs text-neutral-900 dark:text-white flex-1 flex items-center">
-                  {t('landing.principles.items.item3.factGood', '記或不記，都是事實')}
+                <div className="p-2.5 font-sans text-[11px] leading-snug text-neutral-900 dark:text-white flex-1 flex items-center">
+                  {t('landing.principles.items.item3.factGood', '記或不記，都是事實。你的身體和生活才是重點所在，不需要為斷續感到羞恥。')}
                 </div>
               </div>
             </div>
@@ -764,19 +769,19 @@ export default function LandingPage() {
               </div>
               <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item2.title', '拒絕同儕焦慮與動態打擾')}</h3>
               <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                {t('landing.principles.items.item2.desc', 'Zenfit 沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。')}
+                {t('landing.principles.items.item2.desc', '沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。')}
               </p>
             </div>
 
             {/* 視覺微型 UI 對比 */}
             <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
-              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/50 text-[11px] overflow-hidden flex flex-col justify-between opacity-60">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] text-neutral-500 line-through">
+              <div className="rounded border border-sky-200 dark:border-sky-950/50 bg-sky-50/50 dark:bg-sky-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-sky-200 dark:border-sky-900/50 flex items-center space-x-1.5 text-[11px] text-sky-600 dark:text-sky-400 font-semibold">
                   <Trophy className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item2.legacyTitle', '全國排行 #42')}</span>
+                  <span>{t('landing.principles.items.item2.legacyTitle', '好友動態')}</span>
                 </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[11px] truncate flex-1 flex items-center">
-                  {t('landing.principles.items.item2.legacyBad', '「打卡第 100 天，越努力越幸運」')}
+                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
+                  {t('landing.principles.items.item2.legacyBad', '小陳的體脂高於 90% 同齡人，努力加油超越他吧。')}
                 </div>
               </div>
 
@@ -784,11 +789,11 @@ export default function LandingPage() {
                 <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[11px]">
                   <div className="flex items-center space-x-1.5">
                     <Lock className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
-                    <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item2.factTitle', '個人私密空間')}</span>
+                    <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item2.factTitle', '自我量化')}</span>
                   </div>
                 </div>
-                <div className="p-2.5 font-mono text-xs text-neutral-900 dark:text-white flex-1 flex items-center">
-                  {t('landing.principles.items.item2.factGood', '臥推 e1RM 120 kg')}
+                <div className="p-2.5 font-sans text-[11px] leading-snug text-neutral-900 dark:text-white flex-1 flex items-center">
+                  {t('landing.principles.items.item2.factGood', '僅儲存於本機 IndexedDB · 無公開動態。拒絕製造焦慮，無需向外界表演自律。')}
                 </div>
               </div>
             </div>
@@ -801,7 +806,7 @@ export default function LandingPage() {
                 <span className="w-2 h-2 rounded-full bg-telemetry-accent shrink-0"></span>
                 <span>{t('landing.principles.items.item4.tag', '04 // 不做模糊的成品菜熱量估算')}</span>
               </div>
-              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item4.title', '拒絕「一碗紅燒牛肉麵 750 大卡」的黑盒謊言')}</h3>
+              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item4.title', '拒絕「一碗紅燒牛肉麵 = 750 大卡」的黑盒謊言')}</h3>
               <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
                 {t('landing.principles.items.item4.desc', '成品菜估算充滿了不可控的烹調油與吸水率偏差。Zenfit 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。')}
               </p>
@@ -809,24 +814,24 @@ export default function LandingPage() {
 
             {/* 視覺微型 UI 對比 */}
             <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
-              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/50 text-[11px] overflow-hidden flex flex-col justify-between opacity-60">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] text-neutral-500 line-through font-semibold">
+              <div className="rounded border border-violet-200 dark:border-violet-950/50 bg-violet-50/50 dark:bg-violet-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
+                <div className="px-2.5 py-1.5 border-b border-violet-200 dark:border-violet-900/50 flex items-center space-x-1.5 text-[11px] text-violet-600 dark:text-violet-400 font-semibold">
                   <Utensils className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item4.legacyTitle', '牛肉麵 1 碗 = 750 kcal?')}</span>
+                  <span>{t('landing.principles.items.item4.legacyTitle', '成品菜資料庫')}</span>
                 </div>
                 <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item4.legacyBad', '「隱藏用油 30g？吸水率 250%？」')}
+                  {t('landing.principles.items.item4.legacyBad', '固定計算：紅燒牛肉麵 1 碗 = 750 大卡')}
                 </div>
               </div>
 
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
                 <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] font-semibold text-neutral-900 dark:text-white">
                   <Scale className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
-                  <span>{t('landing.principles.items.item4.factTitle', '原子食材拆解 (生重)')}</span>
+                  <span>{t('landing.principles.items.item4.factTitle', '食材拆解')}</span>
                 </div>
                 <div className="p-2.5 font-mono text-[11px] text-neutral-700 dark:text-neutral-300 space-y-0.5 flex-1 flex flex-col justify-center">
                   <div>{t('landing.principles.items.item4.factLine1', '牛腱 150g · 麵 80g')}</div>
-                  <div className="text-telemetry-accent font-semibold">{t('landing.principles.items.item4.factLine2', '+ 橄欖油 8g (明示)')}</div>
+                  <div className="text-telemetry-accent font-semibold">{t('landing.principles.items.item4.factLine2', '+ 橄欖油 8g')}</div>
                 </div>
               </div>
             </div>
