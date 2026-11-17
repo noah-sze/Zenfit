@@ -29,7 +29,7 @@ export type BodyPartSlug =
 export type BodyView = 'anterior' | 'posterior';
 
 /**
- * 根據身體區塊 Slug 與視角 (正面/背面)，獲取對應的 Zenfit DetailedMuscle 列表
+ * 根據身體區塊 Slug 與視角 (正面/背面)，獲取對應的 e2Cal DetailedMuscle 列表
  */
 export function getDetailedMusclesForSlug(
   slug: BodyPartSlug,
@@ -236,7 +236,7 @@ export interface MuscleHighlightOptions {
 /**
  * 依據肌群刺激強度、角色階梯與自訂選項，計算人體地圖 SVG path 的填充與描邊樣式。
  *
- * 整合 Zenfit 赤陶磚紅 Design Tokens 體系：
+ * 整合 e2Cal 赤陶磚紅 Design Tokens 體系：
  * - high (主動肌 / primary / >= 80):
  *     fill: var(--muscle-intensity-high-bg), stroke: var(--muscle-intensity-high-text)
  * - med (協同肌 / secondary / >= 50):

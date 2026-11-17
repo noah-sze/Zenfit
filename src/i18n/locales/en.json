@@ -1,7 +1,7 @@
 {
   "translation": {
     "app": {
-      "name": "Zenfit",
+      "name": "e2Cal",
       "slogan": "Minimalist, privacy-first diet & fitness tracking PWA"
     },
     "common": {
@@ -1033,16 +1033,16 @@
     },
     "welcome": {
       "greeting": "Hello, {{name}}.",
-      "entering": "Entering Zenfit...",
+      "entering": "Entering e2Cal...",
       "skipPrompt": "Click anywhere to continue",
-      "badge": "ZENFIT SETUP",
+      "badge": "E2CAL SETUP",
       "stepCounter": "{{current}} / {{total}}",
       "resendHero1": "Fitness for",
       "resendHero2": "individuals",
       "resendSub1": "Personal nutrition and strength logging.",
       "resendSub2Lead": "Records physiological facts.",
       "skipToSetup": "Skip to Setup",
-      "title": "Zenfit,",
+      "title": "e2Cal,",
       "dietPrefix": "Personal diet and",
       "workoutSuffix": "workout logging.",
       "dataLead": "Only logs and presents data",
@@ -1068,9 +1068,9 @@
       "step3Pillar3Desc": "SVG dynamic muscle highlights to visualize weekly volume distribution.",
       "step4Tag": "03 // CALIBRATION",
       "step4Title": "Basic Profile",
-      "dialogWelcomeTitle": "Welcome to Zenfit,",
+      "dialogWelcomeTitle": "Welcome to e2Cal,",
       "dialogWelcomeSubtitle": "Enter your baseline metrics to begin.",
-      "enterApp": "Enter Zenfit",
+      "enterApp": "Enter e2Cal",
       "step4Desc": "Input your baseline physical metrics to calculate metabolic constants in real time.",
       "previewTitle": "Constants",
       "formula": "Mifflin-St Jeor",
@@ -1088,9 +1088,9 @@
       "nextBtn": "Continue",
       "prevBtn": "Back",
       "completeBtn": "Complete",
-      "startingApp": "Launching Zenfit…",
+      "startingApp": "Launching e2Cal…",
       "validationHint": "Complete all fields above to continue",
-      "readyHint": "All fields ready. Click to enter Zenfit",
+      "readyHint": "All fields ready. Click to enter e2Cal",
       "calRemaining": "{{calories}} kcal remaining",
       "calBalance": "Daily Energy Balance",
       "carbs": "Carbs",
@@ -1190,7 +1190,7 @@
       "textCopied": "Text copied"
     },
     "landing": {
-      "metaTitle": "Zenfit - Nutrition & Strength Tracker",
+      "metaTitle": "e2Cal - Nutrition & Strength Tracker",
       "nav": {
         "diet": "Diet",
         "workout": "Workout",
@@ -1205,7 +1205,7 @@
       "hero": {
         "titleLine1": "Just Pure Data",
         "titleLine2": "Zero Preaching",
-        "desc": "Logging your body shouldn't cause anxiety. Zenfit delivers raw numbers with zero preaching or forced streaks. Fully offline, snappy, and private.",
+        "desc": "Logging your body shouldn't cause anxiety. e2Cal delivers raw numbers with zero preaching or forced streaks. Fully offline, snappy, and private.",
         "ctaExplore": "Explore Metric System",
         "ctaPwa": "Install PWA · 100% Private Data",
         "traits": {
@@ -1220,7 +1220,7 @@
         "tag": "[ 01 / Diet ]",
         "titleLine1": "Frictionless Nutrition Logging",
         "titleLine2": "Accurate Ingredients, One-Tap Copy, Quick Estimate, Rolling Average",
-        "desc": "Nutrition tracking should never be a chore. Zenfit offers four flexible workflows: weighed raw ingredients, one-tap copy from yesterday, quick estimates for dining out, and historical rolling averages.",
+        "desc": "Nutrition tracking should never be a chore. e2Cal offers four flexible workflows: weighed raw ingredients, one-tap copy from yesterday, quick estimates for dining out, and historical rolling averages.",
         "types": {
           "raw": {
             "tag": "01 // Raw Food",
@@ -1278,13 +1278,13 @@
         "tag": "[ 03 / Body ]",
         "titleLine1": "Filter Fluid Noise, Reveal Real Progress",
         "titleLine2": "7-Day Smoothed EMA, Body Circumferences & Objective Trends",
-        "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. Zenfit filters out noise with mathematical smoothing while tracking body circumferences."
+        "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. e2Cal filters out noise with mathematical smoothing while tracking body circumferences."
       },
       "analytics": {
         "tag": "[ 04 / Analytics ]",
         "titleLine1": "Zero Blackbox AI Inside",
         "titleLine2": "Full Freedom Outside",
-        "desc": "No unverified AI scores or ratings. Zenfit provides instant objective metrics and formats them cleanly: export structured text for ChatGPT / Claude, or generate crisp high-resolution images."
+        "desc": "No unverified AI scores or ratings. e2Cal provides instant objective metrics and formats them cleanly: export structured text for ChatGPT / Claude, or generate crisp high-resolution images."
       },
       "sync": {
         "tag": "[ 05 / Sync ]",
@@ -1296,7 +1296,7 @@
         "tag": "[ 06 / Principles ]",
         "titleLine1": "Zero Anxiety Engineering",
         "titleLine2": "No Social Feeds, No Streak Shaming, No Preaching, No Blackboxes",
-        "desc": "You don't need an app to nag you, preach, or compare you to others. Zenfit removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp instrument.",
+        "desc": "You don't need an app to nag you, preach, or compare you to others. e2Cal removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp instrument.",
         "items": {
           "item1": {
             "tag": "01 // No Grading or Prescriptions",
@@ -1329,7 +1329,7 @@
           "item4": {
             "tag": "04 // No Vague Dish Calorie Estimates",
             "title": "Reject the “1 Bowl Beef Noodles = 750 kcal” Lie",
-            "desc": "Dish guessing is riddled with unpredictable cooking oil and water absorption bias. Zenfit grounds everything in raw ingredient constants.",
+            "desc": "Dish guessing is riddled with unpredictable cooking oil and water absorption bias. e2Cal grounds everything in raw ingredient constants.",
             "legacyTitle": "Dish Database",
             "legacyBad": "Fixed estimate: 1 Bowl Beef Noodles = 750 kcal",
             "factTitle": "Ingredient Breakdown",

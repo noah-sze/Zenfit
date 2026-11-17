@@ -3,7 +3,7 @@ import { adjustWorkoutSets } from './CopyWorkoutDialog';
 import type { WorkoutSet } from '@/types';
 
 describe('CopyWorkoutDialog - adjustWorkoutSets', () => {
-  it('當目標組數大於現有組數時，應追加新組並沿用最後一組的重量與次數', () => {
+  it('當目標組數大於現有組數時，應追加新組並沿用最後一組的重量，次數預設為 0（留空）', () => {
     const initialSets: WorkoutSet[] = [
       { id: '1', setNumber: 1, weight: 60, reps: 12, isCompleted: true },
       { id: '2', setNumber: 2, weight: 80, reps: 8, isCompleted: true },
@@ -14,14 +14,14 @@ describe('CopyWorkoutDialog - adjustWorkoutSets', () => {
     expect(result[0]).toEqual(initialSets[0]);
     expect(result[1]).toEqual(initialSets[1]);
 
-    // 第 3 與第 4 組應繼承第 2 組的 weight (80) 與 reps (8)
+    // 第 3 與第 4 組應繼承第 2 組的 weight (80)，次數依照用戶規則留空 (0)
     expect(result[2].weight).toBe(80);
-    expect(result[2].reps).toBe(8);
+    expect(result[2].reps).toBe(0);
     expect(result[2].setNumber).toBe(3);
     expect(result[2].isCompleted).toBe(true);
 
     expect(result[3].weight).toBe(80);
-    expect(result[3].reps).toBe(8);
+    expect(result[3].reps).toBe(0);
     expect(result[3].setNumber).toBe(4);
     expect(result[3].isCompleted).toBe(true);
   });

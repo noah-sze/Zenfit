@@ -311,7 +311,7 @@ export function EditFoodLogDialog({
                     {t('diet.serving', '食用份量')}
                   </span>
 
-                  {/* Zenfit 專案常用的標準數字輸入框膠囊 */}
+                  {/* e2Cal 專案常用的標準數字輸入框膠囊 */}
                   <button
                     type="button"
                     onClick={(e) => handleOpenKeypad(e.currentTarget)}

@@ -1,5 +1,5 @@
 // ============================================================================
-// Zenfit 多語言與繁簡互通搜尋模組 (Multilingual & Simplified/Traditional Search)
+// e2Cal 多語言與繁簡互通搜尋模組 (Multilingual & Simplified/Traditional Search)
 // 提供輕量繁簡折疊、英文 Slug / Key 匹配、權威領域雙語別名庫（Phase 2）與拼音首字母極速穿透（Phase 3）
 // 嚴格零副作用純函數 (Pure Function)，無任何 UI 顯示入侵
 // ============================================================================

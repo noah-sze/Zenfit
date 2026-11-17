@@ -1368,10 +1368,10 @@ export class ZenfitDatabase extends Dexie {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `zenfit-raw-db-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    a.download = `e2cal-raw-db-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    console.log('[ZenfitDB] 原始資料庫快照已匯出下載。包含表格：', Object.keys(snapshot));
+    console.log('[e2CalDB] 原始資料庫快照已匯出下載。包含表格：', Object.keys(snapshot));
     return snapshot;
   }
 }

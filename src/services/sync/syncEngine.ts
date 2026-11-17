@@ -501,7 +501,7 @@ export async function uploadManifestFile(cachedRevs: Record<string, string>): Pr
 
   const now = new Date().toISOString();
   const manifest: SyncManifest = {
-    appName: 'Zenfit',
+    appName: 'e2Cal',
     schemaVersion: 2,
     exportedAt: now,
     stats: {

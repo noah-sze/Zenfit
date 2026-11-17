@@ -246,7 +246,7 @@ export function ShareShowcaseCards({
         toast(t('aiExport.imageCopied', '已複製圖片'));
         setTimeout(() => setImageCopied(false), 2000);
       } else {
-        downloadBlob(blob, `zenfit-${activePayload.date}.png`);
+        downloadBlob(blob, `e2cal-${activePayload.date}.png`);
         setImageCopied(true);
         triggerHaptic('success');
         toast(t('aiExport.imageSaved', '已保存長圖'));
@@ -327,7 +327,7 @@ export function ShareShowcaseCards({
           {previewImageUrl ? (
             <img
               src={previewImageUrl}
-              alt={`Zenfit ${activePayload.date} Share`}
+              alt={`e2Cal ${activePayload.date} Share`}
               className="block w-full h-auto rounded shadow-none select-none pointer-events-none"
             />
           ) : (

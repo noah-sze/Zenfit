@@ -166,7 +166,7 @@ export interface DialogPrecisionHeaderProps {
 }
 
 /**
- * Zenfit 標準精密彈窗標頭 (Precision Header Variant D)
+ * e2Cal 標準精密彈窗標頭 (Precision Header Variant D)
  * - 左側：純圖標取消圓鈕 (✕)
  * - 中間：客觀純品名/標題 (截斷保護，支援可選膠囊點擊導航)
  * - 右側：純圖標提交圓鈕 (✓) 或自訂按鈕（支援 onClick 或 form submit）
@@ -263,7 +263,7 @@ export interface PrecisionDialogContentProps extends Omit<DialogContentProps, 's
 }
 
 /**
- * Zenfit 標準精密彈窗容器 (Precision Dialog Content)
+ * e2Cal 標準精密彈窗容器 (Precision Dialog Content)
  * 唯一真理源：鎖死 300px 寬度、16px 緊湊邊距（p-4 sm:p-4 防洩漏）、font-mono、0 陰影
  * 若提供 title，自動內建標準 Precision Header (Variant D)
  */

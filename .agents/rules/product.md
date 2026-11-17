@@ -2,11 +2,11 @@
 trigger: always_on
 ---
 
-# Zenfit 產品規格與架構白皮書 (Product Spec & Architecture)
+# e2Cal 產品規格與架構白皮書 (Product Spec & Architecture)
 
 ## 1. 產品定位與核心使命 (Product Definition & Mission)
 - **產品定義**：
-  Zenfit 是一款純客戶端、本地優先（Local-First）且支援離線運行的「個人飲食與健身記錄 PWA 應用程式」。
+  e2Cal 是一款純客戶端、本地優先（Local-First）且支援離線運行的「個人飲食與健身記錄 PWA 應用程式」。
 - **核心使命**：
   為認真自律的健身愛好者與自我量化者，提供一把極致高效、無干擾、零延遲、極簡高質感的數據測量儀。
 - **目標體驗**：

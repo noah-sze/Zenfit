@@ -12,8 +12,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Zenfit',
-        short_name: 'Zenfit',
+        name: 'e2Cal',
+        short_name: 'e2Cal',
         description: 'Minimalist craft diet & fitness tracker engineered with craft monochrome aesthetics and local-first privacy',
         theme_color: '#000000',
         background_color: '#000000',

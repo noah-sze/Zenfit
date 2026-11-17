@@ -219,7 +219,7 @@ export function SetupProfileDialog({
               <Logo size={36} className="shrink-0 shadow-none" />
               <div className="space-y-1">
                 <DialogTitle className="font-sans font-bold text-lg sm:text-xl tracking-tight text-foreground p-0 m-0 leading-tight">
-                  {t('welcome.dialogWelcomeTitle', '歡迎使用 Zenfit，')}
+                  {t('welcome.dialogWelcomeTitle', '歡迎使用 e2Cal，')}
                 </DialogTitle>
                 <p className="text-sm text-muted-foreground font-sans leading-normal">
                   {t('welcome.dialogWelcomeSubtitle', '開始之前請輸入個人基本信息。')}
@@ -444,14 +444,14 @@ export function SetupProfileDialog({
             </div>
           </div>
 
-          {/* 進入 Zenfit 按鈕 (高度加高至 h-11 44px，帶 shrink-0 保證高度飽滿) */}
+          {/* 進入 e2Cal 按鈕 (高度加高至 h-11 44px，帶 shrink-0 保證高度飽滿) */}
           <button
             type="button"
             onClick={handleComplete}
             disabled={!isFormValid || isSubmitting}
             className="w-full h-11 shrink-0 rounded-md bg-foreground text-background font-mono text-xs sm:text-sm font-semibold flex items-center justify-center space-x-1.5 hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none shadow-none"
           >
-            <span>{isSubmitting ? t('welcome.startingApp', '正在啟動…') : t('welcome.enterApp', '進入 Zenfit')}</span>
+            <span>{isSubmitting ? t('welcome.startingApp', '正在啟動…') : t('welcome.enterApp', '進入 e2Cal')}</span>
           </button>
 
           {/* 底部客觀儀式小字 */}

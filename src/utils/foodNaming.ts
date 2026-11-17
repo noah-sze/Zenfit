@@ -11,7 +11,7 @@ export interface FoodNamingInput {
 
 /**
  * 格式化食材呈現名稱。
- * 遵循 Zenfit 食物數據規範：
+ * 遵循 e2Cal 食物數據規範：
  * - 若有品牌，格式為「品牌 · 名稱」 (使用 U+00B7 Middle Dot)
  * - 若無品牌，格式為「名稱」
  * - 具備防呆機制：若名稱已包含品牌前綴，避免重複拼接

@@ -76,7 +76,7 @@ export function WelcomeTransitionOverlay({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t('welcome.entering', '正在進入 Zenfit ……')}
+      aria-label={t('welcome.entering', '正在進入 e2Cal ……')}
       onClick={handleSkip}
       className="fixed inset-0 z-[100] bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer opacity-100 pointer-events-auto"
     >
@@ -112,7 +112,7 @@ export function WelcomeTransitionOverlay({
 
         {/* 系統進入副標 */}
         <p className="text-xs sm:text-sm font-mono text-muted-foreground tracking-wide">
-          {t('welcome.entering', '正在進入 Zenfit ……')}
+          {t('welcome.entering', '正在進入 e2Cal ……')}
         </p>
 
         {/* 底部微型刻度條波形 (Telemetry Tick Meter) */}

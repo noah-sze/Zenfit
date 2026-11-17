@@ -156,7 +156,7 @@ export async function exportBackupZip(): Promise<Blob> {
 
   // 7. 全域根目錄 /manifest.json
   const rootManifest: SyncManifest = {
-    appName: 'Zenfit',
+    appName: 'e2Cal',
     schemaVersion: 2,
     exportedAt: now,
     stats: {

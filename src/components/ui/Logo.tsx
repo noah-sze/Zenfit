@@ -9,7 +9,7 @@ export interface LogoProps extends React.SVGProps<SVGSVGElement> {
 }
 
 /**
- * Zenfit 官方向量核心標誌圖元
+ * e2Cal 官方向量核心標誌圖元
  */
 export function ZenfitLogoGlyph({ fill = 'currentColor' }: { fill?: string }) {
   return (
@@ -80,7 +80,7 @@ export function ZenfitLogoGlyph({ fill = 'currentColor' }: { fill?: string }) {
 }
 
 /**
- * Zenfit 全域單一真理源標誌元件
+ * e2Cal 全域單一真理源標誌元件
  */
 export function Logo({
   size = 48,
@@ -126,5 +126,5 @@ export function Logo({
   );
 }
 
-// 別名導出，便於以語意化 ZenfitLogo 引用
-export { Logo as ZenfitLogo };
+// 別名導出，便於以語意化 E2CalLogo / ZenfitLogo 引用
+export { Logo as E2CalLogo, Logo as ZenfitLogo };

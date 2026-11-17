@@ -759,7 +759,7 @@ export function formatDailyExportAsText(
   const lines: string[] = [];
 
   const scopeTitle = t(`aiExport.scope.${payload.scope}`, '當日數據');
-  lines.push(`# Zenfit ${scopeTitle} (${payload.date})`);
+  lines.push(`# e2Cal ${scopeTitle} (${payload.date})`);
 
   // 1. 飲食區塊
   if (payload.diet) {

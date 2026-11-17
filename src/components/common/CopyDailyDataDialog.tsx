@@ -188,7 +188,7 @@ export function CopyDailyDataDialog({
   const handleCopyImage = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
-    const filename = `zenfit-${date}-${scope}.png`;
+    const filename = `e2cal-${date}-${scope}.png`;
 
     try {
       const blob = await generateDailyExportImageBlob(payload, {
@@ -227,7 +227,7 @@ export function CopyDailyDataDialog({
   const handleSaveImage = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
-    const filename = `zenfit-${date}-${scope}.png`;
+    const filename = `e2cal-${date}-${scope}.png`;
 
     try {
       const blob = await generateDailyExportImageBlob(payload, {
@@ -253,7 +253,7 @@ export function CopyDailyDataDialog({
   const handleShareImage = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
-    const filename = `zenfit-${date}-${scope}.png`;
+    const filename = `e2cal-${date}-${scope}.png`;
 
     try {
       const blob = await generateDailyExportImageBlob(payload, {
@@ -266,7 +266,7 @@ export function CopyDailyDataDialog({
           const file = new File([blob], filename, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
-              title: `Zenfit ${date}`,
+              title: `e2Cal ${date}`,
               files: [file],
             });
             triggerHaptic('success');
@@ -366,7 +366,7 @@ export function CopyDailyDataDialog({
               {previewImageDataUrl ? (
                 <img
                   src={previewImageDataUrl}
-                  alt={`Zenfit ${date} Share`}
+                  alt={`e2Cal ${date} Share`}
                   className="block w-full h-auto rounded shadow-none select-none pointer-events-none"
                 />
               ) : (

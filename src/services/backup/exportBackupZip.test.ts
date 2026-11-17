@@ -167,7 +167,7 @@ describe('exportBackupZip', () => {
     // 1. 驗證根目錄 manifest.json
     expect(zip.file('manifest.json')).not.toBeNull();
     const manifestJson = JSON.parse(await zip.file('manifest.json')!.async('string'));
-    expect(manifestJson.appName).toBe('Zenfit');
+    expect(manifestJson.appName).toBe('e2Cal');
     expect(manifestJson.schemaVersion).toBe(2);
     expect(manifestJson.stats.foodsCount).toBe(1);
     expect(manifestJson.stats.recipesCount).toBe(1);

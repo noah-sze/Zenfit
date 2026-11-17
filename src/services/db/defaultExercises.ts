@@ -1,5 +1,5 @@
 // ============================================================================
-// Zenfit 權威運動機能學預設動作庫 (Default Exercises Ground Truth DB)
+// e2Cal 權威運動機能學預設動作庫 (Default Exercises Ground Truth DB)
 // 依據 NSCA Essentials of Strength & Conditioning 與 ExRx.net 雙重解剖學審計
 // 100% 確定性 RFC 4122 v5 靜態 UUID，無括號贅詞，客觀精準
 // ============================================================================

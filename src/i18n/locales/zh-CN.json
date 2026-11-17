@@ -1,7 +1,7 @@
 {
   "translation": {
     "app": {
-      "name": "Zenfit",
+      "name": "e2Cal",
       "slogan": "极简、隐私优先的饮食与健身追踪 PWA"
     },
     "common": {
@@ -1033,16 +1033,16 @@
     },
     "welcome": {
       "greeting": "你好，{{name}}。",
-      "entering": "正在进入 Zenfit ……",
+      "entering": "正在进入 e2Cal ……",
       "skipPrompt": "点击任意处进入",
-      "badge": "ZENFIT SETUP",
+      "badge": "E2CAL SETUP",
       "stepCounter": "{{current}} / {{total}}",
-      "resendHero1": "Zenfit for",
+      "resendHero1": "e2Cal for",
       "resendHero2": "individuals",
       "resendSub1": "个人饮食与肌力训练记录。",
       "resendSub2Lead": "只记录生理事实。",
       "skipToSetup": "跳过介绍",
-      "title": "Zenfit,",
+      "title": "e2Cal,",
       "dietPrefix": "个人饮食和",
       "workoutSuffix": "训练记录。",
       "dataLead": "仅记录和呈现数据",
@@ -1068,9 +1068,9 @@
       "step3Pillar3Desc": "SVG 视觉化动态着色，每周有效组数分布一目了然。",
       "step4Tag": "03 // CALIBRATION",
       "step4Title": "基本资料",
-      "dialogWelcomeTitle": "欢迎使用 Zenfit，",
+      "dialogWelcomeTitle": "欢迎使用 e2Cal，",
       "dialogWelcomeSubtitle": "开始之前请输入个人基本信息。",
-      "enterApp": "进入 Zenfit",
+      "enterApp": "进入 e2Cal",
       "step4Desc": "录入人体基础物理参数，系统将基于客观公式即时推算您的代谢常数。",
       "previewTitle": "生理常数",
       "formula": "Mifflin-St Jeor",
@@ -1090,7 +1090,7 @@
       "completeBtn": "完成",
       "startingApp": "正在启动应用…",
       "validationHint": "请填写上方所有项目以解锁启用",
-      "readyHint": "所有栏位已就绪，点击启动 Zenfit",
+      "readyHint": "所有栏位已就绪，点击启动 e2Cal",
       "calRemaining": "剩余 {{calories}}kcal",
       "calBalance": "全日热量平衡",
       "carbs": "碳水",
@@ -1190,7 +1190,7 @@
       "textCopied": "已复制纯文本"
     },
     "landing": {
-      "metaTitle": "Zenfit - 饮食、训练记录",
+      "metaTitle": "e2Cal - 饮食、训练记录",
       "nav": {
         "diet": "饮食",
         "workout": "训练",
@@ -1220,7 +1220,7 @@
         "tag": "[ 01 / 饮食 ]",
         "titleLine1": "零摩擦记录饮食",
         "titleLine2": "准确食材、一键复制、快速估算、滚动均值",
-        "desc": "记录饮食不该是繁琐负担。Zenfit 针对真实生活打造零阻力记录流：自煮时依托 420+ 种原型食材准确称重；规律进餐时一键复制昨日餐点；外食聚餐时支持快速粗估。",
+        "desc": "记录饮食不该是繁琐负担。e2Cal 针对真实生活打造零阻力记录流：自煮时依托 420+ 种原型食材准确称重；规律进餐时一键复制昨日餐点；外食聚餐时支持快速粗估。",
         "types": {
           "raw": {
             "tag": "01 // 原型食材",
@@ -1278,13 +1278,13 @@
         "tag": "[ 03 / 体态 ]",
         "titleLine1": "过滤水分波动，看懂真实体态",
         "titleLine2": "7 天平滑曲线、身体围度追踪与客观进展",
-        "desc": "喝水多寡与重咸饮食，常让单日体重上下跳动 1～2 公斤。Zenfit 自动过滤水分干扰，帮您算出身体的真实增减趋势；同步支持胸围、腰围等围度追踪，只摆客观事实，告别体重焦虑。"
+        "desc": "喝水多寡与重咸饮食，常让单日体重上下跳动 1～2 公斤。e2Cal 自动过滤水分干扰，帮您算出身体的真实增减趋势；同步支持胸围、腰围等围度追踪，只摆客观事实，告别体重焦虑。"
       },
       "analytics": {
         "tag": "[ 04 / 分析 ]",
         "titleLine1": "内部零黑盒 AI",
         "titleLine2": "外部开放自由分析",
-        "desc": "我们不在软件里塞入未经科学验证的 AI 评分机制。Zenfit 的职责是提供毫秒级的客观事实，并主动帮您整理好格式：一键导出为适合 ChatGPT 与 Claude 的对话文本，或一张精致的长图。分析的自由与决策权，始终 100% 握在您手里。"
+        "desc": "我们不在软件里塞入未经科学验证的 AI 评分机制。e2Cal 的职责是提供毫秒级的客观事实，并主动帮您整理好格式：一键导出为适合 ChatGPT 与 Claude 的对话文本，或一张精致的长图。分析的自由与决策权，始终 100% 握在您手里。"
       },
       "sync": {
         "tag": "[ 05 / 同步 ]",
@@ -1296,7 +1296,7 @@
         "tag": "[ 06 / 原则 ]",
         "titleLine1": "拒绝制造焦虑",
         "titleLine2": "不搞社交、不催打卡、不给指令、不做成品黑盒",
-        "desc": "你不需要一个软件每天催你打卡、对你教导，或是逼你跟别人比较。Zenfit 刻意拿掉所有恼人的套路：今天记录，今天就是事实；今天没记，明天打开依旧是一把干净、安静待命的记录工具。",
+        "desc": "你不需要一个软件每天催你打卡、对你教导，或是逼你跟别人比较。e2Cal 刻意拿掉所有恼人的套路：今天记录，今天就是事实；今天没记，明天打开依旧是一把干净、安静待命的记录工具。",
         "items": {
           "item1": {
             "tag": "01 // 不做评分和行为指令",
@@ -1329,7 +1329,7 @@
           "item4": {
             "tag": "04 // 不做模糊的成品菜热量估算",
             "title": "拒绝「一碗红烧牛肉面 = 750 大卡」的黑盒谎言",
-            "desc": "成品菜估算充满了不可控的烹调油与吸水率偏差。Zenfit 坚持以原子食材生重为唯一真理源，引导使用者建立真正的克数称重感知。",
+            "desc": "成品菜估算充满了不可控的烹调油与吸水率偏差。e2Cal 坚持以原子食材生重为唯一真理源，引导使用者建立真正的克数称重感知。",
             "legacyTitle": "成品菜数据库",
             "legacyBad": "固定计算：红烧牛肉面 1 碗 = 750 大卡",
             "factTitle": "食材拆解",
@@ -1342,7 +1342,7 @@
         "tag": "[ 07 / 技术 ]",
         "titleLine1": "可靠，源自极致克制",
         "titleLine2": "零外部依赖、纯本地计算、永不损坏数据",
-        "desc": "拒绝臃肿的第三方追踪与肥大框架。Zenfit 透过无副作用纯数学纯函数与 100% 单元测试防线，保证您的每一次点击都获得毫秒级的确定性。",
+        "desc": "拒绝臃肿的第三方追踪与肥大框架。e2Cal 透过无副作用纯数学纯函数与 100% 单元测试防线，保证您的每一次点击都获得毫秒级的确定性。",
         "cards": {
           "speed": {
             "title": "01 // 极致速度与流畅",

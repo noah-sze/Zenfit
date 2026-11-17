@@ -27,7 +27,7 @@ if (import.meta.env.DEV) {
   registerSW({
     immediate: true,
     onOfflineReady() {
-      console.log('Zenfit is 100% ready to work offline.');
+      console.log('e2Cal is 100% ready to work offline.');
     },
   });
 }

@@ -485,7 +485,7 @@ describe('syncErrorReason & Toast handling', () => {
     expect(formatSyncErrorMessage(timeoutErr)).toBe('连接超时，请检查网络环境');
 
     await i18n.changeLanguage('en');
-    expect(formatSyncErrorMessage(authErr)).toBe('Authorization expired, please reconnect');
+    expect(formatSyncErrorMessage(authErr)).toBe('Session expired · Reconnect');
     expect(formatSyncErrorMessage(timeoutErr)).toBe('Connection timed out');
 
     await i18n.changeLanguage('zh-TW');

@@ -413,7 +413,7 @@ interface RenderContext {
 }
 
 /**
- * 頂部 Header：品牌標誌、Zenfit 名稱、副標、日期與範圍膠囊
+ * 頂部 Header：品牌標誌、e2Cal 名稱、副標、日期與範圍膠囊
  */
 function renderHeader(rc: RenderContext, payload: DailyExportPayload, y: number): number {
   const { ctx, palette, paddingX, cardWidth, isMeasureOnly } = rc;
@@ -433,12 +433,12 @@ function renderHeader(rc: RenderContext, payload: DailyExportPayload, y: number)
     // 品牌文字區塊 (X 軸左對齊，垂直方向與 Logo 嚴格視覺對齊)
     const brandTextX = paddingX + logoSize + 9;
 
-    // 1. 主名稱 Zenfit (字號 16px，頂部大寫字形與 Logo 頂部完美平齊)
+    // 1. 主名稱 e2Cal (字號 16px，頂部大寫字形與 Logo 頂部完美平齊)
     ctx.font = `700 16px ${MONO_FONT}`;
     ctx.fillStyle = palette.textPrimary;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    ctx.fillText('Zenfit', brandTextX, centerY - 7);
+    ctx.fillText('e2Cal', brandTextX, centerY - 7);
 
     // 2. 子標題 DAILY SNAPSHOT (字號 9.5px，底部與 Logo 底部精準呼應收束)
     ctx.font = `500 9.5px ${MONO_FONT}`;
@@ -1508,7 +1508,7 @@ function renderFooter(rc: RenderContext, y: number): number {
     ctx.fillStyle = palette.textTertiary;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('ZENFIT · LOCAL-FIRST FITNESS TRACKER', paddingX + cardWidth / 2, y + 12);
+    ctx.fillText('E2CAL · LOCAL-FIRST FITNESS TRACKER', paddingX + cardWidth / 2, y + 12);
     ctx.restore();
   }
 

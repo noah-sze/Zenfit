@@ -12,7 +12,7 @@ export interface MonthCalendarProps {
 }
 
 /**
- * Zenfit 精密月份與年份雙列選擇器 (Precision Month & Year Calendar Selector)
+ * e2Cal 精密月份與年份雙列選擇器 (Precision Month & Year Calendar Selector)
  * 遵循標準精密彈窗規範：300px 緊湊網格、微型 HUD 狀態條、雙列獨立滾動
  */
 export function MonthCalendar({ value, onChange, className }: MonthCalendarProps) {

@@ -94,7 +94,7 @@ export default function Settings() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `zenfit-backup-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.download = `e2cal-backup-${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -743,7 +743,7 @@ export default function Settings() {
 
       {/* 頁尾版本標記 */}
       <div className="pt-4 text-center font-mono text-xs text-muted-foreground/50">
-        Zenfit v1.0.0
+        e2Cal v1.0.0
       </div>
 
       {/* Dropbox 同步設定彈窗 (遵循 ui-guidelines 平級兄弟節點聲明) */}

@@ -17,7 +17,7 @@ export interface MonthPickerProps {
 }
 
 /**
- * Zenfit 精密出生年月選擇器 (Precision Month Picker)
+ * e2Cal 精密出生年月選擇器 (Precision Month Picker)
  * 100% 遵循標準精密彈窗規範 (Standard Precision Modal Architecture)：
  * 1. 寬度唯一真理源：300px 緊湊網格，內邊距恆定 16px (p-4 sm:p-4)，0 陰影
  * 2. 標頭唯一真理源：左側取消圖標圓鈕 (✕)、中間客觀純名詞「出生年月」、右側確認圓鈕 (✓)
