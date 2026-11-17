@@ -957,3 +957,25 @@ export function matchesMultilingual(
 
   return false;
 }
+
+/**
+ * 聯想自動補全專用匹配 (Autocomplete Prefix & Multilingual Match)
+ * 1. 複用 matchesMultilingual（包含原字串、簡繁互通、別名與 2 字母以上拼音首字母）
+ * 2. 當輸入為單個英文字母 (^[a-z]$) 時，支援拼音首字母「前綴匹配」(startsWith)：
+ *    例如「H」可命中「火鍋」(hg)，但不會誤命中「鴨貨」(yh)
+ */
+export function matchesAutocomplete(query: string, targetText: string): boolean {
+  if (!query || !targetText) return false;
+  const cleanQuery = query.trim().toLowerCase();
+  if (!cleanQuery) return false;
+
+  if (matchesMultilingual(cleanQuery, { name: targetText })) {
+    return true;
+  }
+
+  if (/^[a-z]$/.test(cleanQuery)) {
+    return toPinyinInitials(targetText).startsWith(cleanQuery);
+  }
+
+  return false;
+}

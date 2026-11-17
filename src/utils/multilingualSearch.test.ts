@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   matchesMultilingual,
+  matchesAutocomplete,
   normalizeChinese,
   toTraditional,
   toSimplified,
@@ -393,6 +394,15 @@ describe('multilingualSearch', () => {
       // "j" 長度為 1，不應泛濫命中
       expect(matchesMultilingual('j', target, 'food')).toBe(false);
       expect(matchesMultilingual('z', target, 'food')).toBe(false);
+    });
+
+    it('matchesAutocomplete：單字母應精準前綴匹配拼音首字母（H 命中火鍋但不誤命中鴨貨）', () => {
+      expect(matchesAutocomplete('H', '火鍋')).toBe(true);
+      expect(matchesAutocomplete('h', '火鍋')).toBe(true);
+      expect(matchesAutocomplete('HG', '火鍋')).toBe(true);
+      expect(matchesAutocomplete('H', '鴨貨')).toBe(false);
+      expect(matchesAutocomplete('Y', '鴨貨')).toBe(true);
+      expect(matchesAutocomplete('火锅', '火鍋')).toBe(true);
     });
   });
 

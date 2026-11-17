@@ -20,7 +20,7 @@ import { useFoods } from '@/hooks/useFoods';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
 import { convertFoodWeight, convertFoodVolume } from '@/utils/unitMath';
-import { matchesMultilingual } from '@/utils/multilingualSearch';
+import { matchesAutocomplete } from '@/utils/multilingualSearch';
 import { ChevronRight } from 'lucide-react';
 
 type KeypadField = 'serving' | 'basis' | 'calories' | 'protein' | 'carbs' | 'fat';
@@ -121,7 +121,7 @@ export function FoodFormDialog({
   const brandSuggestions = useMemo(() => {
     const q = brand.trim();
     if (!q) return existingBrands;
-    const matched = existingBrands.filter((b) => matchesMultilingual(q, { name: b }));
+    const matched = existingBrands.filter((b) => matchesAutocomplete(q, b));
     if (matched.length === 1 && matched[0].toLowerCase() === q.toLowerCase()) {
       return [];
     }
