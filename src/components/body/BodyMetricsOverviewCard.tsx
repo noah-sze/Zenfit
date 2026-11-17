@@ -36,15 +36,15 @@ export function BodyMetricsOverviewCard({
   const getMetricDisplayValue = (type: MetricType) => {
     switch (type) {
       case 'trendWeight':
-        return trendWeight ? `${trendWeight}${bodyWeightUnit}` : '-';
+        return trendWeight ? `${trendWeight} ${bodyWeightUnit}` : '-';
       case 'bmi':
         return bmi && bmi > 0 ? `${bmi}` : '-';
       case 'ffmi':
         return ffmi && ffmi > 0 ? `${ffmi}` : '-';
       case 'leanBodyMass':
-        return leanMass && leanMass > 0 ? `${leanMass}${bodyWeightUnit}` : '-';
+        return leanMass && leanMass > 0 ? `${leanMass} ${bodyWeightUnit}` : '-';
       case 'fatMass':
-        return fatMass && fatMass > 0 ? `${fatMass}${bodyWeightUnit}` : '-';
+        return fatMass && fatMass > 0 ? `${fatMass} ${bodyWeightUnit}` : '-';
     }
   };
 
@@ -131,7 +131,7 @@ export function BodyMetricsOverviewCard({
                     : 'text-muted-foreground/25'
               )}
             >
-              {trendWeight ? `${trendWeight}${bodyWeightUnit}` : '-'}
+              {trendWeight ? `${trendWeight} ${bodyWeightUnit}` : '-'}
             </div>
           </PopoverTrigger>
           {renderMetricPopoverContent('trendWeight')}
@@ -283,7 +283,7 @@ export function BodyMetricsOverviewCard({
                       : 'text-muted-foreground/25'
                 )}
               >
-                {leanMass ? `${leanMass}${bodyWeightUnit}` : '-'}
+                {leanMass ? `${leanMass} ${bodyWeightUnit}` : '-'}
               </div>
             </PopoverTrigger>
             {renderMetricPopoverContent('leanBodyMass')}
@@ -332,7 +332,7 @@ export function BodyMetricsOverviewCard({
                       : 'text-muted-foreground/25'
                 )}
               >
-                {fatMass ? `${fatMass}${bodyWeightUnit}` : '-'}
+                {fatMass ? `${fatMass} ${bodyWeightUnit}` : '-'}
               </div>
             </PopoverTrigger>
             {renderMetricPopoverContent('fatMass')}

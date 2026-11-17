@@ -308,14 +308,14 @@ export function AppLayout() {
       <header className="relative flex-none w-full border-b border-border bg-header-bg backdrop-blur-xl z-40 pt-safe">
         <div className="w-full max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
           {!isSubPage ? (
-            <>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 w-full">
               {/* 左上角 Dropbox 同步狀態膠囊 */}
-              <div className="flex items-center">
+              <div className="flex items-center justify-start min-w-0">
                 <SyncStatusPill />
               </div>
 
-              {/* 正中央絕對幾何置中、固定尺寸防抖日期切換器 */}
-              <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-8 sm:h-9 bg-muted/60 border border-border/80 px-1 rounded-full text-sm">
+              {/* 正中央置中、固定尺寸防抖日期切換器 */}
+              <div className="flex items-center h-8 sm:h-9 bg-muted/60 border border-border/80 px-1 rounded-full text-sm shrink-0">
                 <button
                   type="button"
                   onClick={handlePrevDay}
@@ -356,7 +356,7 @@ export function AppLayout() {
               </div>
 
               {/* 右側操作區：一鍵複製當日數據 + 設定入口 */}
-              <div className="flex items-center gap-0.5 -mr-2">
+              <div className="flex items-center justify-end gap-0.5 -mr-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -384,7 +384,7 @@ export function AppLayout() {
                   <SettingsIcon className="size-5" strokeWidth={1.5} />
                 </button>
               </div>
-            </>
+            </div>
           ) : (
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-1.5 -ml-2 min-w-0 pr-2">

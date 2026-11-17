@@ -298,7 +298,7 @@ export function ShareShowcaseCards({
       <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg flex flex-col justify-between shadow-none space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-xs">
+            <span className="text-neutral-900 dark:text-white font-bold uppercase tracking-wider text-xs">
               01 // {t('aiExport.formatImage', '圖片')}
             </span>
             <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px] uppercase">
@@ -364,7 +364,7 @@ export function ShareShowcaseCards({
       <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg flex flex-col justify-between shadow-none space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wider text-xs">
+            <span className="text-neutral-900 dark:text-white font-bold uppercase tracking-wider text-xs">
               02 // {t('aiExport.formatText', '純文本')}
             </span>
             <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px] uppercase">
@@ -416,7 +416,7 @@ export function ShareShowcaseCards({
       <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg flex flex-col justify-between shadow-none space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider text-xs">
+            <span className="text-neutral-900 dark:text-white font-bold uppercase tracking-wider text-xs">
               03 // {t('aiExport.formatJson', 'JSON')}
             </span>
             <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px] uppercase">

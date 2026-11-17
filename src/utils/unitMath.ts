@@ -154,13 +154,13 @@ export function formatEnergy(
   targetUnit: EnergyUnit
 ): { value: number; unit: string; formatted: string } {
   if (isNaN(kcal) || !isFinite(kcal) || kcal <= 0) {
-    return { value: 0, unit: targetUnit, formatted: `0${targetUnit}` };
+    return { value: 0, unit: targetUnit, formatted: `0 ${targetUnit}` };
   }
   const val = targetUnit === 'kJ' ? Math.round(kcal * KCAL_TO_KJ_RATIO) : Math.round(kcal);
   return {
     value: val,
     unit: targetUnit,
-    formatted: `${val.toLocaleString()}${targetUnit}`,
+    formatted: `${val.toLocaleString()} ${targetUnit}`,
   };
 }
 
@@ -176,7 +176,7 @@ export function formatFoodServing(
 ): { size: number; unit: string; formatted: string } {
   if (isNaN(size) || !isFinite(size) || size <= 0) {
     const defaultUnit = rawUnit.toLowerCase().includes('ml') ? volumeUnit : weightUnit;
-    return { size: 0, unit: defaultUnit, formatted: `0${defaultUnit}` };
+    return { size: 0, unit: defaultUnit, formatted: `0 ${defaultUnit}` };
   }
 
   const u = rawUnit.trim().toLowerCase();
@@ -189,9 +189,9 @@ export function formatFoodServing(
     }
     if (weightUnit === 'g' && u === 'oz') {
       const converted = ozToG(size, 1);
-      return { size: converted, unit: 'g', formatted: `${converted}g` };
+      return { size: converted, unit: 'g', formatted: `${converted} g` };
     }
-    return { size, unit: rawUnit, formatted: `${size}${rawUnit === 'g' ? 'g' : ' ' + rawUnit}` };
+    return { size, unit: rawUnit, formatted: `${size} ${rawUnit}` };
   }
 
   // 液體容量：ml 與 fl oz 互相換算
@@ -202,9 +202,9 @@ export function formatFoodServing(
     }
     if (volumeUnit === 'ml' && (u === 'fl oz' || u === 'floz')) {
       const converted = flOzToMl(size, 1);
-      return { size: converted, unit: 'ml', formatted: `${converted}ml` };
+      return { size: converted, unit: 'ml', formatted: `${converted} ml` };
     }
-    return { size, unit: rawUnit, formatted: `${size}${rawUnit === 'ml' ? 'ml' : ' ' + rawUnit}` };
+    return { size, unit: rawUnit, formatted: `${size} ${rawUnit}` };
   }
 
   // 其他自定義單位（如份、片、匙）原樣保留

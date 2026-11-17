@@ -379,19 +379,19 @@ export function DietPlanModal({
                       className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
                       title={t('diet.clickToEnter', '點擊輸入數值')}
                     >
-                      <span className="font-bold text-foreground">{carbsPercent}</span>
+                      <span className="font-normal text-foreground">{carbsPercent}</span>
                       <span className="text-muted-foreground text-2xs">%</span>
                       <ChevronRight className="size-2.5 text-muted-foreground/60 shrink-0" />
                     </button>
                   ) : (
                     <div className="h-7 flex items-baseline justify-center gap-0.5 select-none">
-                      <span className="font-mono text-xs font-bold text-foreground">{carbsPercent}</span>
+                      <span className="font-mono text-xs font-normal text-foreground">{carbsPercent}</span>
                       <span className="text-muted-foreground text-2xs font-mono">%</span>
                     </div>
                   )}
 
                   <span className="text-2xs font-mono text-muted-foreground truncate max-w-full">
-                    {calculatedMacros.carbsGrams}g
+                    {calculatedMacros.carbsGrams} g
                   </span>
                 </div>
 
@@ -408,19 +408,19 @@ export function DietPlanModal({
                       className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
                       title={t('diet.clickToEnter', '點擊輸入數值')}
                     >
-                      <span className="font-bold text-foreground">{proteinPercent}</span>
+                      <span className="font-normal text-foreground">{proteinPercent}</span>
                       <span className="text-muted-foreground text-2xs">%</span>
                       <ChevronRight className="size-2.5 text-muted-foreground/60 shrink-0" />
                     </button>
                   ) : (
                     <div className="h-7 flex items-baseline justify-center gap-0.5 select-none">
-                      <span className="font-mono text-xs font-bold text-foreground">{proteinPercent}</span>
+                      <span className="font-mono text-xs font-normal text-foreground">{proteinPercent}</span>
                       <span className="text-muted-foreground text-2xs font-mono">%</span>
                     </div>
                   )}
 
                   <span className="text-2xs font-mono text-muted-foreground truncate max-w-full">
-                    {calculatedMacros.proteinGrams}g
+                    {calculatedMacros.proteinGrams} g
                   </span>
                 </div>
 
@@ -437,19 +437,19 @@ export function DietPlanModal({
                       className="h-7 px-2 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-0.5 transition-colors cursor-pointer active:scale-95 select-none"
                       title={t('diet.clickToEnter', '點擊輸入數值')}
                     >
-                      <span className="font-bold text-foreground">{fatPercent}</span>
+                      <span className="font-normal text-foreground">{fatPercent}</span>
                       <span className="text-muted-foreground text-2xs">%</span>
                       <ChevronRight className="size-2.5 text-muted-foreground/60 shrink-0" />
                     </button>
                   ) : (
                     <div className="h-7 flex items-baseline justify-center gap-0.5 select-none">
-                      <span className="font-mono text-xs font-bold text-foreground">{fatPercent}</span>
+                      <span className="font-mono text-xs font-normal text-foreground">{fatPercent}</span>
                       <span className="text-muted-foreground text-2xs font-mono">%</span>
                     </div>
                   )}
 
                   <span className="text-2xs font-mono text-muted-foreground truncate max-w-full">
-                    {calculatedMacros.fatGrams}g
+                    {calculatedMacros.fatGrams} g
                   </span>
                 </div>
               </div>

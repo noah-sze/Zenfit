@@ -173,17 +173,17 @@ describe('unitMath: Precision Metric Tests', () => {
       expect(formatEnergy(389, 'kcal')).toEqual({
         value: 389,
         unit: 'kcal',
-        formatted: '389kcal',
+        formatted: '389 kcal',
       });
       expect(formatEnergy(389, 'kJ')).toEqual({
         value: 1628,
         unit: 'kJ',
-        formatted: '1,628kJ',
+        formatted: '1,628 kJ',
       });
       expect(formatEnergy(0, 'kcal')).toEqual({
         value: 0,
         unit: 'kcal',
-        formatted: '0kcal',
+        formatted: '0 kcal',
       });
     });
 
@@ -194,17 +194,17 @@ describe('unitMath: Precision Metric Tests', () => {
       expect(ozRes.size).toBe(3.53);
       expect(ozRes.formatted).toBe('3.53 oz');
 
-      // 100g 在 g 偏好下維持 100g
+      // 100 g 在 g 偏好下維持 100 g
       const gRes = formatFoodServing(100, 'g', 'g', 'ml');
       expect(gRes.unit).toBe('g');
       expect(gRes.size).toBe(100);
-      expect(gRes.formatted).toBe('100g');
+      expect(gRes.formatted).toBe('100 g');
 
       // 1 oz 換算成 g 偏好
       const ozToGRes = formatFoodServing(1, 'oz', 'g', 'ml');
       expect(ozToGRes.unit).toBe('g');
       expect(ozToGRes.size).toBe(28.3);
-      expect(ozToGRes.formatted).toBe('28.3g');
+      expect(ozToGRes.formatted).toBe('28.3 g');
     });
 
     it('formats food volume correctly for ml <-> fl oz', () => {
@@ -214,11 +214,11 @@ describe('unitMath: Precision Metric Tests', () => {
       expect(flOzRes.size).toBe(8.45);
       expect(flOzRes.formatted).toBe('8.45 fl oz');
 
-      // 250ml 在 ml 偏好下維持 250ml
+      // 250 ml 在 ml 偏好下維持 250 ml
       const mlRes = formatFoodServing(250, 'ml', 'g', 'ml');
       expect(mlRes.unit).toBe('ml');
       expect(mlRes.size).toBe(250);
-      expect(mlRes.formatted).toBe('250ml');
+      expect(mlRes.formatted).toBe('250 ml');
     });
 
     it('preserves custom units like serving or piece', () => {

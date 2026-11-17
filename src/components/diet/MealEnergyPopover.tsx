@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { MetricValue } from '@/components/ui/metric-value';
 import { cn } from '@/lib/utils';
 
 interface MealEnergyPopoverProps {
@@ -50,8 +51,20 @@ export function MealEnergyPopover({
         aria-label={t('common.details', '詳細資訊')}
       >
         {/* 上半部：熱量數值 + 10px 微型箭頭 */}
-        <div className="flex items-center justify-between gap-1 font-mono text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-none">
-          <span>{formattedEnergy}</span>
+        <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-none">
+          {(() => {
+            const idx = formattedEnergy.lastIndexOf(' ');
+            if (idx > 0) {
+              return (
+                <MetricValue
+                  value={formattedEnergy.slice(0, idx)}
+                  unit={formattedEnergy.slice(idx + 1)}
+                  unitClassName="text-[11px] group-hover:text-foreground/80"
+                />
+              );
+            }
+            return <span className="font-mono">{formattedEnergy}</span>;
+          })()}
           <ChevronDown
             className={cn(
               'size-2.5 text-muted-foreground/70 group-hover:text-foreground transition-transform duration-150',
@@ -90,7 +103,7 @@ export function MealEnergyPopover({
             <span className="text-carbs font-medium">
               {t('dietPlan.carbs', '碳水化合物')}
             </span>
-            <span className="font-semibold text-foreground">{Math.round(carbs)}g</span>
+            <MetricValue value={Math.round(carbs)} unit="g" valueClassName="font-normal text-foreground" unitClassName="text-[11px]" />
           </div>
 
           {/* 蛋白質 (P) */}
@@ -98,7 +111,7 @@ export function MealEnergyPopover({
             <span className="text-protein font-medium">
               {t('dietPlan.protein', '蛋白質')}
             </span>
-            <span className="font-semibold text-foreground">{Math.round(protein)}g</span>
+            <MetricValue value={Math.round(protein)} unit="g" valueClassName="font-normal text-foreground" unitClassName="text-[11px]" />
           </div>
 
           {/* 脂肪 (F) */}
@@ -106,7 +119,7 @@ export function MealEnergyPopover({
             <span className="text-fat font-medium">
               {t('dietPlan.fat', '脂肪')}
             </span>
-            <span className="font-semibold text-foreground">{Math.round(fat)}g</span>
+            <MetricValue value={Math.round(fat)} unit="g" valueClassName="font-normal text-foreground" unitClassName="text-[11px]" />
           </div>
         </div>
 

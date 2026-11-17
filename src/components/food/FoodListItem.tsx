@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MetricValue } from '@/components/ui/metric-value';
 import { MacroSquares } from '@/components/food/MacroSquares';
 import type { FoodItem, FoodWeightUnit, FoodVolumeUnit, EnergyUnit } from '@/types';
 import type { NutritionDisplayMode } from '@/utils/nutritionMath';
@@ -97,18 +98,25 @@ export const FoodListItem = React.memo(function FoodListItem({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
-          <span>{displayServing.formatted}</span>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MetricValue value={displayServing.size} unit={displayServing.unit} unitClassName="text-[11px]" />
           <span className="text-muted-foreground/40">·</span>
           <span
             className={cn(
-              'tabular-nums px-1.5 py-0.5 rounded text-[11px] font-mono',
-              isLowCalorie && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium',
-              isHighCalorie && 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium',
+              'inline-flex items-center h-4 leading-none tabular-nums rounded text-[11px] font-normal',
+              isLowCalorie && 'px-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+              isHighCalorie && 'px-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400',
               !isLowCalorie && !isHighCalorie && 'text-muted-foreground'
             )}
           >
-            {displayCal.formatted}
+            <MetricValue
+              value={displayCal.value.toLocaleString()}
+              unit={displayCal.unit}
+              unitClassName={cn(
+                'text-[10px]',
+                (isLowCalorie || isHighCalorie) && 'text-current opacity-85'
+              )}
+            />
           </span>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { MacroSquares } from '@/components/food/MacroSquares';
+import { MetricValue } from '@/components/ui/metric-value';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { cn } from '@/lib/utils';
 
@@ -86,24 +87,38 @@ export function MealBundleCard({
           </div>
 
           {/* 總重量與總熱量副標題 */}
-          <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+          <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
             {bundleTotals.totalWeightGrams > 0 && (
               <>
-                <span>
-                  {formatFoodServing(bundleTotals.totalWeightGrams, 'g', foodWeightUnit, foodVolumeUnit).formatted}
-                </span>
+                {(() => {
+                  const s = formatFoodServing(bundleTotals.totalWeightGrams, 'g', foodWeightUnit, foodVolumeUnit);
+                  return <MetricValue value={s.size} unit={s.unit} unitClassName="text-[10px]" />;
+                })()}
                 <span className="text-border">·</span>
               </>
             )}
             <span
               className={cn(
+                'inline-flex items-center h-4 leading-none',
                 isLowCalorie &&
-                  'text-emerald-500 px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20',
+                  'text-emerald-500 px-1 rounded bg-emerald-500/10 border border-emerald-500/20',
                 isHighCalorie &&
-                  'text-rose-500 px-1 py-0.5 rounded bg-rose-500/10 border border-rose-500/20'
+                  'text-rose-500 px-1 rounded bg-rose-500/10 border border-rose-500/20'
               )}
             >
-              {formatEnergy(bundleTotals.calories, energyUnit).formatted}
+              {(() => {
+                const e = formatEnergy(bundleTotals.calories, energyUnit);
+                return (
+                  <MetricValue
+                    value={e.value.toLocaleString()}
+                    unit={e.unit}
+                    unitClassName={cn(
+                      'text-[10px]',
+                      (isLowCalorie || isHighCalorie) && 'text-current opacity-85'
+                    )}
+                  />
+                );
+              })()}
             </span>
           </div>
         </div>
@@ -144,20 +159,34 @@ export function MealBundleCard({
                   <div className="font-medium text-foreground truncate text-xs">
                     {item.foodName}
                   </div>
-                  <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <span>
-                      {formatFoodServing(item.quantity ?? 0, item.unit ?? 'g', foodWeightUnit, foodVolumeUnit).formatted}
-                    </span>
+                  <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    {(() => {
+                      const s = formatFoodServing(item.quantity ?? 0, item.unit ?? 'g', foodWeightUnit, foodVolumeUnit);
+                      return <MetricValue value={s.size} unit={s.unit} unitClassName="text-[9px]" />;
+                    })()}
                     <span className="text-border">·</span>
                     <span
                       className={cn(
+                        'inline-flex items-center h-4 leading-none',
                         isItemLowCal &&
-                          'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
+                          'text-emerald-600/90 dark:text-emerald-400/90 px-1 rounded bg-emerald-500/5',
                         isItemHighCal &&
-                          'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
+                          'text-rose-600/90 dark:text-rose-400/90 px-1 rounded bg-rose-500/5'
                       )}
                     >
-                      {formatEnergy(item.calories || 0, energyUnit).formatted}
+                      {(() => {
+                        const e = formatEnergy(item.calories || 0, energyUnit);
+                        return (
+                          <MetricValue
+                            value={e.value.toLocaleString()}
+                            unit={e.unit}
+                            unitClassName={cn(
+                              'text-[9px]',
+                              (isItemLowCal || isItemHighCal) && 'text-current opacity-85'
+                            )}
+                          />
+                        );
+                      })()}
                     </span>
                   </div>
                 </div>

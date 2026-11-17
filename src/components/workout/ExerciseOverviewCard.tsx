@@ -139,10 +139,10 @@ export function ExerciseOverviewCard({
                 </div>
               </div>
               <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-                <span className="font-bold text-foreground tabular-nums">
+                <span className="font-normal text-foreground tabular-nums">
                   {convertBodyWeight(bestE1RM, 'kg', bodyWeightUnit, 1)}
                 </span>
-                <span className="text-xs font-normal text-muted-foreground ml-1">
+                <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                   {bodyWeightUnit}
                 </span>
               </div>
@@ -160,10 +160,10 @@ export function ExerciseOverviewCard({
                 />
               </div>
               <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-                <span className="font-bold text-foreground tabular-nums">
+                <span className="font-normal text-foreground tabular-nums">
                   {totalSets.toLocaleString()}
                 </span>
-                <span className="text-xs font-normal text-muted-foreground ml-1">
+                <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                   {t('workout.set', '組')}
                 </span>
               </div>
@@ -182,10 +182,10 @@ export function ExerciseOverviewCard({
               />
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
+              <span className="font-normal text-foreground tabular-nums">
                 {convertBodyWeight(totalVolume, 'kg', bodyWeightUnit, 1)}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                 {bodyWeightUnit}
               </span>
             </div>
@@ -199,7 +199,7 @@ export function ExerciseOverviewCard({
           totalWeeks={totalWeeks}
           onContainerWidthChange={onContainerWidthChange}
           getTooltipText={(day) =>
-            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)}${bodyWeightUnit}`
+            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} ${bodyWeightUnit}`
           }
           renderSelectedDetails={(day) => (
             <div className="flex items-center tabular-nums text-xs font-mono">

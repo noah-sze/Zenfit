@@ -585,6 +585,7 @@
       "lastStimulus": "上次刺激",
       "neverTrained": "近期無刺激 · 已就緒",
       "completedSets": "完成組數",
+      "repsUnit": "次",
       "noWorkoutLogs": "無訓練記錄",
       "allMusclesAdded": "已包含所有肌群",
       "atLeastOneMuscle": "至少需設定一個目標肌群",
@@ -1344,7 +1345,7 @@
         "desc": "拒絕臃腫的第三方追蹤與肥大框架。Zenfit 透過無副作用純數學純函數與 100% 單元測試防線，保證你的每一次點擊都獲得毫秒級的確定性。",
         "cards": {
           "speed": {
-            "title": "01 / 極致速度與流暢",
+            "title": "01 // 極致速度與流暢",
             "point1Title": "零等待時間",
             "point1Desc": "代碼與數據皆在本地運行，徹底告別傳統 App 轉圈等待。",
             "point2Title": "極度穩定防護",
@@ -1353,7 +1354,7 @@
             "point3Desc": "介面深度適配行動端，鍵盤彈出不遮擋、滾動不跳動。"
           },
           "safety": {
-            "title": "02 / 永不損毀的數據",
+            "title": "02 // 永不損毀的數據",
             "point1Title": "原生本地儲存",
             "point1Desc": "數據直接留在設備內部，享有專屬防清理保護。",
             "point2Title": "無感平滑升級",
@@ -1362,7 +1363,7 @@
             "point3Desc": "食材與動作採純 ID 引用，改動一處全域同步，拒絕資料錯亂。"
           },
           "math": {
-            "title": "03 / 純數學與精準驗證",
+            "title": "03 // 純數學與精準驗證",
             "point1Title": "透明科學算法",
             "point1Desc": "力量極限、體重去噪趨勢、供能比皆由客觀純數學推算。",
             "point2Title": "540+ 項測試守護",

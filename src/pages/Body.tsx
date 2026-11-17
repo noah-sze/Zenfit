@@ -276,15 +276,15 @@ export default function Body() {
   const getMetricDisplayValue = (key: BodyMetricKey): string => {
     switch (key) {
       case 'trendWeight':
-        return displayTrendWeight ? `${displayTrendWeight}${bodyWeightUnit}` : '-';
+        return displayTrendWeight ? `${displayTrendWeight} ${bodyWeightUnit}` : '-';
       case 'bmi':
         return bmi > 0 ? `${bmi}` : '-';
       case 'ffmi':
         return ffmi !== null ? `${ffmi}` : '-';
       case 'leanBodyMass':
-        return displayLeanMass ? `${displayLeanMass}${bodyWeightUnit}` : '-';
+        return displayLeanMass ? `${displayLeanMass} ${bodyWeightUnit}` : '-';
       case 'fatMass':
-        return displayFatMass ? `${displayFatMass}${bodyWeightUnit}` : '-';
+        return displayFatMass ? `${displayFatMass} ${bodyWeightUnit}` : '-';
       case 'vTaperRatio':
         return vTaperRatio !== null ? `${vTaperRatio}` : '-';
       case 'whRatio':
@@ -816,7 +816,7 @@ export default function Body() {
                   : 'text-muted-foreground/25'
             )}
           >
-            {displayTrendWeight ? `${displayTrendWeight}${bodyWeightUnit}` : '-'}
+            {displayTrendWeight ? `${displayTrendWeight} ${bodyWeightUnit}` : '-'}
           </div>
         </button>
 
@@ -890,7 +890,7 @@ export default function Body() {
                     : 'text-muted-foreground/25'
               )}
             >
-              {displayLeanMass ? `${displayLeanMass}${bodyWeightUnit}` : '-'}
+              {displayLeanMass ? `${displayLeanMass} ${bodyWeightUnit}` : '-'}
             </div>
           </button>
 
@@ -913,7 +913,7 @@ export default function Body() {
                     : 'text-muted-foreground/25'
               )}
             >
-              {displayFatMass ? `${displayFatMass}${bodyWeightUnit}` : '-'}
+              {displayFatMass ? `${displayFatMass} ${bodyWeightUnit}` : '-'}
             </div>
           </button>
         </div>

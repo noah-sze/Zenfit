@@ -473,10 +473,10 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
               />
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
+              <span className="font-normal text-foreground tabular-nums">
                 {formatEnergy(periodCalories, energyUnit).value.toLocaleString()}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                 {energyUnit}
               </span>
             </div>
@@ -494,10 +494,10 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
               />
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
+              <span className="font-normal text-foreground tabular-nums">
                 {periodCount.toLocaleString()}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                 {t('common.times')}
               </span>
             </div>
@@ -515,10 +515,10 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
               />
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
+              <span className="font-normal text-foreground tabular-nums">
                 {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).size.toLocaleString()}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                 {formatFoodServing(periodMaxGrams, 'g', foodWeightUnit, foodVolumeUnit).unit}
               </span>
             </div>
@@ -568,7 +568,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
           )}>
             <span className="text-carbs font-medium">{t('diet.carbs')}</span>
             <span className="font-mono text-carbs font-medium">
-              {scaledRecipeTotals?.carbs ?? standardTotals.carbs}g
+              {scaledRecipeTotals?.carbs ?? standardTotals.carbs} g
             </span>
           </div>
           <div className={cn(
@@ -577,7 +577,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
           )}>
             <span className="text-protein font-medium">{t('diet.protein')}</span>
             <span className="font-mono text-protein font-medium">
-              {scaledRecipeTotals?.protein ?? standardTotals.protein}g
+              {scaledRecipeTotals?.protein ?? standardTotals.protein} g
             </span>
           </div>
           <div className={cn(
@@ -586,7 +586,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
           )}>
             <span className="text-fat font-medium">{t('diet.fat')}</span>
             <span className="font-mono text-fat font-medium">
-              {scaledRecipeTotals?.fat ?? standardTotals.fat}g
+              {scaledRecipeTotals?.fat ?? standardTotals.fat} g
             </span>
           </div>
         </div>

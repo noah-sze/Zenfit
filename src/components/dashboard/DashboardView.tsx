@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
+import { MetricValue } from '@/components/ui/metric-value';
 import type { BodyRecoverySummary } from '@/utils/recoveryMath';
 
 export interface DashboardViewProps {
@@ -131,20 +132,29 @@ export function DashboardView({
 
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-1 pb-1 text-center">
-            <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono tabular-nums">
+            <div className="hero-number flex items-baseline justify-center gap-1 font-mono tabular-nums">
               <span>{consumedEnergy.toLocaleString()}</span>
-              <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
+              <span className="text-sm sm:text-base font-sans font-normal text-muted-foreground">
                 {energyUnit}
               </span>
             </div>
 
             {/* 客觀差額事實 */}
-            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono tabular-nums text-muted-foreground">
+            <div className="flex items-center justify-center gap-1.5 mt-1 text-sm font-sans text-muted-foreground">
               <span>
                 {energyDiff >= 0
-                  ? `${t('dietPlan.underBudget', '剩餘')} ${energyDiff.toLocaleString()}${energyUnit}`
-                  : `${t('dietPlan.overBudget', '超出')} +${Math.abs(energyDiff).toLocaleString()}${energyUnit}`}
+                  ? t('dietPlan.underBudget', '剩餘')
+                  : t('dietPlan.overBudget', '超出')}
               </span>
+              <MetricValue
+                value={
+                  energyDiff >= 0
+                    ? energyDiff.toLocaleString()
+                    : `+${Math.abs(energyDiff).toLocaleString()}`
+                }
+                unit={energyUnit}
+                unitClassName="text-xs sm:text-sm"
+              />
             </div>
 
             {/* 客觀進度標尺 */}
@@ -166,13 +176,21 @@ export function DashboardView({
             <div className="text-xs font-medium text-carbs truncate whitespace-nowrap">
               {t('dietPlan.carbsShort', '碳水')}
             </div>
-            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-normal text-foreground">
-                {Math.round(totals.carbs)}g
-              </span>
-              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
-                /{targetMacros.carbsGrams}g
-              </span>
+            <div className="text-sm sm:text-base tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <MetricValue
+                value={Math.round(totals.carbs)}
+                unit="g"
+                valueClassName="font-normal text-foreground"
+                unitClassName="text-[11px]"
+              />
+              <span className="text-[11px] sm:text-xs font-sans text-muted-foreground mx-0.5">/</span>
+              <MetricValue
+                value={targetMacros.carbsGrams}
+                unit="g"
+                className="text-[11px] sm:text-xs text-muted-foreground"
+                valueClassName="font-normal"
+                unitClassName="text-[10px]"
+              />
             </div>
             <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -194,13 +212,21 @@ export function DashboardView({
             <div className="text-xs font-medium text-protein truncate whitespace-nowrap">
               {t('dietPlan.proteinShort', '蛋白質')}
             </div>
-            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-normal text-foreground">
-                {Math.round(totals.protein)}g
-              </span>
-              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
-                /{targetMacros.proteinGrams}g
-              </span>
+            <div className="text-sm sm:text-base tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <MetricValue
+                value={Math.round(totals.protein)}
+                unit="g"
+                valueClassName="font-normal text-foreground"
+                unitClassName="text-[11px]"
+              />
+              <span className="text-[11px] sm:text-xs font-sans text-muted-foreground mx-0.5">/</span>
+              <MetricValue
+                value={targetMacros.proteinGrams}
+                unit="g"
+                className="text-[11px] sm:text-xs text-muted-foreground"
+                valueClassName="font-normal"
+                unitClassName="text-[10px]"
+              />
             </div>
             <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -222,13 +248,21 @@ export function DashboardView({
             <div className="text-xs font-medium text-fat truncate whitespace-nowrap">
               {t('dietPlan.fatShort', '脂肪')}
             </div>
-            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-normal text-foreground">
-                {Math.round(totals.fat)}g
-              </span>
-              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
-                /{targetMacros.fatGrams}g
-              </span>
+            <div className="text-sm sm:text-base tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <MetricValue
+                value={Math.round(totals.fat)}
+                unit="g"
+                valueClassName="font-normal text-foreground"
+                unitClassName="text-[11px]"
+              />
+              <span className="text-[11px] sm:text-xs font-sans text-muted-foreground mx-0.5">/</span>
+              <MetricValue
+                value={targetMacros.fatGrams}
+                unit="g"
+                className="text-[11px] sm:text-xs text-muted-foreground"
+                valueClassName="font-normal"
+                unitClassName="text-[10px]"
+              />
             </div>
             <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
               <div

@@ -12,15 +12,15 @@ export interface RawWeightGuideDialogProps {
 }
 
 const RICE_STEPS = [
-  { methodKey: 'riceSteamed', methodFb: '正常蒸煮', weight: '250g', scale: 0.76, kcal: '142 kcal' },
-  { methodKey: 'ricePorridge', methodFb: '軟爛稀飯', weight: '320g', scale: 0.97, kcal: '111 kcal' },
-  { methodKey: 'riceFried', methodFb: '乾硬炒飯', weight: '210g', scale: 0.64, kcal: '170 kcal' },
+  { methodKey: 'riceSteamed', methodFb: '正常蒸煮', weight: '250 g', scale: 0.76, kcal: '142 kcal' },
+  { methodKey: 'ricePorridge', methodFb: '軟爛稀飯', weight: '320 g', scale: 0.97, kcal: '111 kcal' },
+  { methodKey: 'riceFried', methodFb: '乾硬炒飯', weight: '210 g', scale: 0.64, kcal: '170 kcal' },
 ] as const;
 
 const MEAT_STEPS = [
-  { methodKey: 'meatBoiled', methodFb: '水煮', weight: '82g', scale: 0.82, kcal: '134 kcal' },
-  { methodKey: 'meatPanSeared', methodFb: '香煎', weight: '74g', scale: 0.74, kcal: '149 kcal' },
-  { methodKey: 'meatAirFried', methodFb: '氣炸烘烤', weight: '66g', scale: 0.66, kcal: '167 kcal' },
+  { methodKey: 'meatBoiled', methodFb: '水煮', weight: '82 g', scale: 0.82, kcal: '134 kcal' },
+  { methodKey: 'meatPanSeared', methodFb: '香煎', weight: '74 g', scale: 0.74, kcal: '149 kcal' },
+  { methodKey: 'meatAirFried', methodFb: '氣炸烘烤', weight: '66 g', scale: 0.66, kcal: '167 kcal' },
 ] as const;
 
 /**
@@ -152,7 +152,7 @@ export function RawWeightGuideDialog({
                 {t('diet.rawWeightGuide.oilRule', '烹調用油獨立計量')}
               </span>
               <span className="tabular-nums text-telemetry-accent font-medium shrink-0">
-                + 5g
+                + 5 g
               </span>
             </div>
           </div>

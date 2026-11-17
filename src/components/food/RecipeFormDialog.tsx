@@ -402,7 +402,7 @@ export function RecipeFormDialog({
                   </div>
                   <div className="text-xs font-mono text-muted-foreground flex items-center gap-1.5">
                     <span className="text-[11px] text-muted-foreground/80">{t('diet.totalWeight', '總重量')}</span>
-                    <span className="font-semibold text-foreground">
+                    <span className="font-normal text-foreground">
                       {
                         formatFoodServing(
                           totals.totalWeightGrams,
@@ -416,48 +416,48 @@ export function RecipeFormDialog({
                 </div>
 
                 {/* 4 欄巨量素橫向網格卡片 (高度僅約 48px，節省 150px+ 縱向空間) */}
-                <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-4 divide-x divide-border select-none py-2 text-center shrink-0">
+                <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-4 divide-x divide-border select-none text-center shrink-0">
                   {/* 熱量 */}
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-calories uppercase tracking-wider truncate">
                       {t('diet.calories')}
                     </span>
-                    <div className="font-mono text-xs font-bold text-calories mt-0.5 truncate flex items-baseline gap-0.5">
+                    <div className="font-mono text-xs font-normal text-calories mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{formatEnergy(totals.calories, energyUnit).value}</span>
-                      <span className="text-[9px] font-normal opacity-75">{formatEnergy(totals.calories, energyUnit).unit}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">{formatEnergy(totals.calories, energyUnit).unit}</span>
                     </div>
                   </div>
 
                   {/* 碳水 */}
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
                       {t('diet.macroMicro.carbs', '碳')}
                     </span>
-                    <div className="font-mono text-xs font-bold text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                    <div className="font-mono text-xs font-normal text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{totals.carbs}</span>
-                      <span className="text-[9px] font-normal opacity-75">g</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">g</span>
                     </div>
                   </div>
 
                   {/* 蛋白質 */}
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
                       {t('diet.macroMicro.protein', '蛋')}
                     </span>
-                    <div className="font-mono text-xs font-bold text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                    <div className="font-mono text-xs font-normal text-protein mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{totals.protein}</span>
-                      <span className="text-[9px] font-normal opacity-75">g</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">g</span>
                     </div>
                   </div>
 
                   {/* 脂肪 */}
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
                       {t('diet.macroMicro.fat', '脂')}
                     </span>
-                    <div className="font-mono text-xs font-bold text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                    <div className="font-mono text-xs font-normal text-fat mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{totals.fat}</span>
-                      <span className="text-[9px] font-normal opacity-75">g</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">g</span>
                     </div>
                   </div>
                 </div>
@@ -516,10 +516,10 @@ export function RecipeFormDialog({
                           onClick={(e) => handleOpenKeypad(index, e.currentTarget)}
                           className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-muted font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0"
                         >
-                          <span className="font-bold text-foreground">
+                          <span className="font-normal text-foreground">
                             {formatDisplayAmount(item.quantity) || '-'}
                           </span>
-                          <span className="text-muted-foreground text-[11px]">
+                          <span className="font-sans text-muted-foreground text-[11px]">
                             {item.unit}
                           </span>
                           <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />

@@ -182,23 +182,23 @@ export function RoutineFormDialog({
                 <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
                   {t('workout.objectiveMetrics', '客觀概覽')}
                 </div>
-                <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-2 divide-x divide-border select-none py-2 text-center shrink-0">
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-2 divide-x divide-border select-none text-center shrink-0">
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider truncate">
                       {t('workout.exercises', '動作數')}
                     </span>
-                    <div className="font-mono text-xs font-bold text-foreground mt-0.5 truncate flex items-baseline gap-0.5">
+                    <div className="font-mono text-xs font-normal text-foreground mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{summary.exerciseCount}</span>
-                      <span className="text-[9px] font-normal opacity-75">{t('common.items', '項')}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">{t('common.items', '項')}</span>
                     </div>
                   </div>
-                  <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider truncate">
                       {t('workout.coveredMusclesShort', '覆蓋肌群')}
                     </span>
-                    <div className="font-mono text-xs font-bold text-foreground mt-0.5 truncate flex items-baseline gap-0.5">
+                    <div className="font-mono text-xs font-normal text-foreground mt-0.5 truncate flex items-baseline gap-0.5">
                       <span>{summary.coveredMuscles.length}</span>
-                      <span className="text-[9px] font-normal opacity-75">{t('workout.muscleUnit', '個肌群')}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">{t('workout.muscleUnit', '個肌群')}</span>
                     </div>
                   </div>
                 </div>

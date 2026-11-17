@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { evaluateNutritionalHighlight } from '@/utils/nutritionEvaluation';
 import { useTranslation } from 'react-i18next';
+import { MetricValue } from '@/components/ui/metric-value';
+import { AutoMarquee } from '@/components/ui/AutoMarquee';
 import { cn } from '@/lib/utils';
 
 export interface MacroHighlights {
@@ -78,9 +80,9 @@ export const MacroSquares = React.memo(function MacroSquares({
         >
           {t('diet.macroMicro.carbs', '碳')}
         </div>
-        <div className="text-xs tabular-nums leading-tight overflow-hidden">
-          <span>{carbs}g</span>
-        </div>
+        <AutoMarquee className="text-xs leading-tight" align="center">
+          <MetricValue value={carbs} unit="g" unitClassName="text-[10px]" />
+        </AutoMarquee>
       </div>
 
       {/* 蛋白質方塊 */}
@@ -107,9 +109,9 @@ export const MacroSquares = React.memo(function MacroSquares({
         >
           {t('diet.macroMicro.protein', '蛋')}
         </div>
-        <div className="text-xs tabular-nums leading-tight overflow-hidden">
-          <span>{protein}g</span>
-        </div>
+        <AutoMarquee className="text-xs leading-tight" align="center">
+          <MetricValue value={protein} unit="g" unitClassName="text-[10px]" />
+        </AutoMarquee>
       </div>
 
       {/* 脂肪方塊 */}
@@ -136,9 +138,9 @@ export const MacroSquares = React.memo(function MacroSquares({
         >
           {t('diet.macroMicro.fat', '脂')}
         </div>
-        <div className="text-xs tabular-nums leading-tight overflow-hidden">
-          <span>{fat}g</span>
-        </div>
+        <AutoMarquee className="text-xs leading-tight" align="center">
+          <MetricValue value={fat} unit="g" unitClassName="text-[10px]" />
+        </AutoMarquee>
       </div>
     </div>
   );

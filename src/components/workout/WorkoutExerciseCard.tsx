@@ -3,6 +3,7 @@ import { Plus, ChevronRight } from 'lucide-react';
 import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { triggerHaptic } from '@/lib/haptics';
 import { HoldToDeleteIconButton } from '@/components/ui/HoldToDeleteIconButton';
+import { MetricValue } from '@/components/ui/metric-value';
 import { cn } from '@/lib/utils';
 import { kgToLbs } from '@/utils/unitMath';
 import type { WorkoutSet } from '@/types';
@@ -50,42 +51,51 @@ export function WorkoutExerciseCard({
         className
       )}
     >
-      {/* 灰底表頭橫欄 (單行 40px 高度：動作名稱 · 組數 · 容量) */}
+      {/* 灰底表頭橫欄 (單行 40px 高度：動作名稱 · 組數 · 容量；空間不足時整組隱藏組數與容量) */}
       <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {exerciseId && interactive ? (
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                useInAppNavigation.getState().pushSubView({
-                  type: 'exercises',
-                  id: exerciseId,
-                  mode: 'exercises',
-                });
-              }}
-              className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-colors cursor-pointer select-none shrink-0"
-            >
-              {exerciseName}
-            </button>
-          ) : (
-            <span className="font-semibold text-sm tracking-tight text-foreground truncate shrink-0">
-              {exerciseName}
-            </span>
-          )}
-          <span className="text-border select-none shrink-0">·</span>
-          <span className="shrink-0">
-            {sets.length} {t('workout.set', '組')}
-          </span>
-          {displayGroupVolume > 0 && (
-            <>
-              <span className="text-border select-none shrink-0">·</span>
-              <span className="text-muted-foreground shrink-0 truncate">
-                {Math.round(displayGroupVolume).toLocaleString()}
-                {bodyWeightUnit}
+        <div className="flex flex-wrap content-start items-center gap-x-1.5 h-10 overflow-hidden min-w-0 flex-1">
+          <div className="h-10 flex items-center shrink-0 max-w-full">
+            {exerciseId && interactive ? (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  useInAppNavigation.getState().pushSubView({
+                    type: 'exercises',
+                    id: exerciseId,
+                    mode: 'exercises',
+                  });
+                }}
+                className="min-w-0 font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-colors cursor-pointer select-none"
+              >
+                {exerciseName}
+              </button>
+            ) : (
+              <span className="min-w-0 font-semibold text-sm tracking-tight text-foreground truncate">
+                {exerciseName}
               </span>
-            </>
-          )}
+            )}
+          </div>
+          <div className="h-10 flex items-center gap-1.5 shrink-0">
+            <span className="text-border select-none shrink-0">·</span>
+            <MetricValue
+              value={sets.length}
+              unit={t('workout.set', '組')}
+              className="shrink-0"
+              unitClassName="text-[11px]"
+            />
+            {displayGroupVolume > 0 && (
+              <>
+                <span className="text-border select-none shrink-0">·</span>
+                <MetricValue
+                  value={Math.round(displayGroupVolume).toLocaleString()}
+                  unit={bodyWeightUnit}
+                  className="text-muted-foreground shrink-0"
+                  unitClassName="text-[11px]"
+                />
+              </>
+            )}
+          </div>
         </div>
 
         {onDeleteExercise && interactive && (
@@ -128,7 +138,7 @@ export function WorkoutExerciseCard({
                     onOpenKeypad(setIdx, 'weight', set.weight || 0)
                   }
                   className={cn(
-                    'h-7 w-[78px] px-2 rounded-full border border-border/80 bg-background font-mono text-xs flex items-center justify-center gap-1 transition-colors select-none shrink-0',
+                    'h-7 w-[78px] px-2 rounded-full border border-border/80 bg-background font-mono text-xs flex items-center justify-center gap-0.5 transition-colors select-none shrink-0',
                     interactive
                       ? 'hover:bg-hover cursor-pointer active:scale-95'
                       : 'cursor-default'
@@ -142,7 +152,7 @@ export function WorkoutExerciseCard({
                   >
                     {displayWeight}
                   </span>
-                  <span className="text-muted-foreground text-[11px] shrink-0">
+                  <span className="font-sans text-muted-foreground text-[11px] shrink-0">
                     {bodyWeightUnit}
                   </span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
@@ -152,7 +162,7 @@ export function WorkoutExerciseCard({
                   ×
                 </span>
 
-                {/* 次數膠囊 (固定寬度 70px，內部數字右對齊，未填入時顯示 - 次，保證多組垂直對齊) */}
+                {/* 次數膠囊 (固定寬度 78px，內部數字右對齊，未填入時顯示 - 次，保證多組垂直對齊) */}
                 <button
                   type="button"
                   disabled={!interactive}
@@ -161,7 +171,7 @@ export function WorkoutExerciseCard({
                     onOpenKeypad(setIdx, 'reps', set.reps || 0)
                   }
                   className={cn(
-                    'h-7 w-[70px] px-2 rounded-full border border-border/80 bg-background font-mono text-xs flex items-center justify-center gap-1 transition-colors select-none shrink-0',
+                    'h-7 w-[78px] px-2 rounded-full border border-border/80 bg-background font-mono text-xs flex items-center justify-center gap-0.5 transition-colors select-none shrink-0',
                     interactive
                       ? 'hover:bg-hover cursor-pointer active:scale-95'
                       : 'cursor-default'
@@ -179,8 +189,8 @@ export function WorkoutExerciseCard({
                       ? set.reps
                       : '-'}
                   </span>
-                  <span className="text-muted-foreground text-[11px] shrink-0">
-                    {t('common.times', '次')}
+                  <span className="font-sans text-muted-foreground text-[11px] shrink-0">
+                    {t('workout.repsUnit', '次')}
                   </span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
                 </button>

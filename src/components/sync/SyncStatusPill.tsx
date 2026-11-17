@@ -129,7 +129,7 @@ export function SyncStatusPill() {
         disabled={status === 'syncing'}
         title={getTitle()}
         className={cn(
-          'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-xs font-mono select-none transition-all outline-none',
+          'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-xs font-mono select-none transition-all outline-none max-w-full min-w-0',
           status === 'syncing'
             ? 'cursor-not-allowed opacity-80 border-border bg-card text-foreground'
             : 'cursor-pointer active:scale-[0.97] hover:bg-hover',
@@ -151,7 +151,7 @@ export function SyncStatusPill() {
           <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
         )}
 
-        <span>{getLabel()}</span>
+        <span className="truncate">{getLabel()}</span>
       </button>
 
       {/* 連接 Dropbox 彈窗 */}

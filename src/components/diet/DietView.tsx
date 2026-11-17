@@ -1,5 +1,6 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Zap, Plus, History } from 'lucide-react';
+import { Activity, ChevronRight, Zap, Plus, History, PieChart } from 'lucide-react';
 import type { MealType, HydratedFoodLog, FoodRecipe, EnergyUnit, FoodWeightUnit, FoodVolumeUnit } from '@/types';
 import { MealBundleCard } from '@/components/food/MealBundleCard';
 import { MacroSquares } from '@/components/food/MacroSquares';
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { MealEnergyPopover } from '@/components/diet/MealEnergyPopover';
 import { MealAddActionPopover, MealActionMenuContent } from '@/components/diet/MealAddActionPopover';
+import { MetricValue } from '@/components/ui/metric-value';
 import { calculateMealBudget } from '@/utils/nutritionMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { formatEnergy, formatFoodServing } from '@/utils/unitMath';
@@ -162,6 +164,64 @@ export function DietView({
     }
   };
 
+  const activityLabel = getActivityShortLabel(currentActivity);
+  const calorieStatsLabel = t('diet.calorieStats');
+
+  const headerRowRef = useRef<HTMLDivElement>(null);
+  const leftSlotRef = useRef<HTMLDivElement>(null);
+  const centerLabelRef = useRef<HTMLSpanElement>(null);
+  const rightSlotRef = useRef<HTMLDivElement>(null);
+  const requiredRowWidthRef = useRef<number>(0);
+  const [rowWidth, setRowWidth] = useState<number>(0);
+  const [isCompact, setIsCompact] = useState<boolean>(false);
+
+  useEffect(() => {
+    const el = headerRowRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    setRowWidth(el.clientWidth);
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setRowWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    requiredRowWidthRef.current = 0;
+    setIsCompact(false);
+  }, [activityLabel, macroSplitTemplateLabel, calorieStatsLabel]);
+
+  useLayoutEffect(() => {
+    const rowEl = headerRowRef.current;
+    const leftEl = leftSlotRef.current;
+    const centerEl = centerLabelRef.current;
+    const rightEl = rightSlotRef.current;
+    if (!rowEl || !leftEl || !centerEl || !rightEl) return;
+
+    const currentW = rowEl.clientWidth;
+    if (currentW <= 0) return;
+
+    if (!isCompact) {
+      const leftW = leftEl.offsetWidth;
+      const centerW = centerEl.offsetWidth;
+      const rightW = rightEl.offsetWidth;
+      const neededSide = Math.max(leftW, rightW);
+      const availableSide = (currentW - centerW) / 2 - 8;
+
+      if (neededSide > availableSide) {
+        requiredRowWidthRef.current = centerW + neededSide * 2 + 16;
+        setIsCompact(true);
+      }
+    } else if (
+      requiredRowWidthRef.current > 0 &&
+      currentW >= requiredRowWidthRef.current
+    ) {
+      setIsCompact(false);
+    }
+  }, [rowWidth, isCompact, activityLabel, macroSplitTemplateLabel, calorieStatsLabel]);
+
   return (
     <div className={cn('space-y-4', className)}>
       {/* 頂部全日總計卡片 (對齊財務儀表板經典雙層排版：1. 熱量統計 2. 碳水、蛋白質、脂肪) */}
@@ -169,9 +229,9 @@ export function DietView({
         {/* 上半部：熱量統計 (Hero Metric) */}
         <div className="p-4 sm:p-5 relative space-y-3">
           {/* 頂部列：左側活動係數純膠囊、中間熱量統計標籤、右側目標純膠囊 */}
-          <div className="relative flex items-center justify-between">
+          <div ref={headerRowRef} className="relative flex items-center justify-between">
             {/* 左側：活動係數純膠囊快捷切換 */}
-            <div className="shrink-0 z-10">
+            <div ref={leftSlotRef} className="shrink-0 z-10">
               {interactive ? (
                 <Select
                   value={String(currentActivity)}
@@ -179,11 +239,21 @@ export function DietView({
                 >
                   <SelectTrigger
                     size="custom"
-                    className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95"
+                    hideIcon={isCompact}
+                    aria-label={activityLabel}
+                    title={activityLabel}
+                    className={cn(
+                      'h-6 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center transition-colors cursor-pointer select-none active:scale-95',
+                      isCompact ? 'w-6 px-0 justify-center' : 'px-2.5 gap-1'
+                    )}
                   >
-                    <SelectValue className="flex-none">
-                      {getActivityShortLabel(currentActivity)}
-                    </SelectValue>
+                    {isCompact ? (
+                      <Activity className="size-3.5 shrink-0" />
+                    ) : (
+                      <SelectValue className="flex-none">
+                        {activityLabel}
+                      </SelectValue>
+                    )}
                   </SelectTrigger>
                   <SelectContent align="start">
                     <SelectItem value="1.2">{t('dietPlan.sedentary')}</SelectItem>
@@ -198,21 +268,30 @@ export function DietView({
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 text-xs text-muted-foreground flex items-center select-none font-mono">
-                  {getActivityShortLabel(currentActivity)}
+                <div
+                  title={activityLabel}
+                  className={cn(
+                    'h-6 rounded-full border border-border/80 bg-muted/20 text-xs text-muted-foreground flex items-center select-none font-mono',
+                    isCompact ? 'w-6 px-0 justify-center' : 'px-2.5'
+                  )}
+                >
+                  {isCompact ? <Activity className="size-3.5 shrink-0" /> : activityLabel}
                 </div>
               )}
             </div>
 
             {/* 中間：熱量統計標籤 (幾何絕對居中，與下方熱量巨型數值 1:1 垂直對齊) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="text-xs sm:text-sm font-normal text-muted-foreground select-none">
-                {t('diet.calorieStats')}
+              <span
+                ref={centerLabelRef}
+                className="text-xs sm:text-sm font-normal text-muted-foreground select-none whitespace-nowrap"
+              >
+                {calorieStatsLabel}
               </span>
             </div>
 
             {/* 右側：供能比模板膠囊 (點擊可開啟供能比設定) */}
-            <div className="shrink-0 z-10">
+            <div ref={rightSlotRef} className="shrink-0 z-10">
               {interactive ? (
                 <button
                   type="button"
@@ -220,15 +299,35 @@ export function DietView({
                     onOpenPlanModal?.();
                     triggerHaptic('light');
                   }}
-                  className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer select-none active:scale-95"
-                  title={t('dietPlan.title', '供能比')}
+                  className={cn(
+                    'h-6 rounded-full border border-border/80 bg-muted/20 hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground flex items-center transition-colors cursor-pointer select-none active:scale-95',
+                    isCompact ? 'w-6 px-0 justify-center' : 'px-2.5 gap-1'
+                  )}
+                  aria-label={macroSplitTemplateLabel}
+                  title={`${t('dietPlan.title', '供能比')} · ${macroSplitTemplateLabel}`}
                 >
-                  <span>{macroSplitTemplateLabel}</span>
-                  <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
+                  {isCompact ? (
+                    <PieChart className="size-3.5 shrink-0" />
+                  ) : (
+                    <>
+                      <span>{macroSplitTemplateLabel}</span>
+                      <ChevronRight className="size-3 text-muted-foreground/60 shrink-0 -ml-0.5" />
+                    </>
+                  )}
                 </button>
               ) : (
-                <div className="h-6 px-2.5 rounded-full border border-border/80 bg-muted/20 text-xs text-muted-foreground flex items-center gap-1 select-none font-mono">
-                  <span>{macroSplitTemplateLabel}</span>
+                <div
+                  title={macroSplitTemplateLabel}
+                  className={cn(
+                    'h-6 rounded-full border border-border/80 bg-muted/20 text-xs text-muted-foreground flex items-center select-none font-mono',
+                    isCompact ? 'w-6 px-0 justify-center' : 'px-2.5 gap-1'
+                  )}
+                >
+                  {isCompact ? (
+                    <PieChart className="size-3.5 shrink-0" />
+                  ) : (
+                    <span>{macroSplitTemplateLabel}</span>
+                  )}
                 </div>
               )}
             </div>
@@ -236,20 +335,27 @@ export function DietView({
 
           {/* 核心巨型熱量數值 (居中) */}
           <div className="pt-2 pb-1 text-center">
-            <div className="hero-number flex items-baseline justify-center gap-1.5 font-mono tabular-nums">
+            <div className="hero-number flex items-baseline justify-center gap-1 font-mono tabular-nums">
               <span>{consumedEnergy.toLocaleString()}</span>
-              <span className="text-sm sm:text-base font-normal text-muted-foreground font-mono">
+              <span className="text-sm sm:text-base font-sans font-normal text-muted-foreground">
                 {energyUnit}
               </span>
             </div>
 
             {/* 客觀差額事實 */}
-            <div className="flex items-center justify-center gap-2 mt-1 text-sm font-mono tabular-nums text-muted-foreground">
+            <div className="flex items-center justify-center gap-1.5 mt-1 text-sm font-sans text-muted-foreground">
               <span>
-                {energyDiff >= 0
-                  ? `${t('dietPlan.underBudget')} ${energyDiff.toLocaleString()}${energyUnit}`
-                  : `${t('dietPlan.overBudget')} +${Math.abs(energyDiff).toLocaleString()}${energyUnit}`}
+                {energyDiff >= 0 ? t('dietPlan.underBudget') : t('dietPlan.overBudget')}
               </span>
+              <MetricValue
+                value={
+                  energyDiff >= 0
+                    ? energyDiff.toLocaleString()
+                    : `+${Math.abs(energyDiff).toLocaleString()}`
+                }
+                unit={energyUnit}
+                unitClassName="text-xs sm:text-sm"
+              />
             </div>
 
             {/* 客觀進度標尺 */}
@@ -271,13 +377,21 @@ export function DietView({
             <div className="text-xs font-medium text-carbs truncate whitespace-nowrap">
               {t('dietPlan.carbsShort')}
             </div>
-            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-normal text-foreground">
-                {Math.round(totals.carbs)}g
-              </span>
-              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
-                /{targetMacros.carbsGrams}g
-              </span>
+            <div className="text-sm sm:text-base tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <MetricValue
+                value={Math.round(totals.carbs)}
+                unit="g"
+                valueClassName="font-normal text-foreground"
+                unitClassName="text-[11px]"
+              />
+              <span className="text-[11px] sm:text-xs font-sans text-muted-foreground mx-0.5">/</span>
+              <MetricValue
+                value={targetMacros.carbsGrams}
+                unit="g"
+                className="text-[11px] sm:text-xs text-muted-foreground"
+                valueClassName="font-normal"
+                unitClassName="text-[10px]"
+              />
             </div>
             <div className="h-2 w-full bg-carbs-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -299,13 +413,21 @@ export function DietView({
             <div className="text-xs font-medium text-protein truncate whitespace-nowrap">
               {t('dietPlan.proteinShort')}
             </div>
-            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-normal text-foreground">
-                {Math.round(totals.protein)}g
-              </span>
-              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
-                /{targetMacros.proteinGrams}g
-              </span>
+            <div className="text-sm sm:text-base tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <MetricValue
+                value={Math.round(totals.protein)}
+                unit="g"
+                valueClassName="font-normal text-foreground"
+                unitClassName="text-[11px]"
+              />
+              <span className="text-[11px] sm:text-xs font-sans text-muted-foreground mx-0.5">/</span>
+              <MetricValue
+                value={targetMacros.proteinGrams}
+                unit="g"
+                className="text-[11px] sm:text-xs text-muted-foreground"
+                valueClassName="font-normal"
+                unitClassName="text-[10px]"
+              />
             </div>
             <div className="h-2 w-full bg-protein-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -327,13 +449,21 @@ export function DietView({
             <div className="text-xs font-medium text-fat truncate whitespace-nowrap">
               {t('dietPlan.fatShort')}
             </div>
-            <div className="text-sm sm:text-base font-mono tabular-nums tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-normal text-foreground">
-                {Math.round(totals.fat)}g
-              </span>
-              <span className="text-[11px] sm:text-xs font-normal text-muted-foreground">
-                /{targetMacros.fatGrams}g
-              </span>
+            <div className="text-sm sm:text-base tracking-tight flex items-baseline truncate whitespace-nowrap">
+              <MetricValue
+                value={Math.round(totals.fat)}
+                unit="g"
+                valueClassName="font-normal text-foreground"
+                unitClassName="text-[11px]"
+              />
+              <span className="text-[11px] sm:text-xs font-sans text-muted-foreground mx-0.5">/</span>
+              <MetricValue
+                value={targetMacros.fatGrams}
+                unit="g"
+                className="text-[11px] sm:text-xs text-muted-foreground"
+                valueClassName="font-normal"
+                unitClassName="text-[10px]"
+              />
             </div>
             <div className="h-2 w-full bg-fat-subtle rounded-full overflow-hidden mt-2">
               <div
@@ -507,23 +637,40 @@ export function DietView({
                                 </span>
                               </span>
                               <span className="text-border">·</span>
-                              <span>{formatEnergy(item.calories || 0, energyUnit).formatted}</span>
+                              {(() => {
+                                const e = formatEnergy(item.calories || 0, energyUnit);
+                                return <MetricValue value={e.value.toLocaleString()} unit={e.unit} unitClassName="text-[10px]" />;
+                              })()}
                             </>
                           ) : (
                             <>
-                              <span>
-                                {formatFoodServing(item.quantity || 0, item.unit || 'g', foodWeightUnit, foodVolumeUnit).formatted}
-                              </span>
+                              {(() => {
+                                const s = formatFoodServing(item.quantity || 0, item.unit || 'g', foodWeightUnit, foodVolumeUnit);
+                                return <MetricValue value={s.size} unit={s.unit} unitClassName="text-[10px]" />;
+                              })()}
                               <span className="text-border">·</span>
                               <span
                                 className={cn(
+                                  'inline-flex items-center h-4 leading-none',
                                   isLowCalorie &&
-                                    'text-emerald-600/90 dark:text-emerald-400/90 px-1 py-0.5 rounded bg-emerald-500/5',
+                                    'text-emerald-600/90 dark:text-emerald-400/90 px-1 rounded bg-emerald-500/5',
                                   isHighCalorie &&
-                                    'text-rose-600/90 dark:text-rose-400/90 px-1 py-0.5 rounded bg-rose-500/5'
+                                    'text-rose-600/90 dark:text-rose-400/90 px-1 rounded bg-rose-500/5'
                                 )}
                               >
-                                {formatEnergy(item.calories || 0, energyUnit).formatted}
+                                {(() => {
+                                  const e = formatEnergy(item.calories || 0, energyUnit);
+                                  return (
+                                    <MetricValue
+                                      value={e.value.toLocaleString()}
+                                      unit={e.unit}
+                                      unitClassName={cn(
+                                        'text-[10px]',
+                                        (isLowCalorie || isHighCalorie) && 'text-current opacity-85'
+                                      )}
+                                    />
+                                  );
+                                })()}
                               </span>
                             </>
                           )}

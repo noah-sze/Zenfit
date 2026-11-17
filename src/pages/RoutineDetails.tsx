@@ -321,10 +321,10 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
               </span>
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
+              <span className="font-normal text-foreground tabular-nums">
                 {summary.exerciseCount}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                 {t('workout.exerciseUnit')}
               </span>
             </div>
@@ -338,10 +338,10 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
               </span>
             </div>
             <div className="text-sm sm:text-base font-mono tracking-tight flex items-baseline truncate whitespace-nowrap">
-              <span className="font-bold text-foreground tabular-nums">
+              <span className="font-normal text-foreground tabular-nums">
                 {summary.coveredMuscles.length}
               </span>
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="font-sans text-xs font-normal text-muted-foreground ml-0.5">
                 {t('workout.muscleUnit')}
               </span>
             </div>
@@ -355,7 +355,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
           totalWeeks={totalWeeks}
           onContainerWidthChange={setMatrixContainerWidth}
           getTooltipText={(day) =>
-            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)}${bodyWeightUnit}`
+            `${day.date}: ${day.count} ${t('workout.set', '組')} · ${convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} ${bodyWeightUnit}`
           }
           renderSelectedDetails={(day) => (
             <div className="flex items-center tabular-nums text-xs font-mono">
@@ -364,7 +364,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
               </span>
               <span className="text-border mx-1.5 select-none">·</span>
               <span className={day.count === 0 ? 'text-muted-foreground' : 'text-foreground'}>
-                {convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)}{bodyWeightUnit}
+                {convertBodyWeight(day.grams, 'kg', bodyWeightUnit, 1)} {bodyWeightUnit}
               </span>
             </div>
           )}

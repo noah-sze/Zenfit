@@ -526,7 +526,7 @@ export function CopyMealDialog({
                         {/* 右側結構：常用數字輸入框膠囊 / 系統條目熱量標籤 */}
                         {item.entryType === 'estimate' || item.entryType === 'as_planned' || item.isPlaceholder || item.isAsPlanned ? (
                           <div className="h-7 px-2.5 rounded-full border border-border/80 bg-muted/40 font-mono text-xs flex items-center shrink-0">
-                            <span className="font-bold text-foreground">
+                            <span className="font-normal text-foreground">
                               {formatEnergy(item.calories || 0, energyUnit).formatted}
                             </span>
                           </div>
@@ -541,10 +541,10 @@ export function CopyMealDialog({
                             }}
                             className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0 disabled:pointer-events-none"
                           >
-                            <span className="font-bold text-foreground">
+                            <span className="font-normal text-foreground">
                               {formatDisplayAmount(String(item.quantity)) || '0'}
                             </span>
-                            <span className="text-muted-foreground text-[11px]">
+                            <span className="font-sans text-muted-foreground text-[11px]">
                               {item.unit}
                             </span>
                             <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />

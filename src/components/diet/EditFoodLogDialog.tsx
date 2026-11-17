@@ -247,65 +247,66 @@ export function EditFoodLogDialog({
           {/* 表單主體 */}
           <div className="flex flex-col space-y-3 pt-3.5">
             {/* 4 欄即時 HUD Banner 與供能比標尺組合 */}
-            <div className="space-y-1.5 shrink-0">
-              <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-4 divide-x divide-border select-none py-2 text-center shrink-0">
-                {/* 熱量 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
-                  <span className="text-[10px] font-medium text-calories uppercase tracking-wider truncate">
-                    {t('diet.calories')}
-                  </span>
-                  <div className="font-mono text-xs font-bold text-calories mt-0.5 truncate flex items-baseline gap-0.5">
-                    <span>{formatEnergy(currentMacros.calories, energyUnit).value}</span>
-                    <span className="text-[9px] font-normal opacity-75">{formatEnergy(currentMacros.calories, energyUnit).unit}</span>
-                  </div>
+            {/* 4 欄即時 HUD Banner + 供能比標尺 + 食用份量 整合卡片 */}
+            <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border shrink-0">
+              <div>
+                {/* 供能比標尺 (Ratio Bar: 置於卡片頂部，嚴格固定 C -> P -> F 順序) */}
+                <div className="h-1 w-full overflow-hidden flex bg-track" title="供能比標尺">
+                  <div className="bg-carbs transition-all duration-150" style={{ width: `${energyRatios.carbs}%` }} />
+                  <div className="bg-protein transition-all duration-150" style={{ width: `${energyRatios.protein}%` }} />
+                  <div className="bg-fat transition-all duration-150" style={{ width: `${energyRatios.fat}%` }} />
                 </div>
 
-                {/* 碳水化合物 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
-                  <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
-                    {t('diet.macroMicro.carbs', '碳水')}
-                  </span>
-                  <div className="font-mono text-xs font-medium text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
-                    <span>{currentMacros.carbs}</span>
-                    <span className="text-[9px] font-normal opacity-75">g</span>
+                <div className="grid grid-cols-4 divide-x divide-border select-none text-center">
+                  {/* 熱量 */}
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
+                    <span className="text-[10px] font-medium text-calories uppercase tracking-wider truncate">
+                      {t('diet.calories')}
+                    </span>
+                    <div className="font-mono text-xs font-normal text-calories mt-0.5 truncate flex items-baseline gap-0.5">
+                      <span>{formatEnergy(currentMacros.calories, energyUnit).value}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">{formatEnergy(currentMacros.calories, energyUnit).unit}</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* 蛋白質 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
-                  <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
-                    {t('diet.macroMicro.protein', '蛋')}
-                  </span>
-                  <div className="font-mono text-xs font-medium text-protein mt-0.5 truncate flex items-baseline gap-0.5">
-                    <span>{currentMacros.protein}</span>
-                    <span className="text-[9px] font-normal opacity-75">g</span>
+                  {/* 碳水化合物 */}
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
+                    <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
+                      {t('diet.macroMicro.carbs', '碳水')}
+                    </span>
+                    <div className="font-mono text-xs font-normal text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                      <span>{currentMacros.carbs}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">g</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* 脂肪 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
-                  <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
-                    {t('diet.macroMicro.fat', '脂')}
-                  </span>
-                  <div className="font-mono text-xs font-medium text-fat mt-0.5 truncate flex items-baseline gap-0.5">
-                    <span>{currentMacros.fat}</span>
-                    <span className="text-[9px] font-normal opacity-75">g</span>
+                  {/* 蛋白質 */}
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
+                    <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
+                      {t('diet.macroMicro.protein', '蛋')}
+                    </span>
+                    <div className="font-mono text-xs font-normal text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                      <span>{currentMacros.protein}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">g</span>
+                    </div>
+                  </div>
+
+                  {/* 脂肪 */}
+                  <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
+                    <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
+                      {t('diet.macroMicro.fat', '脂')}
+                    </span>
+                    <div className="font-mono text-xs font-normal text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                      <span>{currentMacros.fat}</span>
+                      <span className="font-sans text-[9px] font-normal opacity-75">g</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* 供能比標尺 (Ratio Bar: 嚴格固定 C -> P -> F 順序) */}
-              <div className="h-1 w-full rounded-full overflow-hidden flex bg-track shrink-0" title="供能比標尺">
-                <div className="bg-carbs transition-all duration-150" style={{ width: `${energyRatios.carbs}%` }} />
-                <div className="bg-protein transition-all duration-150" style={{ width: `${energyRatios.protein}%` }} />
-                <div className="bg-fat transition-all duration-150" style={{ width: `${energyRatios.fat}%` }} />
-              </div>
-            </div>
-
-            {/* 表格卡片 (Usage List 表格行：食用份量 + 常用數字輸入框膠囊) */}
-            {!isSystemEntry && (
-              <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
-                <div className="h-10 px-3 flex items-center justify-between bg-card">
+              {/* Usage List 表格行：食用份量 + 常用數字輸入框膠囊 */}
+              {!isSystemEntry && (
+                <div className="h-11 px-3 flex items-center justify-between bg-card text-sm">
                   <span className="text-muted-foreground text-xs font-sans">
                     {t('diet.serving', '食用份量')}
                   </span>
@@ -317,17 +318,17 @@ export function EditFoodLogDialog({
                     className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none"
                     title={t('diet.clickToEnter', '點擊輸入數值')}
                   >
-                    <span className="font-bold text-foreground">
+                    <span className="font-normal text-foreground">
                       {formatDisplayAmount(String(quantity)) || '0'}
                     </span>
-                    <span className="text-muted-foreground text-[11px]">
+                    <span className="font-sans text-muted-foreground text-[11px]">
                       {log.unit || 'g'}
                     </span>
                     <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* 底部破壞性按鈕 (長按 0.5s 防誤觸刪除 · 方案 1 全背景蓄力充能) */}
             <HoldToDeleteButton

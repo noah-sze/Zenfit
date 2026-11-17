@@ -500,7 +500,7 @@ export function QuickPlaceholderDialog({
                   disabled={!hasAnyMacro}
                   onClick={() => handleStepCalories(step)}
                   className={cn(
-                    'h-7 rounded-md border border-border bg-muted/40 text-xs font-mono font-semibold text-foreground flex items-center justify-center transition-all shadow-none select-none',
+                    'h-7 rounded-md border border-border bg-muted/40 text-xs font-mono font-normal text-foreground flex items-center justify-center transition-all shadow-none select-none',
                     hasAnyMacro
                       ? 'hover:bg-hover hover:border-foreground active:scale-95 cursor-pointer'
                       : 'opacity-35 cursor-not-allowed'
@@ -526,10 +526,10 @@ export function QuickPlaceholderDialog({
                     carbs !== null && carbs > 0 ? 'text-carbs' : 'text-muted-foreground'
                   )}
                 >
-                  <span className={carbs !== null && carbs > 0 ? 'text-carbs font-semibold tabular-nums' : 'text-muted-foreground'}>
+                  <span className={carbs !== null && carbs > 0 ? 'text-carbs font-normal tabular-nums' : 'text-muted-foreground'}>
                     {carbs !== null && carbs > 0 ? formatDisplayAmount(String(carbs)) : '-'}
                   </span>
-                  <span className="text-xs text-muted-foreground">g</span>
+                  <span className="font-sans text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
               </div>
@@ -547,10 +547,10 @@ export function QuickPlaceholderDialog({
                     protein !== null && protein > 0 ? 'text-protein' : 'text-muted-foreground'
                   )}
                 >
-                  <span className={protein !== null && protein > 0 ? 'text-protein font-semibold tabular-nums' : 'text-muted-foreground'}>
+                  <span className={protein !== null && protein > 0 ? 'text-protein font-normal tabular-nums' : 'text-muted-foreground'}>
                     {protein !== null && protein > 0 ? formatDisplayAmount(String(protein)) : '-'}
                   </span>
-                  <span className="text-xs text-muted-foreground">g</span>
+                  <span className="font-sans text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
               </div>
@@ -568,10 +568,10 @@ export function QuickPlaceholderDialog({
                     fat !== null && fat > 0 ? 'text-fat' : 'text-muted-foreground'
                   )}
                 >
-                  <span className={fat !== null && fat > 0 ? 'text-fat font-semibold tabular-nums' : 'text-muted-foreground'}>
+                  <span className={fat !== null && fat > 0 ? 'text-fat font-normal tabular-nums' : 'text-muted-foreground'}>
                     {fat !== null && fat > 0 ? formatDisplayAmount(String(fat)) : '-'}
                   </span>
-                  <span className="text-xs text-muted-foreground">g</span>
+                  <span className="font-sans text-xs text-muted-foreground">g</span>
                   <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
                 </button>
               </div>

@@ -309,48 +309,48 @@ export function RecipeStagingDialog({
           <div className="flex-1 min-h-0 flex flex-col space-y-3 pt-3.5 overflow-hidden">
             {/* 4 欄即時 HUD Banner 與供能比標尺組合 */}
             <div className="space-y-1.5 shrink-0">
-              <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-4 divide-x divide-border select-none py-2 text-center shrink-0">
+              <div className="border border-border rounded-lg overflow-hidden bg-card grid grid-cols-4 divide-x divide-border select-none text-center shrink-0">
                 {/* 熱量 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-calories uppercase tracking-wider truncate">
                     {t('diet.calories')}
                   </span>
-                  <div className="font-mono text-xs font-bold text-calories mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-normal text-calories mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{formatEnergy(totals.calories, energyUnit).value}</span>
-                    <span className="text-[9px] font-normal opacity-75">{formatEnergy(totals.calories, energyUnit).unit}</span>
+                    <span className="font-sans text-[9px] font-normal opacity-75">{formatEnergy(totals.calories, energyUnit).unit}</span>
                   </div>
                 </div>
 
                 {/* 碳水化合物 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-carbs uppercase tracking-wider truncate">
                     {t('diet.macroMicro.carbs', '碳')}
                   </span>
-                  <div className="font-mono text-xs font-medium text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-normal text-carbs mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{totals.carbs}</span>
-                    <span className="text-[9px] font-normal opacity-75">g</span>
+                    <span className="font-sans text-[9px] font-normal opacity-75">g</span>
                   </div>
                 </div>
 
                 {/* 蛋白質 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-protein uppercase tracking-wider truncate">
                     {t('diet.macroMicro.protein', '蛋')}
                   </span>
-                  <div className="font-mono text-xs font-medium text-protein mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-normal text-protein mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{totals.protein}</span>
-                    <span className="text-[9px] font-normal opacity-75">g</span>
+                    <span className="font-sans text-[9px] font-normal opacity-75">g</span>
                   </div>
                 </div>
 
                 {/* 脂肪 */}
-                <div className="px-1 flex flex-col items-center justify-center min-w-0">
+                <div className="py-2 px-1 flex flex-col items-center justify-center min-w-0">
                   <span className="text-[10px] font-medium text-fat uppercase tracking-wider truncate">
                     {t('diet.macroMicro.fat', '脂')}
                   </span>
-                  <div className="font-mono text-xs font-medium text-fat mt-0.5 truncate flex items-baseline gap-0.5">
+                  <div className="font-mono text-xs font-normal text-fat mt-0.5 truncate flex items-baseline gap-0.5">
                     <span>{totals.fat}</span>
-                    <span className="text-[9px] font-normal opacity-75">g</span>
+                    <span className="font-sans text-[9px] font-normal opacity-75">g</span>
                   </div>
                 </div>
               </div>

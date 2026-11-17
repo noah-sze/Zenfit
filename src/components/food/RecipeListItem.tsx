@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MetricValue } from '@/components/ui/metric-value';
 import { MacroSquares } from '@/components/food/MacroSquares';
 import type { FoodRecipe, FoodWeightUnit, FoodVolumeUnit, EnergyUnit } from '@/types';
 import type { NutritionDisplayMode } from '@/utils/nutritionMath';
@@ -118,34 +119,45 @@ export const RecipeListItem = React.memo(function RecipeListItem({
           {recipe.name}
         </div>
 
-        <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+        <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
           {nutritionDisplayMode === 'per100g' ? (
             <>
-              <span>
-                {
-                  formatFoodServing(
-                    scaledRecipeMacros.servingSize,
-                    scaledRecipeMacros.servingUnit,
-                    foodWeightUnit,
-                    foodVolumeUnit
-                  ).formatted
-                }
-              </span>
+              {(() => {
+                const s = formatFoodServing(
+                  scaledRecipeMacros.servingSize,
+                  scaledRecipeMacros.servingUnit,
+                  foodWeightUnit,
+                  foodVolumeUnit
+                );
+                return <MetricValue value={s.size} unit={s.unit} unitClassName="text-[10px]" />;
+              })()}
               <span className="text-muted-foreground/40">·</span>
               <span
                 className={cn(
-                  'tabular-nums px-1.5 py-0.5 rounded text-[11px] font-mono',
-                  isLowCalorie && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium',
-                  isHighCalorie && 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium',
+                  'inline-flex items-center h-4 leading-none tabular-nums rounded text-[11px] font-normal',
+                  isLowCalorie && 'px-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                  isHighCalorie && 'px-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400',
                   !isLowCalorie && !isHighCalorie && 'text-muted-foreground'
                 )}
               >
-                {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
+                {(() => {
+                  const e = formatEnergy(scaledRecipeMacros.calories, energyUnit);
+                  return (
+                    <MetricValue
+                      value={e.value.toLocaleString()}
+                      unit={e.unit}
+                      unitClassName={cn(
+                        'text-[10px]',
+                        (isLowCalorie || isHighCalorie) && 'text-current opacity-85'
+                      )}
+                    />
+                  );
+                })()}
               </span>
             </>
           ) : (
             <>
-              <span>
+              <span className="font-mono">
                 {t('diet.itemsCount', {
                   count: recipe.ingredients ? recipe.ingredients.length : 0,
                 })}
@@ -153,13 +165,25 @@ export const RecipeListItem = React.memo(function RecipeListItem({
               <span className="text-muted-foreground/40">·</span>
               <span
                 className={cn(
-                  'tabular-nums px-1.5 py-0.5 rounded text-[11px] font-mono',
-                  isLowCalorie && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium',
-                  isHighCalorie && 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium',
+                  'inline-flex items-center h-4 leading-none tabular-nums rounded text-[11px] font-normal',
+                  isLowCalorie && 'px-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                  isHighCalorie && 'px-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400',
                   !isLowCalorie && !isHighCalorie && 'text-muted-foreground'
                 )}
               >
-                {formatEnergy(scaledRecipeMacros.calories, energyUnit).formatted}
+                {(() => {
+                  const e = formatEnergy(scaledRecipeMacros.calories, energyUnit);
+                  return (
+                    <MetricValue
+                      value={e.value.toLocaleString()}
+                      unit={e.unit}
+                      unitClassName={cn(
+                        'text-[10px]',
+                        (isLowCalorie || isHighCalorie) && 'text-current opacity-85'
+                      )}
+                    />
+                  );
+                })()}
               </span>
             </>
           )}

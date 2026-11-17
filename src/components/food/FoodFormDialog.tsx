@@ -594,10 +594,10 @@ export function FoodFormDialog({
     }
   };
 
-  // 格式化數值膠囊內容：有值時加粗並賦予專屬色，為空 (-) 時呈現極淡佔位色
+  // 格式化數值膠囊內容：有值時正常字重並賦予專屬色，為空 (-) 時呈現極淡佔位色
   const renderAmountValue = (val: string, activeClass: string = 'text-foreground') => {
     if (val) {
-      return <span className={cn("font-bold", activeClass)}>{formatDisplayAmount(val)}</span>;
+      return <span className={cn("font-normal", activeClass)}>{formatDisplayAmount(val)}</span>;
     }
     return <span className="font-normal text-muted-foreground/40 select-none">-</span>;
   };

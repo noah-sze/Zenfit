@@ -403,7 +403,7 @@ export default function Workout() {
       field,
       title: `${exName} · ${t('workout.set')} ${setIndex + 1}`,
       value: displayVal,
-      unit: field === 'weight' ? bodyWeightUnit : t('common.times', '次'),
+      unit: field === 'weight' ? bodyWeightUnit : t('workout.repsUnit', '次'),
       allowDecimals: field === 'weight',
     });
   };
@@ -549,7 +549,7 @@ export default function Workout() {
                           <>
                             <span className="text-border select-none shrink-0">·</span>
                             <span className="text-muted-foreground shrink-0 truncate">
-                              {Math.round(displayWorkoutVolume).toLocaleString()}{bodyWeightUnit}
+                              {Math.round(displayWorkoutVolume).toLocaleString()} {bodyWeightUnit}
                             </span>
                           </>
                         )}
