@@ -125,7 +125,7 @@ export default function ProfileSettings() {
         {/* 行 2：生理性別 與 出生年月 (各佔 50%，全寬點擊熱區) */}
         <div className="grid grid-cols-2 divide-x divide-border">
           {/* 左欄：生理性別 (極簡分段按鈕) */}
-          <div className="h-11 px-3 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden">
+          <div className="h-11 px-3.5 sm:px-4 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden">
             <span className="text-xs font-normal text-muted-foreground font-mono truncate">
               {t('profileSettings.gender', '生理性別')}
             </span>
@@ -170,7 +170,7 @@ export default function ProfileSettings() {
               setBirthDate(val);
               triggerHaptic('selection');
             }}
-            className="h-11 px-3 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden cursor-pointer w-full select-none"
+            className="h-11 px-3.5 sm:px-4 flex items-center justify-between hover:bg-hover transition-colors overflow-hidden cursor-pointer w-full select-none"
           >
             <span className="text-xs font-normal text-muted-foreground font-mono truncate">
               {t('profileSettings.birthDate', '出生年月')}
@@ -214,8 +214,8 @@ export default function ProfileSettings() {
       {/* 區塊 2：生理常數 (單獨一個獨立卡片區塊) */}
       <div className="border border-border rounded-lg overflow-hidden bg-card font-mono">
         {/* 小標題列 (改為純生理常數標籤，無右側冗餘公式名) */}
-        <div className="px-3.5 py-1.5 flex items-center justify-between text-muted-foreground/80 border-b border-border/60 bg-muted/10">
-          <span className="text-[10px] uppercase tracking-wider font-semibold">
+        <div className="px-3.5 sm:px-4 py-1.5 flex items-center justify-between text-muted-foreground/80 border-b border-border/60 bg-muted/10">
+          <span className="text-[10px] uppercase tracking-wider font-normal">
             {t('profileSettings.metricsCalculation', '生理常數')}
           </span>
         </div>
@@ -223,8 +223,8 @@ export default function ProfileSettings() {
         {/* 雙欄指標 (BMI 與 BMR) */}
         <div className="grid grid-cols-2 divide-x divide-border text-left">
           {/* BMI */}
-          <div className="p-3 sm:p-3.5 space-y-1 overflow-hidden">
-            <div className="text-[10px] font-medium text-muted-foreground truncate">
+          <div className="px-3.5 sm:px-4 py-3 sm:py-3.5 space-y-1 overflow-hidden">
+            <div className="text-[10px] font-normal text-muted-foreground truncate">
               {t('welcome.bmi', '身體質量指數 (BMI)')}
             </div>
             <div className="text-base sm:text-lg font-bold text-foreground font-mono leading-none">
@@ -233,8 +233,8 @@ export default function ProfileSettings() {
           </div>
 
           {/* BMR */}
-          <div className="p-3 sm:p-3.5 space-y-1 overflow-hidden">
-            <div className="text-[10px] font-medium text-muted-foreground truncate">
+          <div className="px-3.5 sm:px-4 py-3 sm:py-3.5 space-y-1 overflow-hidden">
+            <div className="text-[10px] font-normal text-muted-foreground truncate">
               {t('welcome.bmr', '靜態基礎代謝 (BMR)')}
             </div>
             <div className="flex items-baseline gap-1 text-foreground font-mono leading-none">
