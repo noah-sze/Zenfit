@@ -427,7 +427,7 @@ export function DietView({
                         <MealActionMenuContent
                           mealType={type}
                           budget={mealBudget}
-                          className="bg-card text-card-foreground border border-border shadow-xl ring-1 ring-black/5 dark:ring-white/10"
+                          className="bg-card text-card-foreground border border-border shadow-none"
                         />
                       </div>
                     )}

@@ -243,7 +243,7 @@ describe('aiDataExport', () => {
       );
       expect(textStr).toContain('[食譜] 高蛋白雞肉飯');
       expect(textStr).toContain('卜蜂 · 舒肥雞胸肉 200g');
-      expect(textStr).toContain('[快速估算] 火鍋');
+      expect(textStr).toContain('[快速估算] 快速估算');
       expect(textStr).toContain('[歷史均值] 歷史均值');
       expect(textStr).toContain('目標配額: 2000kcal');
       expect(textStr).toContain('實際攝取: 1708kcal');
@@ -252,7 +252,7 @@ describe('aiDataExport', () => {
       expect(textStr).toContain('### 午餐 (525kcal');
       expect(textStr).toContain('[食譜] 高蛋白雞肉飯: 525kcal');
       expect(textStr).toContain('卜蜂 · 舒肥雞胸肉 200g: 330kcal');
-      expect(textStr).toContain('[快速估算] 火鍋: 750kcal');
+      expect(textStr).toContain('[快速估算] 快速估算: 750kcal');
       expect(textStr).toContain('[歷史均值] 歷史均值: 200kcal');
     });
   });

@@ -282,7 +282,7 @@ export default function LandingPage() {
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.dropboxSync', 'Dropbox 同步')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#e0533c] shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-telemetry-accent shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.nonPreachy', '客觀無說教')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
