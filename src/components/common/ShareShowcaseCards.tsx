@@ -370,7 +370,7 @@ export function ShareShowcaseCards({
         </div>
 
         {/* 純文本預覽區 */}
-        <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-foreground overscroll-contain">
+        <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-muted-foreground overscroll-contain">
           {textContent}
         </div>
 
@@ -413,7 +413,7 @@ export function ShareShowcaseCards({
         </div>
 
         {/* JSON 預覽區 */}
-        <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre font-mono select-all text-foreground overscroll-contain">
+        <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre font-mono select-all text-muted-foreground overscroll-contain">
           {jsonContent}
         </div>
 
