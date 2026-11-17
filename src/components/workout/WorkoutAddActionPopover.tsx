@@ -123,9 +123,6 @@ export function WorkoutAddActionPopover({
               <span className="text-xs font-medium text-foreground tracking-tight">
                 {t('workout.actionMenu.copyTitle', '複製訓練')}
               </span>
-              <span className="px-1 py-0.5 rounded text-[10px] font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 leading-none">
-                {t('workout.actionMenu.copyTag', '省時')}
-              </span>
             </div>
             <div className="text-2xs text-muted-foreground leading-normal mt-0.5 truncate">
               {t('workout.actionMenu.copyDesc', '套用昨日或歷史訓練')}

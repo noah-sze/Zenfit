@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
-import { Check, Clock, ChevronRight, ChevronDown } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Dialog, DialogContent, DialogPrecisionHeader } from '@/components/ui/dialog';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
@@ -31,7 +31,7 @@ interface CopyableWorkoutItem {
 }
 
 /**
- * 依目標組數純函數調整動作組數，增減時保留原有的 weight / reps
+ * 依目標組數純函數調整動作組數，增減時保留原有的 weight，次數預設留空 (0)
  */
 export function adjustWorkoutSets(originalSets: WorkoutSet[], targetCount: number): WorkoutSet[] {
   const safeCount = Math.max(1, Math.floor(targetCount));
@@ -51,7 +51,7 @@ export function adjustWorkoutSets(originalSets: WorkoutSet[], targetCount: numbe
       id: uuidv4(),
       setNumber: i + 1,
       weight: lastSet?.weight ?? 0,
-      reps: lastSet?.reps ?? 0,
+      reps: 0,
       rpe: lastSet?.rpe,
       isCompleted: true,
     });
@@ -104,6 +104,18 @@ export function CopyWorkoutDialog({
   const activeHistoryDate = useMemo(() => {
     return selectedHistoryDate || lastRecordedDate;
   }, [selectedHistoryDate, lastRecordedDate]);
+
+  // 計算左右步進可用目標日期（降序排列：older 在後、newer 在前）
+  const prevRecordedDate = useMemo(() => {
+    if (!recordedDates || recordedDates.length === 0 || !activeHistoryDate) return null;
+    return recordedDates.find((d) => d < activeHistoryDate) ?? null;
+  }, [recordedDates, activeHistoryDate]);
+
+  const nextRecordedDate = useMemo(() => {
+    if (!recordedDates || recordedDates.length === 0 || !activeHistoryDate) return null;
+    const newer = recordedDates.filter((d) => d > activeHistoryDate);
+    return newer.length > 0 ? newer[newer.length - 1] : null;
+  }, [recordedDates, activeHistoryDate]);
 
   // 彈窗開啟或目標參數變更時，重置手動選擇與次級彈窗
   useEffect(() => {
@@ -328,7 +340,7 @@ export function CopyWorkoutDialog({
             id: uuidv4(),
             setNumber: sIdx + 1,
             weight: s.weight ?? 0,
-            reps: s.reps ?? 0,
+            reps: 0,
             rpe: s.rpe,
             isCompleted: true,
           })),
@@ -380,113 +392,132 @@ export function CopyWorkoutDialog({
             cancelAriaLabel={t('common.cancel', '取消')}
           />
 
-          {/* 動作清單容器（全站標準 min-h-[220px] max-h-[340px]，表頭一體化橫欄 Integrated Header Notch） */}
-          <div className="flex-1 min-h-[220px] max-h-[340px] flex flex-col mt-5 mb-5 rounded-lg border border-border bg-card overflow-hidden">
-            {/* 表頭一體化橫欄 */}
-            <div className="h-8.5 bg-muted/40 border-b border-border px-3 flex items-center justify-between select-none shrink-0">
-              {/* 左側：時鐘圖標 + 來源： + 粗體高亮日期 */}
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono min-w-0 truncate">
-                <Clock className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="shrink-0">{t('workout.copyWorkout.source', '來源：')}</span>
-                <span className="font-semibold text-foreground truncate">
-                  {sourceDateLabel || t('common.none', '無')}
-                </span>
+          <div className="flex flex-col min-h-0">
+            {/* 動作清單容器（對齊複製餐點設計：固定高度防切換跳動，居中日期步進器 + 內部滾動） */}
+            <div className="h-[300px] shrink-0 flex flex-col mt-5 mb-5 rounded-lg border border-border bg-card overflow-hidden">
+              {/* 第一列：居中日期左右步進器 + 點擊開啟月曆 */}
+              <div className="h-11 bg-muted/40 border-b border-border px-3 flex items-center justify-center select-none shrink-0">
+                <div className="inline-flex items-center h-7 rounded-md border border-border/80 bg-background overflow-hidden">
+                  <button
+                    type="button"
+                    disabled={!prevRecordedDate}
+                    onClick={() => {
+                      if (!prevRecordedDate) return;
+                      triggerHaptic('selection');
+                      setSelectedHistoryDate(prevRecordedDate);
+                    }}
+                    aria-label={t('common.previousDay', '前一天')}
+                    className="w-6.5 h-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronLeft className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!recordedDates || recordedDates.length === 0}
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      setIsDatePickerOpen(true);
+                    }}
+                    className="h-full w-32 px-2 border-x border-border/80 font-mono text-xs font-semibold text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center truncate"
+                  >
+                    {sourceDateLabel || t('common.none', '無')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!nextRecordedDate}
+                    onClick={() => {
+                      if (!nextRecordedDate) return;
+                      triggerHaptic('selection');
+                      setSelectedHistoryDate(nextRecordedDate);
+                    }}
+                    aria-label={t('common.nextDay', '後一天')}
+                    className="w-6.5 h-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronRight className="size-3.5" />
+                  </button>
+                </div>
               </div>
 
-              {/* 右側：微型膠囊按鈕 [更換 ▾] */}
-              <button
-                type="button"
-                disabled={!recordedDates || recordedDates.length === 0}
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setIsDatePickerOpen(true);
-                }}
-                className="h-6 px-2 rounded border border-border/80 bg-background hover:bg-hover text-2xs font-mono flex items-center gap-1 text-foreground cursor-pointer transition-colors active:scale-95 disabled:opacity-40 disabled:pointer-events-none select-none shrink-0"
-              >
-                <span>{t('workout.copyWorkout.change', '更換')}</span>
-                <ChevronDown className="size-3 text-muted-foreground" />
-              </button>
-            </div>
+              {/* 動作清單滾動區 */}
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+                {items.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-1">
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {t('workout.copyWorkout.empty', '該日期無歷史訓練')}
+                    </span>
+                    <span className="text-2xs text-muted-foreground/60 font-mono">
+                      {t('workout.copyWorkout.emptyHint', '請選擇其他日期')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {items.map((item, index) => {
+                      const isSelected = selectedIds.has(item.id);
 
-            {/* 動作清單滾動區 */}
-            <div className="flex-1 overflow-y-auto overscroll-contain">
-              {items.length === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center text-center space-y-1">
-                  <span className="text-xs text-muted-foreground font-mono">
-                    {t('workout.copyWorkout.empty', '該日期無歷史訓練')}
-                  </span>
-                  <span className="text-2xs text-muted-foreground/60 font-mono">
-                    {t('workout.copyWorkout.emptyHint', '請選擇其他日期')}
-                  </span>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {items.map((item, index) => {
-                    const isSelected = selectedIds.has(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => toggleItem(item.id)}
+                          className={cn(
+                            'min-h-12 py-2 px-3 sm:px-4 flex items-center justify-between gap-2 bg-card transition-all cursor-pointer hover:bg-hover select-none',
+                            !isSelected && 'opacity-40'
+                          )}
+                        >
+                          {/* 自訂高對比 Checkbox 與動作名稱 */}
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            <div
+                              className={cn(
+                                'size-4 rounded flex items-center justify-center shrink-0 border transition-colors',
+                                isSelected
+                                  ? 'bg-foreground text-background border-foreground'
+                                  : 'border-border bg-transparent text-transparent'
+                              )}
+                            >
+                              {isSelected && <Check className="size-3 stroke-[3]" />}
+                            </div>
 
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => toggleItem(item.id)}
-                        className={cn(
-                          'min-h-12 py-2 px-3 sm:px-4 flex items-center justify-between gap-2 bg-card transition-all cursor-pointer hover:bg-hover select-none',
-                          !isSelected && 'opacity-40'
-                        )}
-                      >
-                        {/* 自訂高對比 Checkbox 與動作名稱 */}
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <div
-                            className={cn(
-                              'size-4 rounded flex items-center justify-center shrink-0 border transition-colors',
-                              isSelected
-                                ? 'bg-foreground text-background border-foreground'
-                                : 'border-border bg-transparent text-transparent'
-                            )}
-                          >
-                            {isSelected && <Check className="size-3 stroke-[3]" />}
+                            <span className="truncate text-xs font-medium text-foreground flex-1 min-w-0">
+                              {item.exerciseName}
+                            </span>
                           </div>
 
-                          <span className="truncate text-xs font-medium text-foreground flex-1 min-w-0">
-                            {item.exerciseName}
-                          </span>
+                          {/* 右側結構：常用數字輸入框膠囊 (組數) */}
+                          <button
+                            type="button"
+                            disabled={!isSelected}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isSelected) return;
+                              handleOpenKeypad(index, e.currentTarget);
+                            }}
+                            className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0 disabled:pointer-events-none"
+                          >
+                            <span className="font-normal text-foreground">
+                              {item.sets.length}
+                            </span>
+                            <span className="font-sans text-muted-foreground text-[11px]">
+                              {t('workout.set', '組')}
+                            </span>
+                            <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                          </button>
                         </div>
-
-                        {/* 右側結構：常用數字輸入框膠囊 (組數) */}
-                        <button
-                          type="button"
-                          disabled={!isSelected}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isSelected) return;
-                            handleOpenKeypad(index, e.currentTarget);
-                          }}
-                          className="h-7 px-2.5 rounded-full border border-border/80 bg-background hover:bg-hover font-mono text-xs flex items-center gap-1 transition-colors cursor-pointer active:scale-95 select-none shrink-0 disabled:pointer-events-none"
-                        >
-                          <span className="font-bold text-foreground">
-                            {item.sets.length}
-                          </span>
-                          <span className="text-muted-foreground text-[11px]">
-                            {t('workout.set', '組')}
-                          </span>
-                          <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* 底部單行彙總條（自然無縫留白，無分割線） */}
-          <div className="flex items-center justify-center px-1 pt-0 pb-0 text-xs font-mono text-muted-foreground shrink-0 select-none">
-            <span>
-              {t('workout.copyWorkout.summary', {
-                count: selectedCount,
-                sets: totalSets,
-                defaultValue: `已選 ${selectedCount} 個動作 · 總計 ${totalSets} 組`,
-              })}
-            </span>
+            {/* 底部單行彙總條（自然無縫留白，無分割線） */}
+            <div className="flex items-center justify-center px-1 pt-0 pb-0 text-xs font-mono text-muted-foreground shrink-0 select-none">
+              <span>
+                {t('workout.copyWorkout.summary', {
+                  count: selectedCount,
+                  sets: totalSets,
+                  defaultValue: `已選 ${selectedCount} 個動作 · 總計 ${totalSets} 組`,
+                })}
+              </span>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
