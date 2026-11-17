@@ -1154,8 +1154,8 @@
         "backToTop": "Back to top ↑"
       },
       "hero": {
-        "titleLine1": "Just Pure Data.",
-        "titleLine2": "Zero Preaching.",
+        "titleLine1": "Just Pure Data",
+        "titleLine2": "Zero Preaching",
         "desc": "Logging your body shouldn't cause anxiety. Zenfit delivers raw numbers with zero preaching or forced streaks. Fully offline, snappy, and private.",
         "ctaExplore": "Explore Metric System",
         "ctaPwa": "Install PWA · 100% Private Data",
@@ -1169,8 +1169,8 @@
       },
       "diet": {
         "tag": "[ 01 / Diet ]",
-        "titleLine1": "Frictionless Nutrition Logging.",
-        "titleLine2": "Accurate Ingredients, One-Tap Copy, Quick Estimate, Rolling Average.",
+        "titleLine1": "Frictionless Nutrition Logging",
+        "titleLine2": "Accurate Ingredients, One-Tap Copy, Quick Estimate, Rolling Average",
         "desc": "Nutrition tracking should never be a chore. Zenfit offers four flexible workflows: weighed raw ingredients, one-tap copy from yesterday, quick estimates for dining out, and historical rolling averages.",
         "types": {
           "raw": {
@@ -1221,32 +1221,32 @@
       },
       "workout": {
         "tag": "[ 02 / Workout ]",
-        "titleLine1": "Strength Biomechanics & Sets.",
-        "titleLine2": "Anatomy Heatmaps, Effective Sets & Pure Math e1RM.",
+        "titleLine1": "Strength Biomechanics & Sets",
+        "titleLine2": "Anatomy Heatmaps, Effective Sets & Pure Math e1RM",
         "desc": "Strict separation of warm-up and working sets. Accurate weight and reps with battle-tested Brzycki / Epley e1RM formulas and weekly effective volume distribution."
       },
       "body": {
         "tag": "[ 03 / Body ]",
-        "titleLine1": "Filter Fluid Noise, Reveal Real Progress.",
-        "titleLine2": "7-Day Smoothed EMA, Body Circumferences & Objective Trends.",
+        "titleLine1": "Filter Fluid Noise, Reveal Real Progress",
+        "titleLine2": "7-Day Smoothed EMA, Body Circumferences & Objective Trends",
         "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. Zenfit filters out noise with mathematical smoothing while tracking body circumferences."
       },
       "analytics": {
         "tag": "[ 04 / Analytics ]",
-        "titleLine1": "Zero Blackbox AI Inside.",
-        "titleLine2": "Full Freedom Outside.",
+        "titleLine1": "Zero Blackbox AI Inside",
+        "titleLine2": "Full Freedom Outside",
         "desc": "No unverified AI scores or ratings. Zenfit provides instant objective metrics and formats them cleanly: export structured text for ChatGPT / Claude, or generate crisp high-resolution images."
       },
       "sync": {
         "tag": "[ 05 / Sync ]",
-        "titleLine1": "Data 100% Yours. Snappy Offline.",
-        "titleLine2": "Full Offline Operation, Private Dropbox Sync & Single-File Backup.",
+        "titleLine1": "Data 100% Yours. Snappy Offline",
+        "titleLine2": "Full Offline Operation, Private Dropbox Sync & Single-File Backup",
         "desc": "Your physiological data never passes through third-party cloud servers. Sync peer-to-peer with your personal Dropbox account, fully functional offline."
       },
       "principles": {
         "tag": "[ 06 / Principles ]",
-        "titleLine1": "Zero Anxiety Engineering.",
-        "titleLine2": "No Social Feeds, No Streak Shaming, No Preaching, No Blackboxes.",
+        "titleLine1": "Zero Anxiety Engineering",
+        "titleLine2": "No Social Feeds, No Streak Shaming, No Preaching, No Blackboxes",
         "desc": "You don't need an app to nag you, preach, or compare you to others. Zenfit removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp instrument.",
         "items": {
           "item1": {
@@ -1254,7 +1254,7 @@
             "title": "No Blackbox Lectures or Judgments",
             "desc": "We never tell you that you ate too little, too much, or slipped up. No shaming red warning cards. The app is an objective mirror—100% of decisions belong to you.",
             "legacyTitle": "Traditional AI Grading",
-            "legacyBad": "“⚠️ Major Overconsumption! -15 pts, cut dinner carbs”",
+            "legacyBad": "“Major Overconsumption. -15 pts, cut dinner carbs”",
             "factTitle": "Objective Reality",
             "factGood": "2,150 / 2,200"
           },
@@ -1263,7 +1263,7 @@
             "title": "Zero Peer Anxiety or Feed Noise",
             "desc": "No discovery feed, no leaderboard, no comparisons. Quantified self is a serious dialogue between you and physics. You never need to perform discipline.",
             "legacyTitle": "National Rank #42",
-            "legacyBad": "“Day 100 streak! Work hard, shine bright ✨”",
+            "legacyBad": "“Day 100 streak. Work hard, shine bright”",
             "factTitle": "Private Space",
             "factGood": "Bench Press e1RM 120 kg"
           },
@@ -1271,8 +1271,8 @@
             "tag": "03 // No Mandatory Streaks or Punishments",
             "title": "True Discipline Needs No Shame Mechanism",
             "desc": "No broken streak alerts or red badge urgency. If you logged today, that is a fact. If you didn't, tomorrow opens to the same clean, ready tool.",
-            "legacyTitle": "Streak Broken!",
-            "legacyBad": "“Streak broken! Watch an ad or spend 50 gems to restore”",
+            "legacyTitle": "Streak Broken",
+            "legacyBad": "“Streak broken. Watch an ad or spend 50 gems to restore”",
             "factTitle": "Calmly on Standby",
             "factGood": "Logged or not, facts are facts"
           },
@@ -1290,8 +1290,8 @@
       },
       "tech": {
         "tag": "[ 07 / Tech ]",
-        "titleLine1": "Reliable Through Radical Restraint.",
-        "titleLine2": "Zero Dependencies, Pure Client Math, Indestructible Data.",
+        "titleLine1": "Reliable Through Radical Restraint",
+        "titleLine2": "Zero Dependencies, Pure Client Math, Indestructible Data",
         "desc": "No bloated tracking SDKs or heavy frameworks. Pure mathematical functions and 100% unit test coverage guarantee deterministic execution.",
         "cards": {
           "speed": {

@@ -49,7 +49,7 @@ export function HeroShowcaseDeck() {
       {/* ========================================================================= */}
       {/* 3. 最底層 / 最背後 (Card 3, Z-index: 10): 食物詳情頁面                    */}
       {/* ========================================================================= */}
-      <div className="absolute left-[140px] xl:left-[160px] top-0 w-[310px] xl:w-[335px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none z-10 transition-all duration-300">
+      <div className="absolute left-[140px] xl:left-[160px] top-0 w-[310px] xl:w-[335px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none z-10">
         
         {/* Mock Window Titlebar */}
         <div className="px-3.5 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between font-mono text-[11px] bg-neutral-50 dark:bg-neutral-950">
@@ -63,7 +63,7 @@ export function HeroShowcaseDeck() {
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>{t('landing.deck.foodDetails', '食材詳情')}</span>
           </div>
-          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] font-sans text-neutral-700 dark:text-neutral-300">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="font-medium">{t('landing.deck.synced', '已同步')}</span>
           </div>
@@ -77,20 +77,20 @@ export function HeroShowcaseDeck() {
             
             {/* 第 1 層：HUD 規格條 */}
             <div className="h-7 px-3 bg-neutral-50 dark:bg-neutral-900/60 flex items-center justify-between text-xs font-mono">
-              <span className="uppercase tracking-widest text-[10px] text-neutral-500 dark:text-neutral-400 font-semibold">
+              <span className="uppercase tracking-widest text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
                 {t('landing.deck.rawFoodHud', '天然原型食材 · 生重')}
               </span>
-              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 tracking-wide font-medium">
+              <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 tracking-wide font-medium">
                 {t('landing.deck.active', '使用中')}
               </span>
             </div>
 
             {/* 第 2 層：品名帶與高蛋白微徽章 */}
             <div className="h-14 px-3.5 flex items-center justify-between gap-2 bg-white dark:bg-black">
-              <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
+              <h2 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
                 {t('landing.deck.chickenBreast', '雞胸肉')}
               </h2>
-              <span className="text-[10px] font-mono border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-medium bg-emerald-50/50 dark:bg-emerald-950/30">
+              <span className="text-[11px] font-mono border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-medium bg-emerald-50/50 dark:bg-emerald-950/30">
                 {t('landing.deck.highProtein', '高蛋白')}
               </span>
             </div>
@@ -99,27 +99,27 @@ export function HeroShowcaseDeck() {
             <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800 bg-white dark:bg-black">
               <div className="p-2.5 flex flex-col justify-between">
                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{t('landing.deck.totalIntake', '總攝入')}</span>
-                <div className="font-mono text-xs font-bold text-neutral-900 dark:text-white mt-1">
-                  3,240 <span className="text-[10px] font-normal text-neutral-500">kcal</span>
+                <div className="font-mono text-xs font-semibold tabular-nums text-neutral-900 dark:text-white mt-1">
+                  3,240 <span className="text-[11px] font-normal text-neutral-500">kcal</span>
                 </div>
               </div>
               <div className="p-2.5 flex flex-col justify-between">
                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{t('landing.deck.frequency', '頻率')}</span>
-                <div className="font-mono text-xs font-bold text-neutral-900 dark:text-white mt-1">
-                  18 <span className="text-[10px] font-normal text-neutral-500">{t('landing.deck.timesUnit', '次')}</span>
+                <div className="font-mono text-xs font-semibold tabular-nums text-neutral-900 dark:text-white mt-1">
+                  18 <span className="text-[11px] font-normal text-neutral-500">{t('landing.deck.timesUnit', '次')}</span>
                 </div>
               </div>
               <div className="p-2.5 flex flex-col justify-between">
                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{t('landing.deck.singleDayMax', '單日最高')}</span>
-                <div className="font-mono text-xs font-bold text-neutral-900 dark:text-white mt-1">
-                  250 <span className="text-[10px] font-normal text-neutral-500">g</span>
+                <div className="font-mono text-xs font-semibold tabular-nums text-neutral-900 dark:text-white mt-1">
+                  250 <span className="text-[11px] font-normal text-neutral-500">g</span>
                 </div>
               </div>
             </div>
 
             {/* 第 4 層：微型足跡熱點矩陣 */}
             <div className="p-3 bg-neutral-50/50 dark:bg-neutral-950/50">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-2">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-2">
                 {t('landing.deck.matrixTitle', '攝入足跡矩陣 (7 週趨勢)')}
               </div>
               <div className="grid grid-rows-7 grid-flow-col gap-1 w-fit">
@@ -168,7 +168,7 @@ export function HeroShowcaseDeck() {
       {/* ========================================================================= */}
       {/* 2. 中間層 (Card 2, Z-index: 20): 飲食頁面                                 */}
       {/* ========================================================================= */}
-      <div className="absolute left-[70px] xl:left-[80px] top-[36px] w-[310px] xl:w-[335px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none z-20 transition-all duration-300">
+      <div className="absolute left-[70px] xl:left-[80px] top-[36px] w-[310px] xl:w-[335px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none z-20">
         
         {/* Mock Window Titlebar */}
         <div className="px-3.5 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between font-mono text-[11px] bg-neutral-50 dark:bg-neutral-950">
@@ -182,7 +182,7 @@ export function HeroShowcaseDeck() {
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>{t('landing.deck.dietMetrics', '飲食')}</span>
           </div>
-          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] font-sans text-neutral-700 dark:text-neutral-300">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="font-medium">{t('landing.deck.synced', '已同步')}</span>
           </div>
@@ -198,7 +198,7 @@ export function HeroShowcaseDeck() {
       {/* ========================================================================= */}
       {/* 1. 最前方 / 主角 (Card 1, Z-index: 30): 總覽頁面                          */}
       {/* ========================================================================= */}
-      <div className="absolute left-0 top-[72px] w-[310px] xl:w-[335px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none z-30 transition-all duration-300">
+      <div className="absolute left-0 top-[72px] w-[310px] xl:w-[335px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden shadow-none z-30">
         
         {/* Mock Window Titlebar */}
         <div className="px-3.5 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between font-mono text-[11px] bg-neutral-50 dark:bg-neutral-950">
@@ -212,7 +212,7 @@ export function HeroShowcaseDeck() {
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>{t('landing.deck.dashboard', '總覽')}</span>
           </div>
-          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+          <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] font-sans text-neutral-700 dark:text-neutral-300">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="font-medium">{t('landing.deck.synced', '已同步')}</span>
           </div>

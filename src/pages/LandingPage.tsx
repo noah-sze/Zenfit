@@ -2,7 +2,20 @@ import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/components/ThemeProvider';
-import { Sun, Moon, ArrowUpRight, Globe } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  ArrowUpRight,
+  Globe,
+  AlertTriangle,
+  BarChart2,
+  Flame,
+  CircleDot,
+  Trophy,
+  Lock,
+  Utensils,
+  Scale,
+} from 'lucide-react';
 import { SetupProfileDialog } from '@/components/welcome/SetupProfileDialog';
 import { WelcomeTransitionOverlay } from '@/components/welcome/WelcomeTransitionOverlay';
 import { getDemoDashboardData, DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
@@ -133,7 +146,7 @@ export default function LandingPage() {
         }}
         className="h-full px-5 sm:px-8 md:px-12 flex-1 min-w-0 md:flex-initial md:min-w-[240px] flex items-center space-x-2.5 shrink-0 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors group cursor-pointer"
       >
-        <svg viewBox="0 0 1024 1024" className="w-7 h-7 rounded-[23%] shrink-0 select-none overflow-hidden transition-transform group-hover:scale-105" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 1024 1024" className="w-7 h-7 rounded-lg shrink-0 select-none overflow-hidden" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="1024" height="1024" rx="240" fill="#000000" />
           <g transform="translate(187 187)">
             <g transform="translate(132.031 91.406)">
@@ -150,7 +163,7 @@ export default function LandingPage() {
             </g>
           </g>
         </svg>
-        <span className="font-sans text-base font-bold tracking-tight text-black dark:text-white leading-none">Zenfit</span>
+        <span className="font-sans text-base font-semibold tracking-tight text-black dark:text-white leading-none">Zenfit</span>
       </a>
 
       {/*  Navigation Links: Full-width Edge-to-Edge Grid  */}
@@ -208,10 +221,10 @@ export default function LandingPage() {
   {/*  =========================================================================  */}
   <section id="hero" className="relative border-b border-neutral-200 dark:border-neutral-800 bg-grid-theme overflow-hidden transition-colors duration-200">
 
-    <div className="w-full grid grid-cols-1 lg:grid-cols-12 min-h-0 lg:min-h-[calc(100vh-50px)]">
+    <div className="w-full grid grid-cols-1 lg:grid-cols-12 min-h-0 lg:min-h-[calc(100vh-56px)]">
       
       {/*  Left Column: Manifesto & Value Proposition  */}
-      <div className="relative overflow-hidden lg:col-span-5 pt-[150px] pb-8 px-6 sm:p-12 lg:p-16 xl:p-20 border-b-0 lg:border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-center space-y-8 bg-white dark:bg-black transition-colors duration-200">
+      <div className="relative overflow-hidden lg:col-span-5 pt-36 pb-8 px-6 sm:p-12 lg:p-16 xl:p-20 border-b-0 lg:border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-center space-y-8 bg-white dark:bg-black transition-colors duration-200">
         <WireframeGlobe
           centerXRatio={0.68}
           centerYRatio={0.42}
@@ -241,9 +254,9 @@ export default function LandingPage() {
               </svg>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.12]">
+            <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.12]">
               {t('landing.hero.titleLine1', '只記數據，')}<br />
-              <span className="text-neutral-500 font-mono font-normal">{t('landing.hero.titleLine2', '絕不對你指手畫腳。')}</span>
+              <span className="text-neutral-500 font-mono font-normal">{t('landing.hero.titleLine2', '絕不對你指手畫腳')}</span>
             </h1>
           </div>
 
@@ -270,15 +283,15 @@ export default function LandingPage() {
         {/*  Core Characteristics List (一行兩個排版)  */}
         <div className="relative z-10 pt-6 border-t border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 dark:text-neutral-400 grid grid-cols-2 gap-x-4 gap-y-2.5">
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.localFirst', '100% 本地優先')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.crossPlatform', '全平台支援')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.dropboxSync', 'Dropbox 同步')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
@@ -310,9 +323,9 @@ export default function LandingPage() {
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
           {t('landing.diet.tag', '[ 01 / 飲食]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.15]">
-          {t('landing.diet.titleLine1', '零摩擦記錄飲食。')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.diet.titleLine2', '準確食材、一鍵複製、快速估算、滾動均值。')}</span>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.15]">
+          {t('landing.diet.titleLine1', '零摩擦記錄飲食')}<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.diet.titleLine2', '準確食材、一鍵複製、快速估算、滾動均值')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.diet.desc', '記錄飲食不該是繁瑣負擔。Zenfit 針對真實生活打造零阻力記錄流：自煮時依托 420+ 種原型食材準確秤重；規律進餐時一鍵複製昨日餐點；外食聚餐時支援快速粗估。')}
@@ -330,10 +343,10 @@ export default function LandingPage() {
             {/*  類型 1: 原型食材  */}
             <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wider">
                   {t('landing.diet.types.raw.tag', '01 // 原型食材')}
                 </span>
-                <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-white">
                   {t('landing.diet.types.raw.title', '自煮精準記錄')}
                 </span>
               </div>
@@ -345,10 +358,10 @@ export default function LandingPage() {
             {/*  類型 2: 一鍵複製  */}
             <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wider">
                   {t('landing.diet.types.copy.tag', '02 // 一鍵複製')}
                 </span>
-                <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-white">
                   {t('landing.diet.types.copy.title', '複用記錄')}
                 </span>
               </div>
@@ -360,10 +373,10 @@ export default function LandingPage() {
             {/*  類型 3: 快速估算  */}
             <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wider">
                   {t('landing.diet.types.estimate.tag', '03 // 快速估算')}
                 </span>
-                <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-white">
                   {t('landing.diet.types.estimate.title', '外賣、聚餐')}
                 </span>
               </div>
@@ -375,10 +388,10 @@ export default function LandingPage() {
             {/*  類型 4: 滾動平均  */}
             <div className="p-3.5 flex flex-col justify-between space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-neutral-500 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wider">
                   {t('landing.diet.types.average.tag', '04 // 滾動平均')}
                 </span>
-                <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-white">
                   {t('landing.diet.types.average.title', '懶得記')}
                 </span>
               </div>
@@ -392,10 +405,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-black overflow-hidden shadow-none">
             {/*  指標 1: 內置食材數量  */}
             <div className="p-3 bg-white dark:bg-black flex flex-col space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[10px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
+              <div className="text-[11px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
                 {t('landing.diet.metrics.foodDb.label', '內置食材庫')}
               </div>
-              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-black text-black dark:text-white font-mono">
+              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-semibold tabular-nums text-black dark:text-white font-mono">
                 {t('landing.diet.metrics.foodDb.value', '420+')} <span className="text-[11px] font-normal text-neutral-500 font-sans">{t('landing.diet.metrics.foodDb.unit', '項')}</span>
               </div>
               <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
@@ -405,10 +418,10 @@ export default function LandingPage() {
 
             {/*  指標 2: 允許自定食譜  */}
             <div className="p-3 bg-white dark:bg-black flex flex-col space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[10px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
+              <div className="text-[11px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
                 {t('landing.diet.metrics.recipes.label', '複合菜餚')}
               </div>
-              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-black text-black dark:text-white font-mono">
+              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-semibold tabular-nums text-black dark:text-white font-mono">
                 {t('landing.diet.metrics.recipes.value', '∞')} <span className="text-[11px] font-normal text-neutral-500 font-sans">{t('landing.diet.metrics.recipes.unit', '自訂')}</span>
               </div>
               <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
@@ -418,10 +431,10 @@ export default function LandingPage() {
 
             {/*  指標 3: 烹調油黑盒歸零  */}
             <div className="p-3 bg-white dark:bg-black flex flex-col space-y-1 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-              <div className="text-[10px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
+              <div className="text-[11px] text-neutral-500 uppercase tracking-wider h-4 flex items-center">
                 {t('landing.diet.metrics.oil.label', '烹調黑盒')}
               </div>
-              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-black text-black dark:text-white font-mono">
+              <div className="h-7 sm:h-8 flex items-baseline gap-1 text-xl sm:text-2xl font-semibold tabular-nums text-black dark:text-white font-mono">
                 {t('landing.diet.metrics.oil.value', '0')} <span className="text-[11px] font-normal text-neutral-500 font-sans">{t('landing.diet.metrics.oil.unit', '隱藏油')}</span>
               </div>
               <div className="font-sans text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug">
@@ -448,7 +461,7 @@ export default function LandingPage() {
                 <span className="text-neutral-400 dark:text-neutral-600">/</span>
                 <span>{t('landing.diet.windowBar.module', '飲食')}</span>
               </div>
-              <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
+              <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] font-sans text-neutral-700 dark:text-neutral-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                 <span className="font-medium">{t('landing.diet.windowBar.synced', '已同步')}</span>
               </div>
@@ -471,15 +484,15 @@ export default function LandingPage() {
   {/*  03. STRENGTH & BIOMECHANICS (訓練記錄)                                     */}
   {/*  =========================================================================  */}
   <section id="workout" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200">
-    <div className="max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] mx-auto space-y-12">
+    <div className="max-w-6xl mx-auto space-y-12">
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
           {t('landing.workout.tag', '[ 02 / 訓練]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.workout.titleLine1', '肌力生物力學與組數表。')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.workout.titleLine2', '解剖熱圖、有效組數與純數學 e1RM。')}</span>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
+          {t('landing.workout.titleLine1', '肌力生物力學與組數表')}<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.workout.titleLine2', '解剖熱圖、有效組數與純數學 e1RM')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.workout.desc', '嚴格區分熱身組與正式組，真實記錄重量與次數。透過成熟的 Brzycki / Epley 公式估算極限力量，自動統計每週有效訓練組數分佈，拒絕未經科學驗證的隨意評分。')}
@@ -540,15 +553,15 @@ export default function LandingPage() {
   {/*  04. BODY & PHYSIOLOGICAL EMA FILTER (體態記錄)                             */}
   {/*  =========================================================================  */}
   <section id="body" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black transition-colors duration-200">
-    <div className="max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] mx-auto space-y-12">
+    <div className="max-w-6xl mx-auto space-y-12">
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
           {t('landing.body.tag', '[ 03 / 體態]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.body.titleLine1', '過濾水分波動，看懂真實體態。')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.body.titleLine2', '7 天平滑曲線、身體圍度追蹤與客觀進展。')}</span>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
+          {t('landing.body.titleLine1', '過濾水分波動，看懂真實體態')}<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.body.titleLine2', '7 天平滑曲線、身體圍度追蹤與客觀進展')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.body.desc', '喝水多寡與重鹹飲食，常讓單日體重上下跳動 1～2 公斤。Zenfit 自動過濾水分干擾，幫你算出身體的真實增減趨勢；同步支援胸圍、腰圍等圍度追蹤，只擺客觀事實，告別體重焦慮。')}
@@ -598,9 +611,9 @@ export default function LandingPage() {
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
           {t('landing.analytics.tag', '[ 04 / 分析]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.analytics.titleLine1', '內部零黑盒 AI，')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析。')}</span>
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.analytics.desc', '我們不在軟體裡塞入未經科學驗證的 AI 評分機制。Zenfit 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。')}
@@ -623,9 +636,9 @@ export default function LandingPage() {
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
           {t('landing.sync.tag', '[ 05 / 同步]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.sync.titleLine1', '數據完全歸你，斷網也能秒開記錄。')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.sync.titleLine2', '離線可用、個人 Dropbox 私密同步與一鍵打包匯出。')}</span>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
+          {t('landing.sync.titleLine1', '數據完全歸你，斷網也能秒開記錄')}<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.sync.titleLine2', '離線可用、個人 Dropbox 私密同步與一鍵打包匯出')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.sync.desc', '你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。')}
@@ -649,9 +662,9 @@ export default function LandingPage() {
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
           {t('landing.principles.tag', '[ 06 / 原則]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.principles.titleLine1', '拒絕製造焦慮。')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.principles.titleLine2', '不搞社交、不催打卡、不給指令、不做成品黑盒。')}</span>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
+          {t('landing.principles.titleLine1', '拒絕製造焦慮')}<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.principles.titleLine2', '不搞社交、不催打卡、不給指令、不做成品黑盒')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.principles.desc', '你不需要一個軟體每天催你打卡、對你說教，或是逼你跟別人比較。Zenfit 刻意拿掉所有惱人的套路：今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、安靜待命的記錄工具。')}
@@ -679,22 +692,22 @@ export default function LandingPage() {
             {/* 視覺微型 UI 對比 */}
             <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
               <div className="rounded border border-red-200 dark:border-red-950/50 bg-red-50/50 dark:bg-red-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-red-200 dark:border-red-900/50 flex items-center space-x-1 text-red-600 dark:text-red-400 font-bold text-[10px]">
-                  <span>🤖</span>
+                <div className="px-2.5 py-1.5 border-b border-red-200 dark:border-red-900/50 flex items-center space-x-1.5 text-red-600 dark:text-red-400 font-semibold text-[11px]">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
                   <span>{t('landing.principles.items.item1.legacyTitle', '傳統 AI 評分')}</span>
                 </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[10px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item1.legacyBad', '「⚠️ 嚴重超標！扣 15 分，晚餐少吃碳水」')}
+                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
+                  {t('landing.principles.items.item1.legacyBad', '「嚴重超標，扣 15 分，晚餐少吃碳水」')}
                 </div>
               </div>
 
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1 text-neutral-900 dark:text-white font-bold text-[10px]">
-                  <span>📊</span>
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-neutral-900 dark:text-white font-semibold text-[11px]">
+                  <BarChart2 className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
                   <span>{t('landing.principles.items.item1.factTitle', '客觀事實')}</span>
                 </div>
-                <div className="p-2.5 font-mono text-xs font-bold text-neutral-900 dark:text-white flex-1 flex items-center">
-                  {t('landing.principles.items.item1.factGood', '2,150 / 2,200')} <span className="text-[9px] font-normal text-neutral-400 ml-1">kcal</span>
+                <div className="p-2.5 font-mono text-xs font-semibold tabular-nums text-neutral-900 dark:text-white flex-1 flex items-center">
+                  {t('landing.principles.items.item1.factGood', '2,150 / 2,200')} <span className="text-[11px] font-normal text-neutral-400 ml-1">kcal</span>
                 </div>
               </div>
             </div>
@@ -716,20 +729,20 @@ export default function LandingPage() {
             {/* 視覺微型 UI 對比 */}
             <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
               <div className="rounded border border-amber-200 dark:border-amber-950/50 bg-amber-50/50 dark:bg-amber-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-amber-200 dark:border-amber-900/50 flex items-center space-x-1 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
-                  <span>🔥</span>
-                  <span>{t('landing.principles.items.item3.legacyTitle', '連續打卡中斷！')}</span>
+                <div className="px-2.5 py-1.5 border-b border-amber-200 dark:border-amber-900/50 flex items-center space-x-1.5 text-amber-600 dark:text-amber-400 font-semibold text-[11px]">
+                  <Flame className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
+                  <span>{t('landing.principles.items.item3.legacyTitle', '連續打卡中斷')}</span>
                 </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[10px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item3.legacyBad', '「已斷簽！看廣告或花費 50 鑽石補簽」')}
+                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
+                  {t('landing.principles.items.item3.legacyBad', '「已斷簽，看廣告或花費 50 鑽石補簽」')}
                 </div>
               </div>
 
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-[10px]">
-                  <div className="flex items-center space-x-1">
-                    <span>🟢</span>
-                    <span className="font-bold text-neutral-900 dark:text-white">{t('landing.principles.items.item3.factTitle', '隨時安靜待命')}</span>
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center space-x-1.5">
+                    <CircleDot className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
+                    <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item3.factTitle', '隨時安靜待命')}</span>
                   </div>
                 </div>
                 <div className="p-2.5 font-mono text-xs text-neutral-900 dark:text-white flex-1 flex items-center">
@@ -758,19 +771,20 @@ export default function LandingPage() {
             {/* 視覺微型 UI 對比 */}
             <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/50 text-[11px] overflow-hidden flex flex-col justify-between opacity-60">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[10px] text-neutral-500 line-through">
-                  <span>{t('landing.principles.items.item2.legacyTitle', '🏆 全國排行 #42')}</span>
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] text-neutral-500 line-through">
+                  <Trophy className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
+                  <span>{t('landing.principles.items.item2.legacyTitle', '全國排行 #42')}</span>
                 </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[10px] truncate flex-1 flex items-center">
-                  {t('landing.principles.items.item2.legacyBad', '「打卡第 100 天，越努力越幸運✨」')}
+                <div className="p-2.5 line-through text-neutral-400 text-[11px] truncate flex-1 flex items-center">
+                  {t('landing.principles.items.item2.legacyBad', '「打卡第 100 天，越努力越幸運」')}
                 </div>
               </div>
 
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[10px]">
-                  <div className="flex items-center space-x-1">
-                    <span>🔒</span>
-                    <span className="font-bold text-neutral-900 dark:text-white">{t('landing.principles.items.item2.factTitle', '個人私密空間')}</span>
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[11px]">
+                  <div className="flex items-center space-x-1.5">
+                    <Lock className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
+                    <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item2.factTitle', '個人私密空間')}</span>
                   </div>
                 </div>
                 <div className="p-2.5 font-mono text-xs text-neutral-900 dark:text-white flex-1 flex items-center">
@@ -796,23 +810,23 @@ export default function LandingPage() {
             {/* 視覺微型 UI 對比 */}
             <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900/50 text-[11px] overflow-hidden flex flex-col justify-between opacity-60">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1 text-[10px] text-neutral-500 line-through font-bold">
-                  <span>🍜</span>
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] text-neutral-500 line-through font-semibold">
+                  <Utensils className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
                   <span>{t('landing.principles.items.item4.legacyTitle', '牛肉麵 1 碗 = 750 kcal?')}</span>
                 </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[10px] leading-tight flex-1 flex items-center">
+                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
                   {t('landing.principles.items.item4.legacyBad', '「隱藏用油 30g？吸水率 250%？」')}
                 </div>
               </div>
 
               <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1 text-[10px] font-bold text-neutral-900 dark:text-white">
-                  <span>⚖️</span>
+                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] font-semibold text-neutral-900 dark:text-white">
+                  <Scale className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
                   <span>{t('landing.principles.items.item4.factTitle', '原子食材拆解 (生重)')}</span>
                 </div>
-                <div className="p-2.5 font-mono text-[10px] text-neutral-700 dark:text-neutral-300 space-y-0.5 flex-1 flex flex-col justify-center">
+                <div className="p-2.5 font-mono text-[11px] text-neutral-700 dark:text-neutral-300 space-y-0.5 flex-1 flex flex-col justify-center">
                   <div>{t('landing.principles.items.item4.factLine1', '牛腱 150g · 麵 80g')}</div>
-                  <div className="text-telemetry-accent font-bold">{t('landing.principles.items.item4.factLine2', '+ 橄欖油 8g (明示)')}</div>
+                  <div className="text-telemetry-accent font-semibold">{t('landing.principles.items.item4.factLine2', '+ 橄欖油 8g (明示)')}</div>
                 </div>
               </div>
             </div>
@@ -834,9 +848,9 @@ export default function LandingPage() {
         <div className="text-xs text-telemetry-accent uppercase tracking-widest font-mono">
           {t('landing.tech.tag', '[ 07 / 技術]')}
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.tech.titleLine1', '可靠，源自極致克制。')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.tech.titleLine2', '零外部依賴、純本地計算、永不損毀數據。')}</span>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
+          {t('landing.tech.titleLine1', '可靠，源自極致克制')}<br />
+          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.tech.titleLine2', '零外部依賴、純本地計算、永不損毀數據')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.tech.desc', '拒絕臃腫的第三方追蹤與肥大框架。Zenfit 透過無副作用純數學純函數與 100% 單元測試防線，保證你的每一次點擊都獲得毫秒級的確定性。')}
@@ -891,10 +905,10 @@ export default function LandingPage() {
   {/*  FOOTER                                                                     */}
   {/*  =========================================================================  */}
   <footer className="py-12 px-4 sm:px-8 bg-neutral-100 dark:bg-black border-t border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 transition-colors duration-200">
-    <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-6">
+    <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-6">
       
       <div className="flex items-center space-x-2.5">
-        <svg viewBox="0 0 1024 1024" className="w-5 h-5 rounded-[23%] shrink-0 select-none overflow-hidden" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 1024 1024" className="w-5 h-5 rounded-md shrink-0 select-none overflow-hidden" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="1024" height="1024" rx="240" fill="#000000" />
           <g transform="translate(187 187)">
             <g transform="translate(132.031 91.406)">
