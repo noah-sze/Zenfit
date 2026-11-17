@@ -270,7 +270,7 @@ export function getDemoDashboardData(
 ): DashboardViewProps {
   const tr = (key: string, fallback: string) => (t ? t(key, fallback) : fallback);
   return {
-    greeting: tr('landing.demoData.greeting', '晚上好，Noah'),
+    greeting: tr('landing.demoData.greeting', '晚上好，Jason'),
     displayWeight: 69.0,
     bodyWeightUnit: 'kg',
     hasTodayWeight: true,

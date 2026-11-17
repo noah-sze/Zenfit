@@ -49,7 +49,7 @@ describe('importBackup', () => {
       JSON.stringify([
         {
           id: PRIMARY_USER_ID,
-          name: 'Noah',
+          name: 'Jason',
           gender: 'male',
           birthDate: '1995-01-01',
           heightCm: 183,
@@ -204,7 +204,7 @@ describe('importBackup', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: PRIMARY_USER_ID,
-          name: 'Noah',
+          name: 'Jason',
         }),
       ])
     );
@@ -221,7 +221,7 @@ describe('importBackup', () => {
     expect(db.user_profile.update).toHaveBeenCalledWith(
       'profile-1',
       expect.objectContaining({
-        name: 'Noah',
+        name: 'Jason',
         heightCm: 183,
       })
     );

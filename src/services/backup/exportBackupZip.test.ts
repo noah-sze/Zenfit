@@ -27,7 +27,7 @@ describe('exportBackupZip', () => {
     vi.mocked(db.user_base_info.toArray).mockResolvedValue([
       {
         id: 'primary_user',
-        name: 'Noah',
+        name: 'Jason',
         gender: 'male',
         birthDate: '1995-01-01',
         heightCm: 183,
@@ -181,7 +181,7 @@ describe('exportBackupZip', () => {
     // 2. 驗證 user 模組
     expect(zip.file('user/base_info.json')).not.toBeNull();
     const baseInfo = JSON.parse(await zip.file('user/base_info.json')!.async('string'));
-    expect(baseInfo[0].name).toBe('Noah');
+    expect(baseInfo[0].name).toBe('Jason');
 
     // 3. 驗證 nutrition 模組
     expect(zip.file('nutrition/foods.json')).not.toBeNull();

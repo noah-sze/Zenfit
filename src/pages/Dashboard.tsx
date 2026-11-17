@@ -107,7 +107,7 @@ export default function Dashboard() {
   return (
     <DashboardView
       gender={profile.gender}
-      greeting={getGreeting(t, profile.name || 'Noah')}
+      greeting={getGreeting(t, profile.name || 'Jason')}
       displayWeight={displayWeight}
       bodyWeightUnit={bodyWeightUnit}
       hasTodayWeight={hasTodayWeight}

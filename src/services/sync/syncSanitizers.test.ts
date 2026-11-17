@@ -249,7 +249,7 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
     it('徹底剔除 weightUnit 與 activityLevel，並將舊使用者 ID 自動映射為 UUID', () => {
       const dirtyInfo = {
         id: 'primary_user',
-        name: 'Noah',
+        name: 'Jason',
         gender: 'male',
         birthDate: '1999-01',
         heightCm: 175,
@@ -263,7 +263,7 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
 
       expect(cleaned).toEqual({
         id: PRIMARY_USER_ID,
-        name: 'Noah',
+        name: 'Jason',
         gender: 'male',
         birthDate: '1999-01',
         heightCm: 175,

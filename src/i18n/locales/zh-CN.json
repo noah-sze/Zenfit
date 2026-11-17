@@ -769,7 +769,7 @@
       "title": "基本资料",
       "basicSection": "基本资料",
       "name": "姓名",
-      "namePlaceholder": "例如 Noah",
+      "namePlaceholder": "例如 Jason",
       "gender": "性别",
       "male": "男",
       "female": "女",
@@ -1415,7 +1415,7 @@
       },
       "themeToggle": "切换浅色/深色模式",
       "demoData": {
-        "greeting": "晚上好，Noah",
+        "greeting": "晚上好，Jason",
         "inclineBenchPress": "上斜杠铃卧推",
         "flatDumbbellPress": "平板哑铃卧推",
         "pullUp": "引体向上",

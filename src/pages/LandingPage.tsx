@@ -283,15 +283,15 @@ export default function LandingPage() {
         {/*  Core Characteristics List (一行兩個排版)  */}
         <div className="relative z-10 pt-6 border-t border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 dark:text-neutral-400 grid grid-cols-2 gap-x-4 gap-y-2.5">
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.localFirst', '100% 本地優先')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.crossPlatform', '全平台支援')}</span>
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
             <span className="text-neutral-800 dark:text-neutral-200">{t('landing.hero.traits.dropboxSync', 'Dropbox 同步')}</span>
           </div>
           <div className="flex items-center space-x-2.5">

@@ -769,7 +769,7 @@
       "title": "Profile",
       "basicSection": "Basic Profile",
       "name": "Name",
-      "namePlaceholder": "e.g. Noah",
+      "namePlaceholder": "e.g. Jason",
       "gender": "Gender",
       "male": "Male",
       "female": "Female",
@@ -1415,7 +1415,7 @@
       },
       "themeToggle": "Toggle light/dark mode",
       "demoData": {
-        "greeting": "Good evening, Noah",
+        "greeting": "Good evening, Jason",
         "inclineBenchPress": "Incline Barbell Bench Press",
         "flatDumbbellPress": "Flat Dumbbell Bench Press",
         "pullUp": "Pull-up",

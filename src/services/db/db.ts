@@ -175,7 +175,7 @@ export class ZenfitDatabase extends Dexie {
           const old = oldProfiles[0];
           await tx.table('user_base_info').put({
             id: 'primary_user',
-            name: old.name || 'Noah',
+            name: old.name || 'Jason',
             gender: old.gender || 'male',
             birthDate: old.birthDate || '1999-01',
             heightCm: old.heightCm || 175,

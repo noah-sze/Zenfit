@@ -32,7 +32,7 @@ describe('useUserProfile isSetupCompleted 狀態判定契約', () => {
 
   it('僅填寫姓名但無身高或生日時，isSetupCompleted 應為 false', () => {
     const partialBase: Partial<UserBaseInfo> = {
-      name: 'Noah',
+      name: 'Jason',
       heightCm: 0,
       birthDate: '',
     };
@@ -60,7 +60,7 @@ describe('useUserProfile isSetupCompleted 狀態判定契約', () => {
   it('姓名、生日與有效身高 (heightCm > 0) 皆填寫時，isSetupCompleted 應為 true', () => {
     const completeBase: UserBaseInfo = {
       id: 'primary_user',
-      name: 'Noah',
+      name: 'Jason',
       gender: 'male',
       birthDate: '1999-01',
       heightCm: 175,

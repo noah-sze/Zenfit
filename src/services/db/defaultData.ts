@@ -204,7 +204,7 @@ export async function restoreMissingDefaultData(db: ZenfitDatabase): Promise<{
  * 1. 清空所有業務日誌 (飲食記錄 daily_diet_logs、訓練日誌 workout_logs、身體指標 body_metrics、課表 routines)
  * 2. 清除所有使用者自定義項目 (isCustom: true 的食材、菜餚、動作、器械)
  * 3. 預設飲食與動作庫 100% 保留並自動解除歸檔 (isArchived: false)；若有缺失自動補齊出廠數據
- * 4. 個人基本資料與檔案重置為初始出廠狀態 (Noah / 70kg / 175cm)
+ * 4. 個人基本資料與檔案重置為初始出廠狀態 (Jason / 70kg / 175cm)
  * 5. 徹底中斷 Dropbox 雲端同步並清除本地授權 Token 與中繼資料
  * 6. 清理記憶體快取與本地偏好存儲
  */
