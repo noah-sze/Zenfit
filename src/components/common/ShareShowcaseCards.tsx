@@ -200,6 +200,7 @@ export function ShareShowcaseCards({
   const [imageCopied, setImageCopied] = useState(false);
   const [textCopied, setTextCopied] = useState(false);
   const [jsonCopied, setJsonCopied] = useState(false);
+  const [focusedPreview, setFocusedPreview] = useState<'image' | 'text' | 'json' | null>(null);
 
   // 生成長圖 DataUrl
   useEffect(() => {
@@ -312,8 +313,17 @@ export function ShareShowcaseCards({
           </p>
         </div>
 
-        {/* 圖片預覽區 */}
-        <div className="h-[240px] overflow-y-auto overflow-x-hidden rounded-lg border border-border bg-muted/20 p-2 overscroll-contain select-none">
+        {/* 圖片預覽區（點擊獲取焦點後才允許內部滾動） */}
+        <div
+          tabIndex={0}
+          onFocus={() => setFocusedPreview('image')}
+          onBlur={() => setFocusedPreview((prev) => (prev === 'image' ? null : prev))}
+          className={
+            focusedPreview === 'image'
+              ? 'h-[240px] overflow-y-auto overflow-x-hidden rounded-lg border border-foreground/40 bg-muted/20 p-2 overscroll-contain select-none focus:outline-hidden'
+              : 'h-[240px] overflow-hidden rounded-lg border border-border bg-muted/20 p-2 select-none cursor-pointer focus:outline-hidden'
+          }
+        >
           {previewImageUrl ? (
             <img
               src={previewImageUrl}
@@ -369,8 +379,17 @@ export function ShareShowcaseCards({
           </p>
         </div>
 
-        {/* 純文本預覽區 */}
-        <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-all text-muted-foreground overscroll-contain">
+        {/* 純文本預覽區（點擊獲取焦點後才允許內部滾動） */}
+        <div
+          tabIndex={0}
+          onFocus={() => setFocusedPreview('text')}
+          onBlur={() => setFocusedPreview((prev) => (prev === 'text' ? null : prev))}
+          className={
+            focusedPreview === 'text'
+              ? 'h-[240px] overflow-y-auto rounded-lg border border-foreground/40 bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-text text-muted-foreground overscroll-contain focus:outline-hidden'
+              : 'h-[240px] overflow-hidden rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-none text-muted-foreground cursor-pointer focus:outline-hidden'
+          }
+        >
           {textContent}
         </div>
 
@@ -412,8 +431,17 @@ export function ShareShowcaseCards({
           </p>
         </div>
 
-        {/* JSON 預覽區 */}
-        <div className="h-[240px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre font-mono select-all text-muted-foreground overscroll-contain">
+        {/* JSON 預覽區（點擊獲取焦點後才允許內部滾動） */}
+        <div
+          tabIndex={0}
+          onFocus={() => setFocusedPreview('json')}
+          onBlur={() => setFocusedPreview((prev) => (prev === 'json' ? null : prev))}
+          className={
+            focusedPreview === 'json'
+              ? 'h-[240px] overflow-y-auto rounded-lg border border-foreground/40 bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre select-text text-muted-foreground overscroll-contain focus:outline-hidden'
+              : 'h-[240px] overflow-hidden rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre select-none text-muted-foreground cursor-pointer focus:outline-hidden'
+          }
+        >
           {jsonContent}
         </div>
 
