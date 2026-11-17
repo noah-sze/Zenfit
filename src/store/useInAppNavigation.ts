@@ -1,6 +1,25 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export const IN_APP_NAV_SESSION_ID =
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
+export function hasActiveSessionHistoryState(): boolean {
+  if (typeof window === 'undefined') return false;
+  const state = window.history?.state as
+    | { zenfitSessionId?: string; zenfitSubViewDepth?: number }
+    | null
+    | undefined;
+  return Boolean(
+    state &&
+      state.zenfitSessionId === IN_APP_NAV_SESSION_ID &&
+      typeof state.zenfitSubViewDepth === 'number' &&
+      state.zenfitSubViewDepth > 0
+  );
+}
+
 export type AppMainTab = 'dashboard' | 'diet' | 'workout' | 'body';
 
 export type InAppSubView =
@@ -52,11 +71,7 @@ export const useInAppNavigation = create<InAppNavigationState>()(
           const stepsToPop = currentStack.length - targetDepth;
           if (stepsToPop <= 0) return;
 
-          if (
-            typeof window !== 'undefined' &&
-            typeof window.history?.go === 'function' &&
-            window.history.state?.zenfitSubViewDepth
-          ) {
+          if (typeof window !== 'undefined' && typeof window.history?.go === 'function' && hasActiveSessionHistoryState()) {
             window.history.go(-stepsToPop);
           } else {
             set({ subViewStack: currentStack.slice(0, targetDepth) });
@@ -64,9 +79,16 @@ export const useInAppNavigation = create<InAppNavigationState>()(
           return;
         }
 
-        // 虛擬歷史記錄橋接：推入一筆歷史狀態，但不改變 /app 路徑
+        // 虛擬歷史記錄橋接：推入一筆帶當前會話識別碼的歷史狀態，但不改變 /app 路徑
         if (typeof window !== 'undefined') {
-          window.history.pushState({ zenfitSubViewDepth: currentStack.length + 1 }, '', '/app');
+          window.history.pushState(
+            {
+              zenfitSessionId: IN_APP_NAV_SESSION_ID,
+              zenfitSubViewDepth: currentStack.length + 1,
+            },
+            '',
+            '/app'
+          );
         }
         set({ subViewStack: [...currentStack, view] });
       },

@@ -462,8 +462,8 @@ export function DietPlanModal({
                 <span
                   className={
                     isRatioValid
-                      ? 'text-muted-foreground font-bold'
-                      : 'text-destructive font-bold'
+                      ? 'text-muted-foreground font-normal'
+                      : 'text-destructive font-normal'
                   }
                 >
                   {ratioTotal}% {isRatioValid ? '' : `(${ratioTotal > 100 ? `+${ratioTotal - 100}%` : `-${100 - ratioTotal}%`})`}

@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { triggerHaptic } from '@/lib/haptics';
 import { getHierarchicalFallbackPath } from '@/utils/navigation';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { useInAppNavigation, hasActiveSessionHistoryState } from '@/store/useInAppNavigation';
 
 /**
  * 全站安全導航與層級返回 Hook
@@ -22,7 +22,7 @@ export function useSafeNavigate() {
     // 1. 單一 URL 內聚狀態架構：若子視圖棧中有頁面，優先安全回退上一層視圖
     const inAppNav = useInAppNavigation.getState();
     if (inAppNav.subViewStack.length > 0) {
-      if (typeof window !== 'undefined' && window.history.state?.zenfitSubViewDepth) {
+      if (hasActiveSessionHistoryState()) {
         window.history.back();
       } else {
         inAppNav.popSubView();

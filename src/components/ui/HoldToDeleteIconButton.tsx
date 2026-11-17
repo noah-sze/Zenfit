@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
-import { triggerHaptic } from '@/lib/haptics';
+import { useHoldToDelete } from '@/hooks/useHoldToDelete';
 import { cn } from '@/lib/utils';
 
 export interface HoldToDeleteIconButtonProps {
@@ -41,66 +40,11 @@ export function HoldToDeleteIconButton({
   title = '刪除',
   'aria-label': ariaLabel = '刪除',
 }: HoldToDeleteIconButtonProps) {
-  const [progress, setProgress] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false);
-
-  const startTimeRef = useRef<number | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const isHoldingRef = useRef(false);
-
-  // 停止長按並回退進度
-  const stopHold = useCallback(() => {
-    isHoldingRef.current = false;
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    setProgress(0);
-  }, []);
-
-  const handleStart = useCallback(
-    () => {
-      if (disabled || isCompleted) return;
-
-      isHoldingRef.current = true;
-      startTimeRef.current = performance.now();
-      triggerHaptic('light');
-
-      const tick = (currentTime: number) => {
-        if (!isHoldingRef.current) return;
-        const elapsed = currentTime - (startTimeRef.current || currentTime);
-        const currentProgress = Math.min(1, elapsed / durationMs);
-
-        setProgress(currentProgress);
-
-        if (currentProgress >= 1) {
-          isHoldingRef.current = false;
-          setIsCompleted(true);
-          triggerHaptic('success');
-          onConfirm();
-        } else {
-          animFrameRef.current = requestAnimationFrame(tick);
-        }
-      };
-
-      animFrameRef.current = requestAnimationFrame(tick);
-    },
-    [disabled, isCompleted, durationMs, onConfirm]
-  );
-
-  const handleEnd = useCallback(() => {
-    if (!isCompleted) {
-      stopHold();
-    }
-  }, [isCompleted, stopHold]);
-
-  useEffect(() => {
-    return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-    };
-  }, []);
+  const { progress, isCompleted, handlers } = useHoldToDelete({
+    onConfirm,
+    disabled,
+    durationMs,
+  });
 
   // 左右卡鉗半周長為 75.4 (π * 24 ≈ 75.398)
   const arcLength = 75.4;
@@ -163,12 +107,7 @@ export function HoldToDeleteIconButton({
       {/* 按鈕本體 */}
       <button
         type="button"
-        onMouseDown={handleStart}
-        onMouseUp={handleEnd}
-        onMouseLeave={handleEnd}
-        onTouchStart={handleStart}
-        onTouchEnd={handleEnd}
-        onTouchCancel={handleEnd}
+        {...handlers}
         disabled={disabled || isCompleted}
         title={title}
         aria-label={ariaLabel}

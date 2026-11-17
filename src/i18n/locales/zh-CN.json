@@ -17,6 +17,7 @@
       "add": "添加",
       "delete": "删除",
       "deleted": "已删除",
+      "holdToDeleteHint": "长按 1s 删除",
       "close": "关闭",
       "back": "返回",
       "copy": "复制",
@@ -1213,7 +1214,7 @@
           }
         },
         "windowBar": {
-          "module": "饮食度量",
+          "module": "饮食",
           "synced": "已同步"
         }
       },
@@ -1336,7 +1337,7 @@
       },
       "deck": {
         "foodDetails": "食材详情",
-        "dietMetrics": "饮食度量",
+        "dietMetrics": "饮食",
         "dashboard": "总览",
         "synced": "已同步",
         "rawFoodHud": "天然原型食材 · 生重",

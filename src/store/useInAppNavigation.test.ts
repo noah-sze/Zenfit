@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useInAppNavigation } from './useInAppNavigation';
+import {
+  useInAppNavigation,
+  IN_APP_NAV_SESSION_ID,
+  hasActiveSessionHistoryState,
+} from './useInAppNavigation';
 
 describe('useInAppNavigation', () => {
   beforeEach(() => {
@@ -34,11 +38,19 @@ describe('useInAppNavigation', () => {
     };
 
     useInAppNavigation.getState().pushSubView({ type: 'settings' });
-    expect(mockPushState).toHaveBeenCalledWith({ zenfitSubViewDepth: 1 }, '', '/app');
+    expect(mockPushState).toHaveBeenCalledWith(
+      { zenfitSessionId: IN_APP_NAV_SESSION_ID, zenfitSubViewDepth: 1 },
+      '',
+      '/app'
+    );
     expect(useInAppNavigation.getState().subViewStack).toEqual([{ type: 'settings' }]);
 
     useInAppNavigation.getState().pushSubView({ type: 'foods', id: 'chicken' });
-    expect(mockPushState).toHaveBeenCalledWith({ zenfitSubViewDepth: 2 }, '', '/app');
+    expect(mockPushState).toHaveBeenCalledWith(
+      { zenfitSessionId: IN_APP_NAV_SESSION_ID, zenfitSubViewDepth: 2 },
+      '',
+      '/app'
+    );
     expect(useInAppNavigation.getState().subViewStack.length).toBe(2);
 
     useInAppNavigation.getState().popSubView();
@@ -59,9 +71,10 @@ describe('useInAppNavigation', () => {
       history: {
         pushState: mockPushState,
         go: mockGo,
-        state: { zenfitSubViewDepth: 3 },
+        state: { zenfitSessionId: IN_APP_NAV_SESSION_ID, zenfitSubViewDepth: 3 },
       },
     };
+    expect(hasActiveSessionHistoryState()).toBe(true);
 
     useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'ex-1', mode: 'exercises' });
     useInAppNavigation.getState().pushSubView({ type: 'exercises', id: 'rt-1', mode: 'routines' });
@@ -84,5 +97,13 @@ describe('useInAppNavigation', () => {
     expect(useInAppNavigation.getState().subViewStack).toEqual([
       { type: 'exercises', id: 'ex-1', mode: 'exercises' },
     ]);
+
+    // 舊會話殘留的 zenfitSubViewDepth 不應被視為當前有效會話歷史
+    (globalThis as any).window = {
+      history: {
+        state: { zenfitSessionId: 'stale-old-session', zenfitSubViewDepth: 2 },
+      },
+    };
+    expect(hasActiveSessionHistoryState()).toBe(false);
   });
 });

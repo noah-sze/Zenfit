@@ -180,7 +180,7 @@ export function HeroShowcaseDeck() {
           <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
             <span className="font-medium text-neutral-900 dark:text-neutral-100">Zenfit</span>
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
-            <span>{t('landing.deck.dietMetrics', '飲食度量')}</span>
+            <span>{t('landing.deck.dietMetrics', '飲食')}</span>
           </div>
           <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>

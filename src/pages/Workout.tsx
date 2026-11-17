@@ -14,7 +14,7 @@ import { kgToLbs, lbsToKg } from '@/utils/unitMath';
 import { findLastExerciseRecord } from '@/utils/workoutMath';
 import { db } from '@/services/db/db';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Dumbbell } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { HoldToDeleteIconButton } from '@/components/ui/HoldToDeleteIconButton';
 import {
   WorkoutRecoveryDashboard,
@@ -597,9 +597,6 @@ export default function Workout() {
       ) : (
         /* 當日無訓練記錄時的客觀極簡空狀態 (對標客觀測量儀哲學) */
         <div className="border border-border bg-card text-card-foreground shadow-none rounded-lg p-8 text-center space-y-4">
-          <div className="size-10 rounded-full border border-border bg-muted/40 mx-auto flex items-center justify-center text-muted-foreground">
-            <Dumbbell className="size-5" />
-          </div>
           <div className="space-y-1">
             <div className="text-sm font-medium font-mono text-foreground">
               {t('workout.noWorkoutLogs', '無訓練記錄')}

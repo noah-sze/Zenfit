@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2 } from 'lucide-react';
-import { triggerHaptic } from '@/lib/haptics';
+import { useHoldToDelete } from '@/hooks/useHoldToDelete';
 import { cn } from '@/lib/utils';
 
 interface HoldToDeleteButtonProps {
@@ -17,7 +16,7 @@ interface HoldToDeleteButtonProps {
  * - 方案 1：全背景蓄力充能 (Full Fill Gauge)
  * - 預設蓄力時長：0.5 秒 (500ms)
  * - 純粹極簡文案：「刪除」
- * - 輕點安全無效，隨時鬆開平滑撤銷，滿 0.5 秒震動並確認執行
+ * - 輕點 3 次提示「長按 1s 刪除」，滿蓄力震動並確認執行
  */
 export function HoldToDeleteButton({
   onConfirm,
@@ -29,86 +28,16 @@ export function HoldToDeleteButton({
   const { t } = useTranslation();
   const displayText = text || t('common.delete', '刪除');
 
-  const [progress, setProgress] = useState(0);
-  const [isHolding, setIsHolding] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-
-  const startTimeRef = useRef<number | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const isHoldingRef = useRef(false);
-
-  // 停止長按並回退進度
-  const stopHold = useCallback(() => {
-    isHoldingRef.current = false;
-    setIsHolding(false);
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    setProgress(0);
-  }, []);
-
-  const handleStart = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      if (disabled || isCompleted) return;
-
-      // 防止行動端預設長按呼出菜單
-      if (e.type === 'touchstart') {
-        // 保留觸控響應
-      }
-
-      isHoldingRef.current = true;
-      setIsHolding(true);
-      startTimeRef.current = performance.now();
-      triggerHaptic('light');
-
-      const tick = (currentTime: number) => {
-        if (!isHoldingRef.current) return;
-        const elapsed = currentTime - (startTimeRef.current || currentTime);
-        const currentProgress = Math.min(1, elapsed / durationMs);
-
-        setProgress(currentProgress);
-
-        if (currentProgress >= 1) {
-          // 滿 1 秒蓄力確認！
-          isHoldingRef.current = false;
-          setIsHolding(false);
-          setIsCompleted(true);
-          triggerHaptic('success');
-          onConfirm();
-        } else {
-          animFrameRef.current = requestAnimationFrame(tick);
-        }
-      };
-
-      animFrameRef.current = requestAnimationFrame(tick);
-    },
-    [disabled, isCompleted, durationMs, onConfirm]
-  );
-
-  const handleEnd = useCallback(() => {
-    if (!isCompleted) {
-      stopHold();
-    }
-  }, [isCompleted, stopHold]);
-
-  useEffect(() => {
-    return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-    };
-  }, []);
+  const { progress, isHolding, isCompleted, handlers } = useHoldToDelete({
+    onConfirm,
+    disabled,
+    durationMs,
+  });
 
   return (
     <button
       type="button"
-      onMouseDown={handleStart}
-      onMouseUp={handleEnd}
-      onMouseLeave={handleEnd}
-      onTouchStart={handleStart}
-      onTouchEnd={handleEnd}
-      onTouchCancel={handleEnd}
+      {...handlers}
       disabled={disabled || isCompleted}
       className={cn(
         'w-full h-9 rounded-md font-mono text-xs font-semibold cursor-pointer select-none relative overflow-hidden flex items-center justify-center outline-none active:scale-[0.985] transition-transform',

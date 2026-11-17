@@ -253,10 +253,14 @@ export default function LandingPage() {
 
           {/*  CTAs  */}
           <div className="pt-2 flex flex-wrap items-center gap-3 font-mono text-xs">
-            <a onClick={(e) => { e.preventDefault(); scrollToSection("diet"); }} href="#diet" className="px-5 py-3 bg-black text-white dark:bg-white dark:text-black font-semibold rounded hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors flex items-center space-x-2">
-              <span>{t('landing.hero.ctaExplore', '探索度量系統')}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            </a>
+            <button
+              type="button"
+              onClick={handleOpenApp}
+              className="px-5 py-3 bg-black text-white dark:bg-white dark:text-black font-semibold rounded hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors flex items-center space-x-2 cursor-pointer"
+            >
+              <span>{t('common.openApp', '開啟應用')}</span>
+              <ArrowUpRight className="w-4 h-4 shrink-0" />
+            </button>
             <div className="px-4 py-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 rounded">
               {t('landing.hero.ctaPwa', 'PWA 離線安裝 · 100% 數據私有化')}
             </div>
@@ -442,7 +446,7 @@ export default function LandingPage() {
               <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
                 <span className="font-semibold text-neutral-900 dark:text-neutral-100">Zenfit</span>
                 <span className="text-neutral-400 dark:text-neutral-600">/</span>
-                <span>{t('landing.diet.windowBar.module', '飲食度量')}</span>
+                <span>{t('landing.diet.windowBar.module', '飲食')}</span>
               </div>
               <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-sans text-neutral-700 dark:text-neutral-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>

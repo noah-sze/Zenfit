@@ -17,6 +17,7 @@
       "add": "Add",
       "delete": "Delete",
       "deleted": "Deleted",
+      "holdToDeleteHint": "Hold 1s to delete",
       "close": "Close",
       "back": "Back",
       "copy": "Copy",

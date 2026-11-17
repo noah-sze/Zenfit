@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
-import { useInAppNavigation, type AppMainTab, type InAppSubView } from '@/store/useInAppNavigation';
+import {
+  useInAppNavigation,
+  IN_APP_NAV_SESSION_ID,
+  hasActiveSessionHistoryState,
+  type AppMainTab,
+  type InAppSubView,
+} from '@/store/useInAppNavigation';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
 import {
@@ -147,9 +153,16 @@ export function AppLayout() {
       } = useInAppNavigation.getState();
       if (stack.length === 0) return;
 
-      const targetDepth = event.state?.zenfitSubViewDepth;
-      if (typeof targetDepth === 'number') {
-        truncateSubViews(targetDepth);
+      const state = event.state as
+        | { zenfitSessionId?: string; zenfitSubViewDepth?: number }
+        | null
+        | undefined;
+      if (
+        state?.zenfitSessionId === IN_APP_NAV_SESSION_ID &&
+        typeof state.zenfitSubViewDepth === 'number' &&
+        state.zenfitSubViewDepth < stack.length
+      ) {
+        truncateSubViews(state.zenfitSubViewDepth);
       } else {
         pop();
       }
@@ -161,7 +174,7 @@ export function AppLayout() {
 
   const handleBack = () => {
     triggerHaptic('light');
-    if (typeof window !== 'undefined' && window.history.state?.zenfitSubViewDepth) {
+    if (hasActiveSessionHistoryState()) {
       window.history.back();
     } else {
       popSubView();
