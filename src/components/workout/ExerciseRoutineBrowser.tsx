@@ -13,6 +13,7 @@ import { sortMuscleEntries } from '@/utils/muscleIntensity';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { matchesMultilingual } from '@/utils/multilingualSearch';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import type { Exercise, WorkoutRoutine, DetailedMuscle } from '@/types';
 
 export type ExerciseSelectMode = 'all' | 'exercises' | 'routines';
@@ -596,7 +597,7 @@ export function ExerciseRoutineBrowser({
                   >
                     <div className="space-y-1 pr-2 min-w-0 flex-1">
                       <div className="text-sm font-medium text-foreground truncate">
-                        {exercise.name}
+                        {getLocalizedExerciseName(exercise)}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground flex-nowrap min-w-0 overflow-hidden">
                         <EquipmentBadge name={getEquipmentDisplayName(exercise.equipment, t)} />

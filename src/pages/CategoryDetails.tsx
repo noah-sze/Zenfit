@@ -17,6 +17,7 @@ import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { formatFoodDisplayName } from '@/utils/foodNaming';
+import { getLocalizedFoodName } from '@/utils/defaultLocalization';
 import { useAppStore } from '@/store/useAppStore';
 import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { NutritionBasisToggle } from '@/components/food/NutritionBasisToggle';
@@ -322,7 +323,7 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
         {/* 第 2 層：B-1 大氣品名帶與特質微徽章 (高度 68px 與指標區塊等高) */}
         <div className="h-[68px] px-3.5 sm:px-4 border-b border-border flex items-center justify-between gap-2.5 bg-card overflow-hidden">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate min-w-0">
-            {food.name}
+            {getLocalizedFoodName(food)}
           </h1>
           {evalRes?.labels && evalRes.labels.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap shrink-0">

@@ -43,7 +43,7 @@ export const FoodListItem = React.memo(function FoodListItem({
   foodVolumeUnit = 'ml',
   energyUnit = 'kcal',
 }: FoodListItemProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const evalRes = evaluateNutritionalHighlight(food);
   const isLowCalorie = evalRes.labels.includes('low-calorie');
@@ -93,7 +93,7 @@ export const FoodListItem = React.memo(function FoodListItem({
       <div className="space-y-1 pr-3 flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground text-sm tracking-tight truncate">
-            {formatFoodDisplayName(food)}
+            {formatFoodDisplayName(food, i18n.language)}
           </span>
         </div>
 

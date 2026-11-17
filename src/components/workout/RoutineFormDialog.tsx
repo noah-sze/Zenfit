@@ -12,6 +12,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { useExercises } from '@/hooks/useExercises';
 import { useEquipments } from '@/hooks/useEquipments';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import type { RoutineExerciseItem, WorkoutRoutine, Exercise } from '@/types';
 
 export interface RoutineFormData {
@@ -245,10 +246,10 @@ export function RoutineFormDialog({
                             type="button"
                             onClick={() => handleOpenReplaceExercise(index)}
                             className="text-left min-w-0 flex-1 truncate cursor-pointer outline-none group"
-                            title={ex ? ex.name : t('workout.unknownExercise')}
+                            title={ex ? getLocalizedExerciseName(ex) : t('workout.unknownExercise')}
                           >
                             <div className="text-xs font-medium text-foreground truncate group-hover:opacity-75 transition-opacity">
-                              {ex ? ex.name : t('workout.unknownExercise')}
+                              {ex ? getLocalizedExerciseName(ex) : t('workout.unknownExercise')}
                             </div>
                             {ex && (
                               <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">

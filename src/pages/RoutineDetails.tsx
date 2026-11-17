@@ -13,6 +13,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { db } from '@/services/db/db';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
 import {
@@ -429,7 +430,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
                         #{idx + 1}
                       </span>
                       <span className="text-sm font-medium text-foreground truncate">
-                        {ex ? ex.name : t('workout.unknownExercise')}
+                        {ex ? getLocalizedExerciseName(ex) : t('workout.unknownExercise')}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground min-w-0">

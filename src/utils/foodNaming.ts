@@ -1,9 +1,12 @@
 import type { TFunction } from 'i18next';
 import type { FoodLog, FoodItem } from '@/types';
+import { getLocalizedFoodName } from '@/utils/defaultLocalization';
 
 export interface FoodNamingInput {
+  id?: string | null;
   name?: string | null;
   brand?: string | null;
+  isCustom?: boolean;
 }
 
 /**
@@ -12,9 +15,10 @@ export interface FoodNamingInput {
  * - 若有品牌，格式為「品牌 · 名稱」 (使用 U+00B7 Middle Dot)
  * - 若無品牌，格式為「名稱」
  * - 具備防呆機制：若名稱已包含品牌前綴，避免重複拼接
+ * - 支援系統預設食材依當前語系動態顯示名稱
  */
-export function formatFoodDisplayName(food: FoodNamingInput): string {
-  const name = food.name?.trim() || '';
+export function formatFoodDisplayName(food: FoodNamingInput, lang?: string): string {
+  const name = getLocalizedFoodName(food, lang);
   const brand = food.brand?.trim() || '';
 
   if (!brand) {

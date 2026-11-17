@@ -22,6 +22,7 @@ import {
 } from '@/hooks/useWorkoutLogs';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
@@ -291,7 +292,7 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
 
       {/* 核心一體化主卡片 (單一真理源，與落地頁 100% 共同複用) */}
       <ExerciseOverviewCard
-        exerciseName={exercise.name}
+        exerciseName={getLocalizedExerciseName(exercise)}
         equipmentName={getEquipmentDisplayName(exercise.equipment, t)}
         isArchived={exercise.isArchived}
         bestE1RM={periodBestE1RM}

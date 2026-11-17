@@ -8,6 +8,7 @@ import { useFoods } from '@/hooks/useFoods';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import {
   Dialog,
   DialogContent,
@@ -673,7 +674,7 @@ export function AddQuickModal() {
                     <option value="">{t('workout.selectExercise')}</option>
                     {exercises.map((ex) => (
                       <option key={ex.id} value={ex.id}>
-                        {ex.name}
+                        {getLocalizedExerciseName(ex)}
                       </option>
                     ))}
                   </select>
@@ -744,7 +745,7 @@ export function AddQuickModal() {
                         return (
                           <div key={idx} className="text-xs font-mono flex items-center justify-between">
                             <span className="truncate text-foreground">
-                              {ex ? ex.name : t('common.unknown')}
+                              {ex ? getLocalizedExerciseName(ex) : t('common.unknown')}
                             </span>
                           </div>
                         );

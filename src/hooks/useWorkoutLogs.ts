@@ -1,8 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import i18n from '@/i18n/config';
 import { db } from '@/services/db/db';
 import type { HydratedWorkoutLog, WorkoutExerciseGroup, WorkoutLog, WorkoutSet } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { triggerHaptic } from '@/lib/haptics';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import { setInMemoryExercisesCache } from './useExercises';
 import { setInMemoryRoutinesCache } from './useRoutines';
 
@@ -33,6 +35,7 @@ export async function prewarmWorkoutLogsCache(): Promise<WorkoutLog[]> {
 }
 
 export function useWorkoutLogs(date?: string) {
+  const currentLang = i18n.language;
   const workouts = useLiveQuery(
     async () => {
       const rawWorkouts = date
@@ -52,7 +55,7 @@ export function useWorkoutLogs(date?: string) {
       const hydrated: HydratedWorkoutLog[] = rawWorkouts.map((w) => {
         const routine = w.routineId ? routineMap.get(w.routineId) : undefined;
         const firstEx = w.exercises?.[0] ? exerciseMap.get(w.exercises[0].exerciseId) : undefined;
-        const title = routine?.name || firstEx?.name || '訓練';
+        const title = routine?.name || (firstEx ? getLocalizedExerciseName(firstEx, currentLang) : '訓練');
 
         return {
           ...w,
@@ -62,7 +65,7 @@ export function useWorkoutLogs(date?: string) {
             const ex = exerciseMap.get(group.exerciseId);
             return {
               ...group,
-              exerciseName: ex ? ex.name : '未知動作',
+              exerciseName: ex ? getLocalizedExerciseName(ex, currentLang) : '未知動作',
               category: ex ? ex.category : undefined,
             };
           }),
@@ -71,7 +74,7 @@ export function useWorkoutLogs(date?: string) {
 
       return hydrated;
     },
-    [date]
+    [date, currentLang]
   );
 
   const addWorkout = async (data: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt'>) => {

@@ -11,6 +11,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import { db } from '@/services/db/db';
 import { cn } from '@/lib/utils';
 import { CopyWorkoutDatePickerDialog } from './CopyWorkoutDatePickerDialog';
+import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import type { WorkoutLog, WorkoutExerciseGroup, WorkoutSet } from '@/types';
 
 export interface CopyWorkoutDialogProps {
@@ -135,7 +136,7 @@ export function CopyWorkoutDialog({
       const routine = w.routineId ? routineMap.get(w.routineId) : undefined;
       (w.exercises || []).forEach((group, gIdx) => {
         const ex = exerciseMap.get(group.exerciseId);
-        const exerciseName = ex ? ex.name : t('workout.unknownExercise', '未知動作');
+        const exerciseName = ex ? getLocalizedExerciseName(ex) : t('workout.unknownExercise', '未知動作');
         const itemId = `${w.id}-${group.exerciseId}-${gIdx}`;
 
         // 確保至少有一組，若原記錄組數為空則補齊一組防禦性資料

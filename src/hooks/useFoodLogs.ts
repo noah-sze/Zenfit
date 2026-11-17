@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import i18n from '@/i18n/config';
 import { db } from '@/services/db/db';
 import type { DailyDietLog, FoodLog, FoodLogEntryType, HydratedFoodLog, MealType } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -51,6 +52,7 @@ export async function prewarmDailyDietLogsCache(): Promise<DailyDietLog[]> {
 }
 
 export function useFoodLogs(date: string) {
+  const currentLang = i18n.language;
   const queryResult = useLiveQuery(
     async () => {
       const dailyLog = await db.daily_diet_logs.where('date').equals(date).first();
@@ -85,7 +87,7 @@ export function useFoodLogs(date: string) {
             };
 
         const displayName = food
-          ? formatFoodDisplayName(food)
+          ? formatFoodDisplayName(food, currentLang)
           : isSystemEntry
             ? (log.customTitle || log.foodName || '')
             : (log.customTitle || log.foodName || '未知食材');
@@ -111,7 +113,7 @@ export function useFoodLogs(date: string) {
         hydratedLogs,
       };
     },
-    [date]
+    [date, currentLang]
   );
 
   const logs: HydratedFoodLog[] = queryResult?.hydratedLogs || [];

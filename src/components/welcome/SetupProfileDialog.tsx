@@ -10,7 +10,7 @@ import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weigh
 import { cmToIn, inToCm, kgToLbs, lbsToKg } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { toast } from '@/components/ui/toast';
-import { CalendarDays, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SetupProfileDialogProps {
@@ -309,11 +309,10 @@ export function SetupProfileDialog({
                 <span className="text-xs font-normal text-muted-foreground font-mono truncate">
                   {t('welcome.birthDate', '出生年月')}
                 </span>
-                <div className="flex items-center gap-1 text-xs font-mono shrink-0">
+                <div className="flex items-center text-xs font-mono shrink-0">
                   <span className={cn(birthDate ? 'text-foreground font-medium' : 'text-muted-foreground')}>
                     {birthDate ? (calculatedAge > 0 ? `${calculatedAge} ${t('welcome.yearsOld', '歲')}` : birthDate) : '-'}
                   </span>
-                  <CalendarDays className="size-3 text-muted-foreground/70 shrink-0" />
                 </div>
               </MonthPicker>
             </div>
