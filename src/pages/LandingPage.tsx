@@ -612,7 +612,7 @@ export default function LandingPage() {
           {t('landing.analytics.tag', '[ 04 / 分析]')}
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.analytics.titleLine1', '內部零黑盒 AI，')}<br />
+          {t('landing.analytics.titleLine1', '內部零黑盒 AI')}<br />
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">

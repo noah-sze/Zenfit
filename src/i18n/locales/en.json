@@ -1208,7 +1208,7 @@
             "desc": "Pure ID references, zero snapshot drift"
           },
           "oil": {
-            "label": "Cooking Blackbox",
+            "label": "Blackbox",
             "value": "0",
             "unit": "Hidden Oils",
             "desc": "Explicit oil metering, zero blindspots"
