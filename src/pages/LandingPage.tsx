@@ -257,7 +257,7 @@ export default function LandingPage() {
 
             <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.12]">
               {t('landing.hero.titleLine1', '只記數據，')}<br />
-              <span className="text-neutral-500 font-mono font-normal">{t('landing.hero.titleLine2', '絕不對你指手畫腳')}</span>
+              <span className="text-neutral-500 font-sans font-normal">{t('landing.hero.titleLine2', '絕不對你指手畫腳')}</span>
             </h1>
           </div>
 
@@ -326,7 +326,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-[1.15]">
           {t('landing.diet.titleLine1', '零摩擦記錄飲食')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.diet.titleLine2', '準確食材、一鍵複製、快速估算、滾動均值')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.diet.titleLine2', '準確食材、一鍵複製、快速估算、滾動均值')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           <BrandText text={t('landing.diet.desc', '記錄飲食不該是繁瑣負擔。e2Cal 針對真實生活打造零阻力記錄流：自煮時依托 420+ 種原型食材準確秤重；規律進餐時一鍵複製昨日餐點；外食聚餐時支援快速粗估。')} />
@@ -493,7 +493,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.workout.titleLine1', '肌力生物力學與組數表')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.workout.titleLine2', '解剖熱圖、有效組數與純數學 e1RM')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.workout.titleLine2', '解剖熱圖、有效組數與純數學 e1RM')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.workout.desc', '嚴格區分熱身組與正式組，真實記錄重量與次數。透過成熟的 Brzycki / Epley 公式估算極限力量，自動統計每週有效訓練組數分佈，拒絕未經科學驗證的隨意評分。')}
@@ -562,7 +562,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.body.titleLine1', '過濾水分波動，看懂真實體態')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.body.titleLine2', '7 天平滑曲線、身體圍度追蹤與客觀進展')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.body.titleLine2', '7 天平滑曲線、身體圍度追蹤與客觀進展')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           <BrandText text={t('landing.body.desc', '喝水多寡與重鹹飲食，常讓單日體重上下跳動 1～2 公斤。e2Cal 自動過濾水分干擾，幫你算出身體的真實增減趨勢；同步支援胸圍、腰圍等圍度追蹤，只擺客觀事實，告別體重焦慮。')} />
@@ -614,7 +614,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.analytics.titleLine1', '內部零黑盒 AI')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           <BrandText text={t('landing.analytics.desc', '我們不在軟體裡塞入未經科學驗證的 AI 評分機制。e2Cal 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。')} />
@@ -639,7 +639,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.sync.titleLine1', '數據完全歸你，斷網也能秒開記錄')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.sync.titleLine2', '離線可用、個人 Dropbox 私密同步與一鍵打包匯出')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.sync.titleLine2', '離線可用、個人 Dropbox 私密同步與一鍵打包匯出')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           {t('landing.sync.desc', '你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。')}
@@ -665,7 +665,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.principles.titleLine1', '拒絕製造焦慮')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.principles.titleLine2', '不搞社交、不催打卡、不給指令、不做成品黑盒')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.principles.titleLine2', '不搞社交、不催打卡、不給指令、不做成品黑盒')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           <BrandText text={t('landing.principles.desc', '你不需要一個軟體每天催你打卡、對你說教，或是逼你跟別人比較。e2Cal 刻意拿掉所有惱人的套路：今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、安靜待命的記錄工具。')} />
@@ -852,7 +852,7 @@ export default function LandingPage() {
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.tech.titleLine1', '可靠，源自極致克制')}<br />
-          <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.tech.titleLine2', '零外部依賴、純本地計算、永不損毀數據')}</span>
+          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.tech.titleLine2', '零外部依賴、純本地計算、永不損毀數據')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
           <BrandText text={t('landing.tech.desc', '拒絕臃腫的第三方追蹤與肥大框架。e2Cal 透過無副作用純數學純函數與 100% 單元測試防線，保證你的每一次點擊都獲得毫秒級的確定性。')} />
