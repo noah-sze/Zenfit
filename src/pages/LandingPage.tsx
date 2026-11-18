@@ -623,24 +623,53 @@ export default function LandingPage() {
   {/*  06. SYNC & UNIVERSAL PWA (Dropbox 同步與 PWA 通用)                          */}
   {/*  =========================================================================  */}
   <section id="sync" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
-      
-      <div className="space-y-4 max-w-3xl">
-        <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          {t('landing.sync.tag', '[ 05 / 同步]')}
-        </div>
-        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.sync.titleLine1', '數據完全歸你，斷網也能秒開記錄')}<br />
-          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.sync.titleLine2', '離線可用、個人 Dropbox 私密同步與一鍵打包匯出')}</span>
-        </h2>
-        <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          {t('landing.sync.desc', '你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。')}
-        </p>
-      </div>
+    <div className="max-w-6xl mx-auto">
+      {/* 方案 1：左文右圖 5:7 非對稱分欄（與下方 06 / 原則 12 欄結構同頻） */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-12 items-start">
+        {/* 左欄：標題、說明與 3 行核心規格卡 */}
+        <div className="lg:col-span-5 space-y-5">
+          <div className="space-y-3">
+            <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
+              {t('landing.sync.tag', '[ 05 / 同步 ]')}
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-tight">
+              {t('landing.sync.titleLine1', '數據完全歸你，斷網也能秒開記錄')}
+            </h2>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed font-sans">
+              {t('landing.sync.desc', '你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。')}
+            </p>
+          </div>
 
-      {/* 多設備 Dropbox 同步線路圖 (以上方文本 max-w-3xl 中心區域對齊) */}
-      <div className="max-w-3xl">
-        <SyncTopologyDiagram />
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-800 font-mono text-xs">
+            {[
+              {
+                label: t('landing.sync.specs.engineLabel', '本地引擎'),
+                value: t('landing.sync.specs.engineValue', 'IndexedDB · 離線秒開'),
+              },
+              {
+                label: t('landing.sync.specs.syncLabel', '多端同步'),
+                value: t('landing.sync.specs.syncValue', '個人 Dropbox · PKCE 直連'),
+              },
+              {
+                label: t('landing.sync.specs.exportLabel', '遷移自由'),
+                value: t('landing.sync.specs.exportValue', '單檔 ZIP 匯出 · 零鎖定'),
+              },
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="min-h-9 py-2 px-3.5 flex items-center justify-between gap-3"
+              >
+                <span className="text-neutral-500 dark:text-neutral-400 shrink-0">{row.label}</span>
+                <span className="text-neutral-900 dark:text-white text-right">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 右欄：滿格同步拓撲圖 */}
+        <div className="lg:col-span-7">
+          <SyncTopologyDiagram />
+        </div>
       </div>
     </div>
   </section>

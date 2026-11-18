@@ -1309,7 +1309,15 @@
         "tag": "[ 05 / Sync ]",
         "titleLine1": "Data 100% Yours. Snappy Offline",
         "titleLine2": "Full Offline Operation, Private Dropbox Sync & Single-File Backup",
-        "desc": "Your physiological data never passes through third-party cloud servers. Sync peer-to-peer with your personal Dropbox account, fully functional offline."
+        "desc": "Your physiological data never passes through third-party cloud servers. Sync peer-to-peer with your personal Dropbox account, fully functional offline.",
+        "specs": {
+          "engineLabel": "Local Engine",
+          "engineValue": "IndexedDB · Offline Ready",
+          "syncLabel": "Multi-Device",
+          "syncValue": "Personal Dropbox · Direct PKCE",
+          "exportLabel": "Portability",
+          "exportValue": "Single ZIP Export · Zero Lock-In"
+        }
       },
       "principles": {
         "tag": "[ 06 / Principles ]",
@@ -1407,6 +1415,8 @@
         "license": "MIT License · Local-First Architecture · 2026"
       },
       "diagram": {
+        "topologyHeader": "LOCAL-FIRST TOPOLOGY",
+        "zeroThirdParty": "ZERO THIRD-PARTY SERVER",
         "localExport": "Local Export",
         "phone": "Mobile",
         "desktop": "Desktop",

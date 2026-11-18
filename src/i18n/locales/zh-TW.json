@@ -1309,7 +1309,15 @@
         "tag": "[ 05 / 同步 ]",
         "titleLine1": "數據完全歸你，斷網也能秒開記錄",
         "titleLine2": "離線可用、個人 Dropbox 私密同步與一鍵打包匯出",
-        "desc": "你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。"
+        "desc": "你的身體數據不經過任何第三方雲端伺服器，直接保存在手機與電腦中。需要多設備同步時直連你的個人 Dropbox，斷網依然流暢好用，隨時都能一鍵完整打包帶走。",
+        "specs": {
+          "engineLabel": "本地引擎",
+          "engineValue": "IndexedDB · 離線秒開",
+          "syncLabel": "多端同步",
+          "syncValue": "個人 Dropbox · PKCE 直連",
+          "exportLabel": "遷移自由",
+          "exportValue": "單檔 ZIP 匯出 · 零鎖定"
+        }
       },
       "principles": {
         "tag": "[ 06 / 原則 ]",
@@ -1407,6 +1415,8 @@
         "license": "MIT License · Local-First Architecture · 2026"
       },
       "diagram": {
+        "topologyHeader": "LOCAL-FIRST TOPOLOGY",
+        "zeroThirdParty": "ZERO THIRD-PARTY SERVER",
         "localExport": "本地導出",
         "phone": "手機",
         "desktop": "桌面",
