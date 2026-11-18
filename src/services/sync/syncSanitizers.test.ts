@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  sanitizeFoodItem,
   sanitizeRecipe,
   sanitizeFoodLog,
   sanitizeDailyDietLog,
@@ -356,6 +357,37 @@ describe('syncSanitizers (同步與持久化邊界純粹度清洗)', () => {
       ]);
       expect('defaultSets' in cleaned.exercises[0]).toBe(false);
       expect('notes' in cleaned.exercises[0]).toBe(false);
+    });
+  });
+
+  describe('sanitizeFoodItem', () => {
+    it('將殘留英制 oz / fl oz 轉為公制 g / ml，並徹底清除 rawNutrition 與 labelBasis* 記憶欄位', () => {
+      const dirtyFood = {
+        id: 'food_custom_1',
+        name: '燕麥奶',
+        category: 'beverage',
+        servingSize: 8,
+        servingUnit: 'fl oz',
+        calories: 120,
+        carbs: 16,
+        protein: 3,
+        fat: 5,
+        labelBasisSize: 100,
+        labelBasisUnit: 'ml',
+        rawNutrition: { calories: 1000, carbs: 16, protein: 3, fat: 5 },
+        isCustom: true,
+        createdAt: 1000,
+        updatedAt: 2000,
+      };
+
+      const cleaned = sanitizeFoodItem(dirtyFood);
+
+      expect(cleaned.servingUnit).toBe('ml');
+      expect(cleaned.servingSize).toBe(236.59);
+      expect(cleaned.calories).toBe(120);
+      expect('rawNutrition' in cleaned).toBe(false);
+      expect('labelBasisSize' in cleaned).toBe(false);
+      expect('labelBasisUnit' in cleaned).toBe(false);
     });
   });
 });

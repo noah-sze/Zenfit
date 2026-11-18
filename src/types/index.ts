@@ -16,14 +16,6 @@ export interface FoodItem {
   carbs: number;
   fat: number;
   fiber?: number;
-  labelBasisSize?: number; // 營養標籤依據數值（如每 100g 或每 1 oz）
-  labelBasisUnit?: string; // 營養標籤依據單位（如 'g', 'oz', 'ml', 'fl oz'）
-  rawNutrition?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
   isCustom: boolean;
   isArchived?: boolean;
   createdAt: number;

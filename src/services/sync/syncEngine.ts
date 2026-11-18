@@ -25,6 +25,7 @@ import {
   type DropboxFileMetadata,
 } from './dropboxClient';
 import {
+  sanitizeFoodItem,
   sanitizeRecipe,
   sanitizeFoodLog,
   sanitizeDailyDietLog,
@@ -380,7 +381,10 @@ export async function uploadAllLocalData(
   pushedTimes['user_base_info'] = now;
 
   // 2. 飲食模組基礎清單
-  cachedRevs['/nutrition/foods.json'] = await uploadJsonFile('/nutrition/foods.json', foods);
+  cachedRevs['/nutrition/foods.json'] = await uploadJsonFile(
+    '/nutrition/foods.json',
+    foods.map(sanitizeFoodItem)
+  );
   cachedRevs['/nutrition/recipes.json'] = await uploadJsonFile(
     '/nutrition/recipes.json',
     recipes.map(sanitizeRecipe)
@@ -763,7 +767,7 @@ export async function executeSync(
           ]);
 
           if (baseInfos?.length) await db.user_base_info.bulkPut(baseInfos.map(sanitizeUserBaseInfo));
-          if (foods?.length) await db.foods.bulkPut(foods);
+          if (foods?.length) await db.foods.bulkPut(foods.map(sanitizeFoodItem));
           if (recipes?.length) await db.recipes.bulkPut(recipes.map(sanitizeRecipe));
           if (dedupedDailyDietLogs.length) await db.daily_diet_logs.bulkPut(dedupedDailyDietLogs);
           if (exercises?.length) await db.exercises.bulkPut(exercises);
@@ -818,8 +822,9 @@ export async function executeSync(
     // 2. 檢查 foods
     const foodsMeta = remoteFileMap.get('/nutrition/foods.json');
     if (foodsMeta && cachedRevs['/nutrition/foods.json'] !== foodsMeta.rev) {
-      const remoteList = (await downloadJsonFile<FoodItem[]>('/nutrition/foods.json')) || [];
-      const localList = await db.foods.toArray();
+      const rawRemoteList = (await downloadJsonFile<FoodItem[]>('/nutrition/foods.json')) || [];
+      const remoteList = rawRemoteList.map(sanitizeFoodItem);
+      const localList = (await db.foods.toArray()).map(sanitizeFoodItem);
       const m = mergeEntities(localList, remoteList);
       if (m.hasLocalChanges) {
         await db.foods.bulkPut(m.merged);
@@ -1053,7 +1058,7 @@ export async function executeSync(
     if (!lastFoodsPushed || maxFoodsUpdated > getNormalizedTimestamp(lastFoodsPushed)) {
       cachedRevs['/nutrition/foods.json'] = await uploadJsonFile(
         '/nutrition/foods.json',
-        localFoods,
+        localFoods.map(sanitizeFoodItem),
         cachedRevs['/nutrition/foods.json']
       );
       pushedTimes['foods'] = now;

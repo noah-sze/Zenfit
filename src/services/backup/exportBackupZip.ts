@@ -1,5 +1,6 @@
 import { db } from '@/services/db/db';
 import {
+  sanitizeFoodItem,
   sanitizeUserBaseInfo,
   sanitizeRecipe,
   sanitizeDailyDietLog,
@@ -71,7 +72,8 @@ export async function exportBackupZip(): Promise<Blob> {
   zip.file('user/base_info.json', JSON.stringify(sanitizedBaseInfos, null, 2));
 
   // 2. 飲食模組基礎清單: /nutrition/foods.json & /nutrition/recipes.json
-  zip.file('nutrition/foods.json', JSON.stringify(foods, null, 2));
+  const sanitizedFoods = foods.map(sanitizeFoodItem);
+  zip.file('nutrition/foods.json', JSON.stringify(sanitizedFoods, null, 2));
   const sanitizedRecipes = recipes.map(sanitizeRecipe);
   zip.file('nutrition/recipes.json', JSON.stringify(sanitizedRecipes, null, 2));
 

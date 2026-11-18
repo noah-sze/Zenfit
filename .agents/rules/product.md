@@ -65,7 +65,7 @@ trigger: always_on
 ## 4. 系統、數據與部署架構 (System, Data & Deployment Architecture)
 
 ### 4.1 本地優先 IndexedDB 與資料安全防線
-- **資料庫引擎**：瀏覽器 IndexedDB 透過 Dexie.js（現行 Schema **v23**）作為唯一資料真理源，核心資料表涵蓋 `user_base_info`、`foods`、`recipes`、`daily_diet_logs`、`equipments`、`exercises`、`routines`、`workout_logs`、`body_metrics`。
+- **資料庫引擎**：瀏覽器 IndexedDB 透過 Dexie.js（現行 Schema **v24**）作為唯一資料真理源，核心資料表涵蓋 `user_base_info`、`foods`、`recipes`、`daily_diet_logs`、`equipments`、`exercises`、`routines`、`workout_logs`、`body_metrics`。
 - **四重資料安全防線**：
   1. **嚴格版本遞增遷移**：結構變更必須遞增 `.version(n)` 並撰寫 `.upgrade(async tx => ...)` 平滑遷移腳本。
   2. **禁止無防護清庫**：生產環境嚴禁未經高防呆二次確認與備份之刪表或清庫操作。

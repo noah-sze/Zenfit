@@ -4,6 +4,8 @@ import {
   scaleNutritionFromBasis,
   calculateFoodLogNutrients,
   calculateMealBudget,
+  normalizeServingToMetric,
+  normalizeFoodInputToMetric,
   MEAL_RATIOS,
 } from './nutritionMath';
 
@@ -526,6 +528,117 @@ describe('nutritionMath - calculateMealBudget', () => {
       fatGrams: 0,
     });
     expect(res).toEqual({
+      calories: 0,
+      carbs: 0,
+      protein: 0,
+      fat: 0,
+    });
+  });
+});
+
+describe('nutritionMath - normalizeServingToMetric', () => {
+  it('保留公制單位 g 與 ml 不變', () => {
+    expect(normalizeServingToMetric(100, 'g')).toEqual({ servingSize: 100, servingUnit: 'g' });
+    expect(normalizeServingToMetric(250, 'ml', 'beverage')).toEqual({ servingSize: 250, servingUnit: 'ml' });
+  });
+
+  it('將英制 oz 與 fl oz 精確換算為公制 g 與 ml', () => {
+    expect(normalizeServingToMetric(1, 'oz')).toEqual({ servingSize: 28.35, servingUnit: 'g' });
+    expect(normalizeServingToMetric(1, 'fl oz', 'beverage')).toEqual({ servingSize: 29.57, servingUnit: 'ml' });
+  });
+
+  it('異常邊界防護：負數、0、NaN 與未知單位安全回退公制', () => {
+    expect(normalizeServingToMetric(-10, 'oz')).toEqual({ servingSize: 0, servingUnit: 'g' });
+    expect(normalizeServingToMetric(Number.NaN, 'fl oz')).toEqual({ servingSize: 0, servingUnit: 'ml' });
+    expect(normalizeServingToMetric(50, '', 'beverage')).toEqual({ servingSize: 50, servingUnit: 'ml' });
+    expect(normalizeServingToMetric(50, undefined, 'natural')).toEqual({ servingSize: 50, servingUnit: 'g' });
+  });
+});
+
+describe('nutritionMath - normalizeFoodInputToMetric', () => {
+  it('回歸測試：100g / 1000 kJ 依份量或自定義基準保存後，一律轉為公制 100g / 239.01 kcal', () => {
+    const servingRes = normalizeFoodInputToMetric({
+      servingSize: 100,
+      servingUnit: 'g',
+      basisMode: 'serving',
+      calories: 1000,
+      energyUnit: 'kJ',
+      carbs: 20,
+      protein: 10,
+      fat: 5,
+      category: 'processed',
+    });
+    expect(servingRes).toEqual({
+      servingSize: 100,
+      servingUnit: 'g',
+      calories: 239.01,
+      carbs: 20,
+      protein: 10,
+      fat: 5,
+    });
+
+    const customRes = normalizeFoodInputToMetric({
+      servingSize: 50,
+      servingUnit: 'g',
+      basisMode: 'custom',
+      basisSize: 100,
+      basisUnit: 'g',
+      calories: 1000,
+      energyUnit: 'kJ',
+      carbs: 20,
+      protein: 10,
+      fat: 5,
+      category: 'processed',
+    });
+    expect(customRes).toEqual({
+      servingSize: 50,
+      servingUnit: 'g',
+      calories: 119.5,
+      carbs: 10,
+      protein: 5,
+      fat: 2.5,
+    });
+  });
+
+  it('英制份量（2 oz）搭配公制標籤基準（每 100 g / 1000 kJ）跨單位換算並收斂為純公制 g 與 kcal', () => {
+    const res = normalizeFoodInputToMetric({
+      servingSize: 2,
+      servingUnit: 'oz',
+      basisMode: 'custom',
+      basisSize: 100,
+      basisUnit: 'g',
+      calories: 1000,
+      energyUnit: 'kJ',
+      carbs: 40,
+      protein: 20,
+      fat: 10,
+      category: 'processed',
+    });
+    // 2 oz = 56.70 g, ratio = 0.567, 1000 kJ = 239.0057 kcal -> 135.52 kcal
+    expect(res.servingUnit).toBe('g');
+    expect(res.servingSize).toBe(56.7);
+    expect(res.calories).toBe(135.52);
+    expect(res.carbs).toBe(22.68);
+    expect(res.protein).toBe(11.34);
+    expect(res.fat).toBe(5.67);
+  });
+
+  it('邊界防護：基準為 0 或負數數值時不產生 NaN / Infinity', () => {
+    const res = normalizeFoodInputToMetric({
+      servingSize: 100,
+      servingUnit: 'g',
+      basisMode: 'custom',
+      basisSize: 0,
+      basisUnit: 'g',
+      calories: -50,
+      energyUnit: 'kJ',
+      carbs: Number.NaN,
+      protein: 0,
+      fat: 0,
+    });
+    expect(res).toEqual({
+      servingSize: 100,
+      servingUnit: 'g',
       calories: 0,
       carbs: 0,
       protein: 0,

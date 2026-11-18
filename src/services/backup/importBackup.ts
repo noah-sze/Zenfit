@@ -2,6 +2,7 @@ import type JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/services/db/db';
 import {
+  sanitizeFoodItem,
   sanitizeUserBaseInfo,
   sanitizeRecipe,
   sanitizeDailyDietLog,
@@ -9,6 +10,8 @@ import {
   sanitizeWorkoutRoutine,
   mapLegacyIdToUuid,
 } from '@/services/sync/syncSanitizers';
+
+export { sanitizeFoodItem };
 import type {
   FoodItem,
   FoodRecipe,
@@ -56,31 +59,6 @@ export interface ParsedBackupData {
 
 function asRecord(input: unknown): Record<string, unknown> {
   return typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
-}
-
-export function sanitizeFoodItem(rawInput: unknown): FoodItem {
-  const raw = asRecord(rawInput);
-  const rawId = String(raw.id || uuidv4());
-  return {
-    id: mapLegacyIdToUuid(rawId) || rawId,
-    name: String(raw.name || '').trim(),
-    category: (raw.category as FoodItem['category']) || 'natural',
-    ...(raw.brand ? { brand: String(raw.brand).trim() } : {}),
-    servingSize: Number(raw.servingSize) || 100,
-    servingUnit: String(raw.servingUnit || 'g'),
-    calories: Number(raw.calories) || 0,
-    protein: Number(raw.protein) || 0,
-    carbs: Number(raw.carbs) || 0,
-    fat: Number(raw.fat) || 0,
-    ...(raw.fiber !== undefined ? { fiber: Number(raw.fiber) } : {}),
-    ...(raw.labelBasisSize !== undefined ? { labelBasisSize: Number(raw.labelBasisSize) } : {}),
-    ...(raw.labelBasisUnit !== undefined ? { labelBasisUnit: String(raw.labelBasisUnit) } : {}),
-    isCustom: Boolean(raw.isCustom),
-    isArchived: Boolean(raw.isArchived),
-    createdAt: Number(raw.createdAt) || Date.now(),
-    updatedAt: Number(raw.updatedAt) || Date.now(),
-    ...(raw.rev !== undefined ? { rev: Number(raw.rev) } : {}),
-  };
 }
 
 export function sanitizeExercise(rawInput: unknown): Exercise {

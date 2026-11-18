@@ -1,4 +1,5 @@
 import type {
+  FoodItem,
   FoodRecipe,
   FoodLog,
   FoodLogEntryType,
@@ -9,7 +10,9 @@ import type {
   WorkoutRoutine,
   UserBaseInfo,
 } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 import { LEGACY_ID_TO_UUID_MAP, PRIMARY_USER_ID } from '@/services/db/defaultData';
+import { normalizeServingToMetric } from '@/utils/nutritionMath';
 
 function asRecord(input: unknown): Record<string, unknown> {
   return typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
@@ -18,6 +21,41 @@ function asRecord(input: unknown): Record<string, unknown> {
 export function mapLegacyIdToUuid(id?: string): string {
   if (!id) return '';
   return LEGACY_ID_TO_UUID_MAP[id] || id;
+}
+
+/**
+ * 清洗單品食材：強制收斂為純淨公制 SI（g / ml、kcal），徹底剔除歷史殘留的 rawNutrition / labelBasisSize / labelBasisUnit
+ */
+export function sanitizeFoodItem(rawInput: unknown): FoodItem {
+  const raw = asRecord(rawInput);
+  const rawId = String(raw.id || uuidv4());
+  const category = (raw.category as FoodItem['category']) || 'natural';
+  const rawSize = Number(raw.servingSize);
+  const rawUnit = typeof raw.servingUnit === 'string' ? raw.servingUnit : undefined;
+  const metricServing = normalizeServingToMetric(
+    Number.isFinite(rawSize) && rawSize > 0 ? rawSize : 100,
+    rawUnit,
+    category
+  );
+
+  return {
+    id: mapLegacyIdToUuid(rawId) || rawId,
+    name: String(raw.name || '').trim(),
+    category,
+    ...(raw.brand ? { brand: String(raw.brand).trim() } : {}),
+    servingSize: metricServing.servingSize,
+    servingUnit: metricServing.servingUnit,
+    calories: Math.max(0, Number(raw.calories) || 0),
+    protein: Math.max(0, Number(raw.protein) || 0),
+    carbs: Math.max(0, Number(raw.carbs) || 0),
+    fat: Math.max(0, Number(raw.fat) || 0),
+    ...(raw.fiber !== undefined ? { fiber: Number(raw.fiber) } : {}),
+    isCustom: Boolean(raw.isCustom),
+    isArchived: Boolean(raw.isArchived),
+    createdAt: Number(raw.createdAt) || Date.now(),
+    updatedAt: Number(raw.updatedAt) || Date.now(),
+    ...(raw.rev !== undefined ? { rev: Number(raw.rev) } : {}),
+  };
 }
 
 /**

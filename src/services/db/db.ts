@@ -33,6 +33,7 @@ import {
 } from './defaultData';
 import { DEFAULT_NATURAL_FOODS } from './defaultNaturalFoods';
 import { inferDiningScenario, DINING_SCENARIOS } from '@/utils/foodNaming';
+import { normalizeServingToMetric } from '@/utils/nutritionMath';
 
 /**
  * 平滑遷移飲食日誌條目為系統分類原型 (System Entry Archetype):
@@ -1261,6 +1262,41 @@ export class ZenfitDatabase extends Dexie {
           });
           existingIds.add(oil.id);
           existingNames.add(oil.name.trim());
+        }
+      }
+    });
+
+    this.version(24).upgrade(async (tx) => {
+      // 升級至版本 24：單品食材全面收斂至純淨公制 SI（g / ml、kcal），清除殘留 rawNutrition / labelBasis* 記憶欄位
+      const foodsTable = tx.table('foods');
+      const allFoods = await foodsTable.toArray();
+      for (const food of allFoods) {
+        const record = food as Record<string, unknown>;
+        const hasLegacyFields =
+          'rawNutrition' in record ||
+          'labelBasisSize' in record ||
+          'labelBasisUnit' in record;
+        const metricServing = normalizeServingToMetric(
+          typeof food.servingSize === 'number' && food.servingSize > 0 ? food.servingSize : 100,
+          food.servingUnit,
+          food.category
+        );
+        const unitChanged =
+          food.servingUnit !== metricServing.servingUnit ||
+          food.servingSize !== metricServing.servingSize;
+
+        if (hasLegacyFields || unitChanged) {
+          const {
+            rawNutrition: _removedRaw,
+            labelBasisSize: _removedBasisSize,
+            labelBasisUnit: _removedBasisUnit,
+            ...cleanFood
+          } = record;
+          await foodsTable.put({
+            ...cleanFood,
+            servingSize: metricServing.servingSize,
+            servingUnit: metricServing.servingUnit,
+          });
         }
       }
     });

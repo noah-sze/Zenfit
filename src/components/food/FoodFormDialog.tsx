@@ -18,8 +18,8 @@ import { triggerHaptic } from '@/lib/haptics';
 import { cn, formatDisplayAmount } from '@/lib/utils';
 import { useFoods } from '@/hooks/useFoods';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
-import { scaleNutritionFromBasis } from '@/utils/nutritionMath';
-import { convertFoodWeight, convertFoodVolume } from '@/utils/unitMath';
+import { normalizeFoodInputToMetric } from '@/utils/nutritionMath';
+import { convertFoodWeight, convertFoodVolume, kcalToKj } from '@/utils/unitMath';
 import { matchesAutocomplete } from '@/utils/multilingualSearch';
 import { ChevronRight } from 'lucide-react';
 
@@ -167,7 +167,7 @@ export function FoodFormDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [keypadConfig, setKeypadConfig] = useState<KeypadConfig | null>(null);
 
-  // 當彈窗開啟或 initialData 改變時，智能識別並回填表單
+  // 當彈窗開啟或 initialData 改變時，將底層公制 SI 真值依當前偏好單位回填（一律以「份量」模式呈現）
   useEffect(() => {
     if (!open) return;
 
@@ -177,10 +177,10 @@ export function FoodFormDialog({
       setBrand(initialData.brand || '');
       setCalorieUnit(energyUnit);
 
-      // 1. 份量一律對齊當前使用者偏好單位，若與原記錄單位不同則進行數值物理換算
+      // 1. 份量依使用者當前偏好單位從底層公制 SI 即時換算呈現
       const isBeverage = initialData.category === 'beverage';
       const prefServingUnit = isBeverage ? foodVolumeUnit : foodWeightUnit;
-      const rawServingUnit = initialData.servingUnit || prefServingUnit;
+      const rawServingUnit = initialData.servingUnit || (isBeverage ? 'ml' : 'g');
       const rawServingSize = typeof initialData.servingSize === 'number' ? initialData.servingSize : 0;
 
       let convertedServingSize = rawServingSize;
@@ -205,54 +205,20 @@ export function FoodFormDialog({
       setServingSize(convertedServingSize > 0 ? String(convertedServingSize) : '');
       setServingUnit(prefServingUnit);
 
-      // 2. 下方的「每（標籤基準）」保持原樣：是英制就英制、公制就公制
-      const rawBasisUnit = initialData.labelBasisUnit || rawServingUnit;
-      const rawBasisSize =
-        typeof initialData.labelBasisSize === 'number' && initialData.labelBasisSize > 0
-          ? initialData.labelBasisSize
-          : rawServingSize;
+      // 2. 一律以「份量」模式開啟；底層保存後即徹底遺忘當初輸入基準，如需重照標籤輸入可隨時切換「自定義」
+      setBasisMode('serving');
+      setBasisUnit(prefServingUnit);
+      setBasisSize(convertedServingSize > 0 ? String(convertedServingSize) : '');
 
-      setBasisUnit(rawBasisUnit);
-      setBasisSize(rawBasisSize > 0 ? String(rawBasisSize) : '');
-
-      // 3. 智能判斷原始信息：
-      // 若標籤基準單位與當前份量單位不同，或標籤基準數值與份量數值不同，則判定為自定義標籤依據
-      const hasCustomBasis =
-        rawBasisUnit !== prefServingUnit ||
-        (rawBasisSize > 0 && convertedServingSize > 0 && Math.abs(rawBasisSize - convertedServingSize) > 0.001) ||
-        (typeof initialData.labelBasisSize === 'number' && initialData.labelBasisSize > 0 && Math.abs(initialData.labelBasisSize - rawServingSize) > 0.001);
-
-      if (hasCustomBasis) {
-        setBasisMode('custom');
-
-        // 優先帶入當初記錄的原始標籤數值；若無則依比例逆向還原
-        if (initialData.rawNutrition) {
-          const rawCal = energyUnit === 'kJ'
-            ? Math.round(initialData.rawNutrition.calories * 4.184 * 100) / 100
-            : initialData.rawNutrition.calories;
-          setCalories(rawCal > 0 ? String(rawCal) : '');
-          setProtein(initialData.rawNutrition.protein ? String(initialData.rawNutrition.protein) : '');
-          setCarbs(initialData.rawNutrition.carbs ? String(initialData.rawNutrition.carbs) : '');
-          setFat(initialData.rawNutrition.fat ? String(initialData.rawNutrition.fat) : '');
-        } else {
-          const ratio = (rawBasisSize || 100) / (rawServingSize || 100);
-          const baseCalKcal = initialData.calories * ratio;
-          const finalCal = energyUnit === 'kJ' ? baseCalKcal * 4.184 : baseCalKcal;
-          setCalories(finalCal > 0 ? String(Math.round(finalCal * 100) / 100) : '');
-          setProtein(String(Math.round(initialData.protein * ratio * 100) / 100));
-          setCarbs(String(Math.round(initialData.carbs * ratio * 100) / 100));
-          setFat(String(Math.round(initialData.fat * ratio * 100) / 100));
-        }
-      } else {
-        setBasisMode('serving');
-        const displayCal = energyUnit === 'kJ'
-          ? Math.round(initialData.calories * 4.184 * 100) / 100
-          : initialData.calories;
-        setCalories(displayCal > 0 ? String(displayCal) : '');
-        setProtein(initialData.protein ? String(initialData.protein) : '');
-        setCarbs(initialData.carbs ? String(initialData.carbs) : '');
-        setFat(initialData.fat ? String(initialData.fat) : '');
-      }
+      // 3. 熱量由底層公制 kcal 依當前偏好單位即時換算（kJ 時使用精準 4.184 換算）
+      const displayCal =
+        energyUnit === 'kJ'
+          ? kcalToKj(initialData.calories, 2)
+          : Math.round(initialData.calories * 100) / 100;
+      setCalories(displayCal > 0 ? String(displayCal) : '');
+      setProtein(initialData.protein ? String(initialData.protein) : '');
+      setCarbs(initialData.carbs ? String(initialData.carbs) : '');
+      setFat(initialData.fat ? String(initialData.fat) : '');
     } else {
       // 新增模式：完全純淨無初始數值，分類預設為空
       setName('');
@@ -485,84 +451,55 @@ export function FoodFormDialog({
     setKeypadConfig(null);
   };
 
-  // 若以 kJ 輸入，存儲時以國際標準 1 kcal = 4.184 kJ 精確折算為大卡
-  const normalizedCalories = calorieUnit === 'kJ'
-    ? roundTo2(parsedCal / 4.184)
-    : roundTo2(parsedCal);
-
-  const scaledSingleServing = useMemo(() => {
-    if (basisMode === 'serving') {
-      return {
-        calories: normalizedCalories,
-        protein: roundTo2(parsedP),
-        carbs: roundTo2(parsedC),
-        fat: roundTo2(parsedF),
-        servingSize: roundTo2(parsedServing),
-        servingUnit,
-      };
-    }
-
-    return scaleNutritionFromBasis({
-      calories: normalizedCalories,
-      protein: parsedP,
-      carbs: parsedC,
-      fat: parsedF,
-      servingSize: parsedServing,
+  // 保存前一律透過純函數統一折算為單份純公制 SI 真值（g / ml、kcal），保存後徹底遺忘輸入單位與基準
+  const normalizedMetricFood = useMemo(
+    () =>
+      normalizeFoodInputToMetric({
+        servingSize: parsedServing,
+        servingUnit: servingUnit.trim() || (category === 'beverage' ? 'ml' : 'g'),
+        basisMode,
+        basisSize: parsedBasis > 0 ? parsedBasis : undefined,
+        basisUnit: parsedBasis > 0 ? basisUnit : undefined,
+        calories: parsedCal,
+        energyUnit: calorieUnit,
+        carbs: parsedC,
+        protein: parsedP,
+        fat: parsedF,
+        category: category || undefined,
+      }),
+    [
+      parsedServing,
       servingUnit,
-      basisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
-      basisUnit: parsedBasis > 0 ? basisUnit : servingUnit,
-    });
-  }, [basisMode, normalizedCalories, parsedP, parsedC, parsedF, parsedServing, parsedBasis, servingUnit, basisUnit]);
+      category,
+      basisMode,
+      parsedBasis,
+      basisUnit,
+      parsedCal,
+      calorieUnit,
+      parsedC,
+      parsedP,
+      parsedF,
+    ]
+  );
 
-  // 表單送出處理
+  // 表單送出處理：無論輸入單位為何，底層一律儲存換算後的純公制 SI 數據
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !category || isSubmitting || !servingSize || parseFloat(servingSize) <= 0) return;
 
     setIsSubmitting(true);
     try {
-      if (basisMode === 'serving') {
-        await onSubmit({
-          name: name.trim(),
-          category,
-          brand: brand.trim() || undefined,
-          servingSize: parsedServing,
-          servingUnit: servingUnit.trim() || 'g',
-          calories: normalizedCalories,
-          protein: roundTo2(parsedP),
-          carbs: roundTo2(parsedC),
-          fat: roundTo2(parsedF),
-          labelBasisSize: parsedServing,
-          labelBasisUnit: servingUnit.trim() || 'g',
-          rawNutrition: {
-            calories: roundTo2(parsedCal),
-            protein: roundTo2(parsedP),
-            carbs: roundTo2(parsedC),
-            fat: roundTo2(parsedF),
-          },
-        });
-      } else {
-        // 自定義基準模式：依比例折算為單份數值儲存，並記憶原始標籤數值與基準單位
-        await onSubmit({
-          name: name.trim(),
-          category,
-          brand: brand.trim() || undefined,
-          servingSize: scaledSingleServing.servingSize,
-          servingUnit: scaledSingleServing.servingUnit,
-          calories: scaledSingleServing.calories,
-          protein: scaledSingleServing.protein,
-          carbs: scaledSingleServing.carbs,
-          fat: scaledSingleServing.fat,
-          labelBasisSize: parsedBasis > 0 ? parsedBasis : parsedServing,
-          labelBasisUnit: parsedBasis > 0 ? basisUnit : servingUnit,
-          rawNutrition: {
-            calories: roundTo2(parsedCal),
-            protein: roundTo2(parsedP),
-            carbs: roundTo2(parsedC),
-            fat: roundTo2(parsedF),
-          },
-        });
-      }
+      await onSubmit({
+        name: name.trim(),
+        category,
+        brand: brand.trim() || undefined,
+        servingSize: normalizedMetricFood.servingSize,
+        servingUnit: normalizedMetricFood.servingUnit,
+        calories: normalizedMetricFood.calories,
+        protein: normalizedMetricFood.protein,
+        carbs: normalizedMetricFood.carbs,
+        fat: normalizedMetricFood.fat,
+      });
 
       onOpenChange(false);
     } finally {

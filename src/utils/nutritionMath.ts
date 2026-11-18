@@ -1,5 +1,5 @@
-import type { FoodWeightUnit, FoodVolumeUnit, MealType } from '@/types';
-import { OZ_TO_G_RATIO, FL_OZ_TO_ML_RATIO } from './unitMath';
+import type { EnergyUnit, FoodCategory, FoodWeightUnit, FoodVolumeUnit, MealType } from '@/types';
+import { OZ_TO_G_RATIO, FL_OZ_TO_ML_RATIO, kjToKcal, roundTo } from './unitMath';
 
 export type NutritionDisplayMode = 'serving' | 'per100g';
 
@@ -319,6 +319,165 @@ export function calculateMealBudget(
     carbs: Math.round(safeCarbs * ratio),
     protein: Math.round(safeProtein * ratio),
     fat: Math.round(safeFat * ratio),
+  };
+}
+
+export interface MetricServingResult {
+  servingSize: number;
+  servingUnit: 'g' | 'ml';
+}
+
+/**
+ * 將任意輸入份量與單位（g / oz / ml / fl oz）強制正規化為公制 SI 單位（g 或 ml）
+ * 遵循底層數據 100% 公制存儲契約
+ */
+export function normalizeServingToMetric(
+  servingSize: number,
+  servingUnit?: string,
+  category?: FoodCategory
+): MetricServingResult {
+  const safeSize =
+    typeof servingSize === 'number' && Number.isFinite(servingSize) && servingSize > 0
+      ? servingSize
+      : 0;
+  const normalizedUnit = (servingUnit || '').trim().toLowerCase();
+
+  if (normalizedUnit === 'fl oz' || normalizedUnit === 'floz' || normalizedUnit.includes('fl')) {
+    return {
+      servingSize: roundTo(safeSize * FL_OZ_TO_ML_RATIO, 2),
+      servingUnit: 'ml',
+    };
+  }
+  if (normalizedUnit === 'ml') {
+    return {
+      servingSize: roundTo(safeSize, 2),
+      servingUnit: 'ml',
+    };
+  }
+  if (normalizedUnit === 'oz' || normalizedUnit.includes('oz')) {
+    return {
+      servingSize: roundTo(safeSize * OZ_TO_G_RATIO, 2),
+      servingUnit: 'g',
+    };
+  }
+  if (normalizedUnit === 'g') {
+    return {
+      servingSize: roundTo(safeSize, 2),
+      servingUnit: 'g',
+    };
+  }
+
+  return {
+    servingSize: roundTo(safeSize, 2),
+    servingUnit: category === 'beverage' ? 'ml' : 'g',
+  };
+}
+
+export interface NormalizeFoodInputParams {
+  servingSize: number;
+  servingUnit: string;
+  basisMode: 'serving' | 'custom';
+  basisSize?: number;
+  basisUnit?: string;
+  calories: number;
+  energyUnit: EnergyUnit;
+  carbs: number;
+  protein: number;
+  fat: number;
+  category?: FoodCategory;
+}
+
+export interface NormalizedMetricFoodNutrition {
+  servingSize: number;
+  servingUnit: 'g' | 'ml';
+  calories: number;
+  carbs: number;
+  protein: number;
+  fat: number;
+}
+
+/**
+ * 將新增 / 編輯食材表單中的任意單位（g / oz / ml / fl oz、kcal / kJ）與任意基準（份量 / 自定義）
+ * 一次性無損折算為單份純公制 SI 真值（g / ml、kcal），保存後徹底遺忘輸入過程的單位與基準。
+ */
+export function normalizeFoodInputToMetric(
+  params: NormalizeFoodInputParams
+): NormalizedMetricFoodNutrition {
+  const safeRawCal =
+    typeof params.calories === 'number' && Number.isFinite(params.calories) && params.calories > 0
+      ? params.calories
+      : 0;
+  const safeCarbs =
+    typeof params.carbs === 'number' && Number.isFinite(params.carbs) && params.carbs > 0
+      ? params.carbs
+      : 0;
+  const safeProtein =
+    typeof params.protein === 'number' && Number.isFinite(params.protein) && params.protein > 0
+      ? params.protein
+      : 0;
+  const safeFat =
+    typeof params.fat === 'number' && Number.isFinite(params.fat) && params.fat > 0
+      ? params.fat
+      : 0;
+
+  // 1. 熱量統一折算為 kcal（1 kcal = 4.184 kJ）
+  const baseCaloriesKcal =
+    params.energyUnit === 'kJ' ? kjToKcal(safeRawCal, 4) : safeRawCal;
+
+  // 2. 食用份量統一折算為公制 SI（g / ml）
+  const metricServing = normalizeServingToMetric(
+    params.servingSize,
+    params.servingUnit,
+    params.category
+  );
+
+  // 3. 依份量直接輸入：無需比例縮放
+  if (params.basisMode === 'serving') {
+    return {
+      servingSize: metricServing.servingSize,
+      servingUnit: metricServing.servingUnit,
+      calories: roundTo(baseCaloriesKcal, 2),
+      carbs: roundTo(safeCarbs, 2),
+      protein: roundTo(safeProtein, 2),
+      fat: roundTo(safeFat, 2),
+    };
+  }
+
+  // 4. 自定義基準輸入（例如每 100 g / 每 1 oz）：先統一至物理公制基準再按單份比例折算
+  const effectiveBasisSize =
+    typeof params.basisSize === 'number' && Number.isFinite(params.basisSize) && params.basisSize > 0
+      ? params.basisSize
+      : params.servingSize;
+  const effectiveBasisUnit =
+    params.basisSize && params.basisSize > 0 && params.basisUnit
+      ? params.basisUnit
+      : params.servingUnit;
+
+  const metricBasis = normalizeServingToMetric(
+    effectiveBasisSize,
+    effectiveBasisUnit,
+    params.category
+  );
+
+  if (metricBasis.servingSize <= 0 || metricServing.servingSize <= 0) {
+    return {
+      servingSize: metricServing.servingSize,
+      servingUnit: metricServing.servingUnit,
+      calories: roundTo(baseCaloriesKcal, 2),
+      carbs: roundTo(safeCarbs, 2),
+      protein: roundTo(safeProtein, 2),
+      fat: roundTo(safeFat, 2),
+    };
+  }
+
+  const ratio = metricServing.servingSize / metricBasis.servingSize;
+  return {
+    servingSize: metricServing.servingSize,
+    servingUnit: metricServing.servingUnit,
+    calories: roundTo(baseCaloriesKcal * ratio, 2),
+    carbs: roundTo(safeCarbs * ratio, 2),
+    protein: roundTo(safeProtein * ratio, 2),
+    fat: roundTo(safeFat * ratio, 2),
   };
 }
 

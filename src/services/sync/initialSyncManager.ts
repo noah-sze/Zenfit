@@ -20,6 +20,7 @@ import {
   type DropboxFileMetadata,
 } from './dropboxClient';
 import {
+  sanitizeFoodItem,
   sanitizeRecipe,
   sanitizeFoodLog,
   sanitizeDailyDietLog,
@@ -341,7 +342,7 @@ async function executeDownloadQueue(): Promise<void> {
         if (data) staged.profiles.push(...data);
       } else if (path === '/nutrition/foods.json') {
         const data = await downloadJsonFile<FoodItem[]>(path);
-        if (data) staged.foods.push(...data);
+        if (data) staged.foods.push(...data.map(sanitizeFoodItem));
       } else if (path === '/nutrition/recipes.json') {
         const data = await downloadJsonFile<FoodRecipe[]>(path);
         if (data) staged.recipes.push(...data.map(sanitizeRecipe));
