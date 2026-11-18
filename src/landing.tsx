@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 if (typeof window !== 'undefined' && window.location.pathname.startsWith('/landing')) {
   window.location.replace('/');
 }
+import '@fontsource-variable/geist'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import './index.css'

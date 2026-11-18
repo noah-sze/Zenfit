@@ -167,6 +167,8 @@ export const DARK_PALETTE: ImagePalette = {
   muscleRecoveringPillText: '#fb7185',
 };
 
+const BRAND_FONT =
+  '"Geist Variable", Geist, "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, sans-serif';
 const SANS_FONT =
   'Inter Variable, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "PingFang TC", "Microsoft YaHei", sans-serif';
 const MONO_FONT =
@@ -433,12 +435,17 @@ function renderHeader(rc: RenderContext, payload: DailyExportPayload, y: number)
     // 品牌文字區塊 (X 軸左對齊，垂直方向與 Logo 嚴格視覺對齊)
     const brandTextX = paddingX + logoSize + 9;
 
-    // 1. 主名稱 e2Cal (字號 16px，頂部大寫字形與 Logo 頂部完美平齊)
-    ctx.font = `700 16px ${MONO_FONT}`;
+    // 1. 主名稱 e2Cal (方案 1 官方品牌字標：Geist Sans SemiBold 16px，字距 -0.03em)
+    ctx.save();
+    ctx.font = `600 16px ${BRAND_FONT}`;
     ctx.fillStyle = palette.textPrimary;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
+    if ('letterSpacing' in ctx) {
+      (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '-0.48px';
+    }
     ctx.fillText('e2Cal', brandTextX, centerY - 7);
+    ctx.restore();
 
     // 2. 子標題 DAILY SNAPSHOT (字號 9.5px，底部與 Logo 底部精準呼應收束)
     ctx.font = `500 9.5px ${MONO_FONT}`;
@@ -1679,6 +1686,13 @@ export async function generateDailyExportImageBlob(
   payload: DailyExportPayload,
   options?: GenerateExportImageOptions
 ): Promise<Blob> {
+  if (typeof document !== 'undefined' && document.fonts?.load) {
+    try {
+      await document.fonts.load(`600 16px ${BRAND_FONT}`);
+    } catch {
+      // 忽略離線或測試環境字體載入 API 限制
+    }
+  }
   const canvas = renderDailyExportToCanvas(payload, options);
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {

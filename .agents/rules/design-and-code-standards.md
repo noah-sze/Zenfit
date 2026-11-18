@@ -28,6 +28,13 @@ trigger: always_on
 - **純粹的對比**：嚴格使用純黑 (`#000`) 與純白 (`#fff`) 作為主要背景與文本對比。捨棄傳統的柔和灰色背景。
 - **扁平化設計 (Flat Design)**：**絕對禁止**在卡片 (Cards) 或容器上使用任何陰影 (`shadow-sm`, `shadow-md` 等)。層級的區分完全依賴細而精緻的邊框 (`border border-border`)。
 - **字體運用 (Typography)**：
+  - **官方品牌字標字體規範 (Brand Wordmark Standard — Option 1: Geist Sans)**：
+    - 產品名 **`e2Cal`** 在全應用程式（包含頁首、頁尾、版本號、歡迎引導、展示窗格、正文文案與 Canvas 匯出長圖）**嚴格唯一採用 `Geist Sans`（本地離線套件 `@fontsource-variable/geist`）**。
+    - **唯一真理源 Token 與元件**：CSS Token 固定為 `--font-brand`（`font-brand`）與 `--tracking-brand: -0.03em`（`tracking-brand`）。JSX 介面呈現一律透過 `src/components/ui/Logo.tsx` 導出之 `<BrandWordmark />` 或 `<BrandText />` 渲染，嚴禁在各業務頁面散落手寫品牌字體樣式。
+    - **字重隨語境自適應原則 (Context-Dependent Weight)**：
+      - **獨立品牌鎖定 (`variant="lockup"`)**：用於頁首導覽列、頁尾標誌、視窗標題列等獨立品牌識別處，標準字重為 `font-semibold`（600）。
+      - **正文與行內文案 (`<BrandText />` / `variant="inline"`)**：**嚴禁在正文段落中固定強制使用粗體**；字重與行高必須視上下文語境而定（預設自然繼承所在段落、標題或按鈕之字重，僅保留 `font-brand` 與 `tracking-brand`），避免在正常閱讀流中產生突兀的視覺跳躍。
+    - **Canvas 長圖繪製規格**：`aiDataExportImage.ts` 等畫布輸出必須使用 `BRAND_FONT`（`Geist Variable`）、字重 `600`、對應字距 `-0.03em`（16px 下為 `-0.48px`）。
   - 數字、重量、次數與統計數據嚴格使用等寬字體 (`font-mono`)，確保對齊與精確感。
   - 大標題使用緊湊的字距 (`tracking-tight`)，小標籤（如 Category, Date, Macros 等提示）使用大寫寬字距 (`uppercase tracking-widest text-xs`)。
   - **中英數排版規則**：所有中文文案（包含 i18n 翻譯檔）都必須嚴格遵循「在中文與英文/數字之間插入一個半形空格」的排版規範（Pangu Spacing），例如「使用 Vite 開發」而不是「使用Vite開發」。
@@ -140,6 +147,7 @@ trigger: always_on
 27. **不得在訓練日誌中儲存標題或動作/課表快照（全域嚴禁 `WorkoutLog.title`）**：訓練日誌（`WorkoutLog`）實體僅記錄客觀物理事實（`id`、`date`、`routineId`（可選）、`exercises` 動作組、`createdAt`、`updatedAt`），**絕對嚴禁儲存 `title` 欄位**。介面渲染所需的標題一律由前端記憶體在即時 Join 時依關聯之 `routineId -> db.routines.name` 或首個動作 `exercises[0].exerciseId -> db.exercises.name` 動態解析為 `HydratedWorkoutLog`，徹底杜絕日誌標題與課表/動作更名時的快照漂移。
 28. **不得在動作組合中配置組數（動作組合純粹化契約，全域嚴禁 `RoutineExerciseItem.defaultSets`）**：動作組合/課表（`WorkoutRoutine`）僅作為動作的有序集合（`exercises: [{ exerciseId }]`），代表訓練項目的編排結構，**絕對嚴禁設定或儲存 `defaultSets` 等組數設定**。組合詳情與表單介面中嚴禁展示「計劃總組數」或組數配置膠囊，相關統計指標統一採用「覆蓋肌群數」；實際訓練組數一律於開始訓練時依動作歷史記錄智能繼承或由使用者即時記錄。
 29. **不得在食物名稱中冠以「生」字前綴強調生重，不得附加「乾重」或「生重」等贅餘後綴，不得冠以「純」等模糊前綴，且嚴禁模糊泛稱（全食材生重基準契約）**：所有天然食材營養常數一律嚴格以未經烹調之「生重 (Raw Weight)」為唯一客觀物理真理源；嚴禁在名稱中使用「生白米」、「生糙米」、「生義大利麵」等前綴；嚴禁附加「乾重」後綴（嚴禁「純米粉乾重」、「冬粉乾重」；一律使用「米粉」、「冬粉」）；嚴禁使用「純麵條」等無明確指代的模糊泛稱，麵條品項繁多必須精確具體化為客觀品類（如「白細麵」、「蕎麥麵」、「烏龍麵」、「寬麵條」、「義大利麵」）；嚴禁在單品食材庫中收錄隨烹調吸水率浮動的熟重副本（如嚴禁「熟義大利麵」、「糙米飯」）。
+30. **不得在介面或匯出畫布中以非官方字體或零散手寫樣式渲染品牌名 `e2Cal`，亦不得在正文段落中強制將 `e2Cal` 固定加粗**：全站所有呈現產品名稱 `e2Cal` 之介面元素必須嚴格採用方案 1 官方品牌字體 `Geist Sans`（`font-brand tracking-brand`，字距 `-0.03em`），並一律經由單一真理源元件 `<BrandWordmark />`（獨立標誌鎖定使用 `variant="lockup"` 字重 600；正文與行內文案使用 `<BrandText />` 或 `variant="inline"` 依上下文決定字重，嚴禁強制粗體）或 Canvas `BRAND_FONT` 輸出。
 
 ## 6. 食物數據與原子計量規範 (Food Data & Atomic Metric Standards)
 - **全食材生重基準合約 (Raw Weight as Single Truth Standard)**：

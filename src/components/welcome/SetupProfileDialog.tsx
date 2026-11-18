@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { NumericKeypadDialog } from '@/components/ui/NumericKeypadDialog';
-import { Logo } from '@/components/ui/Logo';
+import { Logo, BrandText } from '@/components/ui/Logo';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { calculateBMI, calculateBMR, calculateAgeFromBirth } from '@/utils/weightMath';
@@ -219,7 +219,7 @@ export function SetupProfileDialog({
               <Logo size={36} className="shrink-0 shadow-none" />
               <div className="space-y-1">
                 <DialogTitle className="font-sans font-bold text-lg sm:text-xl tracking-tight text-foreground p-0 m-0 leading-tight">
-                  {t('welcome.dialogWelcomeTitle', '歡迎使用 e2Cal，')}
+                  <BrandText text={t('welcome.dialogWelcomeTitle', '歡迎使用 e2Cal，')} />
                 </DialogTitle>
                 <p className="text-sm text-muted-foreground font-sans leading-normal">
                   {t('welcome.dialogWelcomeSubtitle', '開始之前請輸入個人基本信息。')}
@@ -451,7 +451,11 @@ export function SetupProfileDialog({
             disabled={!isFormValid || isSubmitting}
             className="w-full h-11 shrink-0 rounded-md bg-foreground text-background font-mono text-xs sm:text-sm font-semibold flex items-center justify-center space-x-1.5 hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none shadow-none"
           >
-            <span>{isSubmitting ? t('welcome.startingApp', '正在啟動…') : t('welcome.enterApp', '進入 e2Cal')}</span>
+            <span>
+              <BrandText
+                text={isSubmitting ? t('welcome.startingApp', '正在啟動…') : t('welcome.enterApp', '進入 e2Cal')}
+              />
+            </span>
           </button>
 
           {/* 底部客觀儀式小字 */}

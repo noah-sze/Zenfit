@@ -107,6 +107,9 @@
   --text-3xs: 0.65rem; /* 9.1px */
   --text-3xs--line-height: 0.85rem;
 
+  --font-brand: 'Geist Variable', 'Geist', 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --tracking-brand: -0.03em;
+
   --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft JhengHei", "Microsoft YaHei", "Noto Sans CJK", sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-serif: 'Playfair Display', Georgia, Cambria, 'Times New Roman', 'Noto Serif TC', serif;

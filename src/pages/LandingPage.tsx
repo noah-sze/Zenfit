@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { SetupProfileDialog } from '@/components/welcome/SetupProfileDialog';
 import { WelcomeTransitionOverlay } from '@/components/welcome/WelcomeTransitionOverlay';
+import { BrandWordmark, BrandText } from '@/components/ui/Logo';
 import { getDemoDashboardData, DEMO_DASHBOARD_DATA } from '@/components/dashboard/DashboardView';
 import {
   WorkoutRecoveryDashboard,
@@ -163,7 +164,7 @@ export default function LandingPage() {
             </g>
           </g>
         </svg>
-        <span className="font-sans text-base font-semibold tracking-tight text-black dark:text-white leading-none">e2Cal</span>
+        <BrandWordmark className="text-base text-black dark:text-white" />
       </a>
 
       {/*  Navigation Links: Full-width Edge-to-Edge Grid  */}
@@ -261,7 +262,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-neutral-600 dark:text-neutral-400 font-sans text-sm sm:text-base leading-relaxed">
-            {t('landing.hero.desc', '記錄身體不該帶來壓力。今天吃了多少、練了幾組，軟體只如實告訴你真實數字，絕不批判你吃多吃少，更不強迫打卡斷簽。完全支援離線使用，每一次輸入都乾脆俐落。')}
+            <BrandText text={t('landing.hero.desc', '記錄身體不該帶來壓力。今天吃了多少、練了幾組，軟體只如實告訴你真實數字，絕不批判你吃多吃少，更不強迫打卡斷簽。完全支援離線使用，每一次輸入都乾脆俐落。')} />
           </p>
 
           {/*  CTAs  */}
@@ -328,7 +329,7 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.diet.titleLine2', '準確食材、一鍵複製、快速估算、滾動均值')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          {t('landing.diet.desc', '記錄飲食不該是繁瑣負擔。e2Cal 針對真實生活打造零阻力記錄流：自煮時依托 420+ 種原型食材準確秤重；規律進餐時一鍵複製昨日餐點；外食聚餐時支援快速粗估。')}
+          <BrandText text={t('landing.diet.desc', '記錄飲食不該是繁瑣負擔。e2Cal 針對真實生活打造零阻力記錄流：自煮時依托 420+ 種原型食材準確秤重；規律進餐時一鍵複製昨日餐點；外食聚餐時支援快速粗估。')} />
         </p>
       </div>
 
@@ -457,7 +458,7 @@ export default function LandingPage() {
                 <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
               </div>
               <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
-                <span className="font-semibold text-neutral-900 dark:text-neutral-100">e2Cal</span>
+                <BrandWordmark className="text-neutral-900 dark:text-neutral-100" />
                 <span className="text-neutral-400 dark:text-neutral-600">/</span>
                 <span>{t('landing.diet.windowBar.module', '飲食')}</span>
               </div>
@@ -564,7 +565,7 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.body.titleLine2', '7 天平滑曲線、身體圍度追蹤與客觀進展')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          {t('landing.body.desc', '喝水多寡與重鹹飲食，常讓單日體重上下跳動 1～2 公斤。e2Cal 自動過濾水分干擾，幫你算出身體的真實增減趨勢；同步支援胸圍、腰圍等圍度追蹤，只擺客觀事實，告別體重焦慮。')}
+          <BrandText text={t('landing.body.desc', '喝水多寡與重鹹飲食，常讓單日體重上下跳動 1～2 公斤。e2Cal 自動過濾水分干擾，幫你算出身體的真實增減趨勢；同步支援胸圍、腰圍等圍度追蹤，只擺客觀事實，告別體重焦慮。')} />
         </p>
       </div>
 
@@ -616,7 +617,7 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          {t('landing.analytics.desc', '我們不在軟體裡塞入未經科學驗證的 AI 評分機制。e2Cal 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。')}
+          <BrandText text={t('landing.analytics.desc', '我們不在軟體裡塞入未經科學驗證的 AI 評分機制。e2Cal 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。')} />
         </p>
       </div>
 
@@ -667,7 +668,7 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.principles.titleLine2', '不搞社交、不催打卡、不給指令、不做成品黑盒')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          {t('landing.principles.desc', '你不需要一個軟體每天催你打卡、對你說教，或是逼你跟別人比較。e2Cal 刻意拿掉所有惱人的套路：今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、安靜待命的記錄工具。')}
+          <BrandText text={t('landing.principles.desc', '你不需要一個軟體每天催你打卡、對你說教，或是逼你跟別人比較。e2Cal 刻意拿掉所有惱人的套路：今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、安靜待命的記錄工具。')} />
         </p>
       </div>
 
@@ -804,7 +805,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item4.title', '拒絕「一碗紅燒牛肉麵 = 750 大卡」的黑盒謊言')}</h3>
               <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                {t('landing.principles.items.item4.desc', '成品菜估算充滿了不可控的烹調油與吸水率偏差。e2Cal 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。')}
+                <BrandText text={t('landing.principles.items.item4.desc', '成品菜估算充滿了不可控的烹調油與吸水率偏差。e2Cal 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。')} />
               </p>
             </div>
 
@@ -854,7 +855,7 @@ export default function LandingPage() {
           <span className="text-neutral-500 font-mono text-2xl sm:text-4xl font-normal">{t('landing.tech.titleLine2', '零外部依賴、純本地計算、永不損毀數據')}</span>
         </h2>
         <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          {t('landing.tech.desc', '拒絕臃腫的第三方追蹤與肥大框架。e2Cal 透過無副作用純數學純函數與 100% 單元測試防線，保證你的每一次點擊都獲得毫秒級的確定性。')}
+          <BrandText text={t('landing.tech.desc', '拒絕臃腫的第三方追蹤與肥大框架。e2Cal 透過無副作用純數學純函數與 100% 單元測試防線，保證你的每一次點擊都獲得毫秒級的確定性。')} />
         </p>
       </div>
 
@@ -926,7 +927,7 @@ export default function LandingPage() {
             </g>
           </g>
         </svg>
-        <span className="text-neutral-900 dark:text-white font-semibold text-sm tracking-tight font-sans leading-none">e2Cal</span>
+        <BrandWordmark className="text-sm text-neutral-900 dark:text-white" />
       </div>
 
       <div className="flex items-center space-x-6 text-[11px]">

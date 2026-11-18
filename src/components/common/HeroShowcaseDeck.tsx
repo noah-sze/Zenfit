@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { DashboardView, getDemoDashboardData } from '@/components/dashboard/DashboardView';
 import { DietView, getDemoDietData } from '@/components/diet/DietView';
+import { BrandWordmark } from '@/components/ui/Logo';
 
 /**
  * Hero 區塊多卡片立體階梯堆疊展示組件 (Hero Showcase Deck)
@@ -59,7 +60,7 @@ export function HeroShowcaseDeck() {
             <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
           </div>
           <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="font-medium text-neutral-900 dark:text-neutral-100">e2Cal</span>
+            <BrandWordmark className="text-neutral-900 dark:text-neutral-100" />
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>{t('landing.deck.foodDetails', '食材詳情')}</span>
           </div>
@@ -178,7 +179,7 @@ export function HeroShowcaseDeck() {
             <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
           </div>
           <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="font-medium text-neutral-900 dark:text-neutral-100">e2Cal</span>
+            <BrandWordmark className="text-neutral-900 dark:text-neutral-100" />
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>{t('landing.deck.dietMetrics', '飲食')}</span>
           </div>
@@ -208,7 +209,7 @@ export function HeroShowcaseDeck() {
             <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700"></span>
           </div>
           <div className="flex items-center space-x-1 font-sans text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="font-medium text-neutral-900 dark:text-neutral-100">e2Cal</span>
+            <BrandWordmark className="text-neutral-900 dark:text-neutral-100" />
             <span className="text-neutral-400 dark:text-neutral-600">/</span>
             <span>{t('landing.deck.dashboard', '總覽')}</span>
           </div>

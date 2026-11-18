@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Logo } from '@/components/ui/Logo';
+import { Logo, BrandText } from '@/components/ui/Logo';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 
@@ -112,7 +112,7 @@ export function WelcomeTransitionOverlay({
 
         {/* 系統進入副標 */}
         <p className="text-xs sm:text-sm font-mono text-muted-foreground tracking-wide">
-          {t('welcome.entering', '正在進入 e2Cal ……')}
+          <BrandText text={t('welcome.entering', '正在進入 e2Cal ……')} />
         </p>
 
         {/* 底部微型刻度條波形 (Telemetry Tick Meter) */}

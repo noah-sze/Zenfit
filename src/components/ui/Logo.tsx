@@ -128,3 +128,66 @@ export function Logo({
 
 // 別名導出，便於以語意化 E2CalLogo / ZenfitLogo 引用
 export { Logo as E2CalLogo, Logo as ZenfitLogo };
+
+export interface BrandWordmarkProps extends React.HTMLAttributes<HTMLSpanElement> {
+  /** 品牌文字內容，預設為 e2Cal */
+  children?: React.ReactNode;
+  /**
+   * 顯示語境變體：
+   * - `lockup`（預設）：獨立品牌標誌鎖定（頁首、頁尾、視窗標題），固定套用 font-semibold 與 leading-none
+   * - `inline`：行內正文語境，僅套用 Geist Sans 字族與字距，字重與行高自然繼承上下文（不強制加粗）
+   */
+  variant?: 'lockup' | 'inline';
+}
+
+/**
+ * e2Cal 品牌字標單一真理源元件（方案 1：Geist Sans）
+ * 嚴格鎖定全域 Design Tokens：font-brand (Geist Variable)、tracking-brand (-0.03em)
+ */
+export function BrandWordmark({
+  className,
+  children = 'e2Cal',
+  variant = 'lockup',
+  ...props
+}: BrandWordmarkProps) {
+  return (
+    <span
+      className={cn(
+        'font-brand tracking-brand',
+        variant === 'lockup' && 'font-semibold leading-none',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </span>
+  );
+}
+
+export interface BrandTextProps {
+  /** 包含 e2Cal 品牌名的多語系字串 */
+  text: string;
+  /** 附加於品牌字標上的額外樣式（預設繼承正文上下文的字重，可視語境傳入） */
+  wordmarkClassName?: string;
+}
+
+/**
+ * 將任意多語系文案中的「e2Cal」段落自動以行內官方品牌字標（Geist Sans）渲染，
+ * 預設不強制加粗，自然繼承上下文之字重與行高
+ */
+export function BrandText({ text, wordmarkClassName }: BrandTextProps) {
+  const parts = text.split(/(e2Cal)/g);
+  return (
+    <>
+      {parts.map((part, idx) =>
+        part === 'e2Cal' ? (
+          <BrandWordmark key={idx} variant="inline" className={wordmarkClassName}>
+            {part}
+          </BrandWordmark>
+        ) : (
+          <React.Fragment key={idx}>{part}</React.Fragment>
+        )
+      )}
+    </>
+  );
+}

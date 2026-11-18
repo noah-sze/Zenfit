@@ -28,6 +28,7 @@ import { useDropboxSync } from '@/hooks/useDropboxSync';
 import { DropboxSyncDialog } from '@/components/settings/dialogs/DropboxSyncDialog';
 import { ClearDataModal } from '@/components/settings/ClearDataModal';
 import { ImportStrategyModal } from '@/components/settings/dialogs/ImportStrategyModal';
+import { BrandWordmark } from '@/components/ui/Logo';
 import type {
   UnitSystemPreset,
   BodyWeightUnit,
@@ -743,7 +744,7 @@ export default function Settings() {
 
       {/* 頁尾版本標記 */}
       <div className="pt-4 text-center font-mono text-xs text-muted-foreground/50">
-        e2Cal v1.0.0
+        <BrandWordmark variant="inline" /> v1.0.0
       </div>
 
       {/* Dropbox 同步設定彈窗 (遵循 ui-guidelines 平級兄弟節點聲明) */}
