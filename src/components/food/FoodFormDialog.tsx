@@ -755,13 +755,13 @@ export function FoodFormDialog({
 
           {/* 表格段落 3: 基準營養素 (純營養素輸入) */}
           <div className="space-y-1.5 pt-0.5">
-            <div className="flex items-center justify-between px-0">
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+            <div className="flex items-center justify-between gap-2 px-0">
+              <div className="min-w-0 truncate text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
                 {t('diet.servingNutrients')}
               </div>
 
               {/* 28px 微型切換膠囊 (份量 vs 自定義) */}
-              <div className="h-7 p-0.5 rounded-full border border-border bg-background inline-flex items-center text-xs font-mono select-none">
+              <div className="h-7 p-0.5 rounded-full border border-border bg-background inline-flex items-center text-xs font-mono select-none shrink-0">
                 <button
                   type="button"
                   onClick={() => {
