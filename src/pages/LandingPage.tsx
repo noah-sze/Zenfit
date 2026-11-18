@@ -7,14 +7,6 @@ import {
   Moon,
   ArrowUpRight,
   Globe,
-  AlertTriangle,
-  BarChart2,
-  Flame,
-  CircleDot,
-  Trophy,
-  Lock,
-  Utensils,
-  Scale,
 } from 'lucide-react';
 import { SetupProfileDialog } from '@/components/welcome/SetupProfileDialog';
 import { WelcomeTransitionOverlay } from '@/components/welcome/WelcomeTransitionOverlay';
@@ -657,186 +649,149 @@ export default function LandingPage() {
   {/*  07. WHY WE DON'T DO XX (為什麼我們不做 xx)                                  */}
   {/*  =========================================================================  */}
   <section id="non-goals" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
-      
-      <div className="space-y-4 max-w-3xl">
-        <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          {t('landing.principles.tag', '[ 06 / 原則]')}
+    <div className="max-w-6xl mx-auto">
+      {/* 方案 3：Editorial Manifesto Split（左宣言 + 四項 0 規格卡，右 Diff 帳本；手機端右側支援橫向 snap 滾動） */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-12 items-start">
+        {/* 左欄：宣言與 4 項「0」邊界計數卡 */}
+        <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
+          <div className="space-y-3">
+            <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
+              {t('landing.principles.tag', '[ 06 / 原則 ]')}
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-tight">
+              {t('landing.principles.titleLine1', '拒絕製造焦慮')}
+            </h2>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed font-sans">
+              <BrandText
+                text={t(
+                  'landing.principles.manifestoDesc',
+                  '不搞社交、不催打卡、不給指令、不做成品黑盒。e2Cal 是一把冷靜的記錄工具，刻意切除所有消耗注意力的套路。'
+                )}
+              />
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-800 font-mono text-xs">
+            {[
+              t('landing.principles.summary.grading', '評分與指令'),
+              t('landing.principles.summary.social', '社交與排行'),
+              t('landing.principles.summary.streaks', '斷簽與催促'),
+              t('landing.principles.summary.blackbox', '成品菜黑盒'),
+            ].map((label) => (
+              <div
+                key={label}
+                className="h-9 px-3.5 flex items-center justify-between text-neutral-600 dark:text-neutral-400"
+              >
+                <span>{label}</span>
+                <span className="text-neutral-900 dark:text-white font-medium tabular-nums">0</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.principles.titleLine1', '拒絕製造焦慮')}<br />
-          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.principles.titleLine2', '不搞社交、不催打卡、不給指令、不做成品黑盒')}</span>
-        </h2>
-        <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          <BrandText text={t('landing.principles.desc', '你不需要一個軟體每天催你打卡、對你說教，或是逼你跟別人比較。e2Cal 刻意拿掉所有惱人的套路：今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、安靜待命的記錄工具。')} />
-        </p>
+
+        {/* 右欄：桌面端為垂直 Diff 帳本，手機端支援左右滑動切換卡片 */}
+        <div className="lg:col-span-8 flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth gap-3 sm:gap-4 pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mr-0 lg:pr-0 lg:pb-0 lg:block lg:overflow-visible lg:divide-y lg:divide-neutral-200 dark:lg:divide-neutral-800">
+          {[
+            {
+              index: '01',
+              title: t('landing.principles.items.item1.title', '拒絕黑盒說教與主觀評判'),
+              desc: t(
+                'landing.principles.items.item1.desc',
+                '我們嚴禁在軟體中指示「你少吃了」、「你吃超標了」或「你退步了」；絕對不設置帶有羞辱感的紅色警報卡片。軟體是冷靜的鏡子，決策權 100% 歸還使用者。'
+              ),
+              legacyBad: t(
+                'landing.principles.items.item1.legacyBad',
+                '今天碳水太高了，明天多跑 40 分鐘消耗。'
+              ),
+              diffGood: t(
+                'landing.principles.items.item1.diffGood',
+                '2,180 / 2,000 kcal · 超出 +180 kcal（僅呈現客觀事實）'
+              ),
+            },
+            {
+              index: '02',
+              title: t('landing.principles.items.item2.title', '拒絕同儕焦慮與動態打擾'),
+              desc: t(
+                'landing.principles.items.item2.desc',
+                '沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。'
+              ),
+              legacyBad: t(
+                'landing.principles.items.item2.legacyBad',
+                '小陳的體脂高於 90% 同齡人，努力加油超越他吧。'
+              ),
+              diffGood: t(
+                'landing.principles.items.item2.diffGood',
+                '僅儲存於本機 IndexedDB · 無公開動態'
+              ),
+            },
+            {
+              index: '03',
+              title: t('landing.principles.items.item3.title', '真正的自律不需要外部羞恥機制'),
+              desc: t(
+                'landing.principles.items.item3.desc',
+                '不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的記錄工具。'
+              ),
+              legacyBad: t(
+                'landing.principles.items.item3.legacyBad',
+                '已斷簽，看廣告或花費 50 鑽石補簽。'
+              ),
+              diffGood: t(
+                'landing.principles.items.item3.diffGood',
+                '記或不記都是事實 · 隨時安靜待命'
+              ),
+            },
+            {
+              index: '04',
+              title: t(
+                'landing.principles.items.item4.title',
+                '拒絕「一碗紅燒牛肉麵 = 750 大卡」的黑盒謊言'
+              ),
+              desc: t(
+                'landing.principles.items.item4.desc',
+                '成品菜估算充滿了不可控的烹調油與吸水率偏差。e2Cal 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。'
+              ),
+              legacyBad: t(
+                'landing.principles.items.item4.legacyBad',
+                '固定計算：紅燒牛肉麵 1 碗 = 750 大卡'
+              ),
+              diffGood: t(
+                'landing.principles.items.item4.diffGood',
+                '牛腱 150 g · 麵 80 g · 橄欖油 8 g'
+              ),
+            },
+          ].map((item) => (
+            <article
+              key={item.index}
+              className="w-[84vw] max-w-[340px] shrink-0 snap-start rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-4 flex flex-col justify-between gap-4 lg:w-auto lg:max-w-none lg:rounded-none lg:border-0 lg:bg-transparent lg:px-0 lg:py-6 lg:first:pt-0"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-mono text-xs text-neutral-500 dark:text-neutral-400 shrink-0">
+                    {item.index}
+                  </span>
+                  <h3 className="text-sm sm:text-base font-sans font-semibold tracking-tight text-neutral-900 dark:text-white leading-snug">
+                    {item.title}
+                  </h3>
+                </div>
+                <p className="lg:pl-7 text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed">
+                  <BrandText text={item.desc} />
+                </p>
+              </div>
+
+              <div className="lg:ml-7 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden font-mono text-xs">
+                <div className="px-3 py-2 bg-destructive-subtle border-b border-neutral-200 dark:border-neutral-800 flex items-start gap-2 text-neutral-500 dark:text-neutral-400">
+                  <span className="text-destructive font-semibold shrink-0 select-none">-</span>
+                  <span className="line-through leading-relaxed">{item.legacyBad}</span>
+                </div>
+                <div className="px-3 py-2 bg-white dark:bg-black flex items-start gap-2 text-neutral-900 dark:text-white">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 select-none">+</span>
+                  <span className="leading-relaxed">{item.diffGood}</span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
-
-      {/*  4 Non-Goals Pillars (手機端兩欄可橫向滑動加寬卡片：初始顯示 01/03，右滑顯示 02/04；桌面端 2 欄並列等高排版)  */}
-      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth gap-3 sm:gap-6 pb-4 -mr-4 pr-4 sm:mr-0 sm:pr-0 sm:pb-0 sm:overflow-visible sm:grid sm:grid-cols-2 font-mono text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        
-        {/*  左欄：01 與 03 (手機端初始顯露卡片組，寬度加寬至 84vw)  */}
-        <div className="w-[84vw] max-w-[350px] sm:w-full sm:max-w-none shrink-0 snap-start flex flex-col gap-3 sm:gap-6">
-          {/*  Non-goal 1  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
-            <div className="space-y-3">
-              <div className="flex items-center text-neutral-900 dark:text-white font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
-                <span>{t('landing.principles.items.item1.tag', '01 // 不做評分和行為指令')}</span>
-              </div>
-              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item1.title', '拒絕黑盒說教與主觀評判')}</h3>
-              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                {t('landing.principles.items.item1.desc', '我們嚴禁在軟體中指示「你少吃了」、「你吃超標了」或「你退步了」；絕對不設置帶有羞辱感的紅色警報卡片。軟體是冷靜的鏡子，決策權 100% 歸還使用者。')}
-              </p>
-            </div>
-
-            {/* 視覺微型 UI 對比 */}
-            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
-              <div className="rounded border border-red-200 dark:border-red-950/50 bg-red-50/50 dark:bg-red-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-red-200 dark:border-red-900/50 flex items-center space-x-1.5 text-red-600 dark:text-red-400 font-semibold text-[11px]">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item1.legacyTitle', '傳統評分')}</span>
-                </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item1.legacyBad', '今天碳水太高了，明天多跑 40 分鐘消耗。')}
-                </div>
-              </div>
-
-              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-neutral-900 dark:text-white font-semibold text-[11px]">
-                  <BarChart2 className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
-                  <span>{t('landing.principles.items.item1.factTitle', '客觀事實')}</span>
-                </div>
-                <div className="p-2.5 font-mono text-[11px] text-neutral-900 dark:text-white flex-1 flex flex-col justify-center gap-1">
-                  <div className="font-semibold tabular-nums leading-tight">
-                    {t('landing.principles.items.item1.factGood', '2,180 / 2,000 kcal · 超出 +180 kcal')}
-                  </div>
-                  <div className="font-sans text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug">
-                    {t('landing.principles.items.item1.factNote', '只會根據你的記錄呈現客觀事實。多吃少吃，多動少動，完全取決於你自己。')}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/*  Non-goal 3  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
-            <div className="space-y-3">
-              <div className="flex items-center text-neutral-900 dark:text-white font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
-                <span>{t('landing.principles.items.item3.tag', '03 // 不做強制打卡與斷簽懲罰')}</span>
-              </div>
-              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item3.title', '真正的自律不需要外部羞恥機制')}</h3>
-              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                {t('landing.principles.items.item3.desc', '不設置斷簽警告或紅點催促。今天記錄，今天就是事實；今天沒記，明天打開依舊是一把乾淨、隨時待命的記錄工具。')}
-              </p>
-            </div>
-
-            {/* 視覺微型 UI 對比 */}
-            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
-              <div className="rounded border border-amber-200 dark:border-amber-950/50 bg-amber-50/50 dark:bg-amber-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-amber-200 dark:border-amber-900/50 flex items-center space-x-1.5 text-amber-600 dark:text-amber-400 font-semibold text-[11px]">
-                  <Flame className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item3.legacyTitle', '連續打卡中斷')}</span>
-                </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item3.legacyBad', '已斷簽，看廣告或花費 50 鑽石補簽。')}
-                </div>
-              </div>
-
-              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-[11px]">
-                  <div className="flex items-center space-x-1.5">
-                    <CircleDot className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
-                    <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item3.factTitle', '隨時安靜待命')}</span>
-                  </div>
-                </div>
-                <div className="p-2.5 font-sans text-[11px] leading-snug text-neutral-900 dark:text-white flex-1 flex items-center">
-                  {t('landing.principles.items.item3.factGood', '記或不記，都是事實。你的身體和生活才是重點所在，不需要為斷續感到羞恥。')}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/*  右欄：02 與 04 (手機端需向右滑動顯露卡片組，寬度加寬至 84vw)  */}
-        <div className="w-[84vw] max-w-[350px] sm:w-full sm:max-w-none shrink-0 snap-start flex flex-col gap-3 sm:gap-6">
-          {/*  Non-goal 2  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
-            <div className="space-y-3">
-              <div className="flex items-center text-neutral-900 dark:text-white font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
-                <span>{t('landing.principles.items.item2.tag', '02 // 不做社交社群與心靈雞湯')}</span>
-              </div>
-              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item2.title', '拒絕同儕焦慮與動態打擾')}</h3>
-              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                {t('landing.principles.items.item2.desc', '沒有動態廣場、沒有點讚排行、沒有同儕比較。自我量化是一場自己與物理事實的嚴肅對話，無須向外界表演自律。')}
-              </p>
-            </div>
-
-            {/* 視覺微型 UI 對比 */}
-            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
-              <div className="rounded border border-sky-200 dark:border-sky-950/50 bg-sky-50/50 dark:bg-sky-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-sky-200 dark:border-sky-900/50 flex items-center space-x-1.5 text-[11px] text-sky-600 dark:text-sky-400 font-semibold">
-                  <Trophy className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item2.legacyTitle', '好友動態')}</span>
-                </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item2.legacyBad', '小陳的體脂高於 90% 同齡人，努力加油超越他吧。')}
-                </div>
-              </div>
-
-              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center text-[11px]">
-                  <div className="flex items-center space-x-1.5">
-                    <Lock className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
-                    <span className="font-semibold text-neutral-900 dark:text-white">{t('landing.principles.items.item2.factTitle', '自我量化')}</span>
-                  </div>
-                </div>
-                <div className="p-2.5 font-sans text-[11px] leading-snug text-neutral-900 dark:text-white flex-1 flex items-center">
-                  {t('landing.principles.items.item2.factGood', '僅儲存於本機 IndexedDB · 無公開動態。拒絕製造焦慮，無需向外界表演自律。')}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/*  Non-goal 4  */}
-          <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg space-y-5 shadow-none flex flex-col justify-between flex-1">
-            <div className="space-y-3">
-              <div className="flex items-center text-neutral-900 dark:text-white font-bold text-xs pb-3 border-b border-neutral-200 dark:border-neutral-800">
-                <span>{t('landing.principles.items.item4.tag', '04 // 不做模糊的成品菜熱量估算')}</span>
-              </div>
-              <h3 className="text-neutral-900 dark:text-white text-sm sm:text-base font-sans font-bold leading-snug">{t('landing.principles.items.item4.title', '拒絕「一碗紅燒牛肉麵 = 750 大卡」的黑盒謊言')}</h3>
-              <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-                <BrandText text={t('landing.principles.items.item4.desc', '成品菜估算充滿了不可控的烹調油與吸水率偏差。e2Cal 堅持以原子食材生重為唯一真理源，引導使用者建立真正的克數秤重感知。')} />
-              </p>
-            </div>
-
-            {/* 視覺微型 UI 對比 */}
-            <div className="grid grid-cols-2 gap-2 font-mono text-xs select-none pt-1">
-              <div className="rounded border border-violet-200 dark:border-violet-950/50 bg-violet-50/50 dark:bg-violet-950/20 text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-violet-200 dark:border-violet-900/50 flex items-center space-x-1.5 text-[11px] text-violet-600 dark:text-violet-400 font-semibold">
-                  <Utensils className="w-3.5 h-3.5 shrink-0 stroke-[1.5]" />
-                  <span>{t('landing.principles.items.item4.legacyTitle', '成品菜資料庫')}</span>
-                </div>
-                <div className="p-2.5 line-through text-neutral-400 text-[11px] leading-tight flex-1 flex items-center">
-                  {t('landing.principles.items.item4.legacyBad', '固定計算：紅燒牛肉麵 1 碗 = 750 大卡')}
-                </div>
-              </div>
-
-              <div className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[11px] overflow-hidden flex flex-col justify-between">
-                <div className="px-2.5 py-1.5 border-b border-neutral-200 dark:border-neutral-800 flex items-center space-x-1.5 text-[11px] font-semibold text-neutral-900 dark:text-white">
-                  <Scale className="w-3.5 h-3.5 shrink-0 stroke-[1.5] text-neutral-500 dark:text-neutral-400" />
-                  <span>{t('landing.principles.items.item4.factTitle', '食材拆解')}</span>
-                </div>
-                <div className="p-2.5 font-mono text-[11px] text-neutral-700 dark:text-neutral-300 space-y-0.5 flex-1 flex flex-col justify-center">
-                  <div>{t('landing.principles.items.item4.factLine1', '牛腱 150g · 麵 80g')}</div>
-                  <div className="text-telemetry-accent font-semibold">{t('landing.principles.items.item4.factLine2', '+ 橄欖油 8g')}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
     </div>
   </section>
 

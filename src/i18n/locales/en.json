@@ -1315,7 +1315,14 @@
         "tag": "[ 06 / Principles ]",
         "titleLine1": "Zero Anxiety Engineering",
         "titleLine2": "No Social Feeds, No Streak Shaming, No Preaching, No Blackboxes",
-        "desc": "You don't need an app to nag you, preach, or compare you to others. e2Cal removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp instrument.",
+        "desc": "You don't need an app to nag you, preach, or compare you to others. e2Cal removes all cognitive clutter: whether you logged today or not, it remains a calm, sharp logging tool.",
+        "manifestoDesc": "No social feeds, no streak shaming, no preaching, no blackboxes. e2Cal is a calm logging tool that strips away every distraction.",
+        "summary": {
+          "grading": "Grading & Commands",
+          "social": "Social & Feeds",
+          "streaks": "Streaks & Nags",
+          "blackbox": "Dish Blackboxes"
+        },
         "items": {
           "item1": {
             "tag": "01 // No Grading or Prescriptions",
@@ -1325,7 +1332,8 @@
             "legacyBad": "Carbs too high today. Run 40 min tomorrow to burn it off.",
             "factTitle": "Objective Reality",
             "factGood": "2,180 / 2,000 kcal · +180 kcal",
-            "factNote": "Only objective facts from your logs. Eat more or less, move more or less—every choice is yours."
+            "factNote": "Only objective facts from your logs. Eat more or less, move more or less—every choice is yours.",
+            "diffGood": "2,180 / 2,000 kcal · +180 kcal (objective fact only)"
           },
           "item2": {
             "tag": "02 // No Social Feeds or Peer Pressure",
@@ -1334,7 +1342,8 @@
             "legacyTitle": "Friend Feed",
             "legacyBad": "Alex has lower body fat than 90% of peers—push harder to catch up.",
             "factTitle": "Quantified Self",
-            "factGood": "Local IndexedDB only · No public feed. Zero anxiety, no need to perform discipline."
+            "factGood": "Local IndexedDB only · No public feed. Zero anxiety, no need to perform discipline.",
+            "diffGood": "Stored locally in IndexedDB · 0 public feeds"
           },
           "item3": {
             "tag": "03 // No Mandatory Streaks or Punishments",
@@ -1343,7 +1352,8 @@
             "legacyTitle": "Streak Broken",
             "legacyBad": "Streak broken. Watch an ad or spend 50 gems to restore.",
             "factTitle": "Calmly on Standby",
-            "factGood": "Logged or not, facts are facts. Your body and life matter most—never feel ashamed of gaps."
+            "factGood": "Logged or not, facts are facts. Your body and life matter most—never feel ashamed of gaps.",
+            "diffGood": "Logged or not, facts are facts · Always ready"
           },
           "item4": {
             "tag": "04 // No Vague Dish Calorie Estimates",
@@ -1353,7 +1363,8 @@
             "legacyBad": "Fixed estimate: 1 Bowl Beef Noodles = 750 kcal",
             "factTitle": "Ingredient Breakdown",
             "factLine1": "Beef Shank 150 g · Noodles 80 g",
-            "factLine2": "+ Olive Oil 8 g"
+            "factLine2": "+ Olive Oil 8 g",
+            "diffGood": "Beef Shank 150 g · Noodles 80 g · Olive Oil 8 g"
           }
         }
       },
