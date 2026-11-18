@@ -1303,8 +1303,10 @@
         "titleLine1": "Filter Fluid Noise, Reveal Real Progress",
         "titleLine2": "7-Day Smoothed EMA, Body Circumferences & Objective Trends",
         "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. e2Cal filters out noise with mathematical smoothing while tracking body circumferences.",
-        "chartHeader": "WEIGHT TREND · 7D EMA FILTER",
-        "chartFooter": "Solid line: 7-day EMA trend · Hollow dots: daily raw readings"
+        "chartHeader": "WEIGHT TREND",
+        "chartFooter": "Solid line: 7-day EMA trend · Hollow dots: daily raw readings",
+        "todayHeader": "DAILY SNAPSHOT",
+        "metricsHeader": "BODY COMPOSITION"
       },
       "analytics": {
         "tag": "[ 04 / Analytics ]",
@@ -1388,6 +1390,30 @@
         "titleLine1": "Reliable Through Radical Restraint",
         "titleLine2": "Zero Dependencies, Pure Client Math, Indestructible Data",
         "desc": "No bloated tracking SDKs or heavy frameworks. Pure mathematical functions and 100% unit test coverage guarantee deterministic execution.",
+        "summaryDesc": "Zero third-party tracking, pure client computation, and indestructible local data. e2Cal runs on a lean modern web stack built for deterministic speed.",
+        "ctaNote": "No account · Offline ready · 100% local data",
+        "stack": {
+          "core": {
+            "label": "Frontend Core",
+            "desc": "Strict static typing and instant local rendering"
+          },
+          "ui": {
+            "label": "UI & Typography",
+            "desc": "Flat zero-shadow system with offline monospace fonts"
+          },
+          "storage": {
+            "label": "Local Storage",
+            "desc": "Persistent browser database with safe schema migrations"
+          },
+          "sync": {
+            "label": "Offline & Sync",
+            "desc": "Full static caching, direct private sync, and ZIP backup"
+          },
+          "quality": {
+            "label": "Math & Quality",
+            "desc": "Pure math functions guarded by 546 automated unit tests"
+          }
+        },
         "cards": {
           "speed": {
             "title": "01 // Speed & Fluidity",

@@ -170,6 +170,7 @@
     --primary-subtle-border: rgba(0, 0, 0, 0.22);
     --track: #e4e4e7;
     --hover: rgba(0, 0, 0, 0.025);
+    --canvas-dot: rgba(0, 0, 0, 0.055);
     --telemetry-accent: #e0533c;
 
     /* 熱量與三大營養素 - 亮色模式 (高對比、WCAG AA 達標且純淨洗練) */
@@ -267,6 +268,7 @@
     --primary-subtle-border: rgba(255, 255, 255, 0.26);
     --track: #27272a;
     --hover: rgba(255, 255, 255, 0.038);
+    --canvas-dot: rgba(255, 255, 255, 0.08);
     --telemetry-accent: #e0533c;
 
     /* 熱量與三大營養素 - 深色模式 (純黑背景下明快清透、無光暈污染) */

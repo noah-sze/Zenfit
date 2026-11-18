@@ -1303,8 +1303,10 @@
         "titleLine1": "过滤水分波动，看懂真实体态",
         "titleLine2": "7 天平滑曲线、身体围度追踪与客观进展",
         "desc": "喝水多寡与重咸饮食，常让单日体重上下跳动 1～2 公斤。e2Cal 自动过滤水分干扰，帮您算出身体的真实增减趋势；同步支持胸围、腰围等围度追踪，只摆客观事实，告别体重焦虑。",
-        "chartHeader": "WEIGHT TREND · 7D EMA FILTER",
-        "chartFooter": "实线为 7 天抗噪平滑体重 · 空心点为每日原始称重"
+        "chartHeader": "WEIGHT TREND",
+        "chartFooter": "实线为 7 天抗噪平滑体重 · 空心点为每日原始称重",
+        "todayHeader": "DAILY SNAPSHOT",
+        "metricsHeader": "BODY COMPOSITION"
       },
       "analytics": {
         "tag": "[ 04 / 分析 ]",
@@ -1388,6 +1390,30 @@
         "titleLine1": "可靠，源自极致克制",
         "titleLine2": "零外部依赖、纯本地计算、永不损坏数据",
         "desc": "拒绝臃肿的第三方追踪与肥大框架。e2Cal 透过无副作用纯数学纯函数与 100% 单元测试防线，保证您的每一次点击都获得毫秒级的确定性。",
+        "summaryDesc": "零第三方追踪、纯本地计算、永不损坏数据。e2Cal 采用极简现代 Web 技术栈，确保每一次点击都毫秒级确定响应。",
+        "ctaNote": "无需注册 · 离线可用 · 数据 100% 存于本机",
+        "stack": {
+          "core": {
+            "label": "前端核心",
+            "desc": "严格类型约束与极速打包构建"
+          },
+          "ui": {
+            "label": "界面与字体",
+            "desc": "极简无阴影系统与离线等宽字体"
+          },
+          "storage": {
+            "label": "本地数据库",
+            "desc": "原生持久化存储与平滑版本迁移"
+          },
+          "sync": {
+            "label": "离线与同步",
+            "desc": "全静态缓存、直连私密同步与整包导出"
+          },
+          "quality": {
+            "label": "数学与测试防线",
+            "desc": "纯函数演算与 546 项自动化单元测试"
+          }
+        },
         "cards": {
           "speed": {
             "title": "01 // 极致速度与流畅",

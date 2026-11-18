@@ -32,7 +32,7 @@ interface ShareFormatItem {
 }
 
 const DOT_GRID_STYLE = {
-  backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
+  backgroundImage: 'radial-gradient(var(--canvas-dot) 1px, transparent 1px)',
   backgroundSize: '16px 16px',
 } as const;
 
@@ -48,7 +48,7 @@ function UseCaseChips({
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {label ? (
-        <span className="font-mono text-[10.5px] text-muted-foreground mr-0.5 shrink-0">
+        <span className="font-mono text-2xs text-muted-foreground mr-0.5 shrink-0">
           {label}
         </span>
       ) : null}
@@ -57,8 +57,8 @@ function UseCaseChips({
           key={item}
           className={
             emphasized
-              ? 'inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-card text-[11px] leading-tight text-foreground whitespace-nowrap'
-              : 'inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-card text-[11px] leading-tight text-muted-foreground whitespace-nowrap'
+              ? 'inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-card text-xs leading-tight text-foreground whitespace-nowrap'
+              : 'inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-card text-xs leading-tight text-muted-foreground whitespace-nowrap'
           }
         >
           {item}
@@ -90,8 +90,8 @@ function CopyActionButton({
       onClick={onClick}
       className={
         copied
-          ? 'h-6.5 px-2.5 rounded-full border-emerald-600 dark:border-emerald-400 bg-card text-emerald-600 dark:text-emerald-400 hover:bg-hover font-mono text-[11px] font-medium shadow-none cursor-pointer gap-1 shrink-0'
-          : 'h-6.5 px-2.5 rounded-full border-border bg-card text-foreground hover:border-foreground hover:bg-hover font-mono text-[11px] font-medium shadow-none cursor-pointer gap-1 shrink-0'
+          ? 'h-7 px-3 rounded-full border-emerald-600 dark:border-emerald-400 bg-card text-emerald-600 dark:text-emerald-400 hover:bg-hover font-mono text-xs font-medium shadow-none cursor-pointer gap-1 shrink-0'
+          : 'h-7 px-3 rounded-full border-border bg-card text-foreground hover:border-foreground hover:bg-hover font-mono text-xs font-medium shadow-none cursor-pointer gap-1 shrink-0'
       }
     >
       {isBusy ? (
@@ -469,7 +469,7 @@ export function ShareShowcaseCards({
         <div
           className={
             compact
-              ? 'font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words text-muted-foreground'
+              ? 'font-mono text-xs leading-relaxed whitespace-pre-wrap break-words text-muted-foreground'
               : 'font-mono text-xs leading-relaxed whitespace-pre-wrap break-words text-muted-foreground select-text'
           }
         >
@@ -482,7 +482,7 @@ export function ShareShowcaseCards({
       <div
         className={
           compact
-            ? 'font-mono text-[11px] leading-relaxed whitespace-pre text-muted-foreground'
+            ? 'font-mono text-xs leading-relaxed whitespace-pre text-muted-foreground'
             : 'font-mono text-xs leading-relaxed whitespace-pre text-muted-foreground select-text'
         }
       >
@@ -517,8 +517,8 @@ export function ShareShowcaseCards({
                 }}
                 className={
                   isActive
-                    ? 'w-full text-left px-4 py-3.5 flex items-start justify-between gap-3 relative bg-muted/40 transition-colors cursor-pointer'
-                    : 'w-full text-left px-4 py-3.5 flex items-start justify-between gap-3 relative bg-card hover:bg-hover transition-colors cursor-pointer'
+                    ? 'w-full text-left px-4 py-3 flex items-start justify-between gap-3 relative bg-muted/40 transition-colors cursor-pointer'
+                    : 'w-full text-left px-4 py-3 flex items-start justify-between gap-3 relative bg-card hover:bg-hover transition-colors cursor-pointer'
                 }
               >
                 {isActive ? (
@@ -527,7 +527,7 @@ export function ShareShowcaseCards({
 
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
                       {item.index}
                     </span>
                     <span className="text-sm font-semibold text-foreground font-sans">
@@ -537,7 +537,7 @@ export function ShareShowcaseCards({
                   <p className="text-xs text-muted-foreground leading-relaxed font-sans">
                     {item.desc}
                   </p>
-                  <div className="pt-1.5">
+                  <div className="pt-2">
                     <UseCaseChips items={item.useCases} emphasized={isActive} />
                   </div>
                 </div>
@@ -545,8 +545,8 @@ export function ShareShowcaseCards({
                 <span
                   className={
                     isActive
-                      ? 'font-mono text-[10px] uppercase px-1.5 py-0.5 rounded border border-foreground bg-foreground text-background shrink-0 mt-0.5'
-                      : 'font-mono text-[10px] uppercase px-1.5 py-0.5 rounded border border-border bg-card text-muted-foreground shrink-0 mt-0.5'
+                      ? 'font-mono text-2xs uppercase px-1.5 py-0.5 rounded border border-foreground bg-foreground text-background shrink-0 mt-0.5'
+                      : 'font-mono text-2xs uppercase px-1.5 py-0.5 rounded border border-border bg-card text-muted-foreground shrink-0 mt-0.5'
                   }
                 >
                   {item.badge}
@@ -562,7 +562,7 @@ export function ShareShowcaseCards({
         <div className="lg:absolute lg:inset-0 rounded-lg border border-border bg-card text-card-foreground flex flex-col overflow-hidden shadow-none">
           {/* 表頭：與全站 SectionCard h-10 規格一致 */}
           <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 shrink-0">
-            <span className="font-mono text-[11px] font-medium tracking-wider text-foreground uppercase truncate">
+            <span className="font-mono text-xs font-normal tracking-wider text-neutral-500 dark:text-neutral-400 uppercase truncate">
               {activeItem.previewHeader}
             </span>
             <CopyActionButton
@@ -587,9 +587,9 @@ export function ShareShowcaseCards({
           </div>
 
           {/* 底部場景與規格欄（與 SyncTopologyDiagram h-9 底欄同頻） */}
-          <div className="min-h-9 px-4 py-1.5 border-t border-border bg-muted/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="min-h-9 px-4 py-2 border-t border-border bg-muted/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
             <UseCaseChips items={activeItem.useCases} label={useCaseLabel} emphasized />
-            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider shrink-0">
+            <span className="font-mono text-2xs text-neutral-400 dark:text-neutral-500 uppercase tracking-wider shrink-0">
               {activeItem.spec}
             </span>
           </div>
@@ -610,8 +610,8 @@ export function ShareShowcaseCards({
               }
             >
               {/* 表頭：格式編號 + 輕量複製鈕 */}
-              <div className="h-10 px-3.5 bg-muted/40 border-b border-border flex items-center justify-between gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-medium tracking-wider text-foreground uppercase truncate">
+              <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-2 shrink-0">
+                <span className="font-mono text-xs font-normal tracking-wider text-neutral-500 dark:text-neutral-400 uppercase truncate">
                   {item.index} // {item.badge}
                 </span>
                 <CopyActionButton
@@ -624,7 +624,7 @@ export function ShareShowcaseCards({
               </div>
 
               {/* 標題與簡介 */}
-              <div className="px-3.5 py-3 border-b border-border space-y-1 shrink-0">
+              <div className="px-4 py-3 border-b border-border space-y-1 shrink-0">
                 <h3 className="text-sm font-semibold text-foreground font-sans">
                   {item.title}
                 </h3>
@@ -651,7 +651,7 @@ export function ShareShowcaseCards({
               </div>
 
               {/* 底欄：適用場景標籤 */}
-              <div className="min-h-9 px-3.5 py-2 border-t border-border bg-muted/40 flex items-center shrink-0">
+              <div className="min-h-9 px-4 py-2 border-t border-border bg-muted/40 flex items-center shrink-0">
                 <UseCaseChips items={item.useCases} label={useCaseLabel} emphasized />
               </div>
             </div>
