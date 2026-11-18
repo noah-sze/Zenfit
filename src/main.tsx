@@ -55,11 +55,6 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// 平滑關閉 PWA 首屏看門狗
-if (typeof (window as any).__dismissAppShell === 'function') {
-  (window as any).__dismissAppShell();
-}
-
 // 修復 iOS Safari/PWA 虛擬鍵盤或輸入框聚焦引發的 visualViewport 殘留偏移導致點擊錯位
 if (typeof window !== 'undefined') {
   document.addEventListener('focusout', (e) => {

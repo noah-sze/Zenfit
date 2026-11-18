@@ -62,12 +62,6 @@ export function WelcomeTransitionOverlay({
     };
   }, [open, duration, totalTicks]);
 
-  // 點擊任意處略過
-  const handleSkip = () => {
-    triggerHaptic('selection');
-    onFinishRef.current();
-  };
-
   if (!open) {
     return null;
   }
@@ -77,8 +71,7 @@ export function WelcomeTransitionOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={t('welcome.entering', '正在進入 e2Cal ……')}
-      onClick={handleSkip}
-      className="fixed inset-0 z-[100] bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer opacity-100 pointer-events-auto"
+      className="fixed inset-0 z-[100] bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden opacity-100 pointer-events-auto"
     >
       {/* 3D Celestial Wireframe Dome (天體經緯線框球體，以 1px 髮絲線深邃旋轉) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[420px] h-[340px] sm:h-[420px] pointer-events-none opacity-[0.12] dark:opacity-[0.18] text-foreground select-none">
@@ -135,11 +128,6 @@ export function WelcomeTransitionOverlay({
             );
           })}
         </div>
-      </div>
-
-      {/* 右上角極致克制略過提示 */}
-      <div className="absolute top-safe right-4 pt-4 text-[10px] font-mono text-muted-foreground uppercase tracking-widest pointer-events-none opacity-60">
-        {t('welcome.skipPrompt', '點擊任意處進入')}
       </div>
     </div>
   );
