@@ -13,6 +13,9 @@ import { requestStoragePersistence } from '@/services/storage/storageManager'
 import { prewarmFoodsCache } from '@/hooks/useFoods'
 import { prewarmRecipesCache } from '@/hooks/useRecipes'
 import { prewarmExercisesCache } from '@/hooks/useExercises'
+import { initPwaInstallListener } from '@/hooks/usePwaInstall'
+
+initPwaInstallListener()
 
 // 在生產環境自動註冊 PWA Service Worker 實現 100% 離線可用；
 // 在本機開發環境 (npm run dev) 主動清理並註銷殘留的 Service Worker，避免 HMR/ESM 請求被攔截導致死鎖

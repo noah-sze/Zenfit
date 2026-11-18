@@ -26,6 +26,7 @@ import { useUnitPreferences } from '@/hooks/useUnitPreferences';
 import { useBodyPreferences } from '@/hooks/useBodyPreferences';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDropboxSync } from '@/hooks/useDropboxSync';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { DropboxSyncDialog } from '@/components/settings/dialogs/DropboxSyncDialog';
 import { ClearDataModal } from '@/components/settings/ClearDataModal';
 import { ImportStrategyModal } from '@/components/settings/dialogs/ImportStrategyModal';
@@ -47,6 +48,11 @@ export default function Settings() {
   const { preferences, updatePreset, updatePreference } = useUnitPreferences();
   const { bodyPreferences, updateBodyPreference } = useBodyPreferences();
   const { profile } = useUserProfile();
+  const {
+    showSettingsToggle: showPwaInstallSetting,
+    hidePwaInstallPrompt,
+    setHidePwaInstallPrompt,
+  } = usePwaInstall();
   const confirm = useConfirm();
 
   const [isDropboxDialogOpen, setIsDropboxDialogOpen] = useState(false);
@@ -304,6 +310,38 @@ export default function Settings() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* PWA 安裝按鈕顯示開關（安裝 PWA 後不顯示） */}
+          {showPwaInstallSetting && (
+            <div className="usage-row">
+              <span className="text-sm font-normal text-foreground">
+                {t('settings.pwaInstallButton')}
+              </span>
+              <Select
+                value={hidePwaInstallPrompt ? 'hide' : 'show'}
+                onValueChange={(v) => {
+                  if (!v) return;
+                  triggerHaptic('selection');
+                  setHidePwaInstallPrompt(v === 'hide');
+                }}
+              >
+                <SelectTrigger
+                  size="custom"
+                  className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                >
+                  <SelectValue className="flex-none text-right">
+                    {hidePwaInstallPrompt
+                      ? t('settings.hide')
+                      : t('settings.show')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent align="end" className="min-w-28">
+                  <SelectItem value="show">{t('settings.show')}</SelectItem>
+                  <SelectItem value="hide">{t('settings.hide')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </section>
 

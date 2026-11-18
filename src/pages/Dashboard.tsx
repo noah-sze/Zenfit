@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAppStore } from '@/store/useAppStore';
@@ -10,9 +10,12 @@ import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyMetrics } from '@/hooks/useBodyMetrics';
 import { useBodyRecovery } from '@/hooks/useBodyRecovery';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { formatEnergy, convertBodyWeight, kgToLbs } from '@/utils/unitMath';
 import { triggerHaptic } from '@/lib/haptics';
+import { toast } from '@/components/ui/toast';
 import { DashboardView } from '@/components/dashboard/DashboardView';
+import { PwaInstallGuideDialog } from '@/components/pwa/PwaInstallGuideDialog';
 
 function getGreeting(t: TFunction, name: string): string {
   const hour = new Date().getHours();
@@ -31,6 +34,20 @@ export default function Dashboard() {
   const { setActiveTab } = useInAppNavigation();
   const { profile } = useUserProfile();
   const { energyUnit, bodyWeightUnit } = useUnitPreferences();
+  const { showInstallButton, triggerInstall, setHidePwaInstallPrompt } = usePwaInstall();
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
+
+  const handleInstallClick = async () => {
+    const outcome = await triggerInstall();
+    if (outcome === 'accepted') {
+      triggerHaptic('success');
+      toast.show(t('pwa.installed'));
+      return;
+    }
+    if (outcome === 'unsupported') {
+      setIsInstallGuideOpen(true);
+    }
+  };
 
   // 1. 體態與體重數據 (與體態頁面機制一致：今日已錄入為正常色，未錄入則調用最後一次歷史值並呈灰色)
   const { metricToday, recentHistory } = useBodyMetrics(selectedDate);
@@ -105,33 +122,43 @@ export default function Dashboard() {
   }, [workouts, bodyWeightUnit]);
 
   return (
-    <DashboardView
-      gender={profile.gender}
-      greeting={getGreeting(t, profile.name || 'Jason')}
-      displayWeight={displayWeight}
-      bodyWeightUnit={bodyWeightUnit}
-      hasTodayWeight={hasTodayWeight}
-      consumedEnergy={consumedEnergy}
-      energyUnit={energyUnit}
-      energyDiff={energyDiff}
-      targetEnergy={targetEnergy}
-      totals={totals}
-      targetMacros={targetMacros}
-      recoverySummary={recoverySummary}
-      stats={stats}
-      className="pb-20"
-      onNavigateBody={() => {
-        triggerHaptic('light');
-        setActiveTab('body');
-      }}
-      onNavigateDiet={() => {
-        triggerHaptic('light');
-        setActiveTab('diet');
-      }}
-      onNavigateWorkout={() => {
-        triggerHaptic('light');
-        setActiveTab('workout');
-      }}
-    />
+    <>
+      <DashboardView
+        gender={profile.gender}
+        greeting={getGreeting(t, profile.name || 'Jason')}
+        showInstallButton={showInstallButton}
+        onInstallClick={handleInstallClick}
+        displayWeight={displayWeight}
+        bodyWeightUnit={bodyWeightUnit}
+        hasTodayWeight={hasTodayWeight}
+        consumedEnergy={consumedEnergy}
+        energyUnit={energyUnit}
+        energyDiff={energyDiff}
+        targetEnergy={targetEnergy}
+        totals={totals}
+        targetMacros={targetMacros}
+        recoverySummary={recoverySummary}
+        stats={stats}
+        className="pb-20"
+        onNavigateBody={() => {
+          triggerHaptic('light');
+          setActiveTab('body');
+        }}
+        onNavigateDiet={() => {
+          triggerHaptic('light');
+          setActiveTab('diet');
+        }}
+        onNavigateWorkout={() => {
+          triggerHaptic('light');
+          setActiveTab('workout');
+        }}
+      />
+
+      <PwaInstallGuideDialog
+        open={isInstallGuideOpen}
+        onOpenChange={setIsInstallGuideOpen}
+        onHidePrompt={() => setHidePwaInstallPrompt(true)}
+      />
+    </>
   );
 }

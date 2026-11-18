@@ -817,6 +817,9 @@
       "themeLight": "浅色",
       "themeDark": "深色",
       "language": "界面语言",
+      "pwaInstallButton": "安装按钮",
+      "show": "显示",
+      "hide": "隐藏",
       "unitsSection": "度量衡单位",
       "unitsDesc": "记录与统计所用物理单位",
       "unitPreset": "制式模板",
@@ -1572,6 +1575,81 @@
       "resetWarningNoE2ee": "重设后将关闭本地 PIN 锁保护，您的运动与饮食数据不会受影响",
       "legacyResetConfirm": "确认重设并解锁",
       "backToPin": "返回输入 PIN 码"
+    },
+    "pwa": {
+      "install": "安装",
+      "installed": "已安装",
+      "guideTitle": "安装应用",
+      "deviceLabel": "设备",
+      "dontShowAgain": "不再提示",
+      "hiddenToast": "已隐藏",
+      "inAppBadge": "STEP 0",
+      "inAppTitle": "先用系统浏览器打开",
+      "inAppPrefix": "当前处于 App 内置浏览器，请先点击右上角",
+      "inAppMiddle": "并选择",
+      "inAppSuffix": "，再按下方步骤安装。",
+      "platforms": {
+        "iosSafari": "iOS Safari",
+        "iosChrome": "iOS Chrome",
+        "androidChrome": "Android Chrome · Edge",
+        "macosSafari": "macOS Safari",
+        "desktopChromium": "桌面 Chrome · Edge"
+      },
+      "badges": {
+        "share": "分享",
+        "addToHomeScreen": "添加到主屏幕",
+        "add": "添加",
+        "browserMenu": "菜单",
+        "installApp": "安装应用",
+        "install": "安装",
+        "addToDock": "添加到程序坞",
+        "installIcon": "安装图标",
+        "moreMenu": "更多",
+        "openInSafari": "在 Safari 中打开",
+        "openInBrowser": "在浏览器中打开"
+      },
+      "steps": {
+        "iosSafari": {
+          "s1Prefix": "点击屏幕底部工具栏的",
+          "s1Suffix": "按钮（iPad 位于右上角地址栏旁）。",
+          "s2Prefix": "向下滑动菜单，点击",
+          "s2Suffix": "。",
+          "s3Prefix": "确认名称后，点击右上角",
+          "s3Suffix": "即完成安装。"
+        },
+        "iosChrome": {
+          "s1Prefix": "点击右上角地址栏旁的",
+          "s1Suffix": "按钮。",
+          "s2Prefix": "向下滑动菜单，点击",
+          "s2Suffix": "。",
+          "s3Prefix": "点击右上角",
+          "s3Suffix": "，即可从主屏幕全屏启动。"
+        },
+        "androidChrome": {
+          "s1Prefix": "点击浏览器右上角的",
+          "s1Suffix": "按钮（Edge 位于右下角）。",
+          "s2Prefix": "在菜单中点击",
+          "s2Suffix": "（或「添加到主屏幕」）。",
+          "s3Prefix": "在确认弹窗中点击",
+          "s3Suffix": "，稍等片刻图标即会出现在桌面。"
+        },
+        "macosSafari": {
+          "s1Prefix": "点击工具栏右上角的",
+          "s1Suffix": "按钮（或顶部菜单栏「文件」）。",
+          "s2Prefix": "选择",
+          "s2Suffix": "。",
+          "s3Prefix": "点击",
+          "s3Suffix": "，即可直接从程序坞独立打开。"
+        },
+        "desktopChromium": {
+          "s1Prefix": "点击地址栏最右侧的",
+          "s1Suffix": "。",
+          "s2Prefix": "如未看到图标，点击右上角",
+          "s2Suffix": "，在「投放、保存和分享」或「应用」中选择安装。",
+          "s3Prefix": "在确认弹窗中点击",
+          "s3Suffix": "，系统将自动创建桌面应用。"
+        }
+      }
     }
   }
 }

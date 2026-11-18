@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Download } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { WorkoutRecoveryDashboard } from '@/components/workout/WorkoutRecoveryDashboard';
@@ -9,6 +9,8 @@ import type { BodyRecoverySummary } from '@/utils/recoveryMath';
 export interface DashboardViewProps {
   gender?: 'male' | 'female';
   greeting: string;
+  showInstallButton?: boolean;
+  onInstallClick?: () => void;
   displayWeight: number | null;
   bodyWeightUnit: string;
   hasTodayWeight: boolean;
@@ -42,6 +44,8 @@ export interface DashboardViewProps {
 export function DashboardView({
   gender = 'male',
   greeting,
+  showInstallButton = false,
+  onInstallClick,
   displayWeight,
   bodyWeightUnit,
   hasTodayWeight,
@@ -64,12 +68,26 @@ export function DashboardView({
   return (
     <div className={cn("w-full max-w-xl mx-auto space-y-4 select-none", className)}>
       {/* ========================================================================= */}
-      {/* 頂部列：問候語 + 今日體重入口卡片 (點擊跳轉「體態界面」) */}
+      {/* 頂部列：PWA 安裝按鈕（未安裝且未隱藏時）或問候語 + 今日體重入口卡片 */}
       {/* ========================================================================= */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg sm:text-xl font-medium tracking-tight text-foreground font-sans truncate pr-2">
-          {greeting}
-        </h1>
+      <div className="flex items-center justify-between gap-2">
+        {showInstallButton ? (
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              onInstallClick?.();
+            }}
+            className="h-8 px-3.5 rounded-full bg-foreground text-background hover:opacity-90 active:scale-95 transition-[opacity,transform] cursor-pointer font-sans text-xs font-medium inline-flex items-center gap-1.5 select-none shrink-0"
+          >
+            <Download className="size-3.5 stroke-[2.2]" />
+            <span>{t('pwa.install')}</span>
+          </button>
+        ) : (
+          <h1 className="text-lg sm:text-xl font-medium tracking-tight text-foreground font-sans truncate pr-2">
+            {greeting}
+          </h1>
+        )}
 
         <button
           type="button"

@@ -817,6 +817,9 @@
       "themeLight": "Light",
       "themeDark": "Dark",
       "language": "Language",
+      "pwaInstallButton": "Install Button",
+      "show": "Show",
+      "hide": "Hide",
       "unitsSection": "Units",
       "unitsDesc": "Physical units for tracking and stats",
       "unitPreset": "System Preset",
@@ -1572,6 +1575,81 @@
       "resetWarningNoE2ee": "Resetting disables local PIN lock without affecting your data",
       "legacyResetConfirm": "Confirm Reset & Unlock",
       "backToPin": "Back to PIN"
+    },
+    "pwa": {
+      "install": "Install",
+      "installed": "Installed",
+      "guideTitle": "Install App",
+      "deviceLabel": "Device",
+      "dontShowAgain": "Don't show again",
+      "hiddenToast": "Hidden",
+      "inAppBadge": "STEP 0",
+      "inAppTitle": "Open in System Browser First",
+      "inAppPrefix": "In-app browser detected. Tap",
+      "inAppMiddle": "at the top right, choose",
+      "inAppSuffix": ", then follow the steps below.",
+      "platforms": {
+        "iosSafari": "iOS Safari",
+        "iosChrome": "iOS Chrome",
+        "androidChrome": "Android Chrome · Edge",
+        "macosSafari": "macOS Safari",
+        "desktopChromium": "Desktop Chrome · Edge"
+      },
+      "badges": {
+        "share": "Share",
+        "addToHomeScreen": "Add to Home Screen",
+        "add": "Add",
+        "browserMenu": "Menu",
+        "installApp": "Install app",
+        "install": "Install",
+        "addToDock": "Add to Dock",
+        "installIcon": "Install icon",
+        "moreMenu": "More",
+        "openInSafari": "Open in Safari",
+        "openInBrowser": "Open in Browser"
+      },
+      "steps": {
+        "iosSafari": {
+          "s1Prefix": "Tap the",
+          "s1Suffix": "button in the bottom toolbar (top right on iPad).",
+          "s2Prefix": "Scroll down the sheet and tap",
+          "s2Suffix": ".",
+          "s3Prefix": "Tap",
+          "s3Suffix": "in the top right to finish installing."
+        },
+        "iosChrome": {
+          "s1Prefix": "Tap the",
+          "s1Suffix": "button next to the top address bar.",
+          "s2Prefix": "Scroll down the sheet and tap",
+          "s2Suffix": ".",
+          "s3Prefix": "Tap",
+          "s3Suffix": "in the top right to launch full-screen from Home."
+        },
+        "androidChrome": {
+          "s1Prefix": "Tap the",
+          "s1Suffix": "button at the top right (bottom right in Edge).",
+          "s2Prefix": "Select",
+          "s2Suffix": "(or \"Add to Home screen\").",
+          "s3Prefix": "Tap",
+          "s3Suffix": "to confirm and add the icon to your home screen."
+        },
+        "macosSafari": {
+          "s1Prefix": "Click",
+          "s1Suffix": "in the top-right toolbar (or \"File\" in the menu bar).",
+          "s2Prefix": "Choose",
+          "s2Suffix": ".",
+          "s3Prefix": "Click",
+          "s3Suffix": "to install it as a standalone Dock app."
+        },
+        "desktopChromium": {
+          "s1Prefix": "Click the",
+          "s1Suffix": "on the right side of the address bar.",
+          "s2Prefix": "If hidden, click",
+          "s2Suffix": "at the top right and open \"Cast, save, and share\" or \"Apps\".",
+          "s3Prefix": "Click",
+          "s3Suffix": "to create the desktop app shortcut."
+        }
+      }
     }
   }
 }
