@@ -91,7 +91,7 @@ export function FoodFormDialog({
 
   // 基本資訊狀態
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<FoodCategory>('natural');
+  const [category, setCategory] = useState<FoodCategory | ''>('');
   const [brand, setBrand] = useState('');
   const [isBrandFocused, setIsBrandFocused] = useState(false);
   const [brandHighlightIdx, setBrandHighlightIdx] = useState(-1);
@@ -254,9 +254,9 @@ export function FoodFormDialog({
         setFat(initialData.fat ? String(initialData.fat) : '');
       }
     } else {
-      // 新增模式：完全純淨無初始數值
+      // 新增模式：完全純淨無初始數值，分類預設為空
       setName('');
-      setCategory('natural');
+      setCategory('');
       setBrand('');
       setServingSize('');
       setServingUnit(foodWeightUnit);
@@ -517,7 +517,7 @@ export function FoodFormDialog({
   // 表單送出處理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0) return;
+    if (!name.trim() || !category || isSubmitting || !servingSize || parseFloat(servingSize) <= 0) return;
 
     setIsSubmitting(true);
     try {
@@ -610,7 +610,7 @@ export function FoodFormDialog({
         <PrecisionDialogContent
           title={isEdit ? t('settings.editCustomFood') : t('diet.addFood', '新增單品食材')}
           form={formId}
-          submitDisabled={!name.trim() || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
+          submitDisabled={!name.trim() || !category || isSubmitting || !servingSize || parseFloat(servingSize) <= 0}
           submitAriaLabel={isEdit ? t('common.save') : t('common.add')}
           cancelAriaLabel={t('common.cancel')}
           overlayClassName={overlayClassName || (zIndex ? `z-[${zIndex}]` : "z-[70]")}
@@ -694,7 +694,7 @@ export function FoodFormDialog({
               <div className="h-10 px-4 flex items-center justify-between">
                 <span className="text-muted-foreground text-xs">{t('diet.foodCategory.title')}</span>
                 <Select
-                  value={category}
+                  value={category || null}
                   onValueChange={(val) => {
                     if (val) {
                       triggerHaptic('selection');
@@ -707,8 +707,14 @@ export function FoodFormDialog({
                     iconClassName="size-3 text-muted-foreground/60"
                     className="h-7 px-3 rounded-full border border-border/80 bg-background hover:bg-hover font-sans text-xs flex items-center gap-1.5 transition-colors cursor-pointer text-foreground active:scale-95"
                   >
-                    <SelectValue className="font-bold text-foreground">
-                      {t(`diet.foodCategory.${category}`)}
+                    <SelectValue
+                      className={cn(
+                        category
+                          ? 'font-bold text-foreground'
+                          : 'font-normal font-mono text-muted-foreground/40 select-none'
+                      )}
+                    >
+                      {category ? t(`diet.foodCategory.${category}`) : '-'}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="end" className="min-w-36">
