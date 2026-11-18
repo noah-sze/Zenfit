@@ -11,7 +11,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeManifestIcons: false,
       manifest: {
+        id: '/app',
         name: 'e2Cal',
         short_name: 'e2Cal',
         description: 'Minimalist craft diet & fitness tracker engineered with craft monochrome aesthetics and local-first privacy',
@@ -22,12 +24,6 @@ export default defineConfig({
         scope: '/',
         start_url: '/app',
         icons: [
-          {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
           {
             src: '/pwa-192x192.png',
             sizes: '192x192',
@@ -45,16 +41,28 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
+          },
+          {
+            src: '/favicon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
           }
         ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globIgnores: ['promo/**'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
         navigateFallback: '/index.html',
         navigateFallbackAllowlist: [/^(?!\/__).*/],
+        navigateFallbackDenylist: [
+          /^\/manifest\.webmanifest$/,
+          /^\/sw\.js$/,
+          /^\/workbox-.*\.js$/,
+        ],
       },
     }),
   ],

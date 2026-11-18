@@ -1,0 +1,22 @@
+# 自架 Caddy 範例（自動簽發 Let's Encrypt HTTPS 憑證，滿足 PWA HTTPS 硬需求）
+# 將 e2cal.example.com 替換為你的實際域名
+
+e2cal.example.com {
+    root * /srv/e2cal/dist
+    encode zstd gzip
+
+    @noCache path /sw.js /manifest.webmanifest /index.html
+    header @noCache Cache-Control "public, max-age=0, must-revalidate"
+
+    @sw path /sw.js
+    header @sw Service-Worker-Allowed "/"
+
+    @manifest path /manifest.webmanifest
+    header @manifest Content-Type "application/manifest+json; charset=utf-8"
+
+    @immutable path /assets/*
+    header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+    file_server
+    try_files {path} /index.html
+}
