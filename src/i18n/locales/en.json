@@ -1291,13 +1291,20 @@
         "tag": "[ 02 / Workout ]",
         "titleLine1": "Strength Biomechanics & Sets",
         "titleLine2": "Anatomy Heatmaps, Effective Sets & Pure Math e1RM",
-        "desc": "Strict separation of warm-up and working sets. Accurate weight and reps with battle-tested Brzycki / Epley e1RM formulas and weekly effective volume distribution."
+        "desc": "Strict separation of warm-up and working sets. Accurate weight and reps with battle-tested Brzycki / Epley e1RM formulas and weekly effective volume distribution.",
+        "cards": {
+          "anatomyLabel": "Muscle Recovery",
+          "setsLabel": "Sets Log",
+          "analyticsLabel": "Strength Footprint"
+        }
       },
       "body": {
         "tag": "[ 03 / Body ]",
         "titleLine1": "Filter Fluid Noise, Reveal Real Progress",
         "titleLine2": "7-Day Smoothed EMA, Body Circumferences & Objective Trends",
-        "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. e2Cal filters out noise with mathematical smoothing while tracking body circumferences."
+        "desc": "Fluid retention and sodium intake can swing body weight by 1-2 kg. e2Cal filters out noise with mathematical smoothing while tracking body circumferences.",
+        "chartHeader": "WEIGHT TREND · 7D EMA FILTER",
+        "chartFooter": "Solid line: 7-day EMA trend · Hollow dots: daily raw readings"
       },
       "analytics": {
         "tag": "[ 04 / Analytics ]",

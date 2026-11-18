@@ -98,6 +98,19 @@ export default function LandingPage() {
     [t]
   );
 
+  const demoBodyTrendSummary = useMemo(() => {
+    const latest = DEMO_WEIGHT_TREND_DATA[DEMO_WEIGHT_TREND_DATA.length - 1];
+    const cutoffMs = latest ? new Date(latest.date).getTime() - 29 * 24 * 60 * 60 * 1000 : 0;
+    const count30d = DEMO_WEIGHT_TREND_DATA.filter(
+      (p) => new Date(p.date).getTime() >= cutoffMs
+    ).length;
+    const rawWeight = DEMO_BODY_TODAY_DATA.weight ?? 69;
+    const trendWeight = DEMO_BODY_METRICS_DATA.trendWeight ?? 68.85;
+    const delta = Math.round((trendWeight - rawWeight) * 100) / 100;
+    const deltaText = `${delta > 0 ? '+' : ''}${delta.toFixed(2)} ${demoDashboardData.bodyWeightUnit}`;
+    return { count30d, deltaText };
+  }, [demoDashboardData.bodyWeightUnit]);
+
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
@@ -477,11 +490,11 @@ export default function LandingPage() {
   {/*  03. STRENGTH & BIOMECHANICS (訓練記錄)                                     */}
   {/*  =========================================================================  */}
   <section id="workout" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
+    <div className="max-w-6xl mx-auto space-y-5 lg:space-y-10">
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          {t('landing.workout.tag', '[ 02 / 訓練]')}
+          {t('landing.workout.tag', '[ 02 / 訓練 ]')}
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.workout.titleLine1', '肌力生物力學與組數表')}<br />
@@ -492,51 +505,87 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/*  數據指標看板、動作組數記錄與動作歷史詳情 (縮放至真實 App 尺度 78%)  */}
-      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth items-start gap-4 sm:gap-6 lg:grid lg:grid-cols-3 lg:gap-6 xl:gap-8 font-mono text-xs pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 lg:mr-0 lg:pr-0 lg:pb-0 lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        
-        {/*  卡片 1：真實肌群恢復狀態看板 (100% 複用真實 APP 元件 WorkoutRecoveryDashboard，單一真理源)  */}
-        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full shrink-0 snap-start" style={{ zoom: 0.78 }}>
-          <WorkoutRecoveryDashboard
-            recoverySummary={demoDashboardData.recoverySummary}
-            exerciseCount={demoDashboardData.stats.exerciseCount}
-            setCount={demoDashboardData.stats.setCount}
-            totalVolume={demoDashboardData.stats.totalVolume}
-            weightUnit={demoDashboardData.bodyWeightUnit}
-            interactive={true}
-          />
-        </div>
+      {/* 方案 3：三欄等高架構視窗（桌面版三欄齊底；手機版左右橫向滑動，左側與其他區塊嚴格對齊） */}
+      <div className="-mr-4 pr-4 sm:-mr-8 sm:pr-8 lg:mr-0 lg:pr-0 flex flex-row items-stretch gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 lg:pb-0 lg:overflow-visible lg:grid lg:grid-cols-3 lg:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {[
+          {
+            key: 'anatomy',
+            headerTitle: '01 // ANATOMY',
+            headerLabel: t('landing.workout.cards.anatomyLabel', '肌群恢復'),
+            content: (
+              <WorkoutRecoveryDashboard
+                recoverySummary={demoDashboardData.recoverySummary}
+                exerciseCount={demoDashboardData.stats.exerciseCount}
+                setCount={demoDashboardData.stats.setCount}
+                totalVolume={demoDashboardData.stats.totalVolume}
+                weightUnit={demoDashboardData.bodyWeightUnit}
+                interactive={true}
+              />
+            ),
+          },
+          {
+            key: 'sets',
+            headerTitle: '02 // SETS LOG',
+            headerLabel: t('landing.workout.cards.setsLabel', '組數記錄'),
+            content: (
+              <div className="space-y-3">
+                {demoWorkoutExercisesData.map((ex) => (
+                  <WorkoutExerciseCard
+                    key={ex.exerciseName}
+                    exerciseName={ex.exerciseName}
+                    sets={ex.sets}
+                    bodyWeightUnit={ex.bodyWeightUnit}
+                    interactive={false}
+                  />
+                ))}
+              </div>
+            ),
+          },
+          {
+            key: 'analytics',
+            headerTitle: '03 // e1RM & HEATMAP',
+            headerLabel: t('landing.workout.cards.analyticsLabel', '力量足跡'),
+            content: (
+              <ExerciseOverviewCard
+                exerciseName={demoExerciseOverview.exerciseName}
+                equipmentName={demoExerciseOverview.equipmentName}
+                isArchived={demoExerciseOverview.isArchived}
+                bestE1RM={demoExerciseOverview.bestE1RM}
+                totalSets={demoExerciseOverview.totalSets}
+                totalVolume={demoExerciseOverview.totalVolume}
+                bodyWeightUnit={demoExerciseOverview.bodyWeightUnit}
+                heatmapDays={demoExerciseOverview.heatmapDays}
+                totalWeeks={demoExerciseOverview.totalWeeks}
+                overviewPeriod={demoExerciseOverview.overviewPeriod}
+                interactive={false}
+              />
+            ),
+          },
+        ].map((win) => (
+          <div
+            key={win.key}
+            className="w-[86vw] max-w-[380px] sm:max-w-[420px] lg:w-full lg:max-w-none shrink-0 snap-start rounded-lg border border-border bg-card text-card-foreground flex flex-col overflow-hidden shadow-none"
+          >
+            <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-2 text-[11px] font-mono text-muted-foreground shrink-0">
+              <span className="font-medium tracking-wider text-foreground uppercase truncate">
+                {win.headerTitle}
+              </span>
+              <span className="font-sans text-[11px] shrink-0">
+                {win.headerLabel}
+              </span>
+            </div>
 
-        {/*  卡片 2：真實動作組數計量卡片 (100% 複用真實 APP 元件 WorkoutExerciseCard，單一真理源)  */}
-        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full shrink-0 snap-start space-y-4" style={{ zoom: 0.78 }}>
-          {demoWorkoutExercisesData.map((ex) => (
-            <WorkoutExerciseCard
-              key={ex.exerciseName}
-              exerciseName={ex.exerciseName}
-              sets={ex.sets}
-              bodyWeightUnit={ex.bodyWeightUnit}
-              interactive={false}
-            />
-          ))}
-        </div>
-
-        {/*  卡片 3：真實動作詳情看板與訓練足跡 (100% 複用真實 APP 元件 ExerciseOverviewCard，單一真理源)  */}
-        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full shrink-0 snap-start" style={{ zoom: 0.78 }}>
-          <ExerciseOverviewCard
-            exerciseName={demoExerciseOverview.exerciseName}
-            equipmentName={demoExerciseOverview.equipmentName}
-            isArchived={demoExerciseOverview.isArchived}
-            bestE1RM={demoExerciseOverview.bestE1RM}
-            totalSets={demoExerciseOverview.totalSets}
-            totalVolume={demoExerciseOverview.totalVolume}
-            bodyWeightUnit={demoExerciseOverview.bodyWeightUnit}
-            heatmapDays={demoExerciseOverview.heatmapDays}
-            totalWeeks={demoExerciseOverview.totalWeeks}
-            overviewPeriod={demoExerciseOverview.overviewPeriod}
-            interactive={false}
-          />
-        </div>
-
+            <div
+              className="flex-1 p-3.5 sm:p-4 flex flex-col justify-center"
+              style={{
+                backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
+                backgroundSize: '16px 16px',
+              }}
+            >
+              {win.content}
+            </div>
+          </div>
+        ))}
       </div>
 
     </div>
@@ -546,11 +595,11 @@ export default function LandingPage() {
   {/*  04. BODY & PHYSIOLOGICAL EMA FILTER (體態記錄)                             */}
   {/*  =========================================================================  */}
   <section id="body" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
+    <div className="max-w-6xl mx-auto space-y-5 lg:space-y-10">
       
       <div className="space-y-4 max-w-3xl">
         <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          {t('landing.body.tag', '[ 03 / 體態]')}
+          {t('landing.body.tag', '[ 03 / 體態 ]')}
         </div>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
           {t('landing.body.titleLine1', '過濾水分波動，看懂真實體態')}<br />
@@ -561,11 +610,57 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/* 體態時序趨勢、今日數據與體態指標看板 (縮放至真實 App 尺度 78%) */}
-      <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth items-start gap-4 sm:gap-6 lg:grid lg:grid-cols-3 lg:gap-6 xl:gap-8 font-mono text-xs pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 lg:mr-0 lg:pr-0 lg:pb-0 lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        
-        {/* 卡片 1：真實平滑體重時序趨勢折線圖 (100% 複用真實 APP 元件 WeightTrendChart，單一真理源) */}
-        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full shrink-0 snap-start" style={{ zoom: 0.78 }}>
+      {/* 桌面版：7:5 非對稱雙欄（左 7 欄帶表頭與底欄的趨勢主舞台 · 右 5 欄今日數據與體態指標垂直堆疊，頂底等高齊平） */}
+      <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-stretch">
+        <div className="lg:col-span-7 rounded-lg border border-border bg-card text-card-foreground flex flex-col overflow-hidden shadow-none">
+          <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-2 text-[11px] font-mono text-muted-foreground shrink-0">
+            <span className="font-medium tracking-wider text-foreground uppercase truncate">
+              {t('landing.body.chartHeader', 'WEIGHT TREND · 7D EMA FILTER')}
+            </span>
+            <span className="tabular-nums shrink-0">
+              30d · {t('body.recordsCount', { count: demoBodyTrendSummary.count30d, defaultValue: `${demoBodyTrendSummary.count30d} 筆記錄` })}
+            </span>
+          </div>
+
+          <div
+            className="flex-1 flex flex-col justify-center p-5"
+            style={{
+              backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
+              backgroundSize: '16px 16px',
+            }}
+          >
+            <WeightTrendChart
+              data={DEMO_WEIGHT_TREND_DATA}
+              unit={demoDashboardData.bodyWeightUnit}
+              interactive={false}
+            />
+          </div>
+
+          <div className="min-h-9 px-4 py-1.5 border-t border-border bg-muted/40 flex items-center justify-between gap-2 text-[11px] font-mono text-muted-foreground shrink-0">
+            <span className="truncate">
+              {t('landing.body.chartFooter', '實線為 7 天抗噪平滑體重 · 空心點為每日原始稱重')}
+            </span>
+            <span className="tabular-nums text-foreground shrink-0">
+              Δ {demoBodyTrendSummary.deltaText}
+            </span>
+          </div>
+        </div>
+
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <BodyTodayDataCard
+            {...DEMO_BODY_TODAY_DATA}
+            interactive={false}
+          />
+          <BodyMetricsOverviewCard
+            {...DEMO_BODY_METRICS_DATA}
+            interactive={false}
+          />
+        </div>
+      </div>
+
+      {/* 手機／平板版：左右橫向滑動三張 100% 真實 App 體態卡片（左側與其他區塊嚴格對齊） */}
+      <div className="lg:hidden -mr-4 pr-4 sm:-mr-8 sm:pr-8 flex flex-row items-start gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="w-[85vw] max-w-[360px] sm:max-w-[400px] shrink-0 snap-start">
           <WeightTrendChart
             data={DEMO_WEIGHT_TREND_DATA}
             unit={demoDashboardData.bodyWeightUnit}
@@ -573,22 +668,19 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* 卡片 2：真實今日數據卡片 (100% 複用真實 APP 元件 BodyTodayDataCard，單一真理源) */}
-        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full shrink-0 snap-start" style={{ zoom: 0.78 }}>
+        <div className="w-[85vw] max-w-[360px] sm:max-w-[400px] shrink-0 snap-start">
           <BodyTodayDataCard
             {...DEMO_BODY_TODAY_DATA}
             interactive={false}
           />
         </div>
 
-        {/* 卡片 3：真實體態指標看板 (100% 複用真實 APP 元件 BodyMetricsOverviewCard，單一真理源) */}
-        <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] lg:w-full shrink-0 snap-start" style={{ zoom: 0.78 }}>
+        <div className="w-[85vw] max-w-[360px] sm:max-w-[400px] shrink-0 snap-start">
           <BodyMetricsOverviewCard
             {...DEMO_BODY_METRICS_DATA}
             interactive={false}
           />
         </div>
-
       </div>
 
     </div>
