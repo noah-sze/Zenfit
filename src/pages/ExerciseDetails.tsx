@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { APP_ROUTES } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -21,6 +21,7 @@ import {
   setInMemoryWorkoutLogsCache,
 } from '@/hooks/useWorkoutLogs';
 import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/ui/section-card';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { getLocalizedExerciseName } from '@/utils/defaultLocalization';
 import { toast } from '@/components/ui/toast';
@@ -43,19 +44,30 @@ import {
 import { useSafeNavigate } from '@/hooks/useSafeNavigate';
 
 export interface ExerciseDetailsProps {
-  id?: string;
+  id: string;
 }
 
-export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {}) {
-  const { id: routeId } = useParams<{ id: string }>();
+export default function ExerciseDetails({ id }: ExerciseDetailsProps) {
   const { profile } = useUserProfile();
-  const id = propId || routeId;
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { goBack } = useSafeNavigate();
   const confirm = useConfirm();
   const { bodyWeightUnit } = useUnitPreferences();
+  const isExitingRef = useRef(false);
 
-  const { allExercises, updateExercise, archiveExercise, unarchiveExercise, deleteExercise } = useExercises();
+  useEffect(() => {
+    isExitingRef.current = false;
+  }, [id]);
+
+  const {
+    allExercises,
+    isLoading: isExercisesLoading,
+    updateExercise,
+    archiveExercise,
+    unarchiveExercise,
+    deleteExercise,
+  } = useExercises();
   const { allRoutines } = useRoutines();
   const { getEquipmentDisplayName } = useEquipments();
 
@@ -165,7 +177,11 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
     if (exercise.isArchived) {
       const ok = await confirm({
         title: t('common.restore'),
-        description: t('common.confirmRestoreItem', { name: exercise.name }),
+        variant: 'restore',
+        entitySpec: {
+          entityLabel: t('workout.exerciseEntityLabel', '動作'),
+          itemName: exercise.name,
+        },
       });
       if (ok) {
         await unarchiveExercise(exercise.id);
@@ -176,7 +192,7 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
       const ok = await confirm({
         title: t('common.archive'),
         variant: 'archive',
-        archiveSpec: {
+        entitySpec: {
           entityLabel: t('workout.exerciseEntityLabel', '動作'),
           itemName: exercise.name,
           affectedLabel: t('workout.archiveRemoveFromRoutines', '從組合剔除'),
@@ -186,8 +202,7 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
       if (ok) {
         await archiveExercise(exercise.id);
         triggerHaptic('selection');
-        toast.show(t('common.saved'));
-        goBack();
+        toast.show(t('common.archivedSuccess', '已歸檔'));
       }
     }
   };
@@ -196,12 +211,17 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
     if (!exercise || hasUsage) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: exercise.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('workout.exerciseEntityLabel', '動作'),
+        itemName: exercise.name,
+      },
     });
     if (ok) {
+      isExitingRef.current = true;
       const res = await deleteExercise(exercise.id);
       if (!res.success) {
+        isExitingRef.current = false;
         if (res.reason === 'has_logs') {
           toast.show(t('workout.exerciseHasLogs'));
         } else if (res.reason === 'has_routines') {
@@ -227,7 +247,15 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
     }
   }, [headerActionEl]);
 
+  useEffect(() => {
+    if (!isExitingRef.current && (!id || (!isExercisesLoading && !exercise))) {
+      isExitingRef.current = true;
+      goBack();
+    }
+  }, [id, isExercisesLoading, exercise, goBack]);
+
   if (!exercise) {
+    if (isExitingRef.current) return null;
     return (
       <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}
@@ -320,45 +348,36 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
       />
 
       {/* 包含此動作的訓練組合 */}
-      <div className="space-y-1.5">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1 font-mono">
-          {t('workout.relatedRoutines')}
-        </div>
-        <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
-          {relatedRoutines.length === 0 ? (
-            <div className="p-4 text-center text-xs font-mono text-muted-foreground">
-              {t('workout.noRelatedRoutines')}
-            </div>
-          ) : (
-            relatedRoutines.map((routine) => (
-              <button
-                key={routine.id}
-                type="button"
-                onClick={() => {
-                  triggerHaptic('light');
-                  useInAppNavigation.getState().pushSubView({
-                    type: 'exercises',
-                    id: routine.id,
-                    mode: 'routines',
-                  });
-                }}
-                className="w-full p-3.5 flex items-center justify-between hover:bg-hover transition-colors group cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <Layers className="size-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
-                    {routine.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground group-hover:text-foreground">
-                  <span>{t('workout.exerciseCount', { count: routine.exercises.length })}</span>
-                  <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
+      <SectionCard title={t('workout.relatedRoutines')}>
+        {relatedRoutines.length === 0 ? (
+          <div className="p-4 text-center text-xs font-mono text-muted-foreground">
+            {t('workout.noRelatedRoutines')}
+          </div>
+        ) : (
+          relatedRoutines.map((routine) => (
+            <button
+              key={routine.id}
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                navigate(APP_ROUTES.routineDetail(routine.id));
+              }}
+              className="w-full p-3.5 flex items-center justify-between gap-2 hover:bg-hover transition-colors group cursor-pointer text-left"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Layers className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground truncate">
+                  {routine.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground group-hover:text-foreground shrink-0">
+                <span>{t('workout.exerciseCount', { count: routine.exercises.length })}</span>
+                <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
+              </div>
+            </button>
+          ))
+        )}
+      </SectionCard>
 
       {/* 編輯動作彈窗 (複用標準 ExerciseFormDialog) */}
       <ExerciseFormDialog

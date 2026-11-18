@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
@@ -18,6 +18,7 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/ui/section-card';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { useConfirm } from '@/components/ui/confirm-dialog';
@@ -49,23 +50,26 @@ import {
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import { useSafeNavigate } from '@/hooks/useSafeNavigate';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { APP_ROUTES } from '@/utils/navigation';
 import {
   OverviewPeriodSelector,
   IntakeFootprintHeatmap,
 } from '@/components/food/IntakeFootprintHeatmap';
 
 export interface RecipeDetailsProps {
-  id?: string;
+  id: string;
 }
 
-export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
-  const { id: routeId } = useParams<{ id: string }>();
-  const id = propId || routeId;
+export default function RecipeDetails({ id }: RecipeDetailsProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { goBack } = useSafeNavigate();
-  const { pushSubView } = useInAppNavigation();
   const confirm = useConfirm();
+  const isExitingRef = useRef(false);
+
+  useEffect(() => {
+    isExitingRef.current = false;
+  }, [id]);
 
   const { allFoods, isLoading: isFoodsLoading } = useFoods();
   const {
@@ -286,7 +290,11 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
     if (recipe.isArchived) {
       const ok = await confirm({
         title: t('common.restore'),
-        description: t('common.confirmRestoreItem', { name: recipe.name }),
+        variant: 'restore',
+        entitySpec: {
+          entityLabel: t('diet.recipeEntityLabel', '食譜'),
+          itemName: recipe.name,
+        },
       });
       if (ok) {
         await unarchiveRecipe(recipe.id);
@@ -297,7 +305,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
       const ok = await confirm({
         title: t('common.archive'),
         variant: 'archive',
-        archiveSpec: {
+        entitySpec: {
           entityLabel: t('diet.recipeEntityLabel', '食譜'),
           itemName: recipe.name,
         },
@@ -305,8 +313,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
       if (ok) {
         await archiveRecipe(recipe.id);
         triggerHaptic('selection');
-        toast.show(t('common.saved'));
-        goBack();
+        toast.show(t('common.archivedSuccess', '已歸檔'));
       }
     }
   };
@@ -315,10 +322,14 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
     if (!recipe || hasUsage) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: recipe.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('diet.recipeEntityLabel', '食譜'),
+        itemName: recipe.name,
+      },
     });
     if (ok) {
+      isExitingRef.current = true;
       await deleteRecipe(recipe.id);
       triggerHaptic('warning');
       toast.show(t('common.deleted'));
@@ -339,7 +350,11 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
   }, [headerActionEl]);
 
   useEffect(() => {
-    if (!id || (!isRecipesLoading && !isFoodsLoading && (!recipe || !standardTotals))) {
+    if (
+      !isExitingRef.current &&
+      (!id || (!isRecipesLoading && !isFoodsLoading && (!recipe || !standardTotals)))
+    ) {
+      isExitingRef.current = true;
       goBack();
     }
   }, [id, isRecipesLoading, isFoodsLoading, recipe, standardTotals, goBack]);
@@ -417,10 +432,10 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
 
       {/* 核心一體化卡片 (與食材詳情頁 1:1 一體化設計) */}
       <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
-        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-8) */}
-        <div className="h-8 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono">
+        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-10，與下方 SectionCard 表頭等高) */}
+        <div className="h-10 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono">
           <div className="flex items-center gap-2">
-            <span className="uppercase tracking-widest text-[10px] text-muted-foreground font-semibold">
+            <span className="uppercase tracking-widest text-[10px] text-muted-foreground">
               {t('diet.recipesTab', '食譜')}
             </span>
             <span className="text-border">·</span>
@@ -539,69 +554,63 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
       </div>
 
       {/* 配方營養素總計卡片 (三大營養素 C -> P -> F 順序) */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between px-1">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">
-            {t('diet.recipeNutrients', '配方營養素總計')}
-          </div>
-          <NutritionBasisToggle />
+      <SectionCard
+        title={t('diet.recipeNutrients', '配方營養素總計')}
+        action={<NutritionBasisToggle />}
+        bodyClassName="text-sm"
+      >
+        <div className="h-10 px-4 flex items-center justify-between">
+          <span className="text-muted-foreground">
+            {nutritionDisplayMode === 'per100g'
+              ? (foodWeightUnit === 'oz' ? t('diet.per1ozDensity', '1oz 密度') : t('diet.per100gDensity', '100g 密度'))
+              : t('diet.unit')}
+          </span>
+          <span className="font-mono text-foreground font-medium">
+            {formatFoodServing(scaledRecipeTotals?.servingSize ?? standardTotals.totalWeightGrams, scaledRecipeTotals?.servingUnit ?? 'g', foodWeightUnit, foodVolumeUnit).formatted}
+          </span>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
-          <div className="h-10 px-4 flex items-center justify-between">
-            <span className="text-muted-foreground">
-              {nutritionDisplayMode === 'per100g'
-                ? (foodWeightUnit === 'oz' ? t('diet.per1ozDensity', '1oz 密度') : t('diet.per100gDensity', '100g 密度'))
-                : t('diet.unit')}
-            </span>
-            <span className="font-mono text-foreground font-medium">
-              {formatFoodServing(scaledRecipeTotals?.servingSize ?? standardTotals.totalWeightGrams, scaledRecipeTotals?.servingUnit ?? 'g', foodWeightUnit, foodVolumeUnit).formatted}
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.calories && "bg-calories-subtle-bg"
-          )}>
-            <span className="text-calories font-medium">{t('diet.calories')}</span>
-            <span className="font-mono text-calories font-medium">
-              {formatEnergy(scaledRecipeTotals?.calories ?? standardTotals.calories, energyUnit).formatted}
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.carbs && "bg-carbs-subtle-bg"
-          )}>
-            <span className="text-carbs font-medium">{t('diet.carbs')}</span>
-            <span className="font-mono text-carbs font-medium">
-              {scaledRecipeTotals?.carbs ?? standardTotals.carbs} g
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.protein && "bg-protein-subtle-bg"
-          )}>
-            <span className="text-protein font-medium">{t('diet.protein')}</span>
-            <span className="font-mono text-protein font-medium">
-              {scaledRecipeTotals?.protein ?? standardTotals.protein} g
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.fat && "bg-fat-subtle-bg"
-          )}>
-            <span className="text-fat font-medium">{t('diet.fat')}</span>
-            <span className="font-mono text-fat font-medium">
-              {scaledRecipeTotals?.fat ?? standardTotals.fat} g
-            </span>
-          </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.calories && "bg-calories-subtle-bg"
+        )}>
+          <span className="text-calories font-medium">{t('diet.calories')}</span>
+          <span className="font-mono text-calories font-medium">
+            {formatEnergy(scaledRecipeTotals?.calories ?? standardTotals.calories, energyUnit).formatted}
+          </span>
         </div>
-      </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.carbs && "bg-carbs-subtle-bg"
+        )}>
+          <span className="text-carbs font-medium">{t('diet.carbs')}</span>
+          <span className="font-mono text-carbs font-medium">
+            {scaledRecipeTotals?.carbs ?? standardTotals.carbs} g
+          </span>
+        </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.protein && "bg-protein-subtle-bg"
+        )}>
+          <span className="text-protein font-medium">{t('diet.protein')}</span>
+          <span className="font-mono text-protein font-medium">
+            {scaledRecipeTotals?.protein ?? standardTotals.protein} g
+          </span>
+        </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.fat && "bg-fat-subtle-bg"
+        )}>
+          <span className="text-fat font-medium">{t('diet.fat')}</span>
+          <span className="font-mono text-fat font-medium">
+            {scaledRecipeTotals?.fat ?? standardTotals.fat} g
+          </span>
+        </div>
+      </SectionCard>
 
       {/* 食材解構清單 (Ingredient Breakdown List) */}
-      <div className="space-y-1.5 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">
-            {t('diet.recipeIngredients')}
-          </span>
+      <SectionCard
+        title={t('diet.recipeIngredients')}
+        action={
           <button
             type="button"
             onClick={handleOpenAddIngredient}
@@ -610,9 +619,9 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
             <Plus className="size-3 text-muted-foreground" />
             <span>{t('diet.addIngredient')}</span>
           </button>
-        </div>
-
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
+        }
+        bodyClassName="text-sm"
+      >
           {recipe.ingredients.map((ing, idx) => {
             const food = foodMap.get(ing.foodId);
             const macros = calculateIngredientMacros(food, ing.quantity);
@@ -634,7 +643,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
                 onClick={() => {
                   if (food) {
                     triggerHaptic('selection');
-                    pushSubView({ type: 'foods', id: food.id, mode: 'foods' });
+                    navigate(APP_ROUTES.foodDetail(food.id));
                   }
                 }}
                 className="min-h-16 py-2.5 px-4 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group"
@@ -679,8 +688,7 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
               </div>
             );
           })}
-        </div>
-      </div>
+      </SectionCard>
 
       {/* 編輯菜餚 Dialog */}
       <RecipeFormDialog

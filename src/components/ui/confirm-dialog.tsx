@@ -1,31 +1,41 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Archive } from 'lucide-react';
+import { Archive, RefreshCcw, Trash2 } from 'lucide-react';
 import { Dialog, PrecisionDialogContent } from '@/components/ui/dialog';
 import { HoldToDeleteButton } from '@/components/ui/HoldToDeleteButton';
 import { cn } from '@/lib/utils';
 
-export interface ArchiveConfirmSpec {
+export interface EntityConfirmSpec {
   /** 左側標籤（如：食物、食譜、動作、組合、器械） */
   entityLabel: string;
   /** 右側目標對象名稱（維持正常字重 font-normal，不加粗） */
   itemName: string;
-  /** 選填：關聯剔除區塊標題（如：同步自食譜剔除 / 同步自組合剔除） */
+  /** 選填：第二行左側標籤（未提供時依 variant 自動套用預設語意） */
+  statusLabel?: string;
+  /** 選填：第二行右側數值（未提供時依 variant 自動套用預設語意） */
+  statusValue?: string;
+  /** 選填：關聯剔除區塊標題（如：從食譜剔除 / 從組合剔除） */
   affectedLabel?: string;
   /** 選填：受影響的食譜或組合名稱清單；為空時僅顯示基本雙行規格卡 */
   affectedItems?: string[];
 }
 
+export type ArchiveConfirmSpec = EntityConfirmSpec;
+
+export type ConfirmVariant = 'default' | 'destructive' | 'archive' | 'restore';
+
 export interface ConfirmOptions {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  /** 選填：附加於主說明下方的補充影響區塊（非歸檔模式用） */
+  /** 選填：附加於主說明下方的補充影響區塊（非規格卡模式用） */
   details?: React.ReactNode;
-  /** 方案 3 歸檔規格卡資料（variant="archive" 專用） */
+  /** 方案 3 實體規格卡資料（歸檔 / 恢復 / 刪除通用） */
+  entitySpec?: EntityConfirmSpec;
+  /** 向下相容別名：等同 entitySpec */
   archiveSpec?: ArchiveConfirmSpec;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'default' | 'destructive' | 'archive';
+  variant?: ConfirmVariant;
 }
 
 interface ConfirmContextType {
@@ -48,10 +58,11 @@ export interface ConfirmDialogProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   details?: React.ReactNode;
+  entitySpec?: EntityConfirmSpec;
   archiveSpec?: ArchiveConfirmSpec;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'default' | 'destructive' | 'archive';
+  variant?: ConfirmVariant;
   /** 每次開啟遞增之金鑰，用於重置長按蓄力狀態 */
   sessionKey?: number;
   onConfirm: () => void | Promise<void>;
@@ -62,8 +73,8 @@ export interface ConfirmDialogProps {
  * 全站標準確認彈窗（嚴格遵循 Standard Precision Modal Architecture）
  * - 寬度唯一真理源：300px，內邊距恆定 16px (p-4 sm:p-4)，0 陰影
  * - 一般確認 (default)：Precision Header Variant D（左 ✕ 取消、中標題、右 ✓ 確認）
- * - 歸檔確認 (archive · 方案 3)：Vercel 統一規格卡（項目 + 歷史記錄 + 條件式同步剔除列）+ 底部黑色長按蓄力確認鈕
- * - 高危破壞性確認 (destructive)：左 ✕ 取消、中標題，底部配置全寬實色紅底確認鈕
+ * - 歸檔 / 恢復 / 實體刪除 (方案 3 規格卡)：Vercel 統一規格卡（項目 + 狀態/影響 + 條件式剔除列）+ 底部長按蓄力確認鈕
+ * - 其他破壞性確認 (destructive 無規格卡)：左 ✕ 取消、中標題，底部配置全寬實色紅底確認鈕
  */
 export function ConfirmDialog({
   open,
@@ -71,6 +82,7 @@ export function ConfirmDialog({
   title,
   description,
   details,
+  entitySpec,
   archiveSpec,
   confirmText,
   cancelText,
@@ -80,10 +92,25 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
+  const spec = entitySpec ?? archiveSpec;
   const isDestructive = variant === 'destructive';
   const isArchive = variant === 'archive';
-  const usesBottomAction = isDestructive || isArchive;
-  const affectedItems = archiveSpec?.affectedItems ?? [];
+  const isRestore = variant === 'restore';
+  const usesEntitySpecCard = Boolean(spec) && (isArchive || isRestore || isDestructive);
+  const usesBottomAction = isDestructive || isArchive || isRestore;
+  const affectedItems = spec?.affectedItems ?? [];
+
+  const defaultStatusLabel = isArchive
+    ? t('common.historyRecords', '歷史記錄')
+    : isRestore
+      ? t('common.statusLabel', '狀態')
+      : t('common.actionLabel', '操作');
+
+  const defaultStatusValue = isArchive
+    ? t('common.preserved', '保留')
+    : isRestore
+      ? t('common.active', '使用中')
+      : t('common.irreversible', '無法復原');
 
   const handleConfirm = async () => {
     await onConfirm();
@@ -117,29 +144,29 @@ export function ConfirmDialog({
         initialFocus={false}
       >
         <div className="pt-3.5 space-y-3 font-sans text-xs">
-          {/* 方案 3：歸檔統一規格卡（無關聯時為完整雙行卡，有關聯時動態展開同步剔除列） */}
-          {isArchive && archiveSpec ? (
+          {/* 方案 3：統一實體規格卡（歸檔 / 恢復 / 實體刪除皆採用一致佈局） */}
+          {usesEntitySpecCard && spec ? (
             <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
               <div className="h-9 px-3 flex items-center justify-between gap-3">
                 <span className="text-muted-foreground shrink-0">
-                  {archiveSpec.entityLabel}
+                  {spec.entityLabel}
                 </span>
                 <span className="font-normal text-foreground truncate">
-                  {archiveSpec.itemName}
+                  {spec.itemName}
                 </span>
               </div>
               <div className="h-9 px-3 flex items-center justify-between gap-3">
                 <span className="text-muted-foreground shrink-0">
-                  {t('common.historyRecords', '歷史記錄')}
+                  {spec.statusLabel ?? defaultStatusLabel}
                 </span>
                 <span className="font-normal text-muted-foreground">
-                  {t('common.preserved', '保留')}
+                  {spec.statusValue ?? defaultStatusValue}
                 </span>
               </div>
               {affectedItems.length > 0 && (
                 <div className="px-3 py-2.5 bg-muted space-y-2">
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>{archiveSpec.affectedLabel}</span>
+                    <span>{spec.affectedLabel}</span>
                     <span className="font-mono">{affectedItems.length}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -168,7 +195,7 @@ export function ConfirmDialog({
             </div>
           )}
 
-          {/* 歸檔長按確認按鈕（黑色單色蓄力充能，復刻長按刪除按鈕交互契約） */}
+          {/* 歸檔長按確認按鈕（黑色單色蓄力充能） */}
           {isArchive && (
             <HoldToDeleteButton
               key={sessionKey}
@@ -180,8 +207,32 @@ export function ConfirmDialog({
             />
           )}
 
-          {/* 破壞性高危確認按鈕（實色紅底 + 純白文字，緊隨 space-y-3 節奏） */}
-          {isDestructive && (
+          {/* 恢復長按確認按鈕（黑色單色蓄力充能，完全復刻歸檔交互） */}
+          {isRestore && (
+            <HoldToDeleteButton
+              key={sessionKey}
+              variant="primary"
+              icon={<RefreshCcw className="size-3.5 shrink-0" />}
+              text={confirmText || (typeof title === 'string' ? title : t('common.restore'))}
+              hintText={t('common.holdToRestoreHint', '長按恢復')}
+              onConfirm={handleConfirm}
+            />
+          )}
+
+          {/* 實體刪除長按確認按鈕（紅色蓄力充能，完全復刻歸檔交互） */}
+          {isDestructive && usesEntitySpecCard && (
+            <HoldToDeleteButton
+              key={sessionKey}
+              variant="destructive"
+              icon={<Trash2 className="size-3.5 shrink-0" />}
+              text={confirmText || (typeof title === 'string' ? title : t('common.delete'))}
+              hintText={t('common.holdToDeleteHint', '長按 1s 刪除')}
+              onConfirm={handleConfirm}
+            />
+          )}
+
+          {/* 其他破壞性確認按鈕（無實體規格卡時保留實色紅底確認鈕） */}
+          {isDestructive && !usesEntitySpecCard && (
             <button
               type="button"
               onClick={handleConfirm}
@@ -237,6 +288,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
           title={options.title}
           description={options.description}
           details={options.details}
+          entitySpec={options.entitySpec}
           archiveSpec={options.archiveSpec}
           confirmText={options.confirmText}
           cancelText={options.cancelText}

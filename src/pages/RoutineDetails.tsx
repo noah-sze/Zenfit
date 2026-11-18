@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { APP_ROUTES } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -25,6 +25,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { convertBodyWeight } from '@/utils/unitMath';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/ui/section-card';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
@@ -49,20 +50,25 @@ import { useSafeNavigate } from '@/hooks/useSafeNavigate';
 import { IntakeFootprintHeatmap } from '@/components/food/IntakeFootprintHeatmap';
 
 export interface RoutineDetailsProps {
-  id?: string;
+  id: string;
 }
 
-export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {}) {
-  const { id: routeId } = useParams<{ id: string }>();
+export default function RoutineDetails({ id }: RoutineDetailsProps) {
   const { profile } = useUserProfile();
-  const id = propId || routeId;
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { goBack } = useSafeNavigate();
   const confirm = useConfirm();
   const { bodyWeightUnit } = useUnitPreferences();
+  const isExitingRef = useRef(false);
+
+  useEffect(() => {
+    isExitingRef.current = false;
+  }, [id]);
 
   const {
     allRoutines,
+    isLoading: isRoutinesLoading,
     exerciseMap,
     updateRoutine,
     archiveRoutine,
@@ -187,7 +193,11 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
     if (routine.isArchived) {
       const ok = await confirm({
         title: t('common.restore'),
-        description: t('common.confirmRestoreItem', { name: routine.name }),
+        variant: 'restore',
+        entitySpec: {
+          entityLabel: t('workout.routineEntityLabel', '組合'),
+          itemName: routine.name,
+        },
       });
       if (ok) {
         await unarchiveRoutine(routine.id);
@@ -198,7 +208,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
       const ok = await confirm({
         title: t('common.archive'),
         variant: 'archive',
-        archiveSpec: {
+        entitySpec: {
           entityLabel: t('workout.routineEntityLabel', '組合'),
           itemName: routine.name,
         },
@@ -206,8 +216,7 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
       if (ok) {
         await archiveRoutine(routine.id);
         triggerHaptic('selection');
-        toast.show(t('common.saved'));
-        goBack();
+        toast.show(t('common.archivedSuccess', '已歸檔'));
       }
     }
   };
@@ -216,10 +225,14 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
     if (!routine || hasUsage) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: routine.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('workout.routineEntityLabel', '組合'),
+        itemName: routine.name,
+      },
     });
     if (ok) {
+      isExitingRef.current = true;
       await deleteRoutine(routine.id);
       triggerHaptic('warning');
       toast.show(t('common.deleted'));
@@ -239,7 +252,15 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
     }
   }, [headerActionEl]);
 
+  useEffect(() => {
+    if (!isExitingRef.current && (!id || (!isRoutinesLoading && !routine))) {
+      isExitingRef.current = true;
+      goBack();
+    }
+  }, [id, isRoutinesLoading, routine, goBack]);
+
   if (!routine) {
+    if (isExitingRef.current) return null;
     return (
       <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}
@@ -382,11 +403,9 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
       />
 
       {/* 動作清單 (Usage List, 點擊可直達動作詳情) */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground font-mono">
-            {t('workout.routineExerciseList', '動作清單')}
-          </span>
+      <SectionCard
+        title={t('workout.routineExerciseList', '動作清單')}
+        action={
           <button
             type="button"
             onClick={() => {
@@ -398,64 +417,59 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
             <Plus className="size-3 text-muted-foreground" />
             <span>{t('workout.addExercise')}</span>
           </button>
-        </div>
-        <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
-          {routine.exercises.length === 0 ? (
-            <div className="p-4 text-center text-xs font-mono text-muted-foreground">
-              {t('workout.noExercises')}
-            </div>
-          ) : (
-            routine.exercises.map((item, idx) => {
-              const ex = exerciseMap.get(item.exerciseId);
-              const muscles = Object.entries(ex?.targetMuscles || {}) as [
-                DetailedMuscle,
-                number,
-              ][];
+        }
+      >
+        {routine.exercises.length === 0 ? (
+          <div className="p-4 text-center text-xs font-mono text-muted-foreground">
+            {t('workout.noExercises')}
+          </div>
+        ) : (
+          routine.exercises.map((item, idx) => {
+            const ex = exerciseMap.get(item.exerciseId);
+            const muscles = Object.entries(ex?.targetMuscles || {}) as [
+              DetailedMuscle,
+              number,
+            ][];
 
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  disabled={!ex}
-                  onClick={() => {
-                    if (!ex) return;
-                    triggerHaptic('light');
-                    useInAppNavigation.getState().pushSubView({
-                      type: 'exercises',
-                      id: ex.id,
-                      mode: 'exercises',
-                    });
-                  }}
-                  className="w-full p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group text-left disabled:cursor-default disabled:hover:bg-transparent"
-                >
-                  <div className="space-y-1 min-w-0 flex-1 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">
-                        #{idx + 1}
-                      </span>
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {ex ? getLocalizedExerciseName(ex) : t('workout.unknownExercise')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground min-w-0">
-                      {ex && (
-                        <EquipmentBadge name={getEquipmentDisplayName(ex.equipment, t)} />
-                      )}
-                      {muscles.length > 0 && (
-                        <>
-                          {ex && <span className="shrink-0 opacity-50">·</span>}
-                          <AdaptiveMuscleBadgeGroup entries={sortMuscleEntries(muscles)} className="min-w-0 flex-1" />
-                        </>
-                      )}
-                    </div>
+            return (
+              <button
+                key={idx}
+                type="button"
+                disabled={!ex}
+                onClick={() => {
+                  if (!ex) return;
+                  triggerHaptic('light');
+                  navigate(APP_ROUTES.exerciseDetail(ex.id));
+                }}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-hover transition-colors cursor-pointer group text-left disabled:cursor-default disabled:hover:bg-transparent"
+              >
+                <div className="space-y-1 min-w-0 flex-1 pr-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted-foreground">
+                      #{idx + 1}
+                    </span>
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {ex ? getLocalizedExerciseName(ex) : t('workout.unknownExercise')}
+                    </span>
                   </div>
-                  <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
-                </button>
-              );
-            })
-          )}
-        </div>
-      </div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground min-w-0">
+                    {ex && (
+                      <EquipmentBadge name={getEquipmentDisplayName(ex.equipment, t)} />
+                    )}
+                    {muscles.length > 0 && (
+                      <>
+                        {ex && <span className="shrink-0 opacity-50">·</span>}
+                        <AdaptiveMuscleBadgeGroup entries={sortMuscleEntries(muscles)} className="min-w-0 flex-1" />
+                      </>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+              </button>
+            );
+          })
+        )}
+      </SectionCard>
 
       {/* 編輯組合彈窗 (單一真理源 RoutineFormDialog) */}
       <RoutineFormDialog

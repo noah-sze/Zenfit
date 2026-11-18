@@ -4,19 +4,26 @@ import type { WorkoutLog } from '@/types';
 
 let inMemoryRecentExerciseIds: string[] | null = null;
 let inMemoryRecentRoutineIds: string[] | null = null;
+let inMemoryExerciseLastUsedMap: Map<string, number> | null = null;
+let inMemoryRoutineLastUsedMap: Map<string, number> | null = null;
 
 /**
- * 從歷史訓練日誌中提取去重、按最後訓練時間倒序排列的動作與組合 ID 列表 (Pure Function)
+ * 從歷史訓練日誌中提取去重、按最後訓練時間倒序排列的動作與組合 ID 列表及最後使用時間映射 (Pure Function)
  */
 export function extractRecentExerciseAndRoutineIds(workoutLogs: WorkoutLog[]): {
   recentExerciseIds: string[];
   recentRoutineIds: string[];
+  exerciseLastUsedMap: Map<string, number>;
+  routineLastUsedMap: Map<string, number>;
 } {
   const exerciseLastUsedMap = new Map<string, number>();
   const routineLastUsedMap = new Map<string, number>();
 
   for (const log of workoutLogs) {
-    const time = log.createdAt || log.updatedAt || new Date(log.date).getTime() || 0;
+    const time =
+      Math.max(log.createdAt || 0, log.updatedAt || 0) ||
+      new Date(log.date).getTime() ||
+      0;
 
     if (log.routineId) {
       const existing = routineLastUsedMap.get(log.routineId) || 0;
@@ -44,14 +51,21 @@ export function extractRecentExerciseAndRoutineIds(workoutLogs: WorkoutLog[]): {
     .sort((a, b) => b[1] - a[1])
     .map(([id]) => id);
 
-  return { recentExerciseIds, recentRoutineIds };
+  return { recentExerciseIds, recentRoutineIds, exerciseLastUsedMap, routineLastUsedMap };
 }
+
+const EMPTY_LAST_USED_MAP = new Map<string, number>();
 
 export function useRecentExercises() {
   const result = useLiveQuery(
     async () => {
       if (typeof indexedDB === 'undefined') {
-        return { recentExerciseIds: [], recentRoutineIds: [] };
+        return {
+          recentExerciseIds: [],
+          recentRoutineIds: [],
+          exerciseLastUsedMap: new Map<string, number>(),
+          routineLastUsedMap: new Map<string, number>(),
+        };
       }
 
       // 倒序獲取最近 50 次訓練記錄
@@ -60,6 +74,8 @@ export function useRecentExercises() {
 
       inMemoryRecentExerciseIds = extracted.recentExerciseIds;
       inMemoryRecentRoutineIds = extracted.recentRoutineIds;
+      inMemoryExerciseLastUsedMap = extracted.exerciseLastUsedMap;
+      inMemoryRoutineLastUsedMap = extracted.routineLastUsedMap;
 
       return extracted;
     },
@@ -68,10 +84,16 @@ export function useRecentExercises() {
 
   const recentExerciseIds = result?.recentExerciseIds ?? inMemoryRecentExerciseIds ?? [];
   const recentRoutineIds = result?.recentRoutineIds ?? inMemoryRecentRoutineIds ?? [];
+  const exerciseLastUsedMap =
+    result?.exerciseLastUsedMap ?? inMemoryExerciseLastUsedMap ?? EMPTY_LAST_USED_MAP;
+  const routineLastUsedMap =
+    result?.routineLastUsedMap ?? inMemoryRoutineLastUsedMap ?? EMPTY_LAST_USED_MAP;
 
   return {
     recentExerciseIds,
     recentRoutineIds,
+    exerciseLastUsedMap,
+    routineLastUsedMap,
     isLoading: result === undefined && inMemoryRecentExerciseIds === null,
   };
 }
@@ -83,6 +105,8 @@ if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
       const extracted = extractRecentExerciseAndRoutineIds(workoutLogs);
       inMemoryRecentExerciseIds = extracted.recentExerciseIds;
       inMemoryRecentRoutineIds = extracted.recentRoutineIds;
+      inMemoryExerciseLastUsedMap = extracted.exerciseLastUsedMap;
+      inMemoryRoutineLastUsedMap = extracted.routineLastUsedMap;
     })
     .catch(() => {});
 }

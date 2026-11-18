@@ -20,6 +20,7 @@ import { calculateScaledNutrition } from '@/utils/nutritionMath';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { matchesMultilingual } from '@/utils/multilingualSearch';
+import { compareByRecentActivityThenName } from '@/utils/activitySorting';
 import { useBrowserStateStore, type FoodSortOption } from '@/store/useBrowserStateStore';
 import { useAppStore } from '@/store/useAppStore';
 import { useUnitPreferences } from '@/hooks/useUnitPreferences';
@@ -165,22 +166,16 @@ export function FoodRecipeBrowser({
   const { nutritionDisplayMode } = useAppStore();
   const { foodWeightUnit, foodVolumeUnit, energyUnit } = useUnitPreferences();
 
-  // 提取最近記錄
-  const { recentFoodIds, recentRecipeIds, isLoading: isRecentLoading } = useRecentFoods();
+  // 提取最近記錄與最後使用時間映射
+  const {
+    recentFoodIds,
+    recentRecipeIds,
+    foodLastUsedMap,
+    recipeLastUsedMap,
+    isLoading: isRecentLoading,
+  } = useRecentFoods();
   const recentFoodIdSet = useMemo(() => new Set(recentFoodIds), [recentFoodIds]);
   const recentRecipeIdSet = useMemo(() => new Set(recentRecipeIds), [recentRecipeIds]);
-
-  const recentFoodOrderMap = useMemo(() => {
-    const map = new Map<string, number>();
-    recentFoodIds.forEach((id, idx) => map.set(id, idx));
-    return map;
-  }, [recentFoodIds]);
-
-  const recentRecipeOrderMap = useMemo(() => {
-    const map = new Map<string, number>();
-    recentRecipeIds.forEach((id, idx) => map.set(id, idx));
-    return map;
-  }, [recentRecipeIds]);
 
   // 穩定的選擇回調（100% 避免行內匿名函數參照抖動，啟動 React.memo）
   const handleSelectFood = useCallback(
@@ -370,17 +365,11 @@ export function FoodRecipeBrowser({
             if (Math.abs(diff) > 0.001) return diff;
           }
         }
-      } else {
-        if (!isSearching && selectedCategory === 'recent') {
-          const orderA = recentFoodOrderMap.get(a.id) ?? 999999;
-          const orderB = recentFoodOrderMap.get(b.id) ?? 999999;
-          if (orderA !== orderB) return orderA - orderB;
-        }
       }
 
-      return a.name.localeCompare(b.name);
+      return compareByRecentActivityThenName(a, b, foodLastUsedMap);
     });
-  }, [tabBaseFoods, selectedCategory, selectedNutritionTag, foodSearchQuery, foodSortBy, nutritionDisplayMode, recentFoodIdSet, recentFoodOrderMap, foodNutritionTagMap]);
+  }, [tabBaseFoods, selectedCategory, selectedNutritionTag, foodSearchQuery, foodSortBy, nutritionDisplayMode, recentFoodIdSet, foodLastUsedMap, foodNutritionTagMap]);
 
   // ==========================================
   // 食材分批漸進加載 (Incremental Windowing)
@@ -484,8 +473,8 @@ export function FoodRecipeBrowser({
         { id: 'default' as const, label: t('diet.sort.default', '預設') },
         { id: 'calories-desc' as const, label: t('diet.sort.caloriesDesc', '熱量最高') },
         { id: 'calories-asc' as const, label: t('diet.sort.caloriesAsc', '熱量最低') },
-        { id: 'protein-desc' as const, label: t('diet.sort.proteinDesc', '蛋白質最高') },
         { id: 'carbs-desc' as const, label: t('diet.sort.carbsDesc', '碳水最高') },
+        { id: 'protein-desc' as const, label: t('diet.sort.proteinDesc', '蛋白質最高') },
         { id: 'fat-desc' as const, label: t('diet.sort.fatDesc', '脂肪最高') },
       ] as const,
     [t]
@@ -602,17 +591,11 @@ export function FoodRecipeBrowser({
           const diff = macrosB.fat - macrosA.fat;
           if (Math.abs(diff) > 0.001) return diff;
         }
-      } else {
-        if (!isSearching && selectedRecipeCategory === 'recent') {
-          const orderA = recentRecipeOrderMap.get(a.id) ?? 999999;
-          const orderB = recentRecipeOrderMap.get(b.id) ?? 999999;
-          if (orderA !== orderB) return orderA - orderB;
-        }
       }
 
-      return a.name.localeCompare(b.name);
+      return compareByRecentActivityThenName(a, b, recipeLastUsedMap);
     });
-  }, [tabBaseRecipes, selectedRecipeCategory, selectedRecipeNutritionTag, recipeSearchQuery, recipeSortBy, recentRecipeIdSet, recentRecipeOrderMap, recipeNutritionTagMap, getRecipeMacros]);
+  }, [tabBaseRecipes, selectedRecipeCategory, selectedRecipeNutritionTag, recipeSearchQuery, recipeSortBy, recentRecipeIdSet, recipeLastUsedMap, recipeNutritionTagMap, getRecipeMacros]);
 
   // ==========================================
   // 食譜分批漸進加載 (Incremental Windowing)

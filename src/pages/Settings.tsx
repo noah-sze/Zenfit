@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { APP_ROUTES } from '@/utils/navigation';
 import {
   Select,
   SelectContent,
@@ -42,7 +43,7 @@ import type {
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
-  const { pushSubView } = useInAppNavigation();
+  const navigate = useNavigate();
   const { preferences, updatePreset, updatePreference } = useUnitPreferences();
   const { bodyPreferences, updateBodyPreference } = useBodyPreferences();
   const { profile } = useUserProfile();
@@ -237,7 +238,7 @@ export default function Settings() {
           <div
             onClick={() => {
               triggerHaptic('light');
-              pushSubView({ type: 'profile' });
+              navigate(APP_ROUTES.profile);
             }}
             className="usage-row hover:bg-hover transition-colors group cursor-pointer"
           >
@@ -565,7 +566,7 @@ export default function Settings() {
           <div
             onClick={() => {
               triggerHaptic('light');
-              pushSubView({ type: 'foods' });
+              navigate(APP_ROUTES.foods);
             }}
             className="usage-row cursor-pointer group hover:bg-hover transition-colors"
           >
@@ -579,7 +580,7 @@ export default function Settings() {
           <div
             onClick={() => {
               triggerHaptic('light');
-              pushSubView({ type: 'exercises' });
+              navigate(APP_ROUTES.exercises);
             }}
             className="usage-row cursor-pointer group hover:bg-hover transition-colors"
           >

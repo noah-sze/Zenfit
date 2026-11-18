@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { triggerHaptic } from '@/lib/haptics';
 import type { Exercise, WorkoutRoutine, Equipment } from '@/types';
 import { WorkoutManagementBrowser } from '@/components/workout/WorkoutManagementBrowser';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { APP_ROUTES } from '@/utils/navigation';
 import {
   ExerciseFormDialog,
   type ExerciseFormData,
@@ -30,7 +31,7 @@ interface ExercisesProps {
 export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
   const { t } = useTranslation();
   const confirm = useConfirm();
-  const { pushSubView } = useInAppNavigation();
+  const navigate = useNavigate();
 
   // 頂部視圖切換：動作 ➔ 組合 ➔ 器械 (純客戶端 Session 記憶狀態，不污染 URL 歷史堆疊，遵守 Rule 4)
   const { workoutBrowser, setWorkoutTab } = useBrowserStateStore();
@@ -105,8 +106,11 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
   const handleDeleteExercise = async (exercise: Exercise) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: exercise.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('workout.exerciseEntityLabel', '動作'),
+        itemName: exercise.name,
+      },
     });
     if (!ok) return;
 
@@ -152,8 +156,11 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
   const handleDeleteRoutine = async (routine: WorkoutRoutine) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: routine.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('workout.routineEntityLabel', '組合'),
+        itemName: routine.name,
+      },
     });
     if (!ok) return;
 
@@ -199,7 +206,7 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
     const ok = await confirm({
       title: t('common.archive'),
       variant: 'archive',
-      archiveSpec: {
+      entitySpec: {
         entityLabel: t('workout.equipmentEntityLabel', '器械'),
         itemName: displayName,
       },
@@ -216,6 +223,17 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
   };
 
   const handleUnarchiveEquipment = async (equipment: Equipment) => {
+    const displayName = getEquipmentDisplayName(equipment.id, t) || equipment.name;
+    const ok = await confirm({
+      title: t('common.restore'),
+      variant: 'restore',
+      entitySpec: {
+        entityLabel: t('workout.equipmentEntityLabel', '器械'),
+        itemName: displayName,
+      },
+    });
+    if (!ok) return;
+
     try {
       await unarchiveEquipment(equipment.id);
       triggerHaptic('selection');
@@ -229,8 +247,11 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
     const displayName = getEquipmentDisplayName(equipment.id, t) || equipment.name;
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: displayName }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('workout.equipmentEntityLabel', '器械'),
+        itemName: displayName,
+      },
     });
     if (!ok) return;
 
@@ -271,11 +292,11 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
         onTabChange={setWorkoutTab}
         onExerciseClick={(exercise) => {
           setWorkoutTab('exercises');
-          pushSubView({ type: 'exercises', id: exercise.id, mode: 'exercises' });
+          navigate(APP_ROUTES.exerciseDetail(exercise.id));
         }}
         onRoutineClick={(routine) => {
           setWorkoutTab('routines');
-          pushSubView({ type: 'exercises', id: routine.id, mode: 'routines' });
+          navigate(APP_ROUTES.routineDetail(routine.id));
         }}
         onEditEquipment={(equipment) => {
           setEditingEquipment(equipment);

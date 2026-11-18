@@ -1,13 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { Navigate, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
-import {
-  useInAppNavigation,
-  IN_APP_NAV_SESSION_ID,
-  hasActiveSessionHistoryState,
-  type AppMainTab,
-  type InAppSubView,
-} from '@/store/useInAppNavigation';
+import { useInAppNavigation, type AppMainTab } from '@/store/useInAppNavigation';
+import { useSafeNavigate } from '@/hooks/useSafeNavigate';
+import { APP_ROUTES, parseAppSubRoute, type AppSubRoute } from '@/utils/navigation';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
 import {
@@ -44,34 +41,35 @@ import ProfileSettings from '@/pages/ProfileSettings';
 import FoodsPage from '@/pages/FoodsPage';
 import ExercisesPage from '@/pages/ExercisesPage';
 
-function getViewKey(tab: AppMainTab, stack: InAppSubView[]): string {
-  if (stack.length === 0) {
+function getViewKey(tab: AppMainTab, subRoute: AppSubRoute | null): string {
+  if (!subRoute) {
     return `tab:${tab}`;
   }
-  const current = stack[stack.length - 1];
-  // 核心契約：視圖生命週期 Key 收斂至模組級別 (Module Level)，
-  // 模組內部（如 Foods 列表 ⇄ Foods 詳情、Exercises 列表 ⇄ Exercises 詳情）其 ViewKey 恆定不變，
-  // 確保保活容器不被 React 卸載，底層列表滾動位置零丟失
-  return `sub:${current.type}`;
+  // 視圖生命週期 Key 收斂至模組級別，確保列表 ⇄ 詳情切換時底層保活容器不卸載
+  return `sub:${subRoute.module}`;
 }
 
 export function AppLayout() {
   const { t } = useTranslation();
-  const { activeTab, setActiveTab, subViewStack, pushSubView, popSubView } = useInAppNavigation();
-  const currentSubView = subViewStack[subViewStack.length - 1];
-  const isSubPage = Boolean(currentSubView);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const { goBack } = useSafeNavigate();
+  const { activeTab, setActiveTab } = useInAppNavigation();
 
-  // 主頁面個別滾動引用
+  const normalizedPath = pathname.replace(/\/+$/, '') || '/';
+  const isHomeRoute = normalizedPath === APP_ROUTES.home;
+  const subRoute = useMemo(() => parseAppSubRoute(normalizedPath), [normalizedPath]);
+  const isUnknownSubRoute = !isHomeRoute && !subRoute;
+  const isSubPage = Boolean(subRoute);
+
+  // 主頁面與模組滾動記憶
   const mainScrollRef = useRef<HTMLElement>(null);
-  const currentViewKey = getViewKey(activeTab, subViewStack);
-
-  // 導航棧滾動生命週期合約 (Navigation Stack Scroll Lifecycle Contract)
+  const currentViewKey = getViewKey(activeTab, subRoute);
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const prevViewKeyRef = useRef<string>(currentViewKey);
-  const prevDepthRef = useRef<number>(subViewStack.length);
   const isRestoringScrollRef = useRef<boolean>(false);
 
-  // 實時保存當前視圖的滾動位置
   const handleScroll = () => {
     if (isRestoringScrollRef.current || !mainScrollRef.current) return;
     scrollPositionsRef.current[currentViewKey] = mainScrollRef.current.scrollTop;
@@ -79,107 +77,44 @@ export function AppLayout() {
 
   useEffect(() => {
     const prevKey = prevViewKeyRef.current;
-    const prevDepth = prevDepthRef.current;
-    const currentDepth = subViewStack.length;
+    if (currentViewKey === prevKey) return;
 
-    if (currentViewKey !== prevKey) {
-      isRestoringScrollRef.current = true;
+    isRestoringScrollRef.current = true;
+    const isSwitchingMainTabs = prevKey.startsWith('tab:') && currentViewKey.startsWith('tab:');
+    const shouldRestore = isSwitchingMainTabs || navigationType === 'POP';
 
-      if (currentDepth > prevDepth) {
-        // ===== 跨模組 PUSH 操作（如 Settings -> FoodsPage） =====
-        // 1. 父模組當前最新滾動位置記錄備份
-        if (mainScrollRef.current) {
-          scrollPositionsRef.current[prevKey] = mainScrollRef.current.scrollTop;
-        }
-        // 2. 徹底銷毀即將進入之子模組任何殘留快照（保證全新打開）
-        delete scrollPositionsRef.current[currentViewKey];
-        // 3. 強制置頂重置
-        if (mainScrollRef.current) {
-          mainScrollRef.current.scrollTop = 0;
-        }
-      } else if (currentDepth < prevDepth) {
-        // ===== 跨模組 POP 操作（如 FoodsPage -> Settings） =====
-        // 1. 徹底銷毀被退出的子模組的所有滾動記憶
+    if (shouldRestore) {
+      if (navigationType === 'POP' && prevKey.startsWith('sub:')) {
         delete scrollPositionsRef.current[prevKey];
-        // 2. 還原父模組先前保存的滾動高度
-        const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
-        if (mainScrollRef.current) {
-          mainScrollRef.current.scrollTop = targetScroll;
-        }
-      } else {
-        // ===== 同級切換（如切換主 Tab） =====
-        if (mainScrollRef.current) {
-          scrollPositionsRef.current[prevKey] = mainScrollRef.current.scrollTop;
-        }
-        const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
-        if (mainScrollRef.current) {
-          mainScrollRef.current.scrollTop = targetScroll;
-        }
       }
-
-      prevViewKeyRef.current = currentViewKey;
-      prevDepthRef.current = currentDepth;
-
-      // 在下一幀確認滾動位置（防範 DOM 渲染重排）並解鎖監聽
+      const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTop = targetScroll;
+      }
       const rafId = requestAnimationFrame(() => {
-        if (currentDepth > prevDepth) {
-          if (mainScrollRef.current) {
-            mainScrollRef.current.scrollTop = 0;
-          }
-        } else if (currentDepth < prevDepth) {
-          const targetScroll = scrollPositionsRef.current[currentViewKey] ?? 0;
-          if (mainScrollRef.current) {
-            mainScrollRef.current.scrollTop = targetScroll;
-          }
+        if (mainScrollRef.current) {
+          mainScrollRef.current.scrollTop = targetScroll;
         }
         isRestoringScrollRef.current = false;
       });
-
+      prevViewKeyRef.current = currentViewKey;
       return () => cancelAnimationFrame(rafId);
-    } else {
-      // ===== 模組內部導航（currentViewKey === prevKey，如 Foods 列表 ⇄ Foods 詳情） =====
-      // 僅更新深度引用，外層 mainScrollRef 保持原位不動，詳情全屏浮層獨立滾動
-      prevDepthRef.current = currentDepth;
     }
-  }, [activeTab, subViewStack, currentViewKey]);
 
-  // 虛擬歷史記錄橋接：監聽原生 popstate 實現瀏覽器後退鍵與多層回捲同步
-  useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      const {
-        subViewStack: stack,
-        popSubView: pop,
-        truncateSubViews,
-      } = useInAppNavigation.getState();
-      if (stack.length === 0) return;
-
-      const state = event.state as
-        | { zenfitSessionId?: string; zenfitSubViewDepth?: number }
-        | null
-        | undefined;
-      if (
-        state?.zenfitSessionId === IN_APP_NAV_SESSION_ID &&
-        typeof state.zenfitSubViewDepth === 'number' &&
-        state.zenfitSubViewDepth < stack.length
-      ) {
-        truncateSubViews(state.zenfitSubViewDepth);
-      } else {
-        pop();
+    // PUSH 進入新模組：重置頂部滾動
+    delete scrollPositionsRef.current[currentViewKey];
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
+    const rafId = requestAnimationFrame(() => {
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTop = 0;
       }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  const handleBack = () => {
-    triggerHaptic('light');
-    if (hasActiveSessionHistoryState()) {
-      window.history.back();
-    } else {
-      popSubView();
-    }
-  };
+      isRestoringScrollRef.current = false;
+    });
+    prevViewKeyRef.current = currentViewKey;
+    return () => cancelAnimationFrame(rafId);
+  }, [currentViewKey, navigationType]);
 
   const { selectedDate, setSelectedDate } = useAppStore();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -284,23 +219,25 @@ export function AppLayout() {
   ];
 
   const subPageTitle = useMemo(() => {
-    if (!currentSubView) return '';
-    if (currentSubView.type === 'settings') return t('settings.title');
-    if (currentSubView.type === 'profile') return t('profileSettings.title');
-    if (currentSubView.type === 'foods') {
-      if (currentSubView.id) {
-        return currentSubView.mode === 'recipes' ? t('diet.recipeDetails') : t('diet.foodDetails');
-      }
+    if (!subRoute) return '';
+    if (subRoute.module === 'settings') return t('settings.title');
+    if (subRoute.module === 'profile') return t('profileSettings.title');
+    if (subRoute.module === 'foods') {
+      if (subRoute.detailKind === 'recipe') return t('diet.recipeDetails');
+      if (subRoute.detailKind === 'food') return t('diet.foodDetails');
       return t('settings.dietSection');
     }
-    if (currentSubView.type === 'exercises') {
-      if (currentSubView.id) {
-        return currentSubView.mode === 'routines' ? t('workout.routineDetails') : t('workout.exerciseDetails');
-      }
+    if (subRoute.module === 'exercises') {
+      if (subRoute.detailKind === 'routine') return t('workout.routineDetails');
+      if (subRoute.detailKind === 'exercise') return t('workout.exerciseDetails');
       return t('settings.workoutSection');
     }
     return t('settings.title');
-  }, [currentSubView, t]);
+  }, [subRoute, t]);
+
+  if (isUnknownSubRoute) {
+    return <Navigate to={APP_ROUTES.home} replace />;
+  }
 
   return (
     <div className="flex flex-col h-full w-full bg-background text-foreground select-none overflow-hidden">
@@ -375,8 +312,8 @@ export function AppLayout() {
                     if (mainScrollRef.current) {
                       scrollPositionsRef.current[currentViewKey] = mainScrollRef.current.scrollTop;
                     }
-                    pushSubView({ type: 'settings' });
                     triggerHaptic('light');
+                    navigate(APP_ROUTES.settings);
                   }}
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg hover:bg-muted/60"
                   aria-label={t('nav.settings')}
@@ -390,7 +327,7 @@ export function AppLayout() {
               <div className="flex items-center gap-1.5 -ml-2 min-w-0 pr-2">
                 <button
                   type="button"
-                  onClick={handleBack}
+                  onClick={() => goBack()}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
                   aria-label={t('common.back')}
                 >
@@ -413,13 +350,13 @@ export function AppLayout() {
         className="flex-1 overflow-y-auto no-scrollbar w-full"
       >
         <div className={cn("w-full max-w-xl mx-auto px-4 py-4", !isSubPage ? "pb-20" : "pb-8")}>
-          {/* 模式 A：若開啟了子視圖，渲染當前子視圖（綁定 key 確保每次全新打開均重置內部狀態與生命週期） */}
-          {isSubPage && currentSubView && (
+          {/* 模式 A：子視圖（模組級別 Key 確保列表 ⇄ 詳情保活不卸載） */}
+          {isSubPage && subRoute && (
             <div key={currentViewKey} className="w-full animate-in fade-in-50 duration-150">
-              {currentSubView.type === 'settings' && <Settings />}
-              {currentSubView.type === 'profile' && <ProfileSettings />}
-              {currentSubView.type === 'foods' && <FoodsPage />}
-              {currentSubView.type === 'exercises' && <ExercisesPage />}
+              {subRoute.module === 'settings' && <Settings />}
+              {subRoute.module === 'profile' && <ProfileSettings />}
+              {subRoute.module === 'foods' && <FoodsPage />}
+              {subRoute.module === 'exercises' && <ExercisesPage />}
             </div>
           )}
 

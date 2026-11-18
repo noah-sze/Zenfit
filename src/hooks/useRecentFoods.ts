@@ -4,13 +4,17 @@ import type { DailyDietLog } from '@/types';
 
 let inMemoryRecentFoodIds: string[] | null = null;
 let inMemoryRecentRecipeIds: string[] | null = null;
+let inMemoryFoodLastUsedMap: Map<string, number> | null = null;
+let inMemoryRecipeLastUsedMap: Map<string, number> | null = null;
 
 /**
- * 從歷史飲食日誌中提取去重、按最後使用時間倒序排列的食材與食譜 ID 列表 (Pure Function)
+ * 從歷史飲食日誌中提取去重、按最後使用時間倒序排列的食材與食譜 ID 列表及最後使用時間映射 (Pure Function)
  */
 export function extractRecentFoodAndRecipeIds(dailyLogs: DailyDietLog[]): {
   recentFoodIds: string[];
   recentRecipeIds: string[];
+  foodLastUsedMap: Map<string, number>;
+  recipeLastUsedMap: Map<string, number>;
 } {
   const foodLastUsedMap = new Map<string, number>();
   const recipeLastUsedMap = new Map<string, number>();
@@ -18,7 +22,10 @@ export function extractRecentFoodAndRecipeIds(dailyLogs: DailyDietLog[]): {
   for (const dayLog of dailyLogs) {
     const entries = dayLog.entries || [];
     for (const entry of entries) {
-      const time = entry.createdAt || entry.updatedAt || new Date(dayLog.date).getTime() || 0;
+      const time =
+        Math.max(entry.createdAt || 0, entry.updatedAt || 0) ||
+        new Date(dayLog.date).getTime() ||
+        0;
 
       if (entry.bundleId) {
         const existing = recipeLastUsedMap.get(entry.bundleId) || 0;
@@ -44,14 +51,21 @@ export function extractRecentFoodAndRecipeIds(dailyLogs: DailyDietLog[]): {
     .sort((a, b) => b[1] - a[1])
     .map(([id]) => id);
 
-  return { recentFoodIds, recentRecipeIds };
+  return { recentFoodIds, recentRecipeIds, foodLastUsedMap, recipeLastUsedMap };
 }
+
+const EMPTY_LAST_USED_MAP = new Map<string, number>();
 
 export function useRecentFoods() {
   const result = useLiveQuery(
     async () => {
       if (typeof indexedDB === 'undefined') {
-        return { recentFoodIds: [], recentRecipeIds: [] };
+        return {
+          recentFoodIds: [],
+          recentRecipeIds: [],
+          foodLastUsedMap: new Map<string, number>(),
+          recipeLastUsedMap: new Map<string, number>(),
+        };
       }
 
       // 倒序獲取最近 60 個有記錄的日誌
@@ -60,6 +74,8 @@ export function useRecentFoods() {
 
       inMemoryRecentFoodIds = extracted.recentFoodIds;
       inMemoryRecentRecipeIds = extracted.recentRecipeIds;
+      inMemoryFoodLastUsedMap = extracted.foodLastUsedMap;
+      inMemoryRecipeLastUsedMap = extracted.recipeLastUsedMap;
 
       return extracted;
     },
@@ -68,10 +84,15 @@ export function useRecentFoods() {
 
   const recentFoodIds = result?.recentFoodIds ?? inMemoryRecentFoodIds ?? [];
   const recentRecipeIds = result?.recentRecipeIds ?? inMemoryRecentRecipeIds ?? [];
+  const foodLastUsedMap = result?.foodLastUsedMap ?? inMemoryFoodLastUsedMap ?? EMPTY_LAST_USED_MAP;
+  const recipeLastUsedMap =
+    result?.recipeLastUsedMap ?? inMemoryRecipeLastUsedMap ?? EMPTY_LAST_USED_MAP;
 
   return {
     recentFoodIds,
     recentRecipeIds,
+    foodLastUsedMap,
+    recipeLastUsedMap,
     isLoading: result === undefined && inMemoryRecentFoodIds === null,
   };
 }
@@ -83,6 +104,8 @@ if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
       const extracted = extractRecentFoodAndRecipeIds(dailyLogs);
       inMemoryRecentFoodIds = extracted.recentFoodIds;
       inMemoryRecentRecipeIds = extracted.recentRecipeIds;
+      inMemoryFoodLastUsedMap = extracted.foodLastUsedMap;
+      inMemoryRecipeLastUsedMap = extracted.recipeLastUsedMap;
     })
     .catch(() => {});
 }

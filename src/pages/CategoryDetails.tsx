@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Edit2, Archive, RefreshCcw, Trash2, Layers, ChevronRight } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/services/db/db';
 import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/ui/section-card';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { triggerHaptic } from '@/lib/haptics';
@@ -33,22 +34,26 @@ import {
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import { useSafeNavigate } from '@/hooks/useSafeNavigate';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { APP_ROUTES } from '@/utils/navigation';
 import {
   OverviewPeriodSelector,
   IntakeFootprintHeatmap,
 } from '@/components/food/IntakeFootprintHeatmap';
 
 export interface CategoryDetailsProps {
-  id?: string;
+  id: string;
 }
 
-export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {}) {
-  const { id: routeId } = useParams<{ id: string }>();
-  const id = propId || routeId;
+export default function CategoryDetails({ id }: CategoryDetailsProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { goBack } = useSafeNavigate();
   const confirm = useConfirm();
+  const isExitingRef = useRef(false);
+
+  useEffect(() => {
+    isExitingRef.current = false;
+  }, [id]);
   const { allFoods, isLoading, updateFood, archiveFood, unarchiveFood, deleteFood } = useFoods();
   const { allRecipes } = useRecipes();
   const { nutritionDisplayMode } = useAppStore();
@@ -149,10 +154,15 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
 
   const handleToggleArchive = async () => {
     if (!food) return;
+    const foodDisplayName = formatFoodDisplayName(food);
     if (food.isArchived) {
       const ok = await confirm({
         title: t('common.restore'),
-        description: t('common.confirmRestoreItem', { name: formatFoodDisplayName(food) }),
+        variant: 'restore',
+        entitySpec: {
+          entityLabel: t('diet.foodEntityLabel', '食物'),
+          itemName: foodDisplayName,
+        },
       });
       if (ok) {
         await unarchiveFood(food.id);
@@ -160,11 +170,10 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
         toast.show(t('common.saved'));
       }
     } else {
-      const foodDisplayName = formatFoodDisplayName(food);
       const ok = await confirm({
         title: t('common.archive'),
         variant: 'archive',
-        archiveSpec: {
+        entitySpec: {
           entityLabel: t('diet.foodEntityLabel', '食物'),
           itemName: foodDisplayName,
           affectedLabel: t('diet.archiveRemoveFromRecipes', '從食譜剔除'),
@@ -174,8 +183,7 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
       if (ok) {
         await archiveFood(food.id);
         triggerHaptic('selection');
-        toast.show(t('common.saved'));
-        goBack();
+        toast.show(t('common.archivedSuccess', '已歸檔'));
       }
     }
   };
@@ -184,12 +192,17 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
     if (!food || hasUsage) return;
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: formatFoodDisplayName(food) }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('diet.foodEntityLabel', '食物'),
+        itemName: formatFoodDisplayName(food),
+      },
     });
     if (ok) {
+      isExitingRef.current = true;
       const res = await deleteFood(food.id);
       if (!res.success) {
+        isExitingRef.current = false;
         if (res.reason === 'has_logs') {
           toast.show(t('settings.foodHasLogsCannotDelete'));
         } else if (res.reason === 'has_recipes') {
@@ -226,7 +239,8 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
   }, [foodLogs, overviewPeriod, totalWeeks]);
 
   useEffect(() => {
-    if (!id || (!isLoading && !food)) {
+    if (!isExitingRef.current && (!id || (!isLoading && !food))) {
+      isExitingRef.current = true;
       goBack();
     }
   }, [id, isLoading, food, goBack]);
@@ -302,10 +316,10 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
 
       {/* 方案 B-1 + 10px 熱點圖全一體化卡片 */}
       <div className="border border-border rounded-lg overflow-hidden bg-card text-card-foreground shadow-none">
-        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-8) */}
-        <div className="h-8 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono">
+        {/* 第 1 層：B-1 極簡 HUD 規格條 (h-10，與下方 SectionCard 表頭等高) */}
+        <div className="h-10 px-4 border-b border-border bg-muted/40 flex items-center justify-between text-xs font-mono">
           <div className="flex items-center gap-2">
-            <span className="uppercase tracking-widest text-[10px] text-muted-foreground font-semibold">
+            <span className="uppercase tracking-widest text-[10px] text-muted-foreground">
               {t(`diet.foodCategory.${food.category || 'natural'}`)}
             </span>
             {food.brand && (
@@ -426,99 +440,86 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
       </div>
 
       {/* 每份營養素標籤基準卡片 */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between px-1">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">
-            {t('diet.servingNutrients', '基準營養素')}
-          </div>
-          <NutritionBasisToggle />
+      <SectionCard
+        title={t('diet.servingNutrients', '基準營養素')}
+        action={<NutritionBasisToggle />}
+        bodyClassName="text-sm"
+      >
+        <div className="h-10 px-4 flex items-center justify-between">
+          <span className="text-muted-foreground">{t('diet.serving')}</span>
+          <span className="font-mono text-foreground">
+            {formatFoodServing(scaledNutrition?.servingSize ?? food.servingSize, scaledNutrition?.servingUnit ?? food.servingUnit, foodWeightUnit, foodVolumeUnit).formatted}
+          </span>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border text-sm">
-          <div className="h-10 px-4 flex items-center justify-between">
-            <span className="text-muted-foreground">{t('diet.serving')}</span>
-            <span className="font-mono text-foreground">
-              {formatFoodServing(scaledNutrition?.servingSize ?? food.servingSize, scaledNutrition?.servingUnit ?? food.servingUnit, foodWeightUnit, foodVolumeUnit).formatted}
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.calories && "bg-calories-subtle-bg"
-          )}>
-            <span className="text-calories font-medium">{t('diet.calories')}</span>
-            <span className="font-mono text-calories font-medium">
-              {formatEnergy(scaledNutrition?.calories ?? food.calories, energyUnit).formatted}
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.carbs && "bg-carbs-subtle-bg"
-          )}>
-            <span className="text-carbs font-medium">{t('diet.carbs')}</span>
-            <span className="font-mono text-carbs font-medium">
-              {scaledNutrition?.carbs ?? food.carbs} g
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.protein && "bg-protein-subtle-bg"
-          )}>
-            <span className="text-protein font-medium">{t('diet.protein')}</span>
-            <span className="font-mono text-protein font-medium">
-              {scaledNutrition?.protein ?? food.protein} g
-            </span>
-          </div>
-          <div className={cn(
-            "h-10 px-4 flex items-center justify-between transition-colors",
-            evalRes?.highlights.fat && "bg-fat-subtle-bg"
-          )}>
-            <span className="text-fat font-medium">{t('diet.fat')}</span>
-            <span className="font-mono text-fat font-medium">
-              {scaledNutrition?.fat ?? food.fat} g
-            </span>
-          </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.calories && "bg-calories-subtle-bg"
+        )}>
+          <span className="text-calories font-medium">{t('diet.calories')}</span>
+          <span className="font-mono text-calories font-medium">
+            {formatEnergy(scaledNutrition?.calories ?? food.calories, energyUnit).formatted}
+          </span>
         </div>
-      </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.carbs && "bg-carbs-subtle-bg"
+        )}>
+          <span className="text-carbs font-medium">{t('diet.carbs')}</span>
+          <span className="font-mono text-carbs font-medium">
+            {scaledNutrition?.carbs ?? food.carbs} g
+          </span>
+        </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.protein && "bg-protein-subtle-bg"
+        )}>
+          <span className="text-protein font-medium">{t('diet.protein')}</span>
+          <span className="font-mono text-protein font-medium">
+            {scaledNutrition?.protein ?? food.protein} g
+          </span>
+        </div>
+        <div className={cn(
+          "h-10 px-4 flex items-center justify-between transition-colors",
+          evalRes?.highlights.fat && "bg-fat-subtle-bg"
+        )}>
+          <span className="text-fat font-medium">{t('diet.fat')}</span>
+          <span className="font-mono text-fat font-medium">
+            {scaledNutrition?.fat ?? food.fat} g
+          </span>
+        </div>
+      </SectionCard>
 
       {/* 包含此食材的食譜組合 */}
-      <div className="space-y-1.5">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1">
-          {t('diet.relatedRecipes')}
-        </div>
-        <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
-          {referencingRecipes.length === 0 ? (
-            <div className="p-4 text-center text-xs font-mono text-muted-foreground">
-              {t('diet.noRelatedRecipes')}
-            </div>
-          ) : (
-            referencingRecipes.map((recipe) => (
-              <button
-                key={recipe.id}
-                type="button"
-                onClick={() => {
-                  triggerHaptic('light');
-                  useInAppNavigation.getState().pushSubView({
-                    type: 'foods',
-                    id: recipe.id,
-                    mode: 'recipes',
-                  });
-                }}
-                className="w-full p-3.5 flex items-center justify-between gap-2 hover:bg-hover transition-colors group cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Layers className="size-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {recipe.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground group-hover:text-foreground shrink-0">
-                  <span>{t('diet.ingredientsCount', { count: recipe.ingredients.length })}</span>
-                  <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
+      <SectionCard title={t('diet.relatedRecipes')}>
+        {referencingRecipes.length === 0 ? (
+          <div className="p-4 text-center text-xs font-mono text-muted-foreground">
+            {t('diet.noRelatedRecipes')}
+          </div>
+        ) : (
+          referencingRecipes.map((recipe) => (
+            <button
+              key={recipe.id}
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                navigate(APP_ROUTES.recipeDetail(recipe.id));
+              }}
+              className="w-full p-3.5 flex items-center justify-between gap-2 hover:bg-hover transition-colors group cursor-pointer text-left"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Layers className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground truncate">
+                  {recipe.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground group-hover:text-foreground shrink-0">
+                <span>{t('diet.ingredientsCount', { count: recipe.ingredients.length })}</span>
+                <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
+              </div>
+            </button>
+          ))
+        )}
+      </SectionCard>
 
       {/* 編輯食材 Dialog (FoodFormDialog 共用組件) */}
       <FoodFormDialog

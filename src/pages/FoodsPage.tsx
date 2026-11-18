@@ -1,42 +1,26 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Categories from './Categories';
 import CategoryDetails from './CategoryDetails';
 import RecipeDetails from './RecipeDetails';
 import { cn } from '@/lib/utils';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { DetailOverlayContainer } from '@/components/layout/DetailOverlayContainer';
+import { parseAppSubRoute } from '@/utils/navigation';
 
 /**
- * 食物與菜餚管理模組 - 視圖堆疊保活容器 (View Stack Container)
- * 解決進出詳情頁時列表被銷毀重建導致的異步查詢延遲與滾動屏閃跳動問題
- * 1. 底層列表 (Categories) 按需掛載並恆定保活，DOM 節點與滾動座標一分一毫都不會變動
- * 2. 若從外部路由直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
- * 3. 頂層詳情 (CategoryDetails / RecipeDetails) 作為全屏覆蓋層渲染，獨立滾動
+ * 食物與食譜管理模組 - 視圖堆疊保活容器 (Keep-Alive Container)
+ * 1. 底層列表 (Categories) 按需掛載並恆定保活，進入/返回詳情頁時 0 卸載、0 重新查詢、滾動位置零丟失
+ * 2. 若直接開啟詳情 URL，首幀不掛載底層清單，實現 0ms 秒開
+ * 3. 頂層詳情 (CategoryDetails / RecipeDetails) 作為全屏覆蓋層獨立滾動
  */
 export default function FoodsPage() {
-  const location = useLocation();
-  const { id: paramId } = useParams();
-  const { subViewStack } = useInAppNavigation();
-  const currentSubView = subViewStack[subViewStack.length - 1];
+  const { pathname } = useLocation();
+  const subRoute = parseAppSubRoute(pathname);
 
-  const inAppDetailId = currentSubView?.type === 'foods' ? currentSubView.id : undefined;
-  const inAppDetailMode = currentSubView?.type === 'foods' ? currentSubView.mode : undefined;
-
-  const isFoodDetail =
-    (Boolean(inAppDetailId) && inAppDetailMode !== 'recipes') ||
-    (location.pathname.startsWith('/settings/foods/') &&
-      Boolean(paramId) &&
-      !location.pathname.endsWith('/archived'));
-
-  const isRecipeDetail =
-    (Boolean(inAppDetailId) && inAppDetailMode === 'recipes') ||
-    (location.pathname.startsWith('/settings/recipes/') &&
-      Boolean(paramId) &&
-      !location.pathname.endsWith('/archived'));
-
-  const activeId = inAppDetailId || paramId;
+  const activeId = subRoute?.module === 'foods' ? subRoute.id : undefined;
+  const isFoodDetail = subRoute?.module === 'foods' && subRoute.detailKind === 'food' && Boolean(activeId);
+  const isRecipeDetail = subRoute?.module === 'foods' && subRoute.detailKind === 'recipe' && Boolean(activeId);
   const isDetailOpen = isFoodDetail || isRecipeDetail;
 
   const [hasVisitedList, setHasVisitedList] = useState(!isDetailOpen);
@@ -50,7 +34,7 @@ export default function FoodsPage() {
 
   const shouldMountList = !isDetailOpen || hasVisitedList;
 
-  // 模組退出銷毀合約：當使用者真正退出食物管理模組（如返回 /settings）時，徹底銷毀其狀態
+  // 模組退出銷毀合約：當使用者真正離開食物管理模組時重置過濾狀態
   useEffect(() => {
     return () => {
       useBrowserStateStore.getState().resetFoodBrowserState();
@@ -59,19 +43,14 @@ export default function FoodsPage() {
 
   return (
     <div className="relative w-full">
-      {/* 底層列表頁：訪問過列表後恆定保活，0 卸載、0 重新查詢、0 滾動計算 */}
       {shouldMountList && (
         <div className={cn(isDetailOpen && 'pointer-events-none select-none')}>
           <Categories isDetailOpen={isDetailOpen} />
         </div>
       )}
 
-      {/* 頂層詳情頁：覆蓋於列表頁上方，擁有獨立全屏滾動上下文與棧深度滾動記憶 */}
-      {isDetailOpen && (
-        <DetailOverlayContainer
-          stackDepth={subViewStack.length}
-          detailKey={`${inAppDetailMode ?? 'foods'}:${activeId ?? ''}`}
-        >
+      {isDetailOpen && activeId && (
+        <DetailOverlayContainer>
           {isFoodDetail && <CategoryDetails key={activeId} id={activeId} />}
           {isRecipeDetail && <RecipeDetails key={activeId} id={activeId} />}
         </DetailOverlayContainer>

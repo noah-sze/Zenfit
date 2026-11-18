@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,8 +13,9 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import { FoodFormDialog, type FoodFormData } from '@/components/food/FoodFormDialog';
 import { RecipeFormDialog, type RecipeFormData } from '@/components/food/RecipeFormDialog';
 import { FoodRecipeBrowser } from '@/components/food/FoodRecipeBrowser';
+import { formatFoodDisplayName } from '@/utils/foodNaming';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { APP_ROUTES } from '@/utils/navigation';
 
 interface CategoriesProps {
   isDetailOpen?: boolean;
@@ -22,7 +24,7 @@ interface CategoriesProps {
 export default function Categories({ isDetailOpen = false }: CategoriesProps) {
   const { t } = useTranslation();
   const confirm = useConfirm();
-  const { pushSubView } = useInAppNavigation();
+  const navigate = useNavigate();
 
   // 頂部視圖切換：食材 vs 食譜 (純客戶端 Session 記憶狀態，不污染 URL，遵守 Rule 4)
   const { foodBrowser, setFoodTab } = useBrowserStateStore();
@@ -65,8 +67,11 @@ export default function Categories({ isDetailOpen = false }: CategoriesProps) {
   const handleDeleteRecipe = async (recipe: FoodRecipe) => {
     const isOk = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: recipe.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('diet.recipeEntityLabel', '食譜'),
+        itemName: recipe.name,
+      },
     });
     if (!isOk) return;
 
@@ -98,8 +103,11 @@ export default function Categories({ isDetailOpen = false }: CategoriesProps) {
   const handleDeleteFood = async (food: FoodItem) => {
     const ok = await confirm({
       title: t('common.delete'),
-      description: t('common.confirmDeleteItem', { name: food.name }),
       variant: 'destructive',
+      entitySpec: {
+        entityLabel: t('diet.foodEntityLabel', '食物'),
+        itemName: formatFoodDisplayName(food),
+      },
     });
     if (!ok) return;
 
@@ -164,10 +172,10 @@ export default function Categories({ isDetailOpen = false }: CategoriesProps) {
         onItemClick={(item, type) => {
           if (type === 'food') {
             setFoodTab('foods');
-            pushSubView({ type: 'foods', id: item.id, mode: 'foods' });
+            navigate(APP_ROUTES.foodDetail(item.id));
           } else {
             setFoodTab('recipes');
-            pushSubView({ type: 'foods', id: item.id, mode: 'recipes' });
+            navigate(APP_ROUTES.recipeDetail(item.id));
           }
         }}
         onDeleteFood={handleDeleteFood}

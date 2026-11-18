@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, ChevronRight } from 'lucide-react';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { triggerHaptic } from '@/lib/haptics';
 import { HoldToDeleteIconButton } from '@/components/ui/HoldToDeleteIconButton';
 import { MetricValue } from '@/components/ui/metric-value';
@@ -15,6 +14,7 @@ export interface WorkoutExerciseCardProps {
   bodyWeightUnit?: string;
   className?: string;
   interactive?: boolean;
+  onExerciseClick?: (exerciseId: string) => void;
   onOpenKeypad?: (setIdx: number, field: 'weight' | 'reps', val: number) => void;
   onAddSet?: () => void;
   onDeleteExercise?: () => void;
@@ -31,6 +31,7 @@ export function WorkoutExerciseCard({
   bodyWeightUnit = 'kg',
   className = '',
   interactive = true,
+  onExerciseClick,
   onOpenKeypad,
   onAddSet,
   onDeleteExercise,
@@ -55,16 +56,12 @@ export function WorkoutExerciseCard({
       <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs font-mono text-muted-foreground shrink-0 rounded-t-lg">
         <div className="flex flex-wrap content-start items-center gap-x-1.5 h-10 overflow-hidden min-w-0 flex-1">
           <div className="h-10 flex items-center shrink-0 max-w-full">
-            {exerciseId && interactive ? (
+            {exerciseId && interactive && onExerciseClick ? (
               <button
                 type="button"
                 onClick={() => {
                   triggerHaptic('light');
-                  useInAppNavigation.getState().pushSubView({
-                    type: 'exercises',
-                    id: exerciseId,
-                    mode: 'exercises',
-                  });
+                  onExerciseClick(exerciseId);
                 }}
                 className="min-w-0 font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-colors cursor-pointer select-none"
               >

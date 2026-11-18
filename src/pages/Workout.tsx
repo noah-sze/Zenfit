@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
+import { APP_ROUTES } from '@/utils/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useBodyRecovery } from '@/hooks/useBodyRecovery';
@@ -47,6 +48,7 @@ interface KeypadConfig {
 
 export default function Workout() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { selectedDate } = useAppStore();
   const { bodyWeightUnit } = useUnitPreferences();
   const { profile } = useUserProfile();
@@ -458,6 +460,7 @@ export default function Workout() {
         sets={group.sets}
         bodyWeightUnit={bodyWeightUnit}
         interactive={true}
+        onExerciseClick={(exerciseId) => navigate(APP_ROUTES.exerciseDetail(exerciseId))}
         onOpenKeypad={(setIdx, field, val) =>
           handleOpenKeypad(
             workout.id,
@@ -526,11 +529,7 @@ export default function Workout() {
                             onClick={() => {
                               if (!workout.routineId) return;
                               triggerHaptic('light');
-                              useInAppNavigation.getState().pushSubView({
-                                type: 'exercises',
-                                id: workout.routineId,
-                                mode: 'routines',
-                              });
+                              navigate(APP_ROUTES.routineDetail(workout.routineId));
                             }}
                             className="font-semibold text-sm tracking-tight text-foreground truncate px-1.5 py-0.5 -mx-1.5 rounded-full border border-transparent hover:border-border/80 hover:bg-hover transition-colors cursor-pointer select-none shrink-0"
                           >{workout.title}</button>

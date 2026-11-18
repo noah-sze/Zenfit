@@ -1,153 +1,121 @@
 import { describe, it, expect } from 'vitest';
-import { getHierarchicalFallbackPath, isStackNavigation } from './navigation';
+import {
+  APP_ROUTES,
+  parseAppSubRoute,
+  getHierarchicalFallbackPath,
+  isStackNavigation,
+  resolveInitialLogicalPath,
+  toSingleBrowserUrl,
+} from './navigation';
 
-describe('getHierarchicalFallbackPath', () => {
-  describe('一級頂層設定頁面 -> 回退至 App 首頁 /app', () => {
-    it('在 /app/settings 應回退至首頁 /app', () => {
-      expect(getHierarchicalFallbackPath('/app/settings')).toBe('/app');
+describe('navigation (標準 React Router 路由單一真理源)', () => {
+  describe('parseAppSubRoute', () => {
+    it('在主頁 /app 與未知路徑應回傳 null', () => {
+      expect(parseAppSubRoute('/app')).toBeNull();
+      expect(parseAppSubRoute('/app/')).toBeNull();
+      expect(parseAppSubRoute('/app/unknown')).toBeNull();
+      expect(parseAppSubRoute('/')).toBeNull();
     });
 
-    it('在 /app/profile 應回退至首頁 /app', () => {
-      expect(getHierarchicalFallbackPath('/app/profile')).toBe('/app');
+    it('應精準解析設定、個人資料、管理清單與四類詳情頁路徑', () => {
+      expect(parseAppSubRoute(APP_ROUTES.settings)).toEqual({ module: 'settings' });
+      expect(parseAppSubRoute(APP_ROUTES.profile)).toEqual({ module: 'profile' });
+      expect(parseAppSubRoute(APP_ROUTES.foods)).toEqual({ module: 'foods' });
+      expect(parseAppSubRoute(APP_ROUTES.foodDetail('food-1'))).toEqual({
+        module: 'foods',
+        detailKind: 'food',
+        id: 'food-1',
+      });
+      expect(parseAppSubRoute(APP_ROUTES.recipeDetail('recipe-1'))).toEqual({
+        module: 'foods',
+        detailKind: 'recipe',
+        id: 'recipe-1',
+      });
+      expect(parseAppSubRoute(APP_ROUTES.exercises)).toEqual({ module: 'exercises' });
+      expect(parseAppSubRoute(APP_ROUTES.exerciseDetail('ex-1'))).toEqual({
+        module: 'exercises',
+        detailKind: 'exercise',
+        id: 'ex-1',
+      });
+      expect(parseAppSubRoute(APP_ROUTES.routineDetail('rt-1'))).toEqual({
+        module: 'exercises',
+        detailKind: 'routine',
+        id: 'rt-1',
+      });
     });
 
-    it('兼容舊路徑：在 /settings 應回退至首頁 /app', () => {
-      expect(getHierarchicalFallbackPath('/settings')).toBe('/app');
-    });
-
-    it('兼容舊路徑：在 /profile 應回退至首頁 /app', () => {
-      expect(getHierarchicalFallbackPath('/profile')).toBe('/app');
+    it('應正確處理 URL 編碼的實體 ID', () => {
+      expect(parseAppSubRoute(APP_ROUTES.foodDetail('a b/c'))).toEqual({
+        module: 'foods',
+        detailKind: 'food',
+        id: 'a b/c',
+      });
     });
   });
 
-  describe('二級管理清單 -> 回退至設定首頁', () => {
-    it('在 /app/settings/foods 應回退至 /app/settings', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/foods')).toBe('/app/settings');
+  describe('getHierarchicalFallbackPath', () => {
+    it('詳情頁無歷史時應回退至對應管理清單', () => {
+      expect(getHierarchicalFallbackPath('/app/foods/123')).toBe('/app/foods');
+      expect(getHierarchicalFallbackPath('/app/recipes/456')).toBe('/app/foods');
+      expect(getHierarchicalFallbackPath('/app/exercises/abc')).toBe('/app/exercises');
+      expect(getHierarchicalFallbackPath('/app/routines/xyz')).toBe('/app/exercises');
     });
 
-    it('在 /app/settings/exercises 應回退至 /app/settings', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/exercises')).toBe('/app/settings');
+    it('管理清單與個人資料無歷史時應回退至設定頁', () => {
+      expect(getHierarchicalFallbackPath('/app/foods')).toBe('/app/settings');
+      expect(getHierarchicalFallbackPath('/app/exercises')).toBe('/app/settings');
+      expect(getHierarchicalFallbackPath('/app/profile')).toBe('/app/settings');
     });
 
-    it('在 /app/settings/recipes 應回退至 /app/settings', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/recipes')).toBe('/app/settings');
+    it('設定首頁與未知路徑應回退至主應用首頁 /app', () => {
+      expect(getHierarchicalFallbackPath('/app/settings')).toBe('/app');
+      expect(getHierarchicalFallbackPath('/unknown')).toBe('/app');
+      expect(getHierarchicalFallbackPath('/')).toBe('/app');
     });
 
-    it('在 /app/settings/routines 應回退至 /app/settings', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/routines')).toBe('/app/settings');
-    });
-
-    it('兼容舊路徑：在 /settings/foods 應回退至 /app/settings', () => {
+    it('兼容舊版 /settings/* 路徑推導', () => {
+      expect(getHierarchicalFallbackPath('/settings/foods/123')).toBe('/app/foods');
+      expect(getHierarchicalFallbackPath('/settings/recipes/456')).toBe('/app/foods');
+      expect(getHierarchicalFallbackPath('/settings/exercises/abc')).toBe('/app/exercises');
       expect(getHierarchicalFallbackPath('/settings/foods')).toBe('/app/settings');
     });
   });
 
-  describe('三級詳情頁 -> 回退至對應二級清單', () => {
-    it('在 /app/settings/foods/:id 應回退至 /app/settings/foods', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/foods/a0bf9893-0f2d-45d7-83db-dd029d3f4b18')).toBe(
-        '/app/settings/foods'
-      );
+  describe('isStackNavigation', () => {
+    it('同模組內列表與詳情互跳應為棧內導航 (true)', () => {
+      expect(isStackNavigation('/app/foods', '/app/foods/123')).toBe(true);
+      expect(isStackNavigation('/app/foods/123', '/app/recipes/456')).toBe(true);
+      expect(isStackNavigation('/app/recipes/456', '/app/foods')).toBe(true);
+      expect(isStackNavigation('/app/exercises', '/app/exercises/abc')).toBe(true);
+      expect(isStackNavigation('/app/exercises/abc', '/app/routines/xyz')).toBe(true);
     });
 
-    it('在 /app/settings/recipes/:id 應回退至 /app/settings/foods', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/recipes/35ed8eca-91d5-49f0-9557-f374301d56a6')).toBe(
-        '/app/settings/foods'
-      );
-    });
-
-    it('在 /app/settings/exercises/:id 應回退至 /app/settings/exercises', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/exercises/bench-press-123')).toBe(
-        '/app/settings/exercises'
-      );
-    });
-
-    it('在 /app/settings/routines/:id 應回退至 /app/settings/exercises', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/routines/routine-abc')).toBe(
-        '/app/settings/exercises'
-      );
+    it('跨模組導航應為 false', () => {
+      expect(isStackNavigation('/app/settings', '/app/foods')).toBe(false);
+      expect(isStackNavigation('/app/foods', '/app/settings')).toBe(false);
+      expect(isStackNavigation('/app/foods/123', '/app/exercises/abc')).toBe(false);
+      expect(isStackNavigation('/app', '/app/settings')).toBe(false);
     });
   });
 
-  describe('其他子路徑與異常兜底', () => {
-    it('在未明確列出的 /app/settings/* 應回退至 /app/settings', () => {
-      expect(getHierarchicalFallbackPath('/app/settings/some-other-config')).toBe('/app/settings');
+  describe('resolveInitialLogicalPath & toSingleBrowserUrl (單一 URL /app 映射)', () => {
+    it('應正確映射落地頁與 App 內部路徑', () => {
+      expect(resolveInitialLogicalPath('/')).toBe('/');
+      expect(resolveInitialLogicalPath('/landing')).toBe('/');
+      expect(resolveInitialLogicalPath('/app')).toBe('/app');
+      expect(resolveInitialLogicalPath('/app/foods/123')).toBe('/app/foods/123');
+      expect(resolveInitialLogicalPath('/settings')).toBe('/app/settings');
+      expect(resolveInitialLogicalPath('/settings/foods')).toBe('/app/foods');
+      expect(resolveInitialLogicalPath('/profile')).toBe('/app/profile');
+      expect(resolveInitialLogicalPath('/unknown')).toBe('/app');
     });
 
-    it('在未知路由應兜底回首頁 /app', () => {
-      expect(getHierarchicalFallbackPath('/some-unknown-path')).toBe('/app');
-      expect(getHierarchicalFallbackPath('/')).toBe('/app');
-    });
-  });
-
-  describe('isStackNavigation - 視圖堆疊導航分類器', () => {
-    it('相同路徑應視為棧內導航 (true)', () => {
-      expect(isStackNavigation('/settings/foods', '/settings/foods')).toBe(true);
-    });
-
-    describe('食物模組視圖棧 (foods / recipes)', () => {
-      it('從列表深入食材詳情應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/foods', '/settings/foods/123')).toBe(true);
-      });
-
-      it('從食材詳情返回列表應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/foods/123', '/settings/foods')).toBe(true);
-      });
-
-      it('從列表深入菜餚詳情應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/foods', '/settings/recipes/456')).toBe(true);
-      });
-
-      it('從菜餚詳情返回列表應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/recipes/456', '/settings/foods')).toBe(true);
-      });
-
-      it('從 /settings 進入 /settings/foods 不是棧內導航 (false)', () => {
-        expect(isStackNavigation('/settings', '/settings/foods')).toBe(false);
-      });
-
-      it('從 /settings/foods 退出至 /settings 不是棧內導航 (false)', () => {
-        expect(isStackNavigation('/settings/foods', '/settings')).toBe(false);
-      });
-    });
-
-    describe('動作模組視圖棧 (exercises / routines)', () => {
-      it('從列表深入動作詳情應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/exercises', '/settings/exercises/abc')).toBe(true);
-      });
-
-      it('從動作詳情返回列表應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/exercises/abc', '/settings/exercises')).toBe(true);
-      });
-
-      it('從列表深入課表詳情應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/exercises', '/settings/routines/def')).toBe(true);
-      });
-
-      it('從課表詳情返回列表應為棧內導航 (true)', () => {
-        expect(isStackNavigation('/settings/routines/def', '/settings/exercises')).toBe(true);
-      });
-
-      it('從 /settings 進入 /settings/exercises 不是棧內導航 (false)', () => {
-        expect(isStackNavigation('/settings', '/settings/exercises')).toBe(false);
-      });
-
-      it('從 /settings/exercises 退出至 /settings 不是棧內導航 (false)', () => {
-        expect(isStackNavigation('/settings/exercises', '/settings')).toBe(false);
-      });
-    });
-
-    describe('跨頁籤與無關路徑', () => {
-      it('主頁籤之間切換不是棧內導航 (false)', () => {
-        expect(isStackNavigation('/diet', '/workout')).toBe(false);
-        expect(isStackNavigation('/', '/diet')).toBe(false);
-        expect(isStackNavigation('/app/diet', '/app/workout')).toBe(false);
-        expect(isStackNavigation('/app', '/app/diet')).toBe(false);
-      });
-
-      it('從食物模組切換到動作模組不是棧內導航 (false)', () => {
-        expect(isStackNavigation('/settings/foods', '/settings/exercises')).toBe(false);
-        expect(isStackNavigation('/app/settings/foods', '/app/settings/exercises')).toBe(false);
-      });
+    it('除落地頁外，所有 App 內部路徑在瀏覽器網址列一律映射為 /app', () => {
+      expect(toSingleBrowserUrl('/')).toBe('/');
+      expect(toSingleBrowserUrl('/app')).toBe('/app');
+      expect(toSingleBrowserUrl('/app/settings')).toBe('/app');
+      expect(toSingleBrowserUrl('/app/foods')).toBe('/app');
+      expect(toSingleBrowserUrl('/app/recipes/abc')).toBe('/app');
     });
   });
 });

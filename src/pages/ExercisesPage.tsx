@@ -1,41 +1,28 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Exercises from './Exercises';
 import ExerciseDetails from './ExerciseDetails';
 import RoutineDetails from './RoutineDetails';
 import { cn } from '@/lib/utils';
 import { useBrowserStateStore } from '@/store/useBrowserStateStore';
-import { useInAppNavigation } from '@/store/useInAppNavigation';
 import { DetailOverlayContainer } from '@/components/layout/DetailOverlayContainer';
+import { parseAppSubRoute } from '@/utils/navigation';
 
 /**
- * 動作、組合與器械管理模組 - 視圖堆疊保活容器 (View Stack Container)
- * 1. 底層列表 (Exercises) 按需掛載並恆定保活，DOM 節點與滾動座標一分一毫都不會變動
- * 2. 若從外部路由直接跳轉進入詳情頁，首幀不掛載底層龐大列表，實現 0ms 秒開
- * 3. 頂層詳情 (ExerciseDetails / RoutineDetails) 作為全屏覆蓋層渲染，獨立滾動
+ * 動作、組合與器械管理模組 - 視圖堆疊保活容器 (Keep-Alive Container)
+ * 1. 底層列表 (Exercises) 按需掛載並恆定保活，進入/返回詳情頁時 0 卸載、0 重新查詢、滾動位置零丟失
+ * 2. 若直接開啟詳情 URL，首幀不掛載底層清單，實現 0ms 秒開
+ * 3. 頂層詳情 (ExerciseDetails / RoutineDetails) 作為全屏覆蓋層獨立滾動
  */
 export default function ExercisesPage() {
-  const location = useLocation();
-  const { id: paramId } = useParams();
-  const { subViewStack } = useInAppNavigation();
-  const currentSubView = subViewStack[subViewStack.length - 1];
+  const { pathname } = useLocation();
+  const subRoute = parseAppSubRoute(pathname);
 
-  const inAppDetailId = currentSubView?.type === 'exercises' ? currentSubView.id : undefined;
-  const inAppDetailMode = currentSubView?.type === 'exercises' ? currentSubView.mode : undefined;
-
+  const activeId = subRoute?.module === 'exercises' ? subRoute.id : undefined;
   const isExerciseDetail =
-    (Boolean(inAppDetailId) && inAppDetailMode !== 'routines') ||
-    (location.pathname.startsWith('/settings/exercises/') &&
-      Boolean(paramId) &&
-      !location.pathname.endsWith('/archived'));
-
+    subRoute?.module === 'exercises' && subRoute.detailKind === 'exercise' && Boolean(activeId);
   const isRoutineDetail =
-    (Boolean(inAppDetailId) && inAppDetailMode === 'routines') ||
-    (location.pathname.startsWith('/settings/routines/') &&
-      Boolean(paramId) &&
-      !location.pathname.endsWith('/archived'));
-
-  const activeId = inAppDetailId || paramId;
+    subRoute?.module === 'exercises' && subRoute.detailKind === 'routine' && Boolean(activeId);
   const isDetailOpen = isExerciseDetail || isRoutineDetail;
 
   const [hasVisitedList, setHasVisitedList] = useState(!isDetailOpen);
@@ -49,7 +36,7 @@ export default function ExercisesPage() {
 
   const shouldMountList = !isDetailOpen || hasVisitedList;
 
-  // 模組退出銷毀合約：當使用者真正退出動作管理模組（如返回 /settings）時，徹底銷毀其狀態
+  // 模組退出銷毀合約：當使用者真正離開訓練管理模組時重置過濾狀態
   useEffect(() => {
     return () => {
       useBrowserStateStore.getState().resetWorkoutBrowserState();
@@ -58,19 +45,14 @@ export default function ExercisesPage() {
 
   return (
     <div className="relative w-full">
-      {/* 底層列表頁：訪問過列表後恆定保活，0 卸載、0 重新查詢、0 滾動計算 */}
       {shouldMountList && (
         <div className={cn(isDetailOpen && 'pointer-events-none select-none')}>
           <Exercises isDetailOpen={isDetailOpen} />
         </div>
       )}
 
-      {/* 頂層詳情頁：覆蓋於列表頁上方，擁有獨立全屏滾動上下文與棧深度滾動記憶 */}
-      {isDetailOpen && (
-        <DetailOverlayContainer
-          stackDepth={subViewStack.length}
-          detailKey={`${inAppDetailMode ?? 'exercises'}:${activeId ?? ''}`}
-        >
+      {isDetailOpen && activeId && (
+        <DetailOverlayContainer>
           {isExerciseDetail && <ExerciseDetails key={activeId} id={activeId} />}
           {isRoutineDetail && <RoutineDetails key={activeId} id={activeId} />}
         </DetailOverlayContainer>

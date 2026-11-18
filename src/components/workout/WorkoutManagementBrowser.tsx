@@ -12,9 +12,11 @@ import {
 import { useExercises } from '@/hooks/useExercises';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useEquipments } from '@/hooks/useEquipments';
+import { useRecentExercises } from '@/hooks/useRecentExercises';
 import { MAJOR_MUSCLE_GROUPS } from '@/constants/muscles';
 import { getRoutineFactSummary } from '@/utils/workoutMath';
 import { sortMuscleEntries } from '@/utils/muscleIntensity';
+import { compareByRecentActivityThenName } from '@/utils/activitySorting';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { matchesMultilingual } from '@/utils/multilingualSearch';
@@ -106,6 +108,9 @@ export function WorkoutManagementBrowser({
     getEquipmentDisplayName,
   } = useEquipments();
 
+  // 4. 最近訓練使用時間映射（預設排序：最近使用 / 添加 / 修改置頂）
+  const { exerciseLastUsedMap, routineLastUsedMap } = useRecentExercises();
+
   // 計算每個器械被多少個動作使用
   const equipmentUsageCount = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -193,8 +198,8 @@ export function WorkoutManagementBrowser({
         }
         return true;
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [exerciseBaseList, selectedEquipment, selectedMuscleGroup, exerciseSearchQuery]);
+      .sort((a, b) => compareByRecentActivityThenName(a, b, exerciseLastUsedMap));
+  }, [exerciseBaseList, selectedEquipment, selectedMuscleGroup, exerciseSearchQuery, exerciseLastUsedMap]);
 
   // ==========================================
   // 分頁 2：訓練組合 (Routines) 狀態與過濾
@@ -228,8 +233,8 @@ export function WorkoutManagementBrowser({
         }
         return true;
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [routineBaseList, routineSearchQuery]);
+      .sort((a, b) => compareByRecentActivityThenName(a, b, routineLastUsedMap));
+  }, [routineBaseList, routineSearchQuery, routineLastUsedMap]);
 
   // ==========================================
   // 分頁 3：器械 (Equipments) 狀態與過濾
@@ -264,11 +269,9 @@ export function WorkoutManagementBrowser({
         }
         return true;
       })
-      .sort((a, b) => {
-        const nameA = getEquipmentDisplayName(a.id, t);
-        const nameB = getEquipmentDisplayName(b.id, t);
-        return nameA.localeCompare(nameB);
-      });
+      .sort((a, b) =>
+        compareByRecentActivityThenName(a, b, undefined, (eq) => getEquipmentDisplayName(eq.id, t))
+      );
   }, [equipmentBaseList, equipmentSearchQuery, getEquipmentDisplayName, t]);
 
   return (
