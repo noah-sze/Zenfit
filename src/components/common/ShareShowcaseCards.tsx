@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,97 @@ import {
   generateDailyExportImageDataUrl,
   generateDailyExportImageBlob,
 } from '@/services/aiDataExportImage';
+
+type ShareFormatId = 'image' | 'text' | 'json';
+
+interface ShareFormatItem {
+  id: ShareFormatId;
+  index: string;
+  badge: string;
+  title: string;
+  desc: string;
+  previewHeader: string;
+  spec: string;
+  useCases: string[];
+  copied: boolean;
+  isBusy: boolean;
+  onCopy: () => void;
+}
+
+const DOT_GRID_STYLE = {
+  backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
+  backgroundSize: '16px 16px',
+} as const;
+
+function UseCaseChips({
+  items,
+  label,
+  emphasized = false,
+}: {
+  items: string[];
+  label?: string;
+  emphasized?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {label ? (
+        <span className="font-mono text-[10.5px] text-muted-foreground mr-0.5 shrink-0">
+          {label}
+        </span>
+      ) : null}
+      {items.map((item) => (
+        <span
+          key={item}
+          className={
+            emphasized
+              ? 'inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-card text-[11px] leading-tight text-foreground whitespace-nowrap'
+              : 'inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-card text-[11px] leading-tight text-muted-foreground whitespace-nowrap'
+          }
+        >
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function CopyActionButton({
+  copied,
+  isBusy,
+  copyLabel,
+  copiedLabel,
+  onClick,
+}: {
+  copied: boolean;
+  isBusy: boolean;
+  copyLabel: string;
+  copiedLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={isBusy}
+      onClick={onClick}
+      className={
+        copied
+          ? 'h-6.5 px-2.5 rounded-full border-emerald-600 dark:border-emerald-400 bg-card text-emerald-600 dark:text-emerald-400 hover:bg-hover font-mono text-[11px] font-medium shadow-none cursor-pointer gap-1 shrink-0'
+          : 'h-6.5 px-2.5 rounded-full border-border bg-card text-foreground hover:border-foreground hover:bg-hover font-mono text-[11px] font-medium shadow-none cursor-pointer gap-1 shrink-0'
+      }
+    >
+      {isBusy ? (
+        <Loader2 className="size-3 animate-spin" />
+      ) : copied ? (
+        <Check className="size-3 stroke-[2.2]" />
+      ) : (
+        <Copy className="size-3 stroke-[2]" />
+      )}
+      <span>{copied ? copiedLabel : copyLabel}</span>
+    </Button>
+  );
+}
 
 /**
  * 男性 180cm 69kg 深度用戶全天數據分享載荷（工廠函式，完整支援多語系 i18n）
@@ -182,8 +273,10 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export function ShareShowcaseCards({
   payload,
+  header,
 }: {
   payload?: DailyExportPayload;
+  header?: ReactNode;
 }) {
   const { t } = useTranslation();
   const tr = (k: string, fb?: string) => (fb !== undefined ? t(k, fb) : t(k));
@@ -195,12 +288,13 @@ export function ShareShowcaseCards({
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
 
+  const [activeFormat, setActiveFormat] = useState<ShareFormatId>('image');
   const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
   const [isCapturing, setIsCapturing] = useState(false);
   const [imageCopied, setImageCopied] = useState(false);
   const [textCopied, setTextCopied] = useState(false);
   const [jsonCopied, setJsonCopied] = useState(false);
-  const [focusedPreview, setFocusedPreview] = useState<'image' | 'text' | 'json' | null>(null);
+  const [focusedPreview, setFocusedPreview] = useState<ShareFormatId | null>(null);
 
   // 生成長圖 DataUrl
   useEffect(() => {
@@ -223,7 +317,7 @@ export function ShareShowcaseCards({
   const textContent = useMemo(() => formatDailyExportAsText(activePayload, t), [activePayload, t]);
   const jsonContent = useMemo(() => formatDailyExportAsJson(activePayload), [activePayload]);
 
-  // 複製圖片（分享朋友或社交媒體）
+  // 複製圖片
   const handleCopyImage = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
@@ -290,176 +384,279 @@ export function ShareShowcaseCards({
     }
   };
 
-  return (
-    <div className="flex flex-row overflow-x-auto snap-x snap-mandatory scroll-smooth items-stretch gap-4 sm:gap-6 md:grid md:grid-cols-3 md:gap-6 font-mono text-xs pb-4 -mr-4 pr-4 sm:-mr-8 sm:pr-8 md:mr-0 md:pr-0 md:pb-0 md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {/* ========================================================================= */}
-      {/* 卡片 1：圖片 (Image Export)                                               */}
-      {/* ========================================================================= */}
-      <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg flex flex-col justify-between shadow-none space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-neutral-900 dark:text-white font-bold uppercase tracking-wider text-xs">
-              01 // {t('aiExport.formatImage', '圖片')}
-            </span>
-            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px] uppercase">
-              IMAGE
-            </span>
-          </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">
-            {t('landing.shareCards.imageTitle', '高密度分析長圖')}
-          </h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            {t('landing.shareCards.imageDesc', '像素級高對比向量排版，無失真記錄體態、課表與生重進食，適合發送給教練或社群分享。')}
-          </p>
-        </div>
+  const copyLabel = t('common.copy', '複製');
+  const copiedLabel = t('common.copied', '已複製');
+  const useCaseLabel = t('landing.shareCards.useCaseLabel', '分享給');
 
-        {/* 圖片預覽區（點擊獲取焦點後才允許內部滾動） */}
-        <div
-          tabIndex={0}
-          onFocus={() => setFocusedPreview('image')}
-          onBlur={() => setFocusedPreview((prev) => (prev === 'image' ? null : prev))}
+  const formats: ShareFormatItem[] = [
+    {
+      id: 'image',
+      index: '01',
+      badge: 'IMAGE',
+      title: t('landing.shareCards.imageTitle', '高密度分析長圖'),
+      desc: t('landing.shareCards.imageDesc', '像素級高對比排版，無失真呈現飲食、訓練、體態。'),
+      previewHeader: t('landing.shareCards.previewHeaders.image', 'PREVIEW · HIGH-DENSITY SNAPSHOT (PNG)'),
+      spec: t('landing.shareCards.specs.image', 'PNG · 2x Retina'),
+      useCases: [
+        t('landing.shareCards.useCases.friends', '朋友'),
+        t('landing.shareCards.useCases.socialMedia', '社交媒體'),
+        t('landing.shareCards.useCases.coach', '教練'),
+      ],
+      copied: imageCopied,
+      isBusy: isCapturing,
+      onCopy: handleCopyImage,
+    },
+    {
+      id: 'text',
+      index: '02',
+      badge: 'MD',
+      title: t('landing.shareCards.textTitle', '結構化 AI 提示詞'),
+      desc: t('landing.shareCards.textDesc', '無噪音 Markdown 結構，直接貼入對話即可展開分析。'),
+      previewHeader: t('landing.shareCards.previewHeaders.text', 'PREVIEW · STRUCTURED AI PROMPT (MARKDOWN)'),
+      spec: t('landing.shareCards.specs.text', 'MARKDOWN · ZERO-NOISE'),
+      useCases: [
+        t('landing.shareCards.useCases.chatgpt', 'ChatGPT'),
+        t('landing.shareCards.useCases.claude', 'Claude'),
+        t('landing.shareCards.useCases.friends', '朋友'),
+      ],
+      copied: textCopied,
+      isBusy: false,
+      onCopy: handleCopyText,
+    },
+    {
+      id: 'json',
+      index: '03',
+      badge: 'JSON',
+      title: t('landing.shareCards.jsonTitle', '純數學結構化 JSON'),
+      desc: t('landing.shareCards.jsonDesc', '100% 開放標準數據合約，完整涵蓋飲食、訓練、體態。'),
+      previewHeader: t('landing.shareCards.previewHeaders.json', 'PREVIEW · OPEN DATA CONTRACT (JSON)'),
+      spec: t('landing.shareCards.specs.json', 'JSON · OPEN SCHEMA'),
+      useCases: [
+        t('landing.shareCards.useCases.ai', 'AI'),
+        t('landing.shareCards.useCases.scripts', '自動化腳本'),
+        t('landing.shareCards.useCases.externalApps', '外部程式'),
+      ],
+      copied: jsonCopied,
+      isBusy: false,
+      onCopy: handleCopyJson,
+    },
+  ];
+
+  const activeItem = formats.find((item) => item.id === activeFormat) ?? formats[0];
+
+  const renderPreviewContent = (formatId: ShareFormatId, compact = false) => {
+    if (formatId === 'image') {
+      return previewImageUrl ? (
+        <img
+          src={previewImageUrl}
+          alt={`e2Cal ${activePayload.date} Share`}
           className={
-            focusedPreview === 'image'
-              ? 'h-[240px] overflow-y-auto overflow-x-hidden rounded-lg border border-foreground/40 bg-muted/20 p-2 overscroll-contain select-none focus:outline-hidden'
-              : 'h-[240px] overflow-hidden rounded-lg border border-border bg-muted/20 p-2 select-none cursor-pointer focus:outline-hidden'
+            compact
+              ? 'block w-full h-auto rounded border border-border shadow-none select-none pointer-events-none'
+              : 'block w-full max-w-[380px] mx-auto h-auto rounded-lg border border-border shadow-none select-none pointer-events-none'
           }
-        >
-          {previewImageUrl ? (
-            <img
-              src={previewImageUrl}
-              alt={`e2Cal ${activePayload.date} Share`}
-              className="block w-full h-auto rounded shadow-none select-none pointer-events-none"
-            />
-          ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground text-xs font-mono">
-              <Loader2 className="size-4 animate-spin mr-2" />
-              <span>{t('aiExport.imageGenerating', '正在繪製長圖...')}</span>
-            </div>
-          )}
+        />
+      ) : (
+        <div className="h-full min-h-[200px] flex items-center justify-center text-muted-foreground text-xs font-mono">
+          <Loader2 className="size-4 animate-spin mr-2" />
+          <span>{t('aiExport.imageGenerating', '正在繪製長圖...')}</span>
         </div>
+      );
+    }
 
-        {/* 底部操作按鈕：分享朋友或社交媒體（點擊複製長圖） */}
-        <div className="pt-1">
-          <Button
-            type="button"
-            disabled={isCapturing}
-            onClick={handleCopyImage}
-            className="w-full h-9 rounded-lg bg-foreground text-background font-mono text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            {isCapturing ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : imageCopied ? (
-              <Check className="size-3.5 stroke-[2.2]" />
-            ) : (
-              <Copy className="size-3.5 stroke-[2]" />
-            )}
-            <span>{t('aiExport.shareFriendsOrSocial', '分享朋友或社交媒體')}</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 卡片 2：純文本 (Plain Text Markdown Prompt)                                */}
-      {/* ========================================================================= */}
-      <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg flex flex-col justify-between shadow-none space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-neutral-900 dark:text-white font-bold uppercase tracking-wider text-xs">
-              02 // {t('aiExport.formatText', '純文本')}
-            </span>
-            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px] uppercase">
-              MARKDOWN
-            </span>
-          </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">
-            {t('landing.shareCards.textTitle', '結構化 AI 提示詞')}
-          </h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            {t('landing.shareCards.textDesc', '將當日客觀體態、生重宏量素與訓練組數格式化為無噪音 Markdown，直接貼入 Claude 或 ChatGPT。')}
-          </p>
-        </div>
-
-        {/* 純文本預覽區（點擊獲取焦點後才允許內部滾動） */}
+    if (formatId === 'text') {
+      return (
         <div
-          tabIndex={0}
-          onFocus={() => setFocusedPreview('text')}
-          onBlur={() => setFocusedPreview((prev) => (prev === 'text' ? null : prev))}
           className={
-            focusedPreview === 'text'
-              ? 'h-[240px] overflow-y-auto rounded-lg border border-foreground/40 bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-text text-muted-foreground overscroll-contain focus:outline-hidden'
-              : 'h-[240px] overflow-hidden rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words select-none text-muted-foreground cursor-pointer focus:outline-hidden'
+            compact
+              ? 'font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words text-muted-foreground'
+              : 'font-mono text-xs leading-relaxed whitespace-pre-wrap break-words text-muted-foreground select-text'
           }
         >
           {textContent}
         </div>
+      );
+    }
 
-        {/* 底部操作按鈕：AI 或朋友 */}
-        <div className="pt-1">
-          <Button
-            type="button"
-            onClick={handleCopyText}
-            className="w-full h-9 rounded-lg bg-foreground text-background font-mono text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            {textCopied ? (
-              <Check className="size-3.5 stroke-[2.2]" />
-            ) : (
-              <Copy className="size-3.5 stroke-[2]" />
-            )}
-            <span>{t('aiExport.shareAiOrFriends', 'AI 或朋友')}</span>
-          </Button>
+    return (
+      <div
+        className={
+          compact
+            ? 'font-mono text-[11px] leading-relaxed whitespace-pre text-muted-foreground'
+            : 'font-mono text-xs leading-relaxed whitespace-pre text-muted-foreground select-text'
+        }
+      >
+        {jsonContent}
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-12 lg:items-stretch">
+      {/* 左欄：標題說明 + 桌面版三列格式切換器 */}
+      <div className="lg:col-span-5 flex flex-col gap-5">
+        {header}
+
+        {/* 桌面版互動式格式切換器（手機版改由下方橫向滑動卡承載） */}
+        <div
+          role="tablist"
+          aria-label={useCaseLabel}
+          className="hidden lg:block rounded-lg border border-border bg-card overflow-hidden divide-y divide-border"
+        >
+          {formats.map((item) => {
+            const isActive = item.id === activeFormat;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setActiveFormat(item.id);
+                }}
+                className={
+                  isActive
+                    ? 'w-full text-left px-4 py-3.5 flex items-start justify-between gap-3 relative bg-muted/40 transition-colors cursor-pointer'
+                    : 'w-full text-left px-4 py-3.5 flex items-start justify-between gap-3 relative bg-card hover:bg-hover transition-colors cursor-pointer'
+                }
+              >
+                {isActive ? (
+                  <span aria-hidden="true" className="absolute left-0 inset-y-0 w-0.5 bg-foreground" />
+                ) : null}
+
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                      {item.index}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground font-sans">
+                      {item.title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed font-sans">
+                    {item.desc}
+                  </p>
+                  <div className="pt-1.5">
+                    <UseCaseChips items={item.useCases} emphasized={isActive} />
+                  </div>
+                </div>
+
+                <span
+                  className={
+                    isActive
+                      ? 'font-mono text-[10px] uppercase px-1.5 py-0.5 rounded border border-foreground bg-foreground text-background shrink-0 mt-0.5'
+                      : 'font-mono text-[10px] uppercase px-1.5 py-0.5 rounded border border-border bg-card text-muted-foreground shrink-0 mt-0.5'
+                  }
+                >
+                  {item.badge}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 卡片 3：JSON (Structured JSON Data)                                      */}
-      {/* ========================================================================= */}
-      <div className="w-[84vw] max-w-[350px] sm:max-w-[400px] md:w-full md:max-w-none shrink-0 snap-start border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-5 sm:p-6 rounded-lg flex flex-col justify-between shadow-none space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-neutral-900 dark:text-white font-bold uppercase tracking-wider text-xs">
-              03 // {t('aiExport.formatJson', 'JSON')}
+      {/* 右欄（桌面版）：與左欄頂部與底部完全齊平的寬幅預覽視窗 */}
+      <div className="hidden lg:block lg:col-span-7 lg:relative">
+        <div className="lg:absolute lg:inset-0 rounded-lg border border-border bg-card text-card-foreground flex flex-col overflow-hidden shadow-none">
+          {/* 表頭：與全站 SectionCard h-10 規格一致 */}
+          <div className="h-10 px-4 bg-muted/40 border-b border-border flex items-center justify-between gap-3 shrink-0">
+            <span className="font-mono text-[11px] font-medium tracking-wider text-foreground uppercase truncate">
+              {activeItem.previewHeader}
             </span>
-            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px] uppercase">
-              JSON
+            <CopyActionButton
+              copied={activeItem.copied}
+              isBusy={activeItem.isBusy}
+              copyLabel={copyLabel}
+              copiedLabel={copiedLabel}
+              onClick={activeItem.onCopy}
+            />
+          </div>
+
+          {/* 預覽主舞台（固定填滿剩餘高度，長內容內部平順滾動，確保卡片底部與左欄絕對齊平） */}
+          <div
+            className={
+              activeItem.id === 'image'
+                ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain p-5'
+                : 'flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 bg-card'
+            }
+            style={activeItem.id === 'image' ? DOT_GRID_STYLE : undefined}
+          >
+            {renderPreviewContent(activeItem.id, false)}
+          </div>
+
+          {/* 底部場景與規格欄（與 SyncTopologyDiagram h-9 底欄同頻） */}
+          <div className="min-h-9 px-4 py-1.5 border-t border-border bg-muted/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <UseCaseChips items={activeItem.useCases} label={useCaseLabel} emphasized />
+            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider shrink-0">
+              {activeItem.spec}
             </span>
           </div>
-          <h3 className="text-neutral-900 dark:text-white text-base font-sans font-bold">
-            {t('landing.shareCards.jsonTitle', '純數學結構化 JSON')}
-          </h3>
-          <p className="text-neutral-600 dark:text-neutral-400 font-sans leading-relaxed text-xs">
-            {t('landing.shareCards.jsonDesc', '100% 開放標準數據合約，包含完整能量平衡、動作參數與身體維度，便於自動化腳本分析。')}
-          </p>
         </div>
+      </div>
 
-        {/* JSON 預覽區（點擊獲取焦點後才允許內部滾動） */}
-        <div
-          tabIndex={0}
-          onFocus={() => setFocusedPreview('json')}
-          onBlur={() => setFocusedPreview((prev) => (prev === 'json' ? null : prev))}
-          className={
-            focusedPreview === 'json'
-              ? 'h-[240px] overflow-y-auto rounded-lg border border-foreground/40 bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre select-text text-muted-foreground overscroll-contain focus:outline-hidden'
-              : 'h-[240px] overflow-hidden rounded-lg border border-border bg-muted/30 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre select-none text-muted-foreground cursor-pointer focus:outline-hidden'
-          }
-        >
-          {jsonContent}
-        </div>
+      {/* 手機／平板版：左右橫向滑動三張格式預覽卡（左側與其他區塊嚴格對齊） */}
+      <div className="lg:hidden -mr-4 pr-4 sm:-mr-8 sm:pr-8 flex flex-row items-stretch gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {formats.map((item) => {
+          const isFocused = focusedPreview === item.id;
+          return (
+            <div
+              key={item.id}
+              className={
+                isFocused
+                  ? 'w-[85vw] max-w-[360px] sm:max-w-[400px] shrink-0 snap-start rounded-lg border border-foreground bg-card text-card-foreground flex flex-col overflow-hidden shadow-none transition-colors'
+                  : 'w-[85vw] max-w-[360px] sm:max-w-[400px] shrink-0 snap-start rounded-lg border border-border bg-card text-card-foreground flex flex-col overflow-hidden shadow-none transition-colors'
+              }
+            >
+              {/* 表頭：格式編號 + 輕量複製鈕 */}
+              <div className="h-10 px-3.5 bg-muted/40 border-b border-border flex items-center justify-between gap-2 shrink-0">
+                <span className="font-mono text-[11px] font-medium tracking-wider text-foreground uppercase truncate">
+                  {item.index} // {item.badge}
+                </span>
+                <CopyActionButton
+                  copied={item.copied}
+                  isBusy={item.isBusy}
+                  copyLabel={copyLabel}
+                  copiedLabel={copiedLabel}
+                  onClick={item.onCopy}
+                />
+              </div>
 
-        {/* 底部操作按鈕：AI 或程式 */}
-        <div className="pt-1">
-          <Button
-            type="button"
-            onClick={handleCopyJson}
-            className="w-full h-9 rounded-lg bg-foreground text-background font-mono text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            {jsonCopied ? (
-              <Check className="size-3.5 stroke-[2.2]" />
-            ) : (
-              <Copy className="size-3.5 stroke-[2]" />
-            )}
-            <span>{t('aiExport.shareAiOrPrograms', 'AI 或程式')}</span>
-          </Button>
-        </div>
+              {/* 標題與簡介 */}
+              <div className="px-3.5 py-3 border-b border-border space-y-1 shrink-0">
+                <h3 className="text-sm font-semibold text-foreground font-sans">
+                  {item.title}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed font-sans">
+                  {item.desc}
+                </p>
+              </div>
+
+              {/* 預覽區（填滿卡片剩餘高度；點擊獲得焦點後允許內部滾動，避免搶佔手機主頁面滾動） */}
+              <div className="relative flex-1 min-h-[240px]">
+                <div
+                  tabIndex={0}
+                  onFocus={() => setFocusedPreview(item.id)}
+                  onBlur={() => setFocusedPreview((prev) => (prev === item.id ? null : prev))}
+                  style={item.id === 'image' ? DOT_GRID_STYLE : undefined}
+                  className={
+                    isFocused
+                      ? 'absolute inset-0 overflow-y-auto overflow-x-hidden p-3 overscroll-contain focus:outline-hidden'
+                      : 'absolute inset-0 overflow-hidden p-3 select-none cursor-pointer focus:outline-hidden'
+                  }
+                >
+                  {renderPreviewContent(item.id, true)}
+                </div>
+              </div>
+
+              {/* 底欄：適用場景標籤 */}
+              <div className="min-h-9 px-3.5 py-2 border-t border-border bg-muted/40 flex items-center shrink-0">
+                <UseCaseChips items={item.useCases} label={useCaseLabel} emphasized />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

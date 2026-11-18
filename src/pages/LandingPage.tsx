@@ -598,24 +598,26 @@ export default function LandingPage() {
   {/*  05. ANALYTICS & DATA SHARING (分析功能：不接黑盒 AI，數據自由給外部)            */}
   {/*  =========================================================================  */}
   <section id="analytics" className="py-20 px-4 sm:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200">
-    <div className="max-w-6xl mx-auto space-y-12">
-      
-      <div className="space-y-4 max-w-3xl">
-        <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
-          {t('landing.analytics.tag', '[ 04 / 分析]')}
-        </div>
-        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white">
-          {t('landing.analytics.titleLine1', '內部零黑盒 AI')}<br />
-          <span className="text-neutral-500 font-sans text-2xl sm:text-4xl font-normal">{t('landing.analytics.titleLine2', '外部開放自由分析')}</span>
-        </h2>
-        <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-sans">
-          <BrandText text={t('landing.analytics.desc', '我們不在軟體裡塞入未經科學驗證的 AI 評分機制。e2Cal 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。')} />
-        </p>
-      </div>
-
-      {/* 數據分享模式展示 (100% 複用真實分享界面的圖片、純文本、JSON 三大模式) */}
-      <ShareShowcaseCards />
-
+    <div className="max-w-6xl mx-auto">
+      {/* 方案 1：12 欄互動式格式檢視器（左 5 欄標題＋格式切換 · 右 7 欄等高預覽窗；手機版橫向滑動三張格式卡） */}
+      <ShareShowcaseCards
+        header={
+          <div className="space-y-3">
+            <div className="font-mono text-xs text-telemetry-accent uppercase tracking-widest">
+              {t('landing.analytics.tag', '[ 04 / 分析 ]')}
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight font-sans text-neutral-900 dark:text-white leading-tight">
+              {t('landing.analytics.titleLine1', '內部零黑盒 AI')}
+              <span className="block mt-1 text-neutral-500 font-sans text-xl sm:text-2xl font-normal">
+                {t('landing.analytics.titleLine2', '外部開放自由分析')}
+              </span>
+            </h2>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed font-sans">
+              <BrandText text={t('landing.analytics.desc', '我們不在軟體裡塞入未經科學驗證的 AI 評分機制。e2Cal 的職責是提供毫秒級的客觀事實，並主動幫你整理好格式：一鍵導出為適合 ChatGPT 與 Claude 的對話文字，或一張精緻的長圖。分析的自由與決策權，始終 100% 握在你手裡。')} />
+            </p>
+          </div>
+        }
+      />
     </div>
   </section>
 

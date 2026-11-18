@@ -1448,11 +1448,32 @@
       },
       "shareCards": {
         "imageTitle": "高密度分析長圖",
-        "imageDesc": "像素級高對比向量排版，無失真記錄體態、課表與生重進食，適合發送給教練或社群分享。",
+        "imageDesc": "像素級高對比排版，無失真呈現飲食、訓練、體態。",
         "textTitle": "結構化 AI 提示詞",
-        "textDesc": "將當日客觀體態、生重宏量素與訓練組數格式化為無噪音 Markdown，直接貼入 Claude 或 ChatGPT。",
+        "textDesc": "無噪音 Markdown 結構，直接貼入對話即可展開分析。",
         "jsonTitle": "純數學結構化 JSON",
-        "jsonDesc": "100% 開放標準數據合約，包含完整能量平衡、動作參數與身體維度，便於自動化腳本分析。"
+        "jsonDesc": "100% 開放標準數據合約，完整涵蓋飲食、訓練、體態。",
+        "useCaseLabel": "分享給",
+        "useCases": {
+          "friends": "朋友",
+          "socialMedia": "社交媒體",
+          "coach": "教練",
+          "chatgpt": "ChatGPT",
+          "claude": "Claude",
+          "ai": "AI",
+          "scripts": "自動化腳本",
+          "externalApps": "外部程式"
+        },
+        "previewHeaders": {
+          "image": "PREVIEW · HIGH-DENSITY SNAPSHOT (PNG)",
+          "text": "PREVIEW · STRUCTURED AI PROMPT (MARKDOWN)",
+          "json": "PREVIEW · OPEN DATA CONTRACT (JSON)"
+        },
+        "specs": {
+          "image": "PNG · 2x Retina",
+          "text": "MARKDOWN · ZERO-NOISE",
+          "json": "JSON · OPEN SCHEMA"
+        }
       },
       "themeToggle": "切換淺色/深色模式",
       "demoData": {

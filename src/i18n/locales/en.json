@@ -1447,12 +1447,33 @@
         "fat": "Fat"
       },
       "shareCards": {
-        "imageTitle": "High-Density Graphic Export",
-        "imageDesc": "High-contrast vector export recording body, workouts, and raw foods without compression loss.",
+        "imageTitle": "High-Density Snapshot",
+        "imageDesc": "Crisp high-contrast layout capturing diet, workouts, and body metrics without loss.",
         "textTitle": "Structured AI Prompt",
-        "textDesc": "Clean noise-free Markdown with daily metrics and sets, ready to paste into Claude or ChatGPT.",
+        "textDesc": "Zero-noise Markdown formatted for instant analysis in any AI conversation.",
         "jsonTitle": "Pure Structured JSON",
-        "jsonDesc": "100% open standardized data schema including energy balance and workouts for automated scripts."
+        "jsonDesc": "100% open data schema covering diet, workouts, and body metrics.",
+        "useCaseLabel": "Share to",
+        "useCases": {
+          "friends": "Friends",
+          "socialMedia": "Social Media",
+          "coach": "Coach",
+          "chatgpt": "ChatGPT",
+          "claude": "Claude",
+          "ai": "AI",
+          "scripts": "Scripts",
+          "externalApps": "External Apps"
+        },
+        "previewHeaders": {
+          "image": "PREVIEW · HIGH-DENSITY SNAPSHOT (PNG)",
+          "text": "PREVIEW · STRUCTURED AI PROMPT (MARKDOWN)",
+          "json": "PREVIEW · OPEN DATA CONTRACT (JSON)"
+        },
+        "specs": {
+          "image": "PNG · 2x Retina",
+          "text": "MARKDOWN · ZERO-NOISE",
+          "json": "JSON · OPEN SCHEMA"
+        }
       },
       "themeToggle": "Toggle light/dark mode",
       "demoData": {
