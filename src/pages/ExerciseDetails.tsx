@@ -99,8 +99,8 @@ export default function ExerciseDetails({ id }: ExerciseDetailsProps) {
       log.exercises.some(
         (ex) =>
           ex.exerciseId === id ||
-          (typeof (ex as any).exerciseName === 'string' &&
-            (ex as any).exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase())
+          (typeof (ex as typeof ex & { exerciseName?: unknown }).exerciseName === 'string' &&
+            String((ex as typeof ex & { exerciseName?: unknown }).exerciseName).trim().toLowerCase() === exercise.name.trim().toLowerCase())
       )
     );
   }, [allWorkoutLogs, id, exercise]);
@@ -123,8 +123,8 @@ export default function ExerciseDetails({ id }: ExerciseDetailsProps) {
       const targetGroup = log.exercises.filter(
         (ex) =>
           ex.exerciseId === id ||
-          (typeof (ex as any).exerciseName === 'string' &&
-            (ex as any).exerciseName.trim().toLowerCase() === exercise.name.trim().toLowerCase())
+          (typeof (ex as typeof ex & { exerciseName?: unknown }).exerciseName === 'string' &&
+            String((ex as typeof ex & { exerciseName?: unknown }).exerciseName).trim().toLowerCase() === exercise.name.trim().toLowerCase())
       );
       const allSets = targetGroup.flatMap((g) => g.sets || []);
       return {
@@ -255,7 +255,7 @@ export default function ExerciseDetails({ id }: ExerciseDetailsProps) {
   }, [id, isExercisesLoading, exercise, goBack]);
 
   if (!exercise) {
-    if (isExitingRef.current) return null;
+    if (!isExercisesLoading) return null;
     return (
       <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}

@@ -271,7 +271,7 @@ export default function Settings() {
           {/* 外觀主題 */}
           <div className="usage-row">
             <span className="text-sm font-normal text-foreground">{t('settings.theme')}</span>
-            <Select value={theme} onValueChange={(v) => setTheme(v as any)}>
+            <Select value={theme} onValueChange={(v) => { if (v === 'light' || v === 'dark' || v === 'system') setTheme(v); }}>
               <SelectTrigger
                 size="custom"
                 className="flex items-center gap-1 text-sm font-mono text-muted-foreground hover:text-foreground cursor-pointer transition-colors"

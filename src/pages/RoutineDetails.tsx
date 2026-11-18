@@ -260,7 +260,7 @@ export default function RoutineDetails({ id }: RoutineDetailsProps) {
   }, [id, isRoutinesLoading, routine, goBack]);
 
   if (!routine) {
-    if (isExitingRef.current) return null;
+    if (!isRoutinesLoading) return null;
     return (
       <div className="w-full max-w-xl mx-auto p-8 text-center text-sm font-mono text-muted-foreground">
         {t('common.loading')}

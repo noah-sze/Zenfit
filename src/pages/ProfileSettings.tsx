@@ -42,6 +42,13 @@ export default function ProfileSettings() {
   const [displayHeight, setDisplayHeight] = useState(getInitialHeight);
   const isInitializedRef = useRef(false);
 
+  // 折算身高基準 cm
+  const parsedDisplayHeight = parseFloat(displayHeight) || 0;
+  const heightInCm = lengthUnit === 'in' ? inToCm(parsedDisplayHeight) : parsedDisplayHeight;
+
+  // 記錄上一次渲染時使用的長度單位，供單位切換時準確換算既有輸入值
+  const prevLengthUnitRef = useRef(lengthUnit);
+
   // 初始化個人資料表單數據（僅在初次非空載入時初始化，防止打字時被覆寫）
   useEffect(() => {
     if (!isLoading && !isInitializedRef.current) {
@@ -50,23 +57,24 @@ export default function ProfileSettings() {
       setBirthDate(profile.birthDate || '');
       const rawCm = profile.heightCm || 0;
       setDisplayHeight(rawCm > 0 ? (lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm)) : '');
+      prevLengthUnitRef.current = lengthUnit;
       isInitializedRef.current = true;
     }
   }, [isLoading, profile, lengthUnit]);
 
-  // 長度單位切換時僅更新身高展示
+  // 長度單位切換時，依切換前的原單位無損換算為新單位顯示
   useEffect(() => {
-    if (isInitializedRef.current) {
-      const rawCm = heightInCm;
-      if (rawCm > 0) {
-        setDisplayHeight(lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(rawCm));
-      }
+    if (isInitializedRef.current && prevLengthUnitRef.current !== lengthUnit) {
+      const prevUnit = prevLengthUnitRef.current;
+      prevLengthUnitRef.current = lengthUnit;
+      setDisplayHeight((prev) => {
+        const parsed = parseFloat(prev) || 0;
+        if (parsed <= 0) return prev;
+        const rawCm = prevUnit === 'in' ? inToCm(parsed) : parsed;
+        return lengthUnit === 'in' ? String(cmToIn(rawCm, 1)) : String(Math.round(rawCm * 10) / 10);
+      });
     }
   }, [lengthUnit]);
-
-  // 折算身高基準 cm
-  const parsedDisplayHeight = parseFloat(displayHeight) || 0;
-  const heightInCm = lengthUnit === 'in' ? inToCm(parsedDisplayHeight) : parsedDisplayHeight;
 
   // 體重由系統既有記錄提供 (若無則為 0)
   const weightInKg = profile.currentWeightKg || 0;

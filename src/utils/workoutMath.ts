@@ -153,10 +153,11 @@ export function findLastExerciseSet(
       if (!exGroup) continue;
 
       const idMatch = Boolean(cleanExerciseId && exGroup.exerciseId === cleanExerciseId);
+      const legacyExerciseName = (exGroup as typeof exGroup & { exerciseName?: unknown }).exerciseName;
       const nameMatch = Boolean(
         cleanExerciseName &&
-        (exGroup as any).exerciseName &&
-        String((exGroup as any).exerciseName).trim().toLowerCase() === cleanExerciseName
+        typeof legacyExerciseName === 'string' &&
+        legacyExerciseName.trim().toLowerCase() === cleanExerciseName
       );
 
       if (idMatch || nameMatch) {
@@ -240,10 +241,11 @@ export function findLastExerciseRecord(
       if (!exGroup) continue;
 
       const idMatch = Boolean(cleanExerciseId && exGroup.exerciseId === cleanExerciseId);
+      const legacyExerciseName = (exGroup as typeof exGroup & { exerciseName?: unknown }).exerciseName;
       const nameMatch = Boolean(
         cleanExerciseName &&
-        (exGroup as any).exerciseName &&
-        String((exGroup as any).exerciseName).trim().toLowerCase() === cleanExerciseName
+        typeof legacyExerciseName === 'string' &&
+        legacyExerciseName.trim().toLowerCase() === cleanExerciseName
       );
 
       if (idMatch || nameMatch) {

@@ -1381,7 +1381,7 @@ export const db = new ZenfitDatabase();
 // 自動檢查初始化種子資料
 db.seedDefaultData().catch(console.error);
 
-// 掛載至 window 便於開發者與架構審查在 Console 即時檢視
-if (typeof window !== 'undefined') {
-  (window as any).db = db;
+// 僅於開發環境掛載至 window 便於 Console 即時檢視
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as Window & { db?: ZenfitDatabase }).db = db;
 }

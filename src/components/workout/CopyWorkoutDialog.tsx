@@ -117,6 +117,17 @@ export function CopyWorkoutDialog({
     return newer.length > 0 ? newer[newer.length - 1] : null;
   }, [recordedDates, activeHistoryDate]);
 
+  // 數字鍵盤狀態
+  const [keypadConfig, setKeypadConfig] = useState<{
+    index: number;
+    title: string;
+    value: number;
+    unit: string;
+    anchorEl?: HTMLElement | null;
+  } | null>(null);
+  const initialKeypadSetsRef = useRef<WorkoutSet[]>([]);
+  const isKeypadConfirmedRef = useRef(false);
+
   // 彈窗開啟或目標參數變更時，重置手動選擇與次級彈窗
   useEffect(() => {
     if (open) {
@@ -185,17 +196,6 @@ export function CopyWorkoutDialog({
       setSelectedIds(new Set(historicalLogs.map((item) => item.id)));
     }
   }, [open, historicalLogs]);
-
-  // 數字鍵盤狀態
-  const [keypadConfig, setKeypadConfig] = useState<{
-    index: number;
-    title: string;
-    value: number;
-    unit: string;
-    anchorEl?: HTMLElement | null;
-  } | null>(null);
-  const initialKeypadSetsRef = useRef<WorkoutSet[]>([]);
-  const isKeypadConfirmedRef = useRef(false);
 
   // 打開數字鍵盤編輯組數
   const handleOpenKeypad = (index: number, anchorEl: HTMLElement) => {

@@ -95,7 +95,7 @@ export function FoodFormDialog({
   const [brand, setBrand] = useState('');
   const [isBrandFocused, setIsBrandFocused] = useState(false);
   const [brandHighlightIdx, setBrandHighlightIdx] = useState(-1);
-  const brandInputRef = useRef<HTMLInputElement>(null);
+  const [brandInputEl, setBrandInputEl] = useState<HTMLInputElement | null>(null);
   const { allFoods } = useFoods();
 
   // 提取既有品牌清單（依使用頻次排序、大小寫去重）
@@ -630,7 +630,7 @@ export function FoodFormDialog({
                 <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end font-sans">
                   {/* 品牌 (選填) - 長度自適應之膠囊輸入框（含既有品牌聯想） */}
                   <input
-                    ref={brandInputRef}
+                    ref={setBrandInputEl}
                     type="text"
                     value={brand}
                     onFocus={() => {
@@ -938,9 +938,9 @@ export function FoodFormDialog({
         }
       }}
     >
-      {brandInputRef.current && showBrandSuggestions && (
+      {brandInputEl && showBrandSuggestions && (
         <PopoverContent
-          anchor={brandInputRef.current}
+          anchor={brandInputEl}
           side="bottom"
           align="end"
           sideOffset={6}

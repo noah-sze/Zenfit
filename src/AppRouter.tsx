@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
   Router,
   NavigationType,
@@ -8,14 +8,14 @@ import {
   type To,
 } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
-import { LockGuard } from './components/security/LockGuard';
 import { SetupGuard } from './components/security/SetupGuard';
-import LandingPage from './pages/LandingPage';
 import {
   APP_ROUTES,
   resolveInitialLogicalPath,
   toSingleBrowserUrl,
 } from '@/utils/navigation';
+
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 interface SingleUrlHistoryState {
   __e2cal: true;
@@ -175,13 +175,13 @@ export function AppRouter() {
   return (
     <Router location={location} navigationType={navState.action} navigator={navigator}>
       {isLanding ? (
-        <LandingPage />
+        <Suspense fallback={<div className="min-h-full bg-background" />}>
+          <LandingPage />
+        </Suspense>
       ) : (
-        <LockGuard>
-          <SetupGuard>
-            <AppLayout />
-          </SetupGuard>
-        </LockGuard>
+        <SetupGuard>
+          <AppLayout />
+        </SetupGuard>
       )}
     </Router>
   );

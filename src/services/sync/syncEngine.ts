@@ -661,7 +661,7 @@ export async function executeSync(
           !f.name.endsWith('manifest.json')
       );
       const foodChunks = await Promise.all(
-        foodFiles.map((f) => downloadJsonFile<any>(f.path_lower))
+        foodFiles.map((f) => downloadJsonFile<DailyDietLog | DailyDietLog[] | FoodLog[]>(f.path_lower))
       );
       const allDailyDietLogs: DailyDietLog[] = [];
       for (let i = 0; i < foodFiles.length; i++) {
@@ -934,7 +934,7 @@ export async function executeSync(
       const path = bMeta.path_lower;
       if (cachedRevs[path] !== bMeta.rev) {
         const bucket = bMeta.name.replace('.json', '');
-        const rawRemote = await downloadJsonFile<any>(path);
+        const rawRemote = await downloadJsonFile<DailyDietLog | DailyDietLog[] | FoodLog[]>(path);
         if (rawRemote) {
           let remoteLog: DailyDietLog;
           if (Array.isArray(rawRemote)) {

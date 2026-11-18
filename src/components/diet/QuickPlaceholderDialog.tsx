@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ChevronRight } from 'lucide-react';
@@ -137,7 +137,7 @@ export function QuickPlaceholderDialog({
   const [customTitle, setCustomTitle] = useState('');
   const [isNoteFocused, setIsNoteFocused] = useState(false);
   const [noteHighlightIdx, setNoteHighlightIdx] = useState(-1);
-  const noteInputRef = useRef<HTMLInputElement>(null);
+  const [noteInputEl, setNoteInputEl] = useState<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeKeypad, setActiveKeypad] = useState<ActiveKeypadState | null>(null);
 
@@ -579,7 +579,7 @@ export function QuickPlaceholderDialog({
 
             {/* 4. 備註輸入框（支援歷史估算聯想搜索與快速帶入） */}
             <input
-              ref={noteInputRef}
+              ref={setNoteInputEl}
               type="text"
               value={customTitle}
               onFocus={() => {
@@ -662,9 +662,9 @@ export function QuickPlaceholderDialog({
           }
         }}
       >
-        {noteInputRef.current && showNoteSuggestions && (
+        {noteInputEl && showNoteSuggestions && (
           <PopoverContent
-            anchor={noteInputRef.current}
+            anchor={noteInputEl}
             side="bottom"
             align="center"
             sideOffset={6}

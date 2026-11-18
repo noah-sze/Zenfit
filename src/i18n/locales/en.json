@@ -98,15 +98,6 @@
       "greetingAfternoon": "Good afternoon, {{name}}",
       "greetingEvening": "Good evening, {{name}}"
     },
-    "quickAdd": {
-      "title": "Quick Log",
-      "food": "Log Meal",
-      "foodDesc": "Diet and macros",
-      "workout": "Log Workout",
-      "workoutDesc": "Weight, sets, reps",
-      "metric": "Log Body Metric",
-      "metricDesc": "Weight, body fat, water"
-    },
     "diet": {
       "title": "Diet Log",
       "actionMenu": {
@@ -1545,36 +1536,6 @@
       "height": "Height",
       "male": "Male",
       "name": "Name"
-    },
-    "security": {
-      "appLocked": "App Locked",
-      "enterPinPrompt": "Enter PIN to unlock",
-      "pinError": "Incorrect PIN, {{remaining}} attempts left",
-      "answerError": "Incorrect answer, {{remaining}} attempts left",
-      "tooManyAttempts": "Too many attempts, please wait",
-      "lockoutWait": "Retry in {{seconds}}s",
-      "biometricButtonTitle": "Biometric unlock",
-      "biometricClickToRetry": "Tap to retry biometrics",
-      "biometricVerifying": "Verifying biometrics...",
-      "biometricFailed": "Biometrics failed, tap to retry",
-      "biometricFallbackToPin": "Biometrics failed multiple times, enter PIN",
-      "usePinInstead": "Use PIN instead",
-      "forgotPin": "Forgot PIN",
-      "forgotPinTitle": "Reset App Lock",
-      "forgotPinDescE2ee": "Enter your E2EE sync passphrase to verify and reset PIN",
-      "forgotPinDescQuestion": "Answer your security question to verify and reset PIN",
-      "forgotPinDescLegacy": "No passphrase or security question configured; reset will clear lock state",
-      "syncPassphrasePlaceholder": "Enter sync passphrase...",
-      "passphraseError": "Incorrect sync passphrase",
-      "verifyAndUnlock": "Verify & Unlock",
-      "useSecurityQuestion": "Use security question",
-      "useE2EEPassphrase": "Use E2EE passphrase",
-      "securityQuestion": "Security Question",
-      "securityAnswerPlaceholder": "Enter security answer...",
-      "verifySecurityAnswer": "Verify & Unlock",
-      "resetWarningNoE2ee": "Resetting disables local PIN lock without affecting your data",
-      "legacyResetConfirm": "Confirm Reset & Unlock",
-      "backToPin": "Back to PIN"
     },
     "pwa": {
       "install": "Install",

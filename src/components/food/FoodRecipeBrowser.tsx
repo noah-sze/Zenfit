@@ -380,7 +380,9 @@ export function FoodRecipeBrowser({
   const [visibleFoodCount, setVisibleFoodCount] = useState(FOOD_BATCH_SIZE);
   const foodObserverRef = useRef<IntersectionObserver | null>(null);
   const filteredFoodsLengthRef = useRef(filteredFoods.length);
-  filteredFoodsLengthRef.current = filteredFoods.length;
+  useEffect(() => {
+    filteredFoodsLengthRef.current = filteredFoods.length;
+  }, [filteredFoods.length]);
 
   useEffect(() => {
     setVisibleFoodCount(FOOD_BATCH_SIZE);
@@ -605,7 +607,9 @@ export function FoodRecipeBrowser({
   const [visibleRecipeCount, setVisibleRecipeCount] = useState(RECIPE_BATCH_SIZE);
   const recipeObserverRef = useRef<IntersectionObserver | null>(null);
   const filteredRecipesLengthRef = useRef(filteredRecipes.length);
-  filteredRecipesLengthRef.current = filteredRecipes.length;
+  useEffect(() => {
+    filteredRecipesLengthRef.current = filteredRecipes.length;
+  }, [filteredRecipes.length]);
 
   useEffect(() => {
     setVisibleRecipeCount(RECIPE_BATCH_SIZE);

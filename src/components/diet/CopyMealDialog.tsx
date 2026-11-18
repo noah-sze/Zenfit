@@ -90,6 +90,17 @@ export function CopyMealDialog({
     return newer.length > 0 ? newer[newer.length - 1] : null;
   }, [recordedDates, activeHistoryDate]);
 
+  // 數字鍵盤狀態
+  const [keypadConfig, setKeypadConfig] = useState<{
+    index: number;
+    title: string;
+    value: number;
+    unit: string;
+    anchorEl?: HTMLElement | null;
+  } | null>(null);
+  const initialKeypadValueRef = useRef<number>(0);
+  const isKeypadConfirmedRef = useRef(false);
+
   // 彈窗開啟或目標參數變更時，預設重置來源餐別、手動選擇與次級彈窗
   useEffect(() => {
     if (open) {
@@ -156,17 +167,6 @@ export function CopyMealDialog({
       setSelectedIds(new Set(historicalLogs.map((item) => item.id)));
     }
   }, [open, historicalLogs]);
-
-  // 數字鍵盤狀態
-  const [keypadConfig, setKeypadConfig] = useState<{
-    index: number;
-    title: string;
-    value: number;
-    unit: string;
-    anchorEl?: HTMLElement | null;
-  } | null>(null);
-  const initialKeypadValueRef = useRef<number>(0);
-  const isKeypadConfirmedRef = useRef(false);
 
   // 重新計算單項熱量純函數
   const recalculateCalories = useCallback((item: CopyableMealItem, newQty: number): number => {

@@ -1,5 +1,19 @@
-import type { FoodRecipe, FoodLog, FoodLogEntryType, DailyDietLog, WorkoutLog, WorkoutRoutine, UserBaseInfo } from '@/types';
+import type {
+  FoodRecipe,
+  FoodLog,
+  FoodLogEntryType,
+  DailyDietLog,
+  MacroSplit,
+  MealType,
+  WorkoutLog,
+  WorkoutRoutine,
+  UserBaseInfo,
+} from '@/types';
 import { LEGACY_ID_TO_UUID_MAP, PRIMARY_USER_ID } from '@/services/db/defaultData';
+
+function asRecord(input: unknown): Record<string, unknown> {
+  return typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
+}
 
 export function mapLegacyIdToUuid(id?: string): string {
   if (!id) return '';
@@ -9,13 +23,15 @@ export function mapLegacyIdToUuid(id?: string): string {
 /**
  * 清洗菜餚組合：嚴格踐行純 ID 關聯正規化，剔除任何 foodName 快照與根層級 description，並自動遷移舊 ID 至 UUID
  */
-export function sanitizeRecipe(recipe: any): FoodRecipe {
+export function sanitizeRecipe(recipeInput: unknown): FoodRecipe {
+  const recipe = asRecord(recipeInput);
   const rawId = String(recipe.id || '');
   return {
     id: mapLegacyIdToUuid(rawId),
     name: String(recipe.name || ''),
     ingredients: Array.isArray(recipe.ingredients)
-      ? recipe.ingredients.map((ing: any) => {
+      ? recipe.ingredients.map((ingInput: unknown) => {
+          const ing = asRecord(ingInput);
           const rawFoodId = String(ing.foodId || '');
           const item: { foodId: string; quantity: number; unit: string; isOptional?: boolean } = {
             foodId: mapLegacyIdToUuid(rawFoodId),
@@ -39,7 +55,8 @@ export function sanitizeRecipe(recipe: any): FoodRecipe {
 /**
  * 清洗飲食日誌：只保留物理事實與系統原型，剔除食物名稱與靜態營養素快照，並自動遷移引用 foodId 至 UUID
  */
-export function sanitizeFoodLog(log: any): FoodLog {
+export function sanitizeFoodLog(logInput: unknown): FoodLog {
+  const log = asRecord(logInput);
   let entryType: FoodLogEntryType = 'item';
   if (log.entryType === 'as_planned' || log.isAsPlanned) {
     entryType = 'as_planned';
@@ -54,7 +71,7 @@ export function sanitizeFoodLog(log: any): FoodLog {
   const sanitized: FoodLog = {
     id: String(log.id || ''),
     date: String(log.date || ''),
-    mealType: log.mealType || 'snack',
+    mealType: (log.mealType as MealType) || 'snack',
     entryType,
     createdAt: Number(log.createdAt) || Date.now(),
     updatedAt: Number(log.updatedAt) || Date.now(),
@@ -67,25 +84,26 @@ export function sanitizeFoodLog(log: any): FoodLog {
     if (log.bundleId) sanitized.bundleId = mapLegacyIdToUuid(String(log.bundleId));
   } else if (entryType === 'as_planned') {
     sanitized.isAsPlanned = true;
-    if (log.customTitle?.trim()) {
-      sanitized.customTitle = String(log.customTitle).trim();
-    } else if (log.foodName?.trim()) {
-      const rawName = String(log.foodName).trim();
+    const rawCustomTitle = typeof log.customTitle === 'string' ? log.customTitle.trim() : '';
+    const rawFoodName = typeof log.foodName === 'string' ? log.foodName.trim() : '';
+    if (rawCustomTitle) {
+      sanitized.customTitle = rawCustomTitle;
+    } else if (rawFoodName) {
       const isGeneric =
-        rawName.endsWith('配額') ||
-        rawName.endsWith('配额') ||
-        rawName.endsWith('Budget') ||
-        rawName === '正常飲食' ||
-        rawName === '正常饮食' ||
-        rawName === 'Regular Diet' ||
-        rawName === '算我正常吃' ||
-        rawName === '算我正常食' ||
-        rawName === '歷史均值' ||
-        rawName === '历史均值' ||
-        rawName === 'Past Average' ||
-        rawName === 'Historical Average';
+        rawFoodName.endsWith('配額') ||
+        rawFoodName.endsWith('配额') ||
+        rawFoodName.endsWith('Budget') ||
+        rawFoodName === '正常飲食' ||
+        rawFoodName === '正常饮食' ||
+        rawFoodName === 'Regular Diet' ||
+        rawFoodName === '算我正常吃' ||
+        rawFoodName === '算我正常食' ||
+        rawFoodName === '歷史均值' ||
+        rawFoodName === '历史均值' ||
+        rawFoodName === 'Past Average' ||
+        rawFoodName === 'Historical Average';
       if (!isGeneric) {
-        sanitized.customTitle = rawName;
+        sanitized.customTitle = rawFoodName;
       }
     }
     if (typeof log.calories === 'number' && !isNaN(log.calories)) sanitized.calories = log.calories;
@@ -97,17 +115,18 @@ export function sanitizeFoodLog(log: any): FoodLog {
     if (log.scenario) {
       sanitized.scenario = String(log.scenario);
     }
-    if (log.customTitle?.trim()) {
-      sanitized.customTitle = String(log.customTitle).trim();
-    } else if (log.foodName?.trim()) {
-      const rawName = String(log.foodName).trim();
+    const rawCustomTitle = typeof log.customTitle === 'string' ? log.customTitle.trim() : '';
+    const rawFoodName = typeof log.foodName === 'string' ? log.foodName.trim() : '';
+    if (rawCustomTitle) {
+      sanitized.customTitle = rawCustomTitle;
+    } else if (rawFoodName) {
       const isGeneric =
-        rawName === '快速估算' ||
-        rawName === '快速粗估' ||
-        rawName === 'Quick Estimate' ||
-        rawName === '常規';
+        rawFoodName === '快速估算' ||
+        rawFoodName === '快速粗估' ||
+        rawFoodName === 'Quick Estimate' ||
+        rawFoodName === '常規';
       if (!isGeneric) {
-        sanitized.customTitle = rawName;
+        sanitized.customTitle = rawFoodName;
       }
     }
     if (typeof log.calories === 'number' && !isNaN(log.calories)) sanitized.calories = log.calories;
@@ -124,17 +143,19 @@ export function sanitizeFoodLog(log: any): FoodLog {
 /**
  * 清洗自包含每日飲食日誌膠囊：規範化日誌頭部 (meta) 與進食組件 (entries)
  */
-export function sanitizeDailyDietLog(raw: any): DailyDietLog {
+export function sanitizeDailyDietLog(rawInput: unknown): DailyDietLog {
+  const raw = asRecord(rawInput);
+  const meta = asRecord(raw.meta);
   const rawId = String(raw.id || '');
   return {
     id: mapLegacyIdToUuid(rawId) || rawId,
     date: String(raw.date || ''),
     meta: {
-      activityLevel: Number(raw.meta?.activityLevel) || 1.55,
-      macroSplit: raw.meta?.macroSplit || { carbs: 40, protein: 30, fat: 30 },
+      activityLevel: Number(meta.activityLevel) || 1.55,
+      macroSplit: (meta.macroSplit as MacroSplit | undefined) || { carbs: 40, protein: 30, fat: 30 },
     },
     entries: Array.isArray(raw.entries)
-      ? raw.entries.map((entry: any) => sanitizeFoodLog(entry))
+      ? raw.entries.map((entry: unknown) => sanitizeFoodLog(entry))
       : [],
     createdAt: Number(raw.createdAt) || Date.now(),
     updatedAt: Number(raw.updatedAt) || Date.now(),
@@ -145,24 +166,31 @@ export function sanitizeDailyDietLog(raw: any): DailyDietLog {
 /**
  * 清洗訓練日誌：只保留動作 ID 與組數，剔除標題、動作名稱與肌群快照，並自動遷移 exerciseId/routineId 至 UUID
  */
-export function sanitizeWorkoutLog(log: any): WorkoutLog {
+export function sanitizeWorkoutLog(logInput: unknown): WorkoutLog {
+  const log = asRecord(logInput);
   const sanitized: WorkoutLog = {
     id: String(log.id || ''),
     date: String(log.date || ''),
     exercises: Array.isArray(log.exercises)
-      ? log.exercises.map((group: any) => ({
-          exerciseId: mapLegacyIdToUuid(String(group.exerciseId || '')),
-          sets: Array.isArray(group.sets)
-            ? group.sets.map((s: any, idx: number) => ({
-                id: String(s.id || `set-${idx}`),
-                setNumber: Number(s.setNumber) || idx + 1,
-                weight: Number(s.weight) || 0,
-                reps: Number(s.reps) || 0,
-                isCompleted: Boolean(s.isCompleted),
-                ...(s.rpe !== undefined ? { rpe: Number(s.rpe) } : {}),
-              }))
-            : [],
-        }))
+      ? log.exercises.map((groupInput: unknown) => {
+          const group = asRecord(groupInput);
+          return {
+            exerciseId: mapLegacyIdToUuid(String(group.exerciseId || '')),
+            sets: Array.isArray(group.sets)
+              ? group.sets.map((sInput: unknown, idx: number) => {
+                  const s = asRecord(sInput);
+                  return {
+                    id: String(s.id || `set-${idx}`),
+                    setNumber: Number(s.setNumber) || idx + 1,
+                    weight: Number(s.weight) || 0,
+                    reps: Number(s.reps) || 0,
+                    isCompleted: Boolean(s.isCompleted),
+                    ...(s.rpe !== undefined ? { rpe: Number(s.rpe) } : {}),
+                  };
+                })
+              : [],
+          };
+        })
       : [],
     createdAt: Number(log.createdAt) || Date.now(),
     updatedAt: Number(log.updatedAt) || Date.now(),
@@ -177,12 +205,13 @@ export function sanitizeWorkoutLog(log: any): WorkoutLog {
 /**
  * 清洗使用者基礎資料：剔除 weightUnit 與 activityLevel，並自動遷移主鍵至 UUID
  */
-export function sanitizeUserBaseInfo(info: any): UserBaseInfo {
+export function sanitizeUserBaseInfo(infoInput: unknown): UserBaseInfo {
+  const info = asRecord(infoInput);
   const rawId = String(info.id || PRIMARY_USER_ID);
   return {
     id: mapLegacyIdToUuid(rawId) || PRIMARY_USER_ID,
     name: String(info.name || ''),
-    gender: info.gender || 'male',
+    gender: info.gender === 'female' ? 'female' : 'male',
     birthDate: String(info.birthDate || '1999-01'),
     heightCm: Number(info.heightCm) || 175,
     createdAt: Number(info.createdAt) || Date.now(),
@@ -194,16 +223,20 @@ export function sanitizeUserBaseInfo(info: any): UserBaseInfo {
 /**
  * 清洗訓練課表/組合：僅保留 exerciseId，徹底剔除 defaultSets 等組數設定
  */
-export function sanitizeWorkoutRoutine(routine: any): WorkoutRoutine {
+export function sanitizeWorkoutRoutine(routineInput: unknown): WorkoutRoutine {
+  const routine = asRecord(routineInput);
   const rawId = String(routine.id || '');
   return {
     id: mapLegacyIdToUuid(rawId) || rawId,
     name: String(routine.name || ''),
     ...(routine.notes ? { notes: String(routine.notes) } : {}),
     exercises: Array.isArray(routine.exercises)
-      ? routine.exercises.map((item: any) => ({
-          exerciseId: mapLegacyIdToUuid(String(item.exerciseId || '')),
-        }))
+      ? routine.exercises.map((itemInput: unknown) => {
+          const item = asRecord(itemInput);
+          return {
+            exerciseId: mapLegacyIdToUuid(String(item.exerciseId || '')),
+          };
+        })
       : [],
     isCustom: Boolean(routine.isCustom ?? true),
     ...(routine.isArchived !== undefined ? { isArchived: Boolean(routine.isArchived) } : {}),

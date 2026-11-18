@@ -263,7 +263,8 @@ export function calculateBodyRecovery(
     // 遍歷所有動作組
     for (const group of log.exercises || []) {
       let targetMuscles: Partial<Record<DetailedMuscle, MuscleRole | number>> | undefined;
-      const legacyName = (group as any).exerciseName;
+      const legacyGroup = group as typeof group & { exerciseName?: string };
+      const legacyName = typeof legacyGroup.exerciseName === 'string' ? legacyGroup.exerciseName : undefined;
       let exName = legacyName || '動作';
 
       // 1. 優先透過 exerciseId 匹配

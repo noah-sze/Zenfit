@@ -2,6 +2,7 @@ import { db } from '@/services/db/db';
 import type {
   FoodItem,
   FoodRecipe,
+  FoodLog,
   DailyDietLog,
   DietPlan,
   Exercise,
@@ -345,7 +346,7 @@ async function executeDownloadQueue(): Promise<void> {
         const data = await downloadJsonFile<FoodRecipe[]>(path);
         if (data) staged.recipes.push(...data.map(sanitizeRecipe));
       } else if (path.startsWith('/nutrition/logs/')) {
-        const raw = await downloadJsonFile<any>(path);
+        const raw = await downloadJsonFile<DailyDietLog | DailyDietLog[] | FoodLog[]>(path);
         if (raw) {
           if (Array.isArray(raw)) {
             if (raw.length > 0 && 'entries' in raw[0]) {

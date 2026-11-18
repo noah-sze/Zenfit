@@ -3,8 +3,6 @@ import { persist } from 'zustand/middleware';
 import { getInitialDateSession, recordDateSession } from '@/utils/dateSession';
 import type { NutritionDisplayMode } from '@/utils/nutritionMath';
 
-export type QuickAddType = 'food' | 'workout' | 'metric';
-
 interface AppState {
   selectedDate: string; // YYYY-MM-DD
   setSelectedDate: (date: string) => void;
@@ -22,16 +20,8 @@ interface AppState {
   hasConfirmedRawWeight: boolean;
   setHasConfirmedRawWeight: (confirmed: boolean) => void;
 
-  // Add / Edit Modal Controls
-  isAddModalOpen: boolean;
-  addModalType: QuickAddType;
-  editingFoodLogId: string | null;
-  editingWorkoutLogId: string | null;
   hidePwaInstallPrompt: boolean;
-
   setHidePwaInstallPrompt: (hide: boolean) => void;
-  openAddModal: (type?: QuickAddType, editFoodId?: string | null, editWorkoutId?: string | null) => void;
-  closeAddModal: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -54,28 +44,8 @@ export const useAppStore = create<AppState>()(
       hasConfirmedRawWeight: false,
       setHasConfirmedRawWeight: (hasConfirmedRawWeight) => set({ hasConfirmedRawWeight }),
 
-      isAddModalOpen: false,
-      addModalType: 'food',
-      editingFoodLogId: null,
-      editingWorkoutLogId: null,
       hidePwaInstallPrompt: false,
-
       setHidePwaInstallPrompt: (hidePwaInstallPrompt) => set({ hidePwaInstallPrompt }),
-
-      openAddModal: (type = 'food', editFoodId = null, editWorkoutId = null) =>
-        set({
-          isAddModalOpen: true,
-          addModalType: type,
-          editingFoodLogId: editFoodId,
-          editingWorkoutLogId: editWorkoutId,
-        }),
-
-      closeAddModal: () =>
-        set({
-          isAddModalOpen: false,
-          editingFoodLogId: null,
-          editingWorkoutLogId: null,
-        }),
     }),
     {
       name: 'zenfit-app-storage',

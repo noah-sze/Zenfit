@@ -1,4 +1,3 @@
-import JSZip from 'jszip';
 import { db } from '@/services/db/db';
 import {
   sanitizeUserBaseInfo,
@@ -63,6 +62,7 @@ export async function exportBackupZip(): Promise<Blob> {
     db.body_metrics.toArray(),
   ]);
 
+  const { default: JSZip } = await import('jszip');
   const zip = new JSZip();
   const now = new Date().toISOString();
 

@@ -98,15 +98,6 @@
       "greetingAfternoon": "下午好，{{name}}",
       "greetingEvening": "晚上好，{{name}}"
     },
-    "quickAdd": {
-      "title": "快捷记录",
-      "food": "记一餐",
-      "foodDesc": "饮食与三大营养素",
-      "workout": "记训练",
-      "workoutDesc": "重量、组数与次数",
-      "metric": "记体态",
-      "metricDesc": "体重、体脂与饮水"
-    },
     "diet": {
       "title": "饮食日记",
       "actionMenu": {
@@ -1545,36 +1536,6 @@
       "height": "身高",
       "male": "男",
       "name": "姓名"
-    },
-    "security": {
-      "appLocked": "应用已锁定",
-      "enterPinPrompt": "请输入 PIN 码解锁",
-      "pinError": "PIN 码错误，剩余 {{remaining}} 次尝试",
-      "answerError": "安全问题答案错误，剩余 {{remaining}} 次尝试",
-      "tooManyAttempts": "错误次数过多，请稍后再试",
-      "lockoutWait": "请于 {{seconds}} 秒后重试",
-      "biometricButtonTitle": "生物识别解锁",
-      "biometricClickToRetry": "点击重试生物识别",
-      "biometricVerifying": "正在验证生物识别...",
-      "biometricFailed": "生物识别未通过，请点击重试",
-      "biometricFallbackToPin": "生物识别多次未通过，请输入 PIN 码",
-      "usePinInstead": "改用 PIN 码",
-      "forgotPin": "忘记 PIN 码",
-      "forgotPinTitle": "重设应用锁",
-      "forgotPinDescE2ee": "输入您的 E2EE 同步主密码以验证身份并重设 PIN 码",
-      "forgotPinDescQuestion": "回答先前设置的安全问题以验证身份并重设 PIN 码",
-      "forgotPinDescLegacy": "尚未设置同步密码或安全问题，仅可通过清除应用锁定状态进行重设",
-      "syncPassphrasePlaceholder": "输入同步主密码...",
-      "passphraseError": "同步主密码错误",
-      "verifyAndUnlock": "验证并解锁",
-      "useSecurityQuestion": "改用安全问题验证",
-      "useE2EEPassphrase": "改用 E2EE 主密码验证",
-      "securityQuestion": "安全问题",
-      "securityAnswerPlaceholder": "输入安全问题答案...",
-      "verifySecurityAnswer": "验证答案并解锁",
-      "resetWarningNoE2ee": "重设后将关闭本地 PIN 锁保护，您的运动与饮食数据不会受影响",
-      "legacyResetConfirm": "确认重设并解锁",
-      "backToPin": "返回输入 PIN 码"
     },
     "pwa": {
       "install": "安装",

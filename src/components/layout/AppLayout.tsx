@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
 import { Navigate, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,16 +18,19 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toast';
-import { AddQuickModal } from '@/components/quickAdd/AddQuickModal';
-import { AppLockOverlay } from '@/components/security/AppLockOverlay';
 import { InitialSyncModal } from '@/components/sync/InitialSyncModal';
 import { SyncStatusPill } from '@/components/sync/SyncStatusPill';
-import { CopyDailyDataDialog } from '@/components/common/CopyDailyDataDialog';
-import { getAiExportScopeByTab } from '@/services/aiDataExport';
+import type { AiExportScope } from '@/services/aiDataExport';
 import { format, addDays, subDays, parseISO, isToday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { recordDateSession, shouldResetDateOnForeground, getPhysicalToday } from '@/utils/dateSession';
+
+const CopyDailyDataDialog = lazy(() =>
+  import('@/components/common/CopyDailyDataDialog').then((m) => ({
+    default: m.CopyDailyDataDialog,
+  }))
+);
 
 // 4 大主頁面直接靜態直載，實現 DOM 恆定保活 (Keep-Alive)
 import Dashboard from '@/pages/Dashboard';
@@ -131,9 +134,7 @@ export function AppLayout() {
     const checkAndSyncDate = () => {
       const now = Date.now();
       const currentSelected = useAppStore.getState().selectedDate;
-      const modalOpen = useAppStore.getState().isAddModalOpen;
       const isAnyDialogActive =
-        modalOpen ||
         isCalendarOpen ||
         isCopyDataOpen ||
         (typeof document !== 'undefined' &&
@@ -421,17 +422,17 @@ export function AppLayout() {
         </nav>
       )}
 
-      {/* 快捷彈窗與全域提示 */}
-      <AddQuickModal />
-      <AppLockOverlay />
+      {/* 全域彈窗與提示 */}
       <InitialSyncModal />
       {isCopyDataOpen && (
-        <CopyDailyDataDialog
-          open={isCopyDataOpen}
-          onOpenChange={setIsCopyDataOpen}
-          date={selectedDate}
-          scope={getAiExportScopeByTab(activeTab)}
-        />
+        <Suspense fallback={null}>
+          <CopyDailyDataDialog
+            open={isCopyDataOpen}
+            onOpenChange={setIsCopyDataOpen}
+            date={selectedDate}
+            scope={(activeTab === 'dashboard' ? 'all' : activeTab) as AiExportScope}
+          />
+        </Suspense>
       )}
       <Toaster />
     </div>

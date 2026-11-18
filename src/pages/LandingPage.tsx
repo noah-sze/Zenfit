@@ -65,7 +65,7 @@ function ShowcaseFrameWindow({
       </div>
 
       {footerLeft || footerRight ? (
-        <div className="min-h-9 px-4 py-2 border-t border-border bg-muted/40 flex items-center justify-between gap-2 text-xs font-mono text-neutral-400 dark:text-neutral-500 shrink-0">
+        <div className="min-h-9 px-4 py-2 border-t border-border bg-muted/40 flex items-center justify-between gap-2 text-xs font-mono text-muted-foreground shrink-0">
           <span className="truncate">{footerLeft}</span>
           {footerRight ? (
             <span className="tabular-nums text-neutral-500 dark:text-neutral-400 shrink-0">{footerRight}</span>

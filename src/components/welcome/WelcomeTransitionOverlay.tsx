@@ -25,7 +25,9 @@ export function WelcomeTransitionOverlay({
   const { t } = useTranslation();
   const [activeTickCount, setActiveTickCount] = useState(0);
   const onFinishRef = useRef(onFinish);
-  onFinishRef.current = onFinish;
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
 
   const totalTicks = 24;
   const displayName = userName?.trim() || t('common.user', '使用者');

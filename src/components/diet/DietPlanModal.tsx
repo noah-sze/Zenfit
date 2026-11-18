@@ -63,7 +63,7 @@ export function DietPlanModal({
   // 數字鍵盤狀態
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
   const [activeKeypadKey, setActiveKeypadKey] = useState<MacroKey | null>(null);
-  const anchorElRef = useRef<HTMLElement | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const initialValueRef = useRef<number>(0);
   const isKeypadConfirmedRef = useRef(false);
 
@@ -179,7 +179,7 @@ export function DietPlanModal({
     if (template !== 'custom') return;
     triggerHaptic('selection');
     setActiveKeypadKey(macro);
-    anchorElRef.current = el;
+    setAnchorEl(el);
 
     const curVal = macro === 'carbs' ? carbsPercent : macro === 'protein' ? proteinPercent : fatPercent;
     initialValueRef.current = curVal;
@@ -500,7 +500,7 @@ export function DietPlanModal({
           unit="%"
           allowDecimals={false}
           allowNegative={false}
-          anchorEl={anchorElRef.current}
+          anchorEl={anchorEl}
           onLiveChange={handleKeypadLiveChange}
           onConfirm={handleKeypadConfirm}
           onCancel={handleKeypadCancel}

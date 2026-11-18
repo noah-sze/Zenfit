@@ -99,7 +99,7 @@ trigger: always_on
   - `src/store/`：輕量全域客戶端狀態（今日日期會話、導航 Tab、介面偏好）。
   - `src/utils/`：無副作用純函數數學公式、單位換算、排序搜尋與平台偵測（維持高單元測試覆蓋率）。
   - `src/types/` 與 `src/constants/`：強型別領域模型與系統常數定義。
-- **自動化守門管線**：統一以 `npm run check:all` 串聯 Oxlint、Design Token Linter（`lint:design`）、TypeScript 型別檢查、Vitest 單元測試與 Vite 生產建置。
+- **自動化守門管線**：統一以 `npm run check:all` 串聯 Oxlint、TypeScript 型別檢查、Vitest 單元測試與 Vite 生產建置。
 
 ## 6. 未來演進原則 (Roadmap)
 - **多端點自有雲端同步擴展**：維持同步層解耦抽象，未來可擴展支援更多使用者自有雲端儲存端點（如 WebDAV、Google Drive、OneDrive），所有端點必須嚴格共用現行「按日分桶可讀 JSON 目錄規範」與 LWW 合併引擎，絕不引入官方託管伺服器或專有資料鎖定。

@@ -69,7 +69,8 @@ export function EditFoodLogDialog({
 
   // 數字鍵盤狀態
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
-  const anchorElRef = useRef<HTMLElement | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [keypadInitialQuantity, setKeypadInitialQuantity] = useState<number>(quantity);
   const initialQuantityRef = useRef<number>(quantity);
   const isKeypadConfirmedRef = useRef(false);
 
@@ -154,7 +155,8 @@ export function EditFoodLogDialog({
   // 打開數字鍵盤
   const handleOpenKeypad = (el: HTMLElement) => {
     triggerHaptic('selection');
-    anchorElRef.current = el;
+    setAnchorEl(el);
+    setKeypadInitialQuantity(quantity);
     initialQuantityRef.current = quantity;
     isKeypadConfirmedRef.current = false;
     setIsKeypadOpen(true);
@@ -355,11 +357,11 @@ export function EditFoodLogDialog({
             }
           }}
           title={dialogTitle}
-          value={initialQuantityRef.current}
+          value={keypadInitialQuantity}
           unit={log.unit || 'g'}
           allowDecimals={true}
           maxDecimals={2}
-          anchorEl={anchorElRef.current}
+          anchorEl={anchorEl}
           onLiveChange={handleKeypadLiveChange}
           onConfirm={handleKeypadConfirm}
           onCancel={handleKeypadCancel}

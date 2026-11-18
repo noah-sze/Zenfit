@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+import type JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/services/db/db';
 import {
@@ -54,12 +54,17 @@ export interface ParsedBackupData {
   total: number;
 }
 
-export function sanitizeFoodItem(raw: any): FoodItem {
+function asRecord(input: unknown): Record<string, unknown> {
+  return typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
+}
+
+export function sanitizeFoodItem(rawInput: unknown): FoodItem {
+  const raw = asRecord(rawInput);
   const rawId = String(raw.id || uuidv4());
   return {
     id: mapLegacyIdToUuid(rawId) || rawId,
     name: String(raw.name || '').trim(),
-    category: raw.category || 'natural',
+    category: (raw.category as FoodItem['category']) || 'natural',
     ...(raw.brand ? { brand: String(raw.brand).trim() } : {}),
     servingSize: Number(raw.servingSize) || 100,
     servingUnit: String(raw.servingUnit || 'g'),
@@ -78,15 +83,16 @@ export function sanitizeFoodItem(raw: any): FoodItem {
   };
 }
 
-export function sanitizeExercise(raw: any): Exercise {
+export function sanitizeExercise(rawInput: unknown): Exercise {
+  const raw = asRecord(rawInput);
   const rawId = String(raw.id || uuidv4());
   const rawEq = String(raw.equipment || 'bodyweight');
   return {
     id: mapLegacyIdToUuid(rawId) || rawId,
     name: String(raw.name || '').trim(),
-    ...(raw.category ? { category: raw.category } : {}),
+    ...(raw.category ? { category: raw.category as Exercise['category'] } : {}),
     equipment: mapLegacyIdToUuid(rawEq) || rawEq,
-    targetMuscles: raw.targetMuscles || {},
+    targetMuscles: (raw.targetMuscles as Exercise['targetMuscles']) || {},
     ...(raw.notes ? { notes: String(raw.notes) } : {}),
     isCustom: Boolean(raw.isCustom),
     isArchived: Boolean(raw.isArchived),
@@ -96,7 +102,8 @@ export function sanitizeExercise(raw: any): Exercise {
   };
 }
 
-export function sanitizeEquipment(raw: any): Equipment {
+export function sanitizeEquipment(rawInput: unknown): Equipment {
+  const raw = asRecord(rawInput);
   const rawId = String(raw.id || uuidv4());
   return {
     id: mapLegacyIdToUuid(rawId) || rawId,
@@ -109,7 +116,8 @@ export function sanitizeEquipment(raw: any): Equipment {
   };
 }
 
-export function sanitizeBodyMetric(raw: any): BodyMetric {
+export function sanitizeBodyMetric(rawInput: unknown): BodyMetric {
+  const raw = asRecord(rawInput);
   const rawId = String(raw.id || uuidv4());
   return {
     id: rawId,
@@ -166,6 +174,7 @@ export async function parseBackupFile(file: File | Blob | string): Promise<Parse
   // 1. 嘗試以 JSZip 解開
   if (typeof file !== 'string') {
     try {
+      const { default: JSZip } = await import('jszip');
       zip = await JSZip.loadAsync(file);
       isZipLoaded = Object.keys(zip.files).length > 0;
     } catch {
