@@ -37,6 +37,39 @@ export async function prewarmFoodsCache(): Promise<FoodItem[]> {
   }
 }
 
+/**
+ * 歸檔單品食材並於同一交易內從所有關聯食譜中剔除該食材引用
+ * 歷史飲食日誌 (daily_diet_logs) 保持原貌不更動
+ */
+export async function archiveFoodAndCleanRecipes(
+  id: string
+): Promise<{ removedFromRecipeIds: string[] }> {
+  const now = Date.now();
+  const removedFromRecipeIds: string[] = [];
+
+  await db.transaction('rw', [db.foods, db.recipes], async () => {
+    await db.foods.update(id, {
+      isArchived: true,
+      updatedAt: now,
+    });
+
+    const affectedRecipes = await db.recipes
+      .filter((r) => r.ingredients.some((ing) => ing.foodId === id))
+      .toArray();
+
+    for (const recipe of affectedRecipes) {
+      const nextIngredients = recipe.ingredients.filter((ing) => ing.foodId !== id);
+      await db.recipes.update(recipe.id, {
+        ingredients: nextIngredients,
+        updatedAt: now,
+      });
+      removedFromRecipeIds.push(recipe.id);
+    }
+  });
+
+  return { removedFromRecipeIds };
+}
+
 export function useFoods(searchQuery = '') {
   const allFoodsList = useLiveQuery(
     async () => {
@@ -98,10 +131,7 @@ export function useFoods(searchQuery = '') {
   };
 
   const archiveFood = async (id: string) => {
-    await db.foods.update(id, {
-      isArchived: true,
-      updatedAt: Date.now(),
-    });
+    return archiveFoodAndCleanRecipes(id);
   };
 
   const unarchiveFood = async (id: string) => {

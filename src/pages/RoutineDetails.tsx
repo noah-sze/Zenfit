@@ -197,7 +197,11 @@ export default function RoutineDetails({ id: propId }: RoutineDetailsProps = {})
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: t('common.confirmArchiveItem', { name: routine.name }),
+        variant: 'archive',
+        archiveSpec: {
+          entityLabel: t('workout.routineEntityLabel', '組合'),
+          itemName: routine.name,
+        },
       });
       if (ok) {
         await archiveRoutine(routine.id);

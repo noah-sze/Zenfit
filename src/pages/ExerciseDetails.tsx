@@ -175,7 +175,13 @@ export default function ExerciseDetails({ id: propId }: ExerciseDetailsProps = {
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: t('common.confirmArchiveItem', { name: exercise.name }),
+        variant: 'archive',
+        archiveSpec: {
+          entityLabel: t('workout.exerciseEntityLabel', '動作'),
+          itemName: exercise.name,
+          affectedLabel: t('workout.archiveRemoveFromRoutines', '從組合剔除'),
+          affectedItems: relatedRoutines.map((r) => r.name),
+        },
       });
       if (ok) {
         await archiveExercise(exercise.id);

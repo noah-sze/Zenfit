@@ -35,6 +35,8 @@
   --color-overlay: var(--overlay);
   --color-header-bg: var(--header-bg);
   --color-destructive-subtle: var(--destructive-subtle);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-subtle-border: var(--primary-subtle-border);
   --color-track: var(--track);
   --color-hover: var(--hover);
   --color-telemetry-accent: var(--telemetry-accent);
@@ -164,6 +166,8 @@
     --overlay: rgba(255, 255, 255, 0.8);
     --header-bg: rgba(255, 255, 255, 0.9);
     --destructive-subtle: rgba(255, 0, 0, 0.08);
+    --primary-subtle: rgba(0, 0, 0, 0.045);
+    --primary-subtle-border: rgba(0, 0, 0, 0.22);
     --track: #e4e4e7;
     --hover: rgba(0, 0, 0, 0.025);
     --telemetry-accent: #e0533c;
@@ -259,6 +263,8 @@
     --overlay: rgba(0, 0, 0, 0.8);
     --header-bg: rgba(0, 0, 0, 0.9);
     --destructive-subtle: rgba(255, 69, 58, 0.15);
+    --primary-subtle: rgba(255, 255, 255, 0.075);
+    --primary-subtle-border: rgba(255, 255, 255, 0.26);
     --track: #27272a;
     --hover: rgba(255, 255, 255, 0.038);
     --telemetry-accent: #e0533c;

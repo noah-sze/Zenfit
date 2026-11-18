@@ -37,6 +37,39 @@ export async function prewarmExercisesCache(): Promise<Exercise[]> {
   }
 }
 
+/**
+ * 歸檔動作並於同一交易內從所有關聯訓練組合中剔除該動作引用
+ * 歷史訓練日誌 (workout_logs) 保持原貌不更動
+ */
+export async function archiveExerciseAndCleanRoutines(
+  id: string
+): Promise<{ removedFromRoutineIds: string[] }> {
+  const now = Date.now();
+  const removedFromRoutineIds: string[] = [];
+
+  await db.transaction('rw', [db.exercises, db.routines], async () => {
+    await db.exercises.update(id, {
+      isArchived: true,
+      updatedAt: now,
+    });
+
+    const affectedRoutines = await db.routines
+      .filter((r) => r.exercises.some((item) => item.exerciseId === id))
+      .toArray();
+
+    for (const routine of affectedRoutines) {
+      const nextExercises = routine.exercises.filter((item) => item.exerciseId !== id);
+      await db.routines.update(routine.id, {
+        exercises: nextExercises,
+        updatedAt: now,
+      });
+      removedFromRoutineIds.push(routine.id);
+    }
+  });
+
+  return { removedFromRoutineIds };
+}
+
 export function useExercises(equipmentFilter?: string, searchQuery = '') {
   const allExercisesList = useLiveQuery(
     async () => {
@@ -102,10 +135,7 @@ export function useExercises(equipmentFilter?: string, searchQuery = '') {
   };
 
   const archiveExercise = async (id: string) => {
-    await db.exercises.update(id, {
-      isArchived: true,
-      updatedAt: Date.now(),
-    });
+    return archiveExerciseAndCleanRoutines(id);
   };
 
   const unarchiveExercise = async (id: string) => {

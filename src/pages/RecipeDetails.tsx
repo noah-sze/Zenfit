@@ -296,7 +296,11 @@ export default function RecipeDetails({ id: propId }: RecipeDetailsProps = {}) {
     } else {
       const ok = await confirm({
         title: t('common.archive'),
-        description: t('common.confirmArchiveItem', { name: recipe.name }),
+        variant: 'archive',
+        archiveSpec: {
+          entityLabel: t('diet.recipeEntityLabel', '食譜'),
+          itemName: recipe.name,
+        },
       });
       if (ok) {
         await archiveRecipe(recipe.id);

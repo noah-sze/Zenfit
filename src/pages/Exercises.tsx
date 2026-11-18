@@ -198,7 +198,11 @@ export default function Exercises({ isDetailOpen = false }: ExercisesProps) {
     const displayName = getEquipmentDisplayName(equipment.id, t) || equipment.name;
     const ok = await confirm({
       title: t('common.archive'),
-      description: t('common.confirmArchiveItem', { name: displayName }),
+      variant: 'archive',
+      archiveSpec: {
+        entityLabel: t('workout.equipmentEntityLabel', '器械'),
+        itemName: displayName,
+      },
     });
     if (!ok) return;
 

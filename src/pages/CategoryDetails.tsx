@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
-import { Edit2, Archive, RefreshCcw, Trash2 } from 'lucide-react';
+import { Edit2, Archive, RefreshCcw, Trash2, Layers, ChevronRight } from 'lucide-react';
 import { useFoods } from '@/hooks/useFoods';
 import { useRecipes } from '@/hooks/useRecipes';
 import {
@@ -33,6 +33,7 @@ import {
   getInitialMatrixContainerWidth,
 } from '@/utils/heatmapMath';
 import { useSafeNavigate } from '@/hooks/useSafeNavigate';
+import { useInAppNavigation } from '@/store/useInAppNavigation';
 import {
   OverviewPeriodSelector,
   IntakeFootprintHeatmap,
@@ -138,13 +139,13 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
     return logs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }, [dailyLogs, id, food]);
 
-  // 檢查此食材是否被菜餚組合引用（直接從記憶體快取 allRecipes 同步計算，0 IndexedDB 查詢）
-  const referencingRecipesCount = useMemo(() => {
-    if (!id) return 0;
-    return allRecipes.filter((r) => r.ingredients.some((ing) => ing.foodId === id)).length;
+  // 檢查此食材是否被食譜組合引用（直接從記憶體快取 allRecipes 同步計算，0 IndexedDB 查詢）
+  const referencingRecipes = useMemo(() => {
+    if (!id) return [];
+    return allRecipes.filter((r) => r.ingredients.some((ing) => ing.foodId === id));
   }, [allRecipes, id]);
 
-  const hasUsage = foodLogs.length > 0 || referencingRecipesCount > 0;
+  const hasUsage = foodLogs.length > 0 || referencingRecipes.length > 0;
 
   const handleToggleArchive = async () => {
     if (!food) return;
@@ -159,9 +160,16 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
         toast.show(t('common.saved'));
       }
     } else {
+      const foodDisplayName = formatFoodDisplayName(food);
       const ok = await confirm({
         title: t('common.archive'),
-        description: t('common.confirmArchiveItem', { name: formatFoodDisplayName(food) }),
+        variant: 'archive',
+        archiveSpec: {
+          entityLabel: t('diet.foodEntityLabel', '食物'),
+          itemName: foodDisplayName,
+          affectedLabel: t('diet.archiveRemoveFromRecipes', '從食譜剔除'),
+          affectedItems: referencingRecipes.map((r) => r.name),
+        },
       });
       if (ok) {
         await archiveFood(food.id);
@@ -468,6 +476,47 @@ export default function CategoryDetails({ id: propId }: CategoryDetailsProps = {
               {scaledNutrition?.fat ?? food.fat} g
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* 包含此食材的食譜組合 */}
+      <div className="space-y-1.5">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground px-1">
+          {t('diet.relatedRecipes')}
+        </div>
+        <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
+          {referencingRecipes.length === 0 ? (
+            <div className="p-4 text-center text-xs font-mono text-muted-foreground">
+              {t('diet.noRelatedRecipes')}
+            </div>
+          ) : (
+            referencingRecipes.map((recipe) => (
+              <button
+                key={recipe.id}
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  useInAppNavigation.getState().pushSubView({
+                    type: 'foods',
+                    id: recipe.id,
+                    mode: 'recipes',
+                  });
+                }}
+                className="w-full p-3.5 flex items-center justify-between gap-2 hover:bg-hover transition-colors group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Layers className="size-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {recipe.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground group-hover:text-foreground shrink-0">
+                  <span>{t('diet.ingredientsCount', { count: recipe.ingredients.length })}</span>
+                  <ChevronRight className="size-4 opacity-50 group-hover:opacity-100" />
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </div>
 

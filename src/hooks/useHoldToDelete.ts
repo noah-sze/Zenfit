@@ -7,17 +7,20 @@ export interface UseHoldToDeleteOptions {
   onConfirm: () => void | Promise<void>;
   disabled?: boolean;
   durationMs?: number;
+  /** 短按 3 次未蓄力完成時顯示的提示文案（預設使用 common.holdToDeleteHint） */
+  hintText?: string;
 }
 
 /**
- * 長按蓄力刪除共用邏輯 Hook
+ * 長按蓄力確認共用邏輯 Hook（支援刪除、歸檔等防誤觸操作）
  * - 支援 0~1 平滑蓄力進度與觸覺回饋
- * - 連續短按點擊 3 次未完成蓄力時，彈出「長按 1s 刪除」客觀提示 Toast
+ * - 連續短按點擊 3 次未完成蓄力時，彈出客觀長按提示 Toast
  */
 export function useHoldToDelete({
   onConfirm,
   disabled = false,
   durationMs = 500,
+  hintText,
 }: UseHoldToDeleteOptions) {
   const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
@@ -97,9 +100,9 @@ export function useHoldToDelete({
 
     if (shortTapCountRef.current >= 3) {
       shortTapCountRef.current = 0;
-      toast.show(t('common.holdToDeleteHint', '長按 1s 刪除'));
+      toast.show(hintText || t('common.holdToDeleteHint', '長按 1s 刪除'));
     }
-  }, [isCompleted, stopHold, t]);
+  }, [isCompleted, stopHold, t, hintText]);
 
   useEffect(() => {
     return () => {
